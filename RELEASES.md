@@ -6,6 +6,7 @@ This new release adds support for sparse cost matrices in the exact EMD solver. 
 
 #### New features
 - Add support for sparse cost matrices in exact EMD solver `ot.emd` and `ot.emd2` (PR #778)
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` API (PR #TBD)
 
 #### Closed issues
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)

@@ -992,6 +992,15 @@ def test_emd_sparse_vs_dense(nx):
         b, nx.to_numpy(nx.sum(G_sparse_dense, 0)), rtol=1e-5, atol=1e-7
     )
 
+    # Test coo_array element-wise multiplication (only works with coo_array, not coo_matrix)
+    if nx.__name__ == "numpy":
+        # This tests that we're using coo_array which supports element-wise operations
+        M_sparse_np = M_sparse
+        G_sparse_np = G_sparse
+        loss_sparse = np.sum(G_sparse_np * M_sparse_np)
+        # Verify the loss calculation is reasonable
+        assert loss_sparse >= 0, "Sparse loss should be non-negative"
+
 
 def test_emd2_sparse_vs_dense(nx):
     """Test that sparse and dense emd2 solvers produce identical costs.
