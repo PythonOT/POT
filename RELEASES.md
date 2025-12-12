@@ -11,6 +11,7 @@ This new release adds support for sparse cost matrices in the exact EMD solver. 
 
 #### Closed issues
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration 
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
 - Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
