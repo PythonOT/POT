@@ -85,6 +85,17 @@ setup(
                 extra_compile_args=compile_args,
                 language="c++",
             ),
+            Extension(
+                name="ot.bsp.bsp_wrap",
+                sources=[
+                    "ot/bsp/bsp_wrap.pyx",
+                    "ot/bsp/bsp_wrapper.cpp",
+                ],  # cython/c++ src files
+                language="c++",
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
+                extra_compile_args=compile_args,
+                extra_link_args=link_args,
+            ),
         ]
     ),
     platforms=["linux", "macosx", "windows"],
