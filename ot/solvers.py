@@ -1749,6 +1749,38 @@ def solve_sample(
 
         return res
 
+    elif (
+        lazy
+        and method is None
+        and (reg is None or reg == 0)
+        and unbalanced is None
+        and X_a is not None
+        and X_b is not None
+    ):
+        # Use lazy EMD solver with coordinates (no regularization, balanced)
+        value_linear, log = emd2(
+            a,
+            b,
+            M=None,
+            X_a=X_a,
+            X_b=X_b,
+            metric=metric,
+            numItermax=max_iter if max_iter is not None else 100000,
+            log=True,
+            return_matrix=True,
+            numThreads=n_threads,
+        )
+
+        res = OTResult(
+            potentials=(log["u"], log["v"]),
+            value=value_linear,
+            value_linear=value_linear,
+            plan=log["G"],
+            status=log["warning"] if log["warning"] is not None else "Converged",
+        )
+
+        return res
+
     else:
         # Detect backend
         nx = get_backend(X_a, X_b, a, b)

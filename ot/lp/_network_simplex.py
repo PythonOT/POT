@@ -13,7 +13,7 @@ import warnings
 
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
-from .emd_wrap import emd_c, emd_c_sparse, check_result
+from .emd_wrap import emd_c, emd_c_sparse, emd_c_lazy, check_result
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):
@@ -320,20 +320,20 @@ def emd(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     if is_sparse:
@@ -440,7 +440,10 @@ def emd(
 def emd2(
     a,
     b,
-    M,
+    M=None,
+    X_a=None,
+    X_b=None,
+    metric="sqeuclidean",
     processes=1,
     numItermax=100000,
     log=False,
@@ -487,13 +490,23 @@ def emd2(
         Source histogram (uniform weight if empty list)
     b : (nt,) array-like, float64
         Target histogram (uniform weight if empty list)
-    M : (ns,nt) array-like or sparse matrix, float64
+    M : (ns,nt) array-like or sparse matrix, float64, optional
         Loss matrix. Can be:
 
         - Dense array (c-order array in numpy with type float64)
         - Sparse matrix in backend's format (scipy.sparse.coo_matrix for NumPy backend,
           torch.sparse_coo_tensor for PyTorch backend, etc.)
 
+        Either M or (X_a, X_b) must be provided.
+    X_a : (ns, dim) array-like, float64, optional
+        Source coordinates for lazy cost computation.
+        If provided along with X_b, costs will be computed on-the-fly.
+    X_b : (nt, dim) array-like, float64, optional
+        Target coordinates for lazy cost computation.
+        If provided along with X_a, costs will be computed on-the-fly.
+    metric : str, optional (default='sqeuclidean')
+        Distance metric for lazy mode. Options: 'sqeuclidean', 'euclidean', 'cityblock'.
+        Only used when X_a and X_b are provided.
     processes : int, optional (default=1)
         Nb of processes used for multiple emd computation (deprecated)
     numItermax : int, optional (default=100000)
@@ -564,11 +577,25 @@ def emd2(
 
     n1, n2 = None, None
 
-    a, b, M = list_to_array(a, b, M)
-    nx = get_backend(a, b, M)
+    # Check if we're using lazy mode with coordinates
+    use_lazy = X_a is not None and X_b is not None and M is None
 
-    # Check if M is sparse using backend's issparse method
-    is_sparse = nx.issparse(M)
+    if use_lazy:
+        # Lazy mode: coordinates provided
+        a, b, X_a, X_b = list_to_array(a, b, X_a, X_b)
+        nx = get_backend(a, b, X_a, X_b)
+        n1, n2 = X_a.shape[0], X_b.shape[0]
+        is_sparse = False
+    else:
+        # Standard mode: cost matrix provided
+        if M is None:
+            raise ValueError(
+                "Either M (cost matrix) or (X_a, X_b) coordinates must be provided"
+            )
+        a, b, M = list_to_array(a, b, M)
+        nx = get_backend(a, b, M)
+        # Check if M is sparse using backend's issparse method
+        is_sparse = nx.issparse(M)
 
     # Save original sparse tensor for gradient tracking (before conversion to numpy)
     M_original_sparse = None
@@ -591,21 +618,24 @@ def emd2(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
+    elif use_lazy:
+        # In lazy mode, use coordinates for type inference
+        type_as = X_a
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
     # if empty array given then use uniform distributions
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     a0, b0 = a, b
@@ -650,7 +680,10 @@ def emd2(
     def f(b):
         bsel = b != 0
 
-        if is_sparse:
+        if use_lazy:
+            # Solve with lazy cost computation from coordinates
+            G, cost, u, v, result_code = emd_c_lazy(a, b, X_a, X_b, metric, numItermax)
+        elif is_sparse:
             # Solve sparse EMD
             flow_sources, flow_targets, flow_values, cost, u, v, result_code = (
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
@@ -723,6 +756,27 @@ def emd2(
                 flow_targets_backend,
                 shape=(n1, n2),
                 type_as=type_as,
+            )
+        elif use_lazy:
+            # Lazy case: warn about integer casting
+            if not nx.is_floating_point(type_as):
+                warnings.warn(
+                    "Input histogram consists of integer. The transport plan will be "
+                    "casted accordingly, possibly resulting in a loss of precision. "
+                    "If this behaviour is unwanted, please make sure your input "
+                    "histogram consists of floating point elements.",
+                    stacklevel=2,
+                )
+
+            G_backend = nx.from_numpy(G, type_as=type_as)
+            # For now, just set gradients wrt marginals
+            cost = nx.set_gradients(
+                nx.from_numpy(cost, type_as=type_as),
+                (a0, b0),
+                (
+                    nx.from_numpy(u - np.mean(u), type_as=type_as),
+                    nx.from_numpy(v - np.mean(v), type_as=type_as),
+                ),
             )
         else:
             # Dense case: warn about integer casting
