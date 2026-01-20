@@ -601,7 +601,8 @@ def test_solve_sample_lazy(nx):
     np.testing.assert_allclose(sol0.plan, sol.lazy_plan[:], rtol=1e-5, atol=1e-5)
 
 
-def test_solve_sample_lazy_emd(nx):
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "cityblock"])
+def test_solve_sample_lazy_emd(nx, metric):
     # test lazy EMD solver (no regularization, computes distances on-the-fly)
     n_s = 20
     n_t = 25
@@ -615,34 +616,37 @@ def test_solve_sample_lazy_emd(nx):
 
     X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
 
-    # Test all supported metrics
-    for metric in ["sqeuclidean", "euclidean", "cityblock"]:
-        # Standard solver: pre-compute distance matrix
-        M = ot.dist(X_sb, X_tb, metric=metric)
-        sol_standard = ot.solve(M, ab, bb)
+    # Standard solver: pre-compute distance matrix
+    M = ot.dist(X_sb, X_tb, metric=metric)
+    sol_standard = ot.solve(M, ab, bb)
 
-        # Lazy solver: compute distances on-the-fly
-        sol_lazy = ot.solve_sample(X_sb, X_tb, ab, bb, lazy=True, metric=metric)
+    # Lazy solver: compute distances on-the-fly
+    sol_lazy = ot.solve_sample(X_sb, X_tb, ab, bb, lazy=True, metric=metric)
 
-        # Check that results match
-        np.testing.assert_allclose(
-            nx.to_numpy(sol_standard.value),
-            nx.to_numpy(sol_lazy.value),
-            rtol=1e-10,
-            atol=1e-10,
-            err_msg=f"Lazy EMD cost mismatch for metric {metric}",
-        )
+    # Check that results match
+    np.testing.assert_allclose(
+        nx.to_numpy(sol_standard.value),
+        nx.to_numpy(sol_lazy.value),
+        rtol=1e-10,
+        atol=1e-10,
+        err_msg=f"Lazy EMD cost mismatch for metric {metric}",
+    )
 
-        np.testing.assert_allclose(
-            nx.to_numpy(sol_standard.plan),
-            nx.to_numpy(sol_lazy.plan),
-            rtol=1e-10,
-            atol=1e-10,
-            err_msg=f"Lazy EMD plan mismatch for metric {metric}",
-        )
+    np.testing.assert_allclose(
+        nx.to_numpy(sol_standard.plan),
+        nx.to_numpy(sol_lazy.plan),
+        rtol=1e-10,
+        atol=1e-10,
+        err_msg=f"Lazy EMD plan mismatch for metric {metric}",
+    )
 
+
+def test_solve_sample_lazy_emd_large(nx):
     # Test larger problem to verify memory savings benefit
     n_large = 100
+    d = 2
+    rng = np.random.RandomState(42)
+
     X_s_large = rng.rand(n_large, d)
     X_t_large = rng.rand(n_large, d)
     a_large = ot.utils.unif(n_large)

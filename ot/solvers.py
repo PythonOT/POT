@@ -8,7 +8,7 @@ General OT solvers with unified API
 # License: MIT License
 
 from .utils import OTResult, dist
-from .lp import emd2, wasserstein_1d
+from .lp import emd2, emd2_lazy, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import (
@@ -1758,17 +1758,15 @@ def solve_sample(
         and X_b is not None
     ):
         # Use lazy EMD solver with coordinates (no regularization, balanced)
-        value_linear, log = emd2(
+        value_linear, log = emd2_lazy(
             a,
             b,
-            M=None,
-            X_a=X_a,
-            X_b=X_b,
+            X_a,
+            X_b,
             metric=metric,
             numItermax=max_iter if max_iter is not None else 100000,
             log=True,
             return_matrix=True,
-            numThreads=n_threads,
         )
 
         res = OTResult(
