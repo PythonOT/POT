@@ -83,15 +83,15 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
-    // Set the cost of each edge
+    // Set the cost of each edge using bulk copy for efficiency
+    std::vector<double> cost_array(n * m);
     int64_t idarc = 0;
     for (uint64_t i=0; i<n; i++) {
         for (uint64_t j=0; j<m; j++) {
-            double val=*(D+indI[i]*n2+indJ[j]);
-            net.setCost(di.arcFromId(idarc), val);
-            ++idarc;
+            cost_array[idarc++] = *(D+indI[i]*n2+indJ[j]);
         }
     }
+    net.setCostArray(&cost_array[0]);
 
 
     // Solve the problem with the network simplex algorithm
@@ -185,15 +185,15 @@ int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
 
     net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
-    // Set the cost of each edge
+    // Set the cost of each edge using bulk copy for efficiency
+    std::vector<double> cost_array(n * m);
     int64_t idarc = 0;
     for (uint64_t i=0; i<n; i++) {
         for (uint64_t j=0; j<m; j++) {
-            double val=*(D+indI[i]*n2+indJ[j]);
-            net.setCost(di.arcFromId(idarc), val);
-            ++idarc;
+            cost_array[idarc++] = *(D+indI[i]*n2+indJ[j]);
         }
     }
+    net.setCostArray(&cost_array[0]);
 
 
     // Solve the problem with the network simplex algorithm
@@ -445,8 +445,6 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
         *cost = 0;
         
-        // Initialize output arrays
-        for (int i = 0; i < n1 * n2; i++) G[i] = 0.0;
         for (int i = 0; i < n1; i++) alpha[i] = 0.0;
         for (int i = 0; i < n2; i++) beta[i] = 0.0;
         

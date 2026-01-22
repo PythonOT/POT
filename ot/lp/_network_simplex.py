@@ -778,14 +778,14 @@ def emd2(
 
 
 def emd2_lazy(
-    a,
-    b,
     X_a,
     X_b,
+    a=None,
+    b=None,
     metric="sqeuclidean",
     numItermax=100000,
     log=False,
-    return_matrix=False,
+    return_matrix=True,
     center_dual=True,
     check_marginals=True,
 ):
@@ -815,14 +815,14 @@ def emd2_lazy(
 
     Parameters
     ----------
-    a : (ns,) array-like, float64
-        Source histogram (uniform weight if empty list)
-    b : (nt,) array-like, float64
-        Target histogram (uniform weight if empty list)
     X_a : (ns, dim) array-like, float64
         Source sample coordinates
     X_b : (nt, dim) array-like, float64
         Target sample coordinates
+    a : (ns,) array-like, float64, optional
+        Source histogram (uniform weight if None)
+    b : (nt,) array-like, float64, optional
+        Target histogram (uniform weight if None)
     metric : str, optional (default='sqeuclidean')
         Distance metric for cost computation. Options:
 
@@ -866,7 +866,6 @@ def emd2_lazy(
 
     n1, n2 = X_a.shape[0], X_b.shape[0]
 
-    # Validate dimensions match
     if X_a.shape[1] != X_b.shape[1]:
         raise ValueError(
             f"X_a and X_b must have the same number of dimensions, "
@@ -880,7 +879,6 @@ def emd2_lazy(
     else:
         type_as = X_a
 
-    # if empty array given then use uniform distributions
     if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
     if b is None or len(b) == 0:
@@ -903,26 +901,22 @@ def emd2_lazy(
         a_np.shape[0] == n1 and b_np.shape[0] == n2
     ), "Dimension mismatch, check dimensions of X_a/X_b with a and b"
 
-    # ensure that same mass
     if check_marginals:
         np.testing.assert_almost_equal(
-            a_np.sum(0),
-            b_np.sum(0, keepdims=True),
+            a_np.sum(),
+            b_np.sum(),
             err_msg="a and b vector must have the same sum",
             decimal=6,
         )
-    b_np = b_np * a_np.sum(0) / b_np.sum(0, keepdims=True)
+    b_np = b_np * a_np.sum() / b_np.sum()
 
-    # Solve with lazy cost computation
     G, cost, u, v, result_code = emd_c_lazy(
         a_np, b_np, X_a_np, X_b_np, metric, numItermax
     )
 
-    # Center dual potentials
     if center_dual:
         u, v = center_ot_dual(u, v, a_np, b_np)
 
-    # Convert sparse plan to backend format
     if not nx.is_floating_point(type_as):
         warnings.warn(
             "Input histogram consists of integer. The transport plan will be "
@@ -934,7 +928,6 @@ def emd2_lazy(
 
     G_backend = nx.from_numpy(G, type_as=type_as)
 
-    # Set gradients wrt marginals
     cost_backend = nx.set_gradients(
         nx.from_numpy(cost, type_as=type_as),
         (a0, b0),
@@ -946,7 +939,6 @@ def emd2_lazy(
 
     check_result(result_code)
 
-    # Return results
     if log or return_matrix:
         log_dict = {
             "cost": cost_backend,

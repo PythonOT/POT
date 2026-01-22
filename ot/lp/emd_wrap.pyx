@@ -304,14 +304,17 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     if coords_b.shape[1] != dim:
         raise ValueError(f"Coordinate dimension mismatch: coords_a has {dim} dimensions but coords_b has {coords_b.shape[1]}")
     
-    if metric == 'sqeuclidean':
-        metric_code = 0
-    elif metric == 'euclidean':
-        metric_code = 1
-    elif metric == 'cityblock':
-        metric_code = 2
-    else:
-        raise ValueError(f"Unknown metric: {metric}")
+    metric_map = {
+        'sqeuclidean': 0,
+        'euclidean': 1,
+        'cityblock': 2
+    }
+    
+    try:
+        metric_code = metric_map[metric]
+    except KeyError:
+        raise ValueError(f"Unknown metric: '{metric}'. Supported metrics are: {list(metric_map.keys())}")
+        
     cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
     cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros([n1, n2])

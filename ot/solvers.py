@@ -1759,10 +1759,10 @@ def solve_sample(
     ):
         # Use lazy EMD solver with coordinates (no regularization, balanced)
         value_linear, log = emd2_lazy(
-            a,
-            b,
             X_a,
             X_b,
+            a,
+            b,
             metric=metric,
             numItermax=max_iter if max_iter is not None else 100000,
             log=True,

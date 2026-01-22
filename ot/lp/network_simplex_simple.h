@@ -481,8 +481,8 @@ namespace lemon {
                     int i = _ns._node_num - _source[e] - 1;
                     int j = _ns._n2 - _target[e] - 1;
                     
-                    const double* __restrict__ xa = _ns._coords_a + i * _ns._dim;
-                    const double* __restrict__ xb = _ns._coords_b + j * _ns._dim;
+                    const double* xa = _ns._coords_a + i * _ns._dim;
+                    const double* xb = _ns._coords_b + j * _ns._dim;
                     Cost cost = 0;
                     
                     if (_ns._metric == 0) {  // sqeuclidean
@@ -601,6 +601,20 @@ namespace lemon {
             return *this;
         }
 
+        /// \brief Set all arc costs from a contiguous array (bulk copy).
+        ///
+        /// This function efficiently copies arc costs from a contiguous array
+        /// instead of calling setCost() for each arc individually. The array
+        /// must contain costs in arc ID order (0 to arc_num-1).
+        ///
+        /// \param cost_array Pointer to array of costs (size = arc_num)
+        ///
+        /// \return <tt>(*this)</tt>
+        NetworkSimplexSimple& setCostArray(const Cost* cost_array) {
+            std::copy(cost_array, cost_array + _arc_num, _cost.begin());
+            return *this;
+        }
+
         /// \brief Enable lazy cost computation from coordinates.
         ///
         /// This function enables lazy cost computation where distances are
@@ -635,8 +649,8 @@ namespace lemon {
         ///
         /// \return Cost (distance) between the two points
         inline Cost computeLazyCost(int i, int j_adjusted) const {
-            const double* __restrict__ xa = _coords_a + i * _dim;
-            const double* __restrict__ xb = _coords_b + j_adjusted * _dim;
+            const double* xa = _coords_a + i * _dim;
+            const double* xb = _coords_b + j_adjusted * _dim;
             Cost cost = 0;
             
             if (_metric == 0) {  // sqeuclidean

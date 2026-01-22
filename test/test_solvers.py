@@ -53,7 +53,6 @@ lst_parameters_solve_sample_NotImplemented = [
         "method": "nystroem",
         "metric": "euclidean",
     },  # fail nystroem on metric not euclidean
-    # Note: {"lazy": True} now works - lazy EMD solver implemented
     {"lazy": True, "unbalanced": 1},  # fail lazy for unbalanced (not supported)
     {
         "lazy": True,
