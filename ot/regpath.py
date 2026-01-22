@@ -486,6 +486,9 @@ def complement_schur(M_current, b, d, id_pop):
         else:
             X = M_current.dot(b)
             s = d - b.T.dot(X)
+            # Ensure s is a scalar (extract from array if needed)
+            if np.ndim(s) > 0:
+                s = s.item()
             M = np.zeros((n, n))
             M[:-1, :-1] = M_current + X.dot(X.T) / s
             X_ravel = X.ravel()
