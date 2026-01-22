@@ -703,21 +703,6 @@ namespace lemon_omp {
 			return *this;
 		}
 
-		/// \brief Set all cost values at once from an array.
-		///
-		/// This function sets all arc costs from a vector in one bulk operation.
-		/// More efficient than calling setCost() for each arc individually.
-		///
-		/// \param cost_array Vector containing all arc costs in order
-		///
-		/// \return <tt>(*this)</tt>
-		template<typename Value>
-		NetworkSimplexSimple& setCostArray(const std::vector<Value>& cost_array) {
-			std::copy(cost_array.begin(), cost_array.end(), _cost.begin());
-			return *this;
-		}
-
-
 		/// \brief Set the supply values of the nodes.
 		///
 		/// This function sets the supply values of the nodes.
