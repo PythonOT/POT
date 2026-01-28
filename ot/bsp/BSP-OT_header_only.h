@@ -17,8 +17,8 @@
 namespace BSPOT {
 namespace fs = std::filesystem;
 
-using scalar = double;
-//using scalar = float;
+// using scalar = double;
+using scalar = float;
 using scalars = std::vector<scalar>;
 
 using vec = Eigen::Vector3<scalar>;

@@ -15,24 +15,25 @@ cimport libc.math as math
 from libc.stdint cimport uint64_t
 
 cdef extern from "bsp_wrapper.h":
-    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan)
+    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,const char* cost_name)
+    double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,const char* cost_name)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64):
+def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64,str cost_name="sqnorm"):
     """
-        Solves the Binary Space Partitioning (BSP) tree based OT problem and returns the optimal transport cost
-
-        cost = bsp_solve(X,Y,plans)
+    
+    Builds nb_plans BSP Matchings and merges them in a single bijection.
+        
+        cost,plan,plans = bsp_solve(X,Y,n_plans)
 
     where :
 
     - X and Y are the input point clouds
-    - plans is the set of BSP partitioning hyperplanes
+    - n_plans is the number of BSP Matchings used to compute the final bijection
 
-    Returns the optimal transport cost.
-
+    Returns the transport cost of the final bijection, the final bijection, and the intermediary ones
 
     """
     cdef int n = X.shape[0]
@@ -41,32 +42,48 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost
+    
+    cdef bytes cost_bytes = cost_name.encode("utf-8")
+    cdef const char* cost_c = cost_bytes
 
-    cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data)
+    cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,cost_c)
 
     # add 
 
-    return cost, plan
+    return cost, plan, plans
     
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def merge_plans(np.ndarray[int, ndim=2, mode="c"] plans):
+def merge_bijections(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  np.ndarray[int, ndim=2, mode="c"] plans,str cost_name = "sqnorm"):
     """
-        Merges OT plans
+        Merges transport bijections
 
     where :
 
-    - plans1 and plans2 are the input sets of BSP partitioning hyperplanes
+    - X and Y are the input point clouds
+    - plans input bijections
+    - metric name, by default "sqnorm"
 
-    Returns the merged set of BSP partitioning hyperplanes.
+    Returns the merged bijection and its transport cost.
     """
     
-    plan = np.zeros((plans.shape[0],), dtype=np.int64)
+    cdef int n = X.shape[0]
+    cdef int d = X.shape[1]
+    cdef int k = plans.shape[0]
+    cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
+
+    cdef double cost
+    
+    cdef bytes cost_bytes = cost_name.encode("utf-8")
+    cdef const char* cost_c = cost_bytes
 
     # add merging code here
+    
+    cost = MergeBijections(n, d, <double*>X.data, <double*>Y.data, k, <int*> plans.data, <int*> plan.data,cost_c)
 
-    return plan
+
+    return cost,plan
 
 
     
