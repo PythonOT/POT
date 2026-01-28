@@ -40,7 +40,7 @@ def get_openmp_flag(compiler):
                 omp_flag += ["-I/opt/homebrew/opt/libomp/include"]
                 omp_flag += ["/opt/homebrew/opt/libomp/lib/libomp.dylib"]
             else:
-                # Assuming `brew install libomp` on old macOS version
+                # Assuming `brew install libomp` on old macOS
                 if os.path.isfile("/usr/local/opt/libomp/lib/libomp.dylib"):
                     omp_flag += ["-I/usr/local/opt/libomp/include"]
                     omp_flag += ["/usr/local/opt/libomp/lib/libomp.dylib"]
