@@ -15,7 +15,7 @@ cimport libc.math as math
 from libc.stdint cimport uint64_t
 
 cdef extern from "bsp_wrapper.h":
-    double BSPOT_wrap(int n1, int n2, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan)
+    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan)
 
 
 @cython.boundscheck(False)
@@ -32,15 +32,17 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
     - plans is the set of BSP partitioning hyperplanes
 
     Returns the optimal transport cost.
+
+
     """
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n, n_plans), dtype=np.int64) 
-    cdef np.ndarray[int, ndim=2, mode="c"] plan = np.zeros((n,), dtype=np.int64) 
+    cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n, n_plans), dtype=np.int32) 
+    cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost
 
-    cost = BSPOT_wrap(n, n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data)
+    cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data)
 
     # add 
 
