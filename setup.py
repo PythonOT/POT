@@ -92,7 +92,7 @@ setup(
                     "ot/bsp/bsp_wrapper.cpp",
                 ],  # cython/c++ src files
                 language="c++",
-                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/lp")],
+                include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/bsp/eigen"), os.path.join(ROOT, "ot/lp")],
                 extra_compile_args=compile_args,
                 extra_link_args=link_args,
             ),
