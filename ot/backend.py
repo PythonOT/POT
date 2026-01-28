@@ -94,7 +94,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -178,7 +178,16 @@ def _get_backend_instance(backend_impl):
 
 
 def _check_args_backend(backend_impl, args):
-    is_instance = set(isinstance(arg, backend_impl.__type__) for arg in args)
+    # Get backend instance to use issparse method
+    backend = _get_backend_instance(backend_impl)
+
+    # Check if each arg is either:
+    # 1. An instance of backend.__type__ (e.g., np.ndarray for NumPy)
+    # 2. A sparse matrix recognized by backend.issparse() (e.g., scipy.sparse for NumPy)
+    is_instance = set(
+        isinstance(arg, backend_impl.__type__) or backend.issparse(arg) for arg in args
+    )
+
     # check that all arguments matched or not the type
     if len(is_instance) == 1:
         return is_instance.pop()
@@ -793,9 +802,9 @@ class Backend:
         r"""
         Creates a sparse tensor in COOrdinate format.
 
-        This function follows the api from :any:`scipy.sparse.coo_matrix`
+        This function follows the api from :any:`scipy.sparse.coo_array`
 
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
         """
         raise NotImplementedError()
 
@@ -836,6 +845,31 @@ class Backend:
         This function follows the api from :any:`scipy.sparse.csr_matrix.toarray`
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.toarray.html
+        """
+        raise NotImplementedError()
+
+    def sparse_coo_data(self, a):
+        r"""
+        Extracts COO format data (row, col, data, shape) from a sparse matrix.
+
+        Returns row indices, column indices, data values, and shape as numpy arrays/tuple.
+        This is used to interface with C++ solvers that require explicit edge lists.
+
+        Parameters
+        ----------
+        a : sparse matrix
+            Sparse matrix in backend's COO format
+
+        Returns
+        -------
+        row : numpy.ndarray
+            Row indices (1D array)
+        col : numpy.ndarray
+            Column indices (1D array)
+        data : numpy.ndarray
+            Data values (1D array)
+        shape : tuple
+            Shape of the matrix (n_rows, n_cols)
         """
         raise NotImplementedError()
 
@@ -1320,9 +1354,9 @@ class NumpyBackend(Backend):
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
-            return coo_matrix((data, (rows, cols)), shape=shape)
+            return coo_array((data, (rows, cols)), shape=shape)
         else:
-            return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
+            return coo_array((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
     def issparse(self, a):
         return issparse(a)
@@ -1348,6 +1382,15 @@ class NumpyBackend(Backend):
             return a.toarray()
         else:
             return a
+
+    def sparse_coo_data(self, a):
+        # Convert to COO array format if needed
+        if not isinstance(a, coo_array):
+            a_coo = coo_array(a)
+        else:
+            a_coo = a
+
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
@@ -1767,6 +1810,13 @@ class JaxBackend(Backend):
     def todense(self, a):
         # Currently, JAX does not support sparse matrices
         return a
+
+    def sparse_coo_data(self, a):
+        # JAX doesn't support sparse matrices, so this shouldn't be called
+        # But if it is, convert the dense array to sparse using scipy
+        a_np = self.to_numpy(a)
+        a_coo = coo_array(a_np)
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
@@ -2340,6 +2390,20 @@ class TorchBackend(Backend):
         else:
             return a
 
+    def sparse_coo_data(self, a):
+        # For torch sparse tensors, coalesce first to ensure unique indices
+        a_coalesced = a.coalesce()
+        indices = a_coalesced._indices()
+        values = a_coalesced._values()
+
+        # Convert to numpy
+        row = self.to_numpy(indices[0])
+        col = self.to_numpy(indices[1])
+        data = self.to_numpy(values)
+        shape = tuple(a_coalesced.shape)
+
+        return row, col, data, shape
+
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
             return torch.where(condition)
@@ -2738,10 +2802,10 @@ class CupyBackend(Backend):  # pragma: no cover
         rows = self.from_numpy(rows)
         cols = self.from_numpy(cols)
         if type_as is None:
-            return cupyx.scipy.sparse.coo_matrix((data, (rows, cols)), shape=shape)
+            return cupyx.scipy.sparse.coo_array((data, (rows, cols)), shape=shape)
         else:
             with cp.cuda.Device(type_as.device):
-                return cupyx.scipy.sparse.coo_matrix(
+                return cupyx.scipy.sparse.coo_array(
                     (data, (rows, cols)), shape=shape, dtype=type_as.dtype
                 )
 

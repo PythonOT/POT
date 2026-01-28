@@ -2,10 +2,21 @@
 
 ## 0.9.7.dev0
 
+This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
+
+#### New features 
+- Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
+- Geomloss function now handles both scalar and slice indices for i and j (PR #785)
+- Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+
 #### Closed issues
+- Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
+- Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
-- Stable `ot.TorchBackend.sqrtm` around repeated eigvals (PR #774, Issue #773)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 
 ## 0.9.6.post1
 

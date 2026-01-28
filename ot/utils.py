@@ -58,7 +58,18 @@ def laplacian(x):
 
 def list_to_array(*lst, nx=None):
     r"""Convert a list if in numpy format"""
-    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+    # Filter to non-empty, non-list items (handle sparse matrices gracefully)
+    lst_not_empty = []
+    for a in lst:
+        if isinstance(a, list):
+            continue
+        try:
+            if len(a) > 0:
+                lst_not_empty.append(a)
+        except TypeError:
+            # Sparse matrices don't support len(), but they're not empty
+            lst_not_empty.append(a)
+
     if nx is None:  # find backend
         if len(lst_not_empty) == 0:
             type_as = np.zeros(0)
@@ -418,7 +429,9 @@ def dist(
         else:
             if isinstance(metric, str) and metric.endswith("minkowski"):
                 return cdist(x1, x2, metric=metric, p=p, w=w)
-            if w is not None:
+            # Only pass w parameter for metrics that support it
+            # According to SciPy docs, only 'minkowski' and 'wminkowski' support w
+            if w is not None and metric in ["minkowski", "wminkowski"]:
                 return cdist(x1, x2, metric=metric, w=w)
             return cdist(x1, x2, metric=metric)
 

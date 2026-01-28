@@ -19,7 +19,7 @@ lst_metrics = [
     "correlation",
 ]
 
-lst_all_metrics = lst_metrics + [
+lst_all_metrics_candidates = lst_metrics + [
     "braycurtis",
     "canberra",
     "chebyshev",
@@ -33,6 +33,18 @@ lst_all_metrics = lst_metrics + [
     "sokalsneath",
     "yule",
 ]
+
+# Filter to only include metrics available in current SciPy version
+# (some metrics like sokalmichener were removed in newer SciPy versions)
+lst_all_metrics = []
+for metric in lst_all_metrics_candidates:
+    try:
+        scipy.spatial.distance.cdist(
+            np.array([[0, 0]]), np.array([[1, 1]]), metric=metric
+        )
+        lst_all_metrics.append(metric)
+    except ValueError:
+        pass
 
 
 def get_LazyTensor(nx):
@@ -240,7 +252,18 @@ def test_dist():
         "seuclidean",
     ]  # do not support weights depending on scipy's version
 
+    # Filter out metrics not available in current scipy version
+    from scipy.spatial.distance import cdist
+
+    available_metrics_w = []
     for metric in metrics_w:
+        try:
+            cdist(x[:2], x[:2], metric=metric)
+            available_metrics_w.append(metric)
+        except ValueError:
+            pass
+
+    for metric in available_metrics_w:
         print(metric)
         ot.dist(x, x, metric=metric, p=3, w=rng.random((2,)))
         ot.dist(
