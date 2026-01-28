@@ -17,7 +17,7 @@
 namespace BSPOT {
 namespace fs = std::filesystem;
 
- using scalar = double;
+using scalar = double;
 //using scalar = float;
 using scalars = std::vector<scalar>;
 
@@ -46,13 +46,6 @@ using grid_Index = std::pair<Index,Index>;
 
 
 
-inline auto range(int i) {
-    return std::views::iota(0,i);
-}
-inline auto range(int a,int b) {
-    return std::views::iota(a,b);
-}
-
 
 inline ints rangeVec(int a,int b) {
     ints rslt(b-a);
@@ -62,6 +55,15 @@ inline ints rangeVec(int a,int b) {
 
 inline ints rangeVec(int i) {
     return rangeVec(0,i);
+}
+
+inline auto range(int i) {
+    return rangeVec(i);
+    // return std::views::iota(0,i);
+}
+inline auto range(int a,int b) {
+    return rangeVec(a,b);
+    // return std::views::iota(a,b);
 }
 
 
@@ -205,6 +207,7 @@ namespace BSPOT {
 
 
 
+    /*
 template<int static_dim>
 ints SlicedAssign(const Points<static_dim>& A,const Points<static_dim>& B) {
     int N = A.cols();
@@ -223,6 +226,7 @@ ints SlicedAssign(const Points<static_dim>& A,const Points<static_dim>& B) {
     return plan;
 }
 
+*/
 
 
 
@@ -304,6 +308,7 @@ inline Atoms UniformMass(int n) {
 }
 
 
+/*
 
 struct arrow {
     scalar mass;
@@ -772,9 +777,11 @@ struct CouplingMerger {
         return pi;
     }
 };
+*/
 
 
 }
+
 
 #endif // COUPLING_H
 
@@ -2076,7 +2083,7 @@ std::vector<std::vector<int>> BSPOT::UnionFind::getConnectedComponents(int n) {
 
 void BSPOT::StampedPriorityQueue::insert(int key, scalar priority) {
     int ts = 0;
-    if (timestamp.contains(key))
+    if (timestamp.find(key) == timestamp.end())
         ts = timestamp[key]+1;
     timestamp[key] = ts;
     queue.push(stamped_element{priority, key, ts});
@@ -2271,7 +2278,7 @@ bool checkValid(const BSPOT::ints &T,const BSPOT::ints& TI) {
             return false;
         }
     for (auto i : BSPOT::range(M)){
-        if (TI[i] != -1 && !image.contains(i)){
+        if (TI[i] != -1 && image.find(i) != image.end()){
             std::cerr << "wrong inverse" << std::endl;;
             return false;
         }
@@ -2693,6 +2700,8 @@ protected:
         int operator[](int i) const {return id[b + i].id;}
 
         int size() const {return e - b;}
+
+        SliceView(const ids& id,int b,int e) : id(id),b(b),e(e){}
     };
 
 
@@ -2814,6 +2823,7 @@ protected:
         partialBSPOT(idA,idB,pivot,end,height+1);
     }
 
+    /*
     void selectBSPOT(std::map<int,int>& T,ids &idA, ids &idB, int beg, int end,std::set<int> targets,int height = 0) {
         auto gap = (end-beg);
         if (gap == 0){
@@ -2840,6 +2850,7 @@ protected:
         if (R.size())
             selectBSPOT(T,idA,idB,pivot,end,R,height+1);
     }
+            */
 
 
 
@@ -2878,6 +2889,7 @@ public:
         return quickselectTransport(targets);
     }
 
+    /*
     std::map<int,int> quickselectTransport(const std::set<int>& targets) {
         ids idA(A.cols()),idB(B.cols());
         for (auto i : range(A.cols())) {
@@ -2888,6 +2900,7 @@ public:
         selectBSPOT(T,idA,idB,0,A.cols(),targets);
         return T;
     }
+    */
 
 
     BijectiveMatching computeMatching(bool random_pivot = true){
