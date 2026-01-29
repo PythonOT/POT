@@ -11,6 +11,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 
 #### Closed issues
+
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
 - Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
 - Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
@@ -18,6 +19,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add test for build from source (PR #772, Issue #764)
 - Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 - Fix openmp flags on macOS (PR #789)
+- Clean documentation (PR #787)
+
 
 ## 0.9.6.post1
 
