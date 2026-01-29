@@ -44,27 +44,35 @@ std::vector<BSPOT::BijectiveMatching> computeBSPMatchings_dim(const BSPOT::Point
 }
 
 
-BSPOT::BijectiveMatching MergeBijections(const std::vector<BSPOT::BijectiveMatching>& matchings,const std::function<BSPOT::scalar(int,int)>& cost) {
+BSPOT::BijectiveMatching MergeBijections(const std::vector<BSPOT::BijectiveMatching>& matchings,const std::function<BSPOT::scalar(int,int)>& cost,const BSPOT::BijectiveMatching& T0 = BSPOT::BijectiveMatching()) {
     using namespace BSPOT;
-return MergePlansNoPar(matchings,cost);
+    return MergePlansNoPar(matchings,cost,T0);
 }
 
 
 template<int dim>
-double BSPOT_wrap_dim(int n, int d, double *X, double *Y, uint64_t nb_plans,std::vector<BSPOT::BijectiveMatching>& plans, BSPOT::BijectiveMatching& plan,std::string cost_name) {
+double BSPOT_wrap_dim(int n, int d, double *X, double *Y, uint64_t nb_plans,std::vector<BSPOT::BijectiveMatching>& plans, BSPOT::BijectiveMatching& plan,std::string cost_name,const BSPOT::BijectiveMatching& T0) {
     auto A = UnLinearize<dim>(X,n,d);
     auto B = UnLinearize<dim>(Y,n,d);
     plans = computeBSPMatchings_dim<dim>(A,B,nb_plans);
     auto cost_func = makeCost<dim>(A,B,cost_name);
-    plan = MergeBijections(plans,cost_func);
+    plan = MergeBijections(plans,cost_func,T0);
 
     return plan.evalMatching(cost_func);
 }
 
-double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,const char* cn) {
+double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,const char* cn,int* initial_plan) {
     using namespace BSPOT;
 
     std::string cost_name(cn);
+
+    BijectiveMatching T0;
+
+    if (initial_plan){
+        ints t0(n);
+        std::copy(initial_plan,initial_plan+n,t0.begin());
+        T0 = BijectiveMatching(t0);
+    }
 
 
     std::vector<BijectiveMatching> plans;
@@ -73,16 +81,16 @@ double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *pl
 
     switch (d)
     {
-        case 2: {cost = BSPOT_wrap_dim<2>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 3: {cost = BSPOT_wrap_dim<3>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 4: {cost = BSPOT_wrap_dim<4>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 5: {cost = BSPOT_wrap_dim<5>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 6: {cost = BSPOT_wrap_dim<6>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 7: {cost = BSPOT_wrap_dim<7>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 8: {cost = BSPOT_wrap_dim<8>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 9: {cost = BSPOT_wrap_dim<9>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        case 10: {cost = BSPOT_wrap_dim<10>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
-        default: {cost = BSPOT_wrap_dim<-1>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
+        case 2: {cost = BSPOT_wrap_dim<2>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 3: {cost = BSPOT_wrap_dim<3>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 4: {cost = BSPOT_wrap_dim<4>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 5: {cost = BSPOT_wrap_dim<5>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 6: {cost = BSPOT_wrap_dim<6>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 7: {cost = BSPOT_wrap_dim<7>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 8: {cost = BSPOT_wrap_dim<8>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 9: {cost = BSPOT_wrap_dim<9>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        case 10: {cost = BSPOT_wrap_dim<10>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
+        default: {cost = BSPOT_wrap_dim<-1>(n,d,X,Y,nb_plans,plans,plan,cost_name,T0);break;}
     }
 
     std::copy(plan.getPlan().begin(), plan.getPlan().end(), final_plan_ptr);
@@ -114,9 +122,7 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
 
     std::string cost_name(cn);
 
-
     std::vector<BijectiveMatching> plans(nb_plans);
-    std::cout << "start copy " << nb_plans << " " << n << std::endl;
 
     for (std::size_t i = 0; i < nb_plans; ++i)
     {
@@ -132,7 +138,6 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
     BijectiveMatching plan;
     scalar cost;
 
-    std::cout << "merge" << std::endl;
     switch (d)
     {
         case 2: {cost = MergeBijections_dim<2>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
@@ -146,7 +151,6 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
         case 10: {cost = MergeBijections_dim<10>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
         default: {cost = MergeBijections_dim<-1>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
     }
-    std::cout << "final copy" << std::endl;
 
     std::copy(plan.getPlan().begin(), plan.getPlan().end(), final_plan_ptr);
     return cost;

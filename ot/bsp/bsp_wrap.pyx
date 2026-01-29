@@ -14,14 +14,15 @@ cimport cython
 cimport libc.math as math
 from libc.stdint cimport uint64_t
 
+
 cdef extern from "bsp_wrapper.h":
-    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,const char* cost_name)
+    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,const char* cost_name,int* initial_plan)
     double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,const char* cost_name)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64,str cost_name="sqnorm"):
+def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64,str cost_name="sqnorm",np.ndarray[int,ndim=1,mode="c"] initial_plan = None):
     """
     
     Builds nb_plans BSP Matchings and merges them in a single bijection.
@@ -46,7 +47,10 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
     cdef bytes cost_bytes = cost_name.encode("utf-8")
     cdef const char* cost_c = cost_bytes
 
-    cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,cost_c)
+    if initial_plan is None:
+        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,cost_c, NULL)
+    else:
+        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,cost_c, <int*>initial_plan.data)
 
     # add 
 
