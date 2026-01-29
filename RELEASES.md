@@ -9,7 +9,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
 - Geomloss function now handles both scalar and slice indices for i and j (PR #785)
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
-
+- Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
+ 
 #### Closed issues
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
 - Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
