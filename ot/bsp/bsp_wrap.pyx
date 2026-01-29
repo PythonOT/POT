@@ -55,7 +55,7 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def merge_bijections(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  np.ndarray[int, ndim=2, mode="c"] plans,str cost_name = "sqnorm"):
+def merge_bijections(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  np.ndarray[int, ndim=2, mode="c"] plans,str cost = "sqnorm"):
     """
         Merges transport bijections
 
@@ -70,20 +70,20 @@ def merge_bijections(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, 
     
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef int k = plans.shape[0]
+    cdef int k = plans.shape[1]
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
-    cdef double cost
+    cdef double cost_val
     
-    cdef bytes cost_bytes = cost_name.encode("utf-8")
+    cdef bytes cost_bytes = cost.encode("utf-8")
     cdef const char* cost_c = cost_bytes
 
     # add merging code here
     
-    cost = MergeBijections(n, d, <double*>X.data, <double*>Y.data, k, <int*> plans.data, <int*> plan.data,cost_c)
+    cost_val = MergeBijections(n, d, <double*>X.data, <double*>Y.data, k, <int*> plans.data, <int*> plan.data,cost_c)
 
 
-    return cost,plan
+    return cost_val,plan
 
 
     

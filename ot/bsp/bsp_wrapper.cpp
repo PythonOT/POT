@@ -13,6 +13,11 @@ std::function<BSPOT::scalar(int,int)> makeCost(const BSPOT::Points<dim>& A,const
             return (A.col(i) - B.col(j)).squaredNorm();
         };
     }
+    if (cost == "norm") {
+        return [&](int i,int j) {
+            return (A.col(i) - B.col(j)).norm();
+        };
+    }
     return [&](int i,int j) {
         return (A.col(i) - B.col(j)).squaredNorm();
     };
@@ -33,7 +38,7 @@ std::vector<BSPOT::BijectiveMatching> computeBSPMatchings_dim(const BSPOT::Point
         if (gaussian)
             plan = BSP.computeGaussianMatching();
         else
-            plan = BSP.computeMatching();
+            plan = BSP.computeMatching(true);
     }
     return plans;
 }
@@ -111,6 +116,7 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
 
 
     std::vector<BijectiveMatching> plans(nb_plans);
+    std::cout << "start copy " << nb_plans << " " << n << std::endl;
 
     for (std::size_t i = 0; i < nb_plans; ++i)
     {
@@ -126,6 +132,7 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
     BijectiveMatching plan;
     scalar cost;
 
+    std::cout << "merge" << std::endl;
     switch (d)
     {
         case 2: {cost = MergeBijections_dim<2>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
@@ -139,6 +146,7 @@ double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, in
         case 10: {cost = MergeBijections_dim<10>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
         default: {cost = MergeBijections_dim<-1>(n,d,X,Y,nb_plans,plans,plan,cost_name);break;}
     }
+    std::cout << "final copy" << std::endl;
 
     std::copy(plan.getPlan().begin(), plan.getPlan().end(), final_plan_ptr);
     return cost;
