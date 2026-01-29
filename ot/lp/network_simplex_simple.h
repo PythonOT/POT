@@ -27,18 +27,10 @@
 
 #pragma once
 #undef DEBUG_LVL
-#define DEBUG_LVL 0
-
-#if DEBUG_LVL>0
-#include <iomanip>
-#endif
-
 #undef EPSILON
 #undef _EPSILON
-#undef MAX_DEBUG_ITER
 #define EPSILON 2.2204460492503131e-15
 #define _EPSILON 1e-8
-#define MAX_DEBUG_ITER 100000
 
 
 /// \ingroup min_cost_flow_algs
@@ -238,7 +230,8 @@ namespace lemon {
         _arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
         MAX(std::numeric_limits<Value>::max()),
         INF(std::numeric_limits<Value>::has_infinity ?
-            std::numeric_limits<Value>::infinity() : MAX)
+            std::numeric_limits<Value>::infinity() : MAX),
+        _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0)
         {
             // Reset data structures
             reset();
@@ -320,6 +313,8 @@ namespace lemon {
         // Data related to the underlying digraph
         const GR &_graph;
         int _node_num;
+        int _n1;  // Number of source nodes (for lazy cost computation)
+        int _n2;  // Number of target nodes (for lazy cost computation)
         ArcsType _arc_num;
         ArcsType _all_arc_num;
         ArcsType _search_arc_num;
@@ -342,6 +337,12 @@ namespace lemon {
         //SparseValueVector<Value> _flow;
         CostVector _pi;
 
+        // Lazy cost computation support
+        bool _lazy_cost;
+        const double* _coords_a;
+        const double* _coords_b;
+        int _dim;
+        int _metric; // 0: sqeuclidean, 1: euclidean, 2: cityblock
 
     private:
         // Data for storing the spanning tree structure
@@ -470,6 +471,41 @@ namespace lemon {
                 _block_size = std::max(ArcsType(BLOCK_SIZE_FACTOR * std::sqrt(double(_search_arc_num))), MIN_BLOCK_SIZE);
             }
 
+            // Get cost for an arc (either from pre-computed array or compute lazily)
+            inline Cost getCost(ArcsType e) const {
+                if (!_ns._lazy_cost) {
+                    return _cost[e];
+                } else {
+                    // For lazy mode, compute cost from coordinates inline
+                    // _source and _target use reversed node numbering
+                    int i = _ns._node_num - _source[e] - 1;
+                    int j = _ns._n2 - _target[e] - 1;
+                    
+                    const double* xa = _ns._coords_a + i * _ns._dim;
+                    const double* xb = _ns._coords_b + j * _ns._dim;
+                    Cost cost = 0;
+                    
+                    if (_ns._metric == 0) {  // sqeuclidean
+                        for (int d = 0; d < _ns._dim; ++d) {
+                            Cost diff = xa[d] - xb[d];
+                            cost += diff * diff;
+                        }
+                        return cost;
+                    } else if (_ns._metric == 1) {  // euclidean
+                        for (int d = 0; d < _ns._dim; ++d) {
+                            Cost diff = xa[d] - xb[d];
+                            cost += diff * diff;
+                        }
+                        return std::sqrt(cost);
+                    } else {  // cityblock
+                        for (int d = 0; d < _ns._dim; ++d) {
+                            cost += std::abs(xa[d] - xb[d]);
+                        }
+                        return cost;
+                    }
+                }
+            }
+
             // Find next entering arc
             bool findEnteringArc() {
                 Cost c, min = 0;
@@ -477,33 +513,33 @@ namespace lemon {
                 ArcsType cnt = _block_size;
                 double a;
                     for (e = _next_arc; e != _search_arc_num; ++e) {
-                        c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _state[e] * (getCost(e) + _pi[_source[e]] - _pi[_target[e]]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
                             a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                            a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                            a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
                     for (e = 0; e != _next_arc; ++e) {
-                        c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _state[e] * (getCost(e) + _pi[_source[e]] - _pi[_target[e]]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
                             a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                            a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                            a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
                     a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                    a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                    a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                     if (min >=  -EPSILON*a) return false;
 
             search_end:
@@ -565,6 +601,90 @@ namespace lemon {
             return *this;
         }
 
+        /// \brief Enable lazy cost computation from coordinates.
+        ///
+        /// This function enables lazy cost computation where distances are
+        /// computed on-the-fly from point coordinates instead of using a
+        /// pre-computed cost matrix.
+        ///
+        /// \param coords_a Pointer to source coordinates (n1 x dim array)
+        /// \param coords_b Pointer to target coordinates (n2 x dim array)
+        /// \param dim Dimension of the coordinates
+        /// \param metric Distance metric: 0=sqeuclidean, 1=euclidean, 2=cityblock
+        ///
+        /// \return <tt>(*this)</tt>
+        NetworkSimplexSimple& setLazyCost(const double* coords_a, const double* coords_b, 
+                                           int dim, int metric, int n1, int n2) {
+            _lazy_cost = true;
+            _coords_a = coords_a;
+            _coords_b = coords_b;
+            _dim = dim;
+            _metric = metric;
+            _n1 = n1;
+            _n2 = n2;
+            return *this;
+        }
+
+        /// \brief Compute cost lazily from coordinates.
+        ///
+        /// Computes the distance between source node i and target node j
+        /// based on the specified metric.
+        ///
+        /// \param i Source node index
+        /// \param j Target node index (adjusted by subtracting n1)
+        ///
+        /// \return Cost (distance) between the two points
+        inline Cost computeLazyCost(int i, int j_adjusted) const {
+            const double* xa = _coords_a + i * _dim;
+            const double* xb = _coords_b + j_adjusted * _dim;
+            Cost cost = 0;
+            
+            if (_metric == 0) {  // sqeuclidean
+                for (int d = 0; d < _dim; ++d) {
+                    Cost diff = xa[d] - xb[d];
+                    cost += diff * diff;
+                }
+                return cost;
+            } else if (_metric == 1) {  // euclidean
+                for (int d = 0; d < _dim; ++d) {
+                    Cost diff = xa[d] - xb[d];
+                    cost += diff * diff;
+                }
+                return std::sqrt(cost);
+            } else {  // cityblock (L1)
+                for (int d = 0; d < _dim; ++d) {
+                    cost += std::abs(xa[d] - xb[d]);
+                }
+                return cost;
+            }
+        }
+
+
+        /// \brief Get cost for an arc (either from array or compute lazily).
+        ///
+        /// This is the main cost accessor that works from anywhere in the class.
+        /// In lazy mode, computes cost on-the-fly from coordinates.
+        /// In normal mode, returns pre-computed cost from array.
+        ///
+        /// \param arc_id The arc ID
+        /// \return Cost of the arc
+        inline Cost getCostForArc(ArcsType arc_id) const {
+            if (!_lazy_cost) {
+                return _cost[arc_id];
+            } else {
+                // For artificial arcs (>= _arc_num), return 0
+                // These are not real transport arcs
+                if (arc_id >= _arc_num) {
+                    return 0;
+                }
+                // Compute lazily from coordinates
+                // _source and _target use reversed node numbering: _node_id(n) = _node_num - n - 1
+                // Recover original indices: i = _node_num - _source[arc_id] - 1, j = _n2 - _target[arc_id] - 1
+                int i = _node_num - _source[arc_id] - 1;
+                int j = _n2 - _target[arc_id] - 1;
+                return computeLazyCost(i, j);
+            }
+        }
 
         /// \brief Set the supply values of the nodes.
         ///
@@ -689,14 +809,7 @@ namespace lemon {
         /// \see ProblemType, PivotRule
         /// \see resetParams(), reset()
         ProblemType run() {
-#if DEBUG_LVL>0
-            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED << "\n" ;
-#endif
-
             if (!init()) return INFEASIBLE;
-#if DEBUG_LVL>0
-            std::cout << "Init done, starting iterations\n";
-#endif
             return start();
         }
 
@@ -879,8 +992,19 @@ namespace lemon {
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            for (ArcsType i=0; i<_flow.size(); i++)
-                c += _flow[i] * Number(_cost[i]);
+            if (!_lazy_cost) {
+                for (ArcsType i=0; i<_flow.size(); i++)
+                    c += _flow[i] * Number(_cost[i]);
+            } else {
+                // Compute costs lazily
+                for (ArcsType i=0; i<_flow.size(); i++) {
+                    if (_flow[i] != 0) {
+                        int src = _node_num - _source[i] - 1;
+                        int tgt = _n2 - _target[i] - 1;
+                        c += _flow[i] * Number(computeLazyCost(src, tgt));
+                    }
+                }
+            }
             return c;
 
         }
@@ -965,7 +1089,8 @@ namespace lemon {
             } else {
                 ART_COST = 0;
                 for (ArcsType i = 0; i != _arc_num; ++i) {
-                    if (_cost[i] > ART_COST) ART_COST = _cost[i];
+                    Cost c = getCostForArc(i);
+                    if (c > ART_COST) ART_COST = c;
                 }
                 ART_COST = (ART_COST + 1) * _node_num;
             }
@@ -1305,8 +1430,8 @@ namespace lemon {
         // Update potentials
         void updatePotential() {
             Cost sigma = _forward[u_in] ?
-            _pi[v_in] - _pi[u_in] - _cost[_pred[u_in]] :
-            _pi[v_in] - _pi[u_in] + _cost[_pred[u_in]];
+            _pi[v_in] - _pi[u_in] - getCostForArc(_pred[u_in]) :
+            _pi[v_in] - _pi[u_in] + getCostForArc(_pred[u_in]);
             // Update potentials in the subtree, which has been moved
             int end = _thread[_last_succ[u_in]];
             for (int u = u_in; u != end; u = _thread[u]) {
@@ -1365,7 +1490,7 @@ namespace lemon {
                         Arc min_arc = INVALID;
                         Arc a; _graph.firstIn(a, v);
                         for (; a != INVALID; _graph.nextIn(a)) {
-                            c = _cost[getArcID(a)];
+                            c = getCostForArc(getArcID(a));
                             if (c < min_cost) {
                                 min_cost = c;
                                 min_arc = a;
@@ -1384,7 +1509,7 @@ namespace lemon {
                     Arc min_arc = INVALID;
                     Arc a; _graph.firstOut(a, u);
                     for (; a != INVALID; _graph.nextOut(a)) {
-                        c = _cost[getArcID(a)];
+                        c = getCostForArc(getArcID(a));
                         if (c < min_cost) {
                             min_cost = c;
                             min_arc = a;
@@ -1400,7 +1525,7 @@ namespace lemon {
             for (ArcsType i = 0; i != arc_vector.size(); ++i) {
                 in_arc = arc_vector[i];
                 // l'erreur est probablement ici...
-                if (_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -
+                if (_state[in_arc] * (getCostForArc(in_arc) + _pi[_source[in_arc]] -
                                       _pi[_target[in_arc]]) >= 0) continue;
                 findJoinNode();
                 bool change = findLeavingArc();
@@ -1436,27 +1561,6 @@ namespace lemon {
 					retVal = MAX_ITER_REACHED;
                     break;
                 }
-#if DEBUG_LVL>0
-                if(iter_number>MAX_DEBUG_ITER)
-                    break;
-                if(iter_number%1000==0||iter_number%1000==1){
-                    double curCost=totalCost();
-                    double sumFlow=0;
-                    double a;
-                    a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
-                    a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                    for (int64_t i=0; i<_flow.size(); i++) {
-                        sumFlow+=_state[i]*_flow[i];
-                    }
-                    std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << iter_number << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
-                    std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
-                    std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
-                    std::cout << _cost[in_arc] << "\n";
-                    std::cout << _pi[_source[in_arc]] << "\n";
-                    std::cout << _pi[_target[in_arc]] << "\n";
-                    std::cout << a << "\n";
-                }
-#endif
 
                 findJoinNode();
                 bool change = findLeavingArc();
@@ -1466,45 +1570,9 @@ namespace lemon {
                     updateTreeStructure();
                     updatePotential();
                 }
-#if DEBUG_LVL>0
-                else{
-                    std::cout << "No change\n";
-                }
-#endif
-#if DEBUG_LVL>1
-                std::cout << "Arc in = (" << _source[in_arc] << ", " << _target[in_arc] << ")\n";
-#endif
 
             }
 
-
-#if DEBUG_LVL>0
-                double curCost=totalCost();
-                double sumFlow=0;
-                double a;
-                a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
-                a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                for (int64_t i=0; i<_flow.size(); i++) {
-                    sumFlow+=_state[i]*_flow[i];
-                }
-
-                std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
-
-                std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
-                std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
-
-#endif
-
-#if DEBUG_LVL>1
-            sumFlow=0;
-            for (int i=0; i<_flow.size(); i++) {
-                sumFlow+=_state[i]*_flow[i];
-                if (_state[i]==STATE_TREE) {
-                    std::cout << "Non zero value at (" << _node_num+1-_source[i] << ", " << _node_num+1-_target[i] << ")\n";
-                }
-            }
-            std::cout << "Sum of the flow " << sumFlow << "\n"<< niter <<" iterations, current cost=" << totalCost() << "\n";
-#endif
             // Check feasibility
 			if( retVal == OPTIMAL){
                 for (ArcsType e = _search_arc_num; e != _all_arc_num; ++e) {
