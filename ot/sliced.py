@@ -192,7 +192,7 @@ def max_sliced_wasserstein_distance(
     Computes a Monte-Carlo approximation of the max p-Sliced Wasserstein distance
 
     .. math::
-        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta _in
+        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta \in
         \mathcal{U}(\mathbb{S}^{d-1})}{\max} [\mathcal{W}_p^p(\theta_\#
         \mu, \theta_\# \nu)]^{\frac{1}{p}}
 
@@ -340,6 +340,7 @@ def projection_sphere_to_circle(
     Projection of :math:`x\in S^{d-1}` on circles using coordinates on [0,1[.
 
     To get the projection on the circle, we use the following formula:
+
     .. math::
         P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}
 
