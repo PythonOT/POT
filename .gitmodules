@@ -1,0 +1,3 @@
+[submodule "ot/bsp/eigen"]
+	path = ot/bsp/eigen
+	url = https://gitlab.com/libeigen/eigen.git
