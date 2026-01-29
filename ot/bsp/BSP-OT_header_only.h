@@ -6,10 +6,10 @@
 
 
 #pragma once
-#include <eigen/Eigen/Dense>
+#include <Eigen/Dense>
 #include <numeric>
 #include <vector>
-#include <eigen/Eigen/Sparse>
+#include <Eigen/Sparse>
 
 #include <filesystem>
 #include <ranges>
