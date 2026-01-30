@@ -11,11 +11,11 @@
 #include <vector>
 #include <Eigen/Sparse>
 
-#include <filesystem>
+// #include <filesystem>
 #include <ranges>
 
 namespace BSPOT {
-namespace fs = std::filesystem;
+// namespace fs = std::filesystem;
 
 // using scalar = double;
 using scalar = float;
@@ -76,18 +76,6 @@ inline smat Identity(int V) {
     return I;
    }
 
-using Time = std::chrono::high_resolution_clock;
-using TimeStamp = std::chrono::time_point<std::chrono::high_resolution_clock>;
-using TimeTypeSec = float;
-using DurationSec = std::chrono::duration<TimeTypeSec>;
-
-inline TimeTypeSec TimeBetween(const TimeStamp& A,const TimeStamp& B){
-    return DurationSec(B-A).count();
-}
-
-inline TimeTypeSec TimeFrom(const TimeStamp& A){
-    return DurationSec(Time::now()-A).count();
-}
 
 
 template<class T>
@@ -207,30 +195,6 @@ namespace BSPOT {
 
 
 
-    /*
-template<int static_dim>
-ints SlicedAssign(const Points<static_dim>& A,const Points<static_dim>& B) {
-    int N = A.cols();
-    int dim = A.rows();
-    std::vector<std::pair<scalar,int>> dot_mu(N),dot_nu(N);
-    Vector<static_dim> d = sampleUnitGaussian<static_dim>(dim);
-    for (auto j : range(N)) {
-        dot_mu[j] = {d.dot(A.col(j)),j};
-        dot_nu[j] = {d.dot(B.col(j)),j};
-    }
-    std::sort(dot_mu.begin(),dot_mu.end());
-    std::sort(dot_nu.begin(),dot_nu.end());
-    ints plan(N);
-    for (auto j : range(N))
-        plan[dot_mu[j].second] = dot_nu[j].second;
-    return plan;
-}
-
-*/
-
-
-
-
 }
 
 #endif // SLICED_H
@@ -306,479 +270,6 @@ inline Atoms UniformMass(int n) {
     }
     return rslt;
 }
-
-
-/*
-
-struct arrow {
-    scalar mass;
-    scalar cost;
-};
-
-using mapping = std::unordered_map<int,arrow>;
-
-struct CouplingMerger {
-
-    cost_function cost;
-
-    CouplingMerger(const cost_function& cost) : cost(cost) {}
-    CouplingMerger() {}
-
-
-    bool rotateIfUpdate(std::vector<mapping>& pi,std::vector<mapping>& piI,int a,int b,int ap,int bp) {
-        if (a == ap || b == bp)
-            return false;
-        // if (!pi[a].contains(b) || !pi[ap].contains(bp) || !piI[b].contains(a) || !piI[bp].contains(ap)){
-        //     std::cerr << "wrong vertices" << std::endl;;
-        //     return false;
-        // }
-        const auto& T = pi[a][b];
-        const auto& Tp = pi[ap][bp];
-        const scalar rho1 = T.mass;
-        const scalar rho2 = Tp.mass;
-        if (rho1 < 1e-8 || rho2 < 1e-8)
-            return false;
-        const scalar rho = std::min(rho1,rho2);
-        const scalar curr_cost = T.cost*rho1 + Tp.cost*rho2;
-        scalar cabp = cost(a,bp);
-        scalar capb = cost(ap,b);
-        const scalar new_cost = T.cost*(rho1 - rho) + Tp.cost*(rho2-rho) + (cabp + capb)*rho;
-        if (new_cost < curr_cost) {
-
-            if (rho1 < rho2) {
-                // a-b is deleted
-                pi[a].erase(b);
-                piI[b].erase(a);
-
-                pi[ap][bp].mass -= rho;
-                piI[bp][ap].mass -= rho;
-            } else {
-                pi[ap].erase(bp);
-                piI[bp].erase(ap);
-
-                pi[a][b].mass -= rho;
-                piI[b][a].mass -= rho;
-            }
-
-            pi[a][bp].mass += rho;
-            pi[a][bp].cost = cabp;
-            piI[bp][a].mass += rho;
-            piI[bp][a].cost = cabp;
-
-            pi[ap][b].mass += rho;
-            pi[ap][b].cost = capb;
-            piI[b][ap].mass += rho;
-            piI[b][ap].cost = capb;
-            // spdlog::info("old cost {} new cost {}",curr_cost,new_cost);
-            return true;
-        }
-
-        return false;
-    }
-
-    //connect two portions of the tree by an edge
-    void connectTree(std::vector<int>& forest, int tip, int parent, int from) {
-        //assumes from is an ancestor of tip
-        //flips all edges on the path from tip to from
-        //connects tip to its new parent
-        //beware that this removes the last edge on the path from tip to from
-        int previous = parent ;
-        int current = tip ;
-        while(current != from) {
-            int next = forest[current] ;
-            forest[current] = previous ;
-            previous = current ;
-            current = next ;
-        }
-    }
-
-    void findLoop(const std::vector<int>& forest, int n1, int n2, std::vector<int>& loop) {
-        int size = forest.size() ;
-        //static marks buffer to find the forest loop
-        //TODO benchmark the utility of the static, not thread safe
-        static std::vector<int> marked(size, size) ;
-        //mark for this run
-        //FIXME this may break if more than 2^32 calls are made
-        static int mark = 0 ;
-        ++mark ;
-        //determine the loop between the source and the target
-        //TODO benchmark the utility of the static, not thread safe
-        static std::vector<int> loop_buf ;
-        loop.resize(0) ;
-        loop_buf.resize(0) ;
-        loop.push_back(n1) ;
-        loop_buf.push_back(n2) ;
-        marked[n1] = mark ;
-        marked[n2] = mark ;
-        while(true) {
-            int next = forest[loop.back()] ;
-            if(next != size) {
-                //this side of the path has not reached the root
-                if(marked[next] == mark) {
-                    //the loop is found, trim the other portion of the loop
-                    while(loop_buf.back() != next) {
-                        //safety check, ensure the loop is well formed
-                        assert(!loop_buf.empty()) ;
-                        loop_buf.pop_back() ;
-                    }
-                    break ;
-                } else {
-                    marked[next] = mark ;
-                }
-            } else {
-                if(loop_buf.back() == size) {
-                    //the edge creates no loop
-                    loop.resize(0) ;
-                    return ;
-                }
-            }
-            //no loop found yet, grow the loop and swap the portion to grow
-            loop.push_back(next) ;
-            if(loop_buf.back() != size) {
-                loop.swap(loop_buf) ;
-            }
-        }
-        //finalize the loop in a single vector
-        if(loop[0] != n1) loop.swap(loop_buf) ;
-        for(int node : loop_buf | std::views::reverse) {
-            loop.push_back(node) ;
-        }
-    }
-
-    //mutate the tree to improve the coupling
-    void forestImproveLoop(Coupling& coupling, std::vector<int>& forest, std::vector<int>& loop) {
-        //problem dimensions
-        int n = coupling.rows() ;
-        int m = coupling.cols() ;
-
-        //source and target
-        int source = loop[0] ;
-        int target = loop.back() - n ;
-
-        //safety check, the loop should alternate source and target in equal numbers
-        assert(loop.size() % 2 == 0) ;
-
-        //change in transport cost when rotating mass around the loop
-        scalar factor = cost(source, target) ;
-
-        //bottlenecks when rotating mass
-        //0 => adding mass transfer between loop extremities (always possible)
-        //1 => decreasing mass transfer between loop extremities (only if edge already in the coupling)
-        scalar bottleneck[2] = {
-                                std::numeric_limits<scalar>::infinity(),
-            coupling.coeff(source, target)
-        } ;
-        int bottleneck_edge[2] = {n+m, n+m} ;
-        int bottleneck_start[2] = {n+m, n+m} ;
-        //iterate over loop edges
-        for(std::size_t i = 0; i < loop.size() - 1; ++i) {
-            //extremitiex of the edge
-            int v1 = loop[i] ;
-            int v2 = loop[i+1] ;
-            //alternate adding / removing
-            scalar c = 2*(i%2) ;
-            c -= 1 ; //beware adding -1 above yields havoc because i is unsigned
-            //determine whether extremities are sources or targets
-            //get transport cost and currently transiting mass
-            scalar m = std::numeric_limits<scalar>::infinity() ;
-            if(v2 > v1) {
-                c *= cost(v1, v2-n) ;
-                m = coupling.coeff(v1, v2-n) ;
-            } else {
-                c *= cost(v2, v1-n) ;
-                m = coupling.coeff(v2, v1-n) ;
-            }
-            //update bottlenecks
-            if(m < bottleneck[i%2]) {
-                bottleneck[i%2] = m ;
-                if(v2 == forest[v1]) {
-                    //the bottleneck is such that there is a path source -> ... -> v1 -> v2
-                    bottleneck_edge[i%2] = v2 ;
-                    bottleneck_start[i%2] = source ;
-                } else {
-                    //the bottleneck is such that there is a path target -> ... -> v2 -> v1
-                    bottleneck_edge[i%2] = v1 ;
-                    bottleneck_start[i%2] = target + n ;
-                }
-            }
-            //contribute to the global cost
-            factor += c ;
-        }
-
-        //determine how mass should rotate around the loop to yield an improvement
-        int index = factor > 0 ;
-        int direction = -2*index + 1 ;
-        if(bottleneck[index] > 0) {
-            //improvement when increasing transfer between loop extremities
-            //rotate mass in the coupling
-            for(std::size_t i = 0; i < loop.size() - 1; ++i) {
-                //extremitiex of the edge
-                int v1 = loop[i] ;
-                int v2 = loop[i+1] ;
-                //alternate adding / removing
-                scalar c = 2*(i%2) ;
-                c -= 1 ;
-                c *= direction ;
-                if(v2 > v1) {
-                    coupling.coeffRef(v1, v2-n) += c*bottleneck[index] ;
-                    assert(coupling.coeffRef(v1, v2-n) >= 0) ;
-                } else {
-                    coupling.coeffRef(v2, v1-n) += c*bottleneck[index] ;
-                    assert(coupling.coeffRef(v2, v1-n) >= 0) ;
-                }
-            }
-
-            //insert the new edge in the coupling
-            coupling.coeffRef(source, target) += direction * bottleneck[index] ;
-
-            //update the forest inserting the edge if it is not the bottleneck
-            if(bottleneck_edge[index] != n+m) {
-                connectTree(forest,
-                        bottleneck_start[index],
-                        source + target + n - bottleneck_start[index],
-                        bottleneck_edge[index]) ;
-            }
-            //checkForest(forest, n) ;
-        }
-    }
-
-    void forestTryEdge(Coupling& coupling, std::vector<int>& forest, int source, int target) {
-        //problem dimensions
-        int n = coupling.rows() ;
-        int m = coupling.cols() ;
-
-        //check whether the edge creates a loop
-        //TODO benchmark the utility of the static
-        static std::vector<int> loop ;
-        findLoop(forest, source, target + n, loop) ;
-
-        if(loop.empty()) {
-            //no loop created, add the edge
-            connectTree(forest, source, target + n, n+m) ;
-            //checkForest(forest, n) ;
-            return ;
-        }
-
-        if(loop.size() == 2) {
-            //the edge is already present in the forest
-            return ;
-        }
-
-        //a loop is created, try improving it
-        forestImproveLoop(coupling, forest, loop) ;
-    }
-
-    //build a tree from a coupling
-    void buildForest(Coupling& coupling, std::vector<int>& forest) {
-        //problem dimensions
-        int n = coupling.rows() ;
-        int m = coupling.cols() ;
-        //the forest stores the parents
-        //clear provided vector
-        forest.resize(0) ;
-        //when no parent use n+m
-        forest.resize(n+m, n+m) ;
-
-        //list edges to avoid iterator invalidation
-        std::vector<std::tuple<int, int, scalar>> edges ;
-        std::vector<scalar> max_edge(n, 0) ;
-        edges.reserve(coupling.nonZeros()) ;
-        for(int source = 0; source < coupling.outerSize(); ++source) {
-            for(Coupling::InnerIterator it(coupling, source); it; ++it) {
-                edges.emplace_back(source, it.col(), it.value()) ;
-                max_edge[source] = std::max(max_edge[source], it.value()) ;
-            }
-        }
-
-        //sorting directly by decreasing edge values yields better results
-        //but it becomes much slower probably because sorting edges by source
-        //has a much better memory access pattern
-        std::sort(edges.begin(), edges.end(), 
-            [&] (auto const& e1, auto const& e2) { 
-              auto [s1, t1, v1] = e1 ;
-              auto [s2, t2, v2] = e2 ;
-              if(s1 == s2) return v1 > v2 ;
-              return max_edge[s1] > max_edge[s2] ; 
-            }
-            ) ;
-
-        for(auto [source, target, value] : edges) {
-          //spdlog::info("trying edge {} -> {} with value {}", source, target, -value) ;
-          //edge vertices belong to trees
-          //if its the same tree, adding the edge may create a loop
-          //if a loop exists, it is deleted, improving transport cost
-          forestTryEdge(coupling, forest, source, target) ;
-        }
-    }
-
-    void improveQuads(Coupling& coupling, std::vector<int>& forest) {
-      //store neighborhoods
-      std::vector<int> source_neighbors ;
-      std::vector<int> source_offsets ;
-      std::vector<int> target_neighbors ;
-      std::vector<int> target_offsets ;
-
-      source_neighbors.reserve(coupling.nonZeros()) ;
-      source_offsets.reserve(coupling.outerSize() + 1) ;
-      source_offsets.push_back(0) ;
-      target_neighbors.resize(coupling.nonZeros()) ;
-      target_offsets.resize(coupling.innerSize() + 1, 0) ;
-
-      //source -> target
-      for(int source = 0; source < coupling.outerSize(); ++source) {
-        for(Coupling::InnerIterator it(coupling, source); it; ++it) {
-          int target = it.col() ;
-          source_neighbors.push_back(target) ;
-          ++target_offsets[target] ;
-        }
-        source_offsets.push_back(source_neighbors.size()) ;
-      }
-
-      //target->source
-      for(int target = 1; target < target_offsets.size(); ++target) {
-        target_offsets[target] += target_offsets[target-1] ;
-      }
-      for(int source = 0; source < coupling.outerSize(); ++source) {
-        for(Coupling::InnerIterator it(coupling, source); it; ++it) {
-          int target = it.col() ;
-          --target_offsets[target] ;
-          target_neighbors[target_offsets[target]] = source ;
-        }
-      }
-
-      //list quad edges
-      for(int source = 0; source < coupling.outerSize(); ++source) {
-        for(Coupling::InnerIterator it(coupling, source); it; ++it) {
-          int target = it.col() ;
-          //we have a source->target edge
-          //try every edge between their respective neighbors
-          for(int i = target_offsets[target]; i < target_offsets[target+1]; ++i) {
-            for(int j = source_offsets[source]; j < source_offsets[source+1]; ++j) {
-              forestTryEdge(coupling, forest, target_neighbors[i], source_neighbors[j]) ;
-            }
-          }
-        }
-      }
-
-      //cleanup zeros in the sparse matrix
-      coupling = coupling.pruned() ;
-    }
-
-    //safety check the tree
-    void checkForest(const std::vector<int>& forest, int target_start) {
-        int size = forest.size() ;
-        //ensure no loop happens
-        std::vector<int> marked(size, size) ;
-        for(int i = 0; i < size; ++i) {
-            int current = i ;
-            marked[i] = i ;
-            while(forest[current] < size) {
-                current = forest[current] ;
-                //assert the graph has no loop
-                assert(marked[current] != i) ;
-                marked[current] = i ;
-            }
-        }
-        //ensure all edges are from source to target
-        for(int i = 0; i < size; ++i) {
-            int parent = forest[i] ;
-            if(parent < size) {
-                if(i < target_start) {
-                    assert(parent >= target_start) ;
-                } else {
-                    assert(parent < target_start) ;
-                }
-            }
-        }
-    }
-
-    Coupling forestMerge(const std::vector<Coupling>& couplings) {
-        Coupling result = couplings[0] ;
-        // spdlog::info("initial coupling cost is {}",eval(A,B,result));
-
-        //source size
-        int n = result.rows() ;
-
-        //build initial tree
-        std::vector<int> forest ;
-        buildForest(result, forest) ;
-        //checkForest(forest, n) ;
-
-        //merge the other couplings
-        for(std::size_t i = 1; i < couplings.size(); ++i) {
-            const Coupling& coupling = couplings[i] ;
-            //spdlog::info("merging cost {}",eval(A,B,coupling));
-            for(int source = 0; source < coupling.outerSize(); ++source) {
-                for (Coupling::InnerIterator it(coupling, source); it; ++it) {
-                    int target = it.col() ;
-                    forestTryEdge(result, forest, source, target) ;
-                }
-            }
-            //spdlog::info("coupling cost is now {}",eval(A,B,result));
-            //checkForest(forest, n) ;
-        }
-
-        return result.pruned() ;
-    }
-
-    Coupling CycleMerge(const std::vector<Coupling>& couplings) {
-        std::vector<bool> visited;
-
-        auto pi1 = couplings[0];
-
-        int n = pi1.rows();
-        int m = pi1.cols();
-
-        std::vector<std::unordered_map<int,arrow>> edges(n);
-        std::vector<std::unordered_map<int,arrow>> edgesI(m);
-        for (auto i = 0;i<pi1.outerSize();i++){
-            for (Coupling::InnerIterator it(pi1,i);it;++it) {
-                int j = it.col();
-                scalar c = cost(i,j);
-                edges[i][j] = {it.value(),c};
-                edgesI[j][i] = {it.value(),c};
-            }
-        }
-        for (auto i : range(1,couplings.size())){
-            const auto& pip = couplings[i];
-            //spdlog::info("merging cost {}",eval(A,B,pip));
-            for (auto a = 0;a<n;a++){
-                for (Coupling::InnerIterator it(pip,a);it;++it) {
-                    int bp = it.col();
-                    bool ok;
-                    do {
-                        ok = true;
-                        for (auto b : edges[a]) {
-                            for (auto ap : edgesI[bp]) {
-                                if (rotateIfUpdate(edges,edgesI,a,b.first,ap.first,bp)) {
-                                    ok = false;
-                                    break;
-                                }
-                            }
-                            if (!ok)
-                                break;
-                        }
-                    } while (!ok);
-                }
-            }
-        }
-
-        std::vector<triplet> triplets;
-        for (auto i = 0;i<edges.size();i++){
-            for (auto j : edges[i]){
-                if (j.second.mass > 1e-8) {
-                    triplet t(i,j.first,j.second.mass);
-                    triplets.push_back(t);
-                }
-            }
-        }
-        Coupling pi(n,m);
-        pi.setFromTriplets(triplets.begin(),triplets.end());
-        return pi;
-    }
-};
-*/
-
 
 }
 
@@ -894,78 +385,6 @@ inline Points<dim> ForceToSize(const Points<dim>& X,int target) {
 
 #include <random>
 
-/*
-namespace BSPOT {
-
-void normalize(Vecs &X, Vec offset, scalar dilat){
-    int dim = X[0].size();
-    Vec min = Vec::Ones(dim)*1e9;
-    Vec max = Vec::Ones(dim)*(-1e9);
-    for (const auto& x : X){
-        min = min.cwiseMin(x);
-        max = max.cwiseMax(x);
-    }
-    Vec scale = max - min;
-    double f = dilat/scale.maxCoeff();
-    if (!offset.size())
-        offset = Vec::Zero(dim);
-    Vec c = (min+max)*0.5;
-    for (auto& x : X){
-        x = (x-c)*f + offset;
-    }
-}
-
-Vecs concat(const Vecs &X, const Vecs &Y)
-{
-    Vecs rslt(X.begin(),X.end());
-    rslt.insert(rslt.end(),Y.begin(),Y.end());
-    return rslt;
-}
-
-Vecs pad(const Vecs &X, int target) {
-    int n = X.size();
-    Vecs rslt = X;
-    while (rslt.size() != target)
-        rslt.push_back(X[rand()%X.size()]);
-    return rslt;
-}
-
-Vecs trunc(const Vecs &X, int target){
-    Vecs rslt = X;
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(rslt.begin(),rslt.end(),g);
-    rslt.resize(target);
-    return rslt;
-}
-
-void translate(Vecs &X, Vec offset)
-{
-    for (auto& x : X)
-        x += offset;
-}
-
-void normalize(Mat &X, Vec offset, scalar dilat)
-{
-    Vec min = X.colwise().minCoeff();
-    Vec max = X.colwise().maxCoeff();
-    Vec scale = max - min;
-    double f = dilat/scale.maxCoeff();
-    if (!offset.size())
-        offset = Vec::Zero(X.cols());
-    Vec c = (min+max)*0.5;
-    X.rowwise() -= c.transpose();
-    X *= f;
-    X.rowwise() += offset.transpose();
-
-    // for (auto i : range(X.rows()))
-        // X.row(i) = (X.row(i)-c).array()*f + offset.array();
-}
-
-}
-
-*/
-
 
 // end --- cloudutils.cpp --- 
 
@@ -1026,48 +445,6 @@ public:
     std::pair<int, scalar> pop();
 
     bool empty() const;
-};
-
-
-class StopWatch {
-     std::map<std::string,scalar> profiler;
-     TimeStamp clock;
-
-public:
-     void start() {
-        clock = Time::now();
-    }
-
-     void reset() {
-        profiler.clear();
-    }
-
-     void tick(std::string label) {
-        if (profiler.find(label) == profiler.end())
-            profiler[label] = 0;
-        profiler[label] += TimeFrom(clock);
-        clock = Time::now();
-    }
-
-     void profile(bool relative = true) {
-        std::cout << "         STOPWATCH REPORT            " << std::endl;
-        scalar s = 0;
-        std::vector<std::pair<std::string,scalar>> stamps;
-        for (const auto& [key,value] : profiler){
-            s += value;
-            stamps.push_back({key,value});
-        }
-        if (!relative)
-            s = 1;
-        std::sort(stamps.begin(),stamps.end(),[](std::pair<std::string,scalar> a,std::pair<std::string,scalar> b) {
-            return a.second > b.second;
-        });
-        for (auto x : stamps){
-            std::cout << x.first << " : " << x.second/s << "\n";
-        }
-        std::cout << "         END     REPORT            " << std::endl << std::endl;
-    }
-
 };
 
 struct Edge {
@@ -1497,7 +874,6 @@ BijectiveMatching MergePlansNoPar(const std::vector<BijectiveMatching> &plans,co
 bool swapIfUpgradeK(ints &T, ints &TI, const ints &TP, int a,int k, const cost_function &cost);
 
 inline ints rankPlans(const std::vector<BijectiveMatching>& plans,const cost_function& cost) {
-    auto start = Time::now();
     std::vector<std::pair<scalar,int>> scores(plans.size());
     for (auto i : range(plans.size())) {
         scores[i].first = plans[i].evalMatching(cost);
@@ -1506,7 +882,6 @@ inline ints rankPlans(const std::vector<BijectiveMatching>& plans,const cost_fun
     std::sort(scores.begin(),scores.end(),[](const auto& a,const auto& b) {
         return a.first < b.first;
     });
-    // spdlog::info("sort timing {}",TimeFrom(start));
     ints rslt(scores.size());
     for (auto i : range(scores.size()))
         rslt[i] = scores[i].second;
@@ -1724,7 +1099,6 @@ BijectiveMatching MergePlans(const std::vector<BijectiveMatching> &plans, const 
 
     scalar avg_cc_size = 0;
 
-    StopWatch profiler;
     for (auto k : range(s,plans.size())) {
         ints Tp = plans[I[k]];
         ints Tpi = plans[I[k]].inverseMatching();
@@ -1843,7 +1217,6 @@ BijectiveMatching MergePlansNoPar(const std::vector<BijectiveMatching> &plans, c
 
     ints sig(N);
 
-    StopWatch profiler;
     for (auto k : range(s,plans.size())) {
         ints Tp = plans[I[k]];
         ints Tpi = plans[I[k]].inverseMatching();
@@ -2024,21 +1397,6 @@ int BSPOT::UnionFind::find(int u) {
     }
     return parent[u];
 }
-
-//void UnionFind::unite(int u, int v) {
-//    int rootU = find(u);
-//    int rootV = find(v);
-//    if (rootU != rootV) {
-//        if (rank[rootU] > rank[rootV]) {
-//            parent[rootV] = rootU;
-//        } else if (rank[rootU] < rank[rootV]) {
-//            parent[rootU] = rootV;
-//        } else {
-//            parent[rootV] = rootU;
-//            rank[rootU]++;
-//        }
-//    }
-//}
 
 
 void BSPOT::UnionFind::unite(int x, int y) {
@@ -2591,6 +1949,7 @@ public:
 
 namespace BSPOT {
 
+/*
 template<int D>
 inline Points<D> ReadPointCloud(std::filesystem::path path) {
     std::ifstream infile(path);
@@ -2636,6 +1995,7 @@ inline Points<D> ReadPointCloud(std::filesystem::path path) {
     return pointCloud;
 }
 
+
 template<int D>
 void WritePointCloud(std::filesystem::path path,const Points<D>& pts) {
     // each row is a point
@@ -2655,6 +2015,7 @@ void WritePointCloud(std::filesystem::path path,const Points<D>& pts) {
         outfile << "\n";
     }
 }
+*/
 
 }
 
@@ -3381,7 +2742,6 @@ template<int dim>
 BijectiveMatching computeGaussianBSPOT(const Points<dim>& A,const Points<dim>& B,int nb_plans,const cost_function& cost,BijectiveMatching T = BijectiveMatching()) {
     std::vector<BijectiveMatching> plans(nb_plans);
     BijectiveBSPMatching BSP(A,B);
-    auto start = Time::now();
 #pragma omp parallel for
     for (int i = 0;i<nb_plans;i++)
         plans[i] = BSP.computeGaussianMatching();
