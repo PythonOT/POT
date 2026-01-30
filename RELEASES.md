@@ -1,10 +1,21 @@
 # Releases
 
-## 0.9.7dev
+## 0.9.7.dev0
 
-#### New features
-- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #)
-- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #)
+This new release adds support for sparse cost matrices in the exact EMD solver. Users can now pass sparse cost matrices (e.g., k-NN graphs, sparse graphs) and receive sparse transport plans, significantly reducing memory footprint for large-scale problems. The implementation is backend-agnostic, automatically handling scipy.sparse for NumPy and torch.sparse for PyTorch, and preserves full gradient computation capabilities for automatic differentiation in PyTorch. This enables efficient solving of OT problems on graphs with millions of nodes where only a sparse subset of edges have finite costs.
+
+#### New features 
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
+- Geomloss function now handles both scalar and slice indices for i and j. Using backend agnostic reshaping. Allows to do plan[i,:] and plan[:,j] (PR #785)
+- Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
+- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+
+#### Closed issues
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration  (PR #785)
+- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
+- Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 
 ## 0.9.6.post1
 

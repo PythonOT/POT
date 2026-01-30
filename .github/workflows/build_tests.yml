@@ -27,7 +27,7 @@ jobs:
 
 
     - name: Checking Out Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     # Install Python & Packages
     - uses: actions/setup-python@v4
       with:
@@ -39,6 +39,20 @@ jobs:
         pre-commit install --install-hooks
         pre-commit run --all-files
 
+  build_from_source:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Build from source
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install cython numpy
+        python setup.py sdist bdist_wheel
+        pip install dist/*.tar.gz
 
   linux:
 
@@ -50,11 +64,17 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: insightsengineering/disk-space-reclaimer@v1
+      with:
+        android: true
+        dotnet: true
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: Install POT
       run: |
         pip install -e .
@@ -79,6 +99,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
+        cache: 'pip'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
@@ -107,6 +128,7 @@ jobs:
        uses: actions/setup-python@v5
        with:
          python-version: ${{ matrix.python-version }}
+         cache: 'pip'
      - name: Install POT
        run: |
          pip install -e .
@@ -134,6 +156,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: RC.exe
       run: |
         function Invoke-VSDevEnvironment {

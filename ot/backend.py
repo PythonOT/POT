@@ -94,7 +94,7 @@ import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -119,7 +119,7 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax
         import jax.numpy as jnp
         import jax.scipy.special as jspecial
-        from jax.lib import xla_bridge
+        from jax.extend.backend import get_backend as _jax_get_backend
 
         jax_type = jax.numpy.ndarray
         jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
@@ -178,7 +178,16 @@ def _get_backend_instance(backend_impl):
 
 
 def _check_args_backend(backend_impl, args):
-    is_instance = set(isinstance(arg, backend_impl.__type__) for arg in args)
+    # Get backend instance to use issparse method
+    backend = _get_backend_instance(backend_impl)
+
+    # Check if each arg is either:
+    # 1. An instance of backend.__type__ (e.g., np.ndarray for NumPy)
+    # 2. A sparse matrix recognized by backend.issparse() (e.g., scipy.sparse for NumPy)
+    is_instance = set(
+        isinstance(arg, backend_impl.__type__) or backend.issparse(arg) for arg in args
+    )
+
     # check that all arguments matched or not the type
     if len(is_instance) == 1:
         return is_instance.pop()
@@ -793,9 +802,9 @@ class Backend:
         r"""
         Creates a sparse tensor in COOrdinate format.
 
-        This function follows the api from :any:`scipy.sparse.coo_matrix`
+        This function follows the api from :any:`scipy.sparse.coo_array`
 
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
         """
         raise NotImplementedError()
 
@@ -836,6 +845,31 @@ class Backend:
         This function follows the api from :any:`scipy.sparse.csr_matrix.toarray`
 
         See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.toarray.html
+        """
+        raise NotImplementedError()
+
+    def sparse_coo_data(self, a):
+        r"""
+        Extracts COO format data (row, col, data, shape) from a sparse matrix.
+
+        Returns row indices, column indices, data values, and shape as numpy arrays/tuple.
+        This is used to interface with C++ solvers that require explicit edge lists.
+
+        Parameters
+        ----------
+        a : sparse matrix
+            Sparse matrix in backend's COO format
+
+        Returns
+        -------
+        row : numpy.ndarray
+            Row indices (1D array)
+        col : numpy.ndarray
+            Column indices (1D array)
+        data : numpy.ndarray
+            Data values (1D array)
+        shape : tuple
+            Shape of the matrix (n_rows, n_cols)
         """
         raise NotImplementedError()
 
@@ -1336,9 +1370,9 @@ class NumpyBackend(Backend):
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
-            return coo_matrix((data, (rows, cols)), shape=shape)
+            return coo_array((data, (rows, cols)), shape=shape)
         else:
-            return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
+            return coo_array((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
     def issparse(self, a):
         return issparse(a)
@@ -1364,6 +1398,15 @@ class NumpyBackend(Backend):
             return a.toarray()
         else:
             return a
+
+    def sparse_coo_data(self, a):
+        # Convert to COO array format if needed
+        if not isinstance(a, coo_array):
+            a_coo = coo_array(a)
+        else:
+            a_coo = a
+
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
@@ -1535,7 +1578,7 @@ class JaxBackend(Backend):
         self.__type_list__ = []
         # available_devices = jax.devices("cpu")
         available_devices = []
-        if xla_bridge.get_backend().platform == "gpu":
+        if _jax_get_backend().platform == "gpu":
             available_devices += jax.devices("gpu")
         for d in available_devices:
             self.__type_list__ += [
@@ -1794,6 +1837,13 @@ class JaxBackend(Backend):
         # Currently, JAX does not support sparse matrices
         return a
 
+    def sparse_coo_data(self, a):
+        # JAX doesn't support sparse matrices, so this shouldn't be called
+        # But if it is, convert the dense array to sparse using scipy
+        a_np = self.to_numpy(a)
+        a_coo = coo_array(a_np)
+        return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
+
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
             return jnp.where(condition)
@@ -1974,6 +2024,7 @@ class TorchBackend(Backend):
             self.rng_cuda_ = torch.Generator("cpu")
 
         from torch.autograd import Function
+        from torch.autograd.function import once_differentiable
 
         # define a function that takes inputs val and grads
         # ad returns a val tensor with proper gradients
@@ -1988,7 +2039,31 @@ class TorchBackend(Backend):
                 # the gradients are grad
                 return (None, None) + tuple(g * grad_output for g in ctx.grads)
 
+        # define a differentiable SPD matrix sqrt
+        # with closed-form VJP
+        class MatrixSqrtFunction(Function):
+            @staticmethod
+            def forward(ctx, a):
+                a_sym = 0.5 * (a + a.transpose(-2, -1))
+                L, V = torch.linalg.eigh(a_sym)
+                s = L.clamp_min(0).sqrt()
+                y = (V * s.unsqueeze(-2)) @ V.transpose(-2, -1)
+                ctx.save_for_backward(s, V)
+                return y
+
+            @staticmethod
+            @once_differentiable
+            def backward(ctx, g):
+                s, V = ctx.saved_tensors
+                g_sym = 0.5 * (g + g.transpose(-2, -1))
+                ghat = V.transpose(-2, -1) @ g_sym @ V
+                d = s.unsqueeze(-1) + s.unsqueeze(-2)
+                xhat = ghat / d
+                xhat = xhat.masked_fill(d == 0, 0)
+                return V @ xhat @ V.transpose(-2, -1)
+
         self.ValFunction = ValFunction
+        self.MatrixSqrtFunction = MatrixSqrtFunction
 
     def _to_numpy(self, a):
         if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
@@ -2351,6 +2426,20 @@ class TorchBackend(Backend):
         else:
             return a
 
+    def sparse_coo_data(self, a):
+        # For torch sparse tensors, coalesce first to ensure unique indices
+        a_coalesced = a.coalesce()
+        indices = a_coalesced._indices()
+        values = a_coalesced._values()
+
+        # Convert to numpy
+        row = self.to_numpy(indices[0])
+        col = self.to_numpy(indices[1])
+        data = self.to_numpy(values)
+        shape = tuple(a_coalesced.shape)
+
+        return row, col, data, shape
+
     def where(self, condition, x=None, y=None):
         if x is None and y is None:
             return torch.where(condition)
@@ -2431,12 +2520,7 @@ class TorchBackend(Backend):
         return torch.linalg.pinv(a, hermitian=hermitian)
 
     def sqrtm(self, a):
-        L, V = torch.linalg.eigh(a)
-        L = torch.sqrt(L)
-        # Q[...] = V[...] @ diag(L[...])
-        Q = torch.einsum("...jk,...k->...jk", V, L)
-        # R[...] = Q[...] @ V[...].T
-        return torch.einsum("...jk,...kl->...jl", Q, torch.transpose(V, -1, -2))
+        return self.MatrixSqrtFunction.apply(a)
 
     def eigh(self, a):
         return torch.linalg.eigh(a)
@@ -2760,10 +2844,10 @@ class CupyBackend(Backend):  # pragma: no cover
         rows = self.from_numpy(rows)
         cols = self.from_numpy(cols)
         if type_as is None:
-            return cupyx.scipy.sparse.coo_matrix((data, (rows, cols)), shape=shape)
+            return cupyx.scipy.sparse.coo_array((data, (rows, cols)), shape=shape)
         else:
             with cp.cuda.Device(type_as.device):
-                return cupyx.scipy.sparse.coo_matrix(
+                return cupyx.scipy.sparse.coo_array(
                     (data, (rows, cols)), shape=shape, dtype=type_as.dtype
                 )
 

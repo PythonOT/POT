@@ -75,6 +75,48 @@ def test_get_backend(nx):
         assert effective_nx.__name__ == nx.__name__
 
 
+def test_get_backend_sparse_matrix():
+    """Test that get_backend correctly handles sparse matrices and rejects mixed backends."""
+    from scipy.sparse import coo_matrix
+
+    a_np = np.array([0.5, 0.5])
+    b_np = np.array([0.5, 0.5])
+    M_scipy = coo_matrix(([1.0, 2.0], ([0, 1], [0, 1])), shape=(2, 2))
+
+    nx = get_backend(a_np, b_np, M_scipy)
+    assert nx.__name__ == "numpy", "NumPy backend should accept scipy.sparse matrices"
+
+    nx = get_backend(M_scipy)
+    assert nx.__name__ == "numpy", "scipy.sparse should use NumPy backend"
+
+    if torch:
+        a_torch = torch.tensor([0.5, 0.5])
+        b_torch = torch.tensor([0.5, 0.5])
+        M_torch_sparse = torch.sparse_coo_tensor(
+            torch.tensor([[0, 1], [0, 1]]), torch.tensor([1.0, 2.0]), (2, 2)
+        )
+
+        nx = get_backend(a_torch, b_torch, M_torch_sparse)
+        assert (
+            nx.__name__ == "torch"
+        ), "PyTorch backend should accept torch.sparse tensors"
+
+        nx = get_backend(M_torch_sparse)
+        assert nx.__name__ == "torch", "torch.sparse should use PyTorch backend"
+
+        # Case 1: PyTorch dense + scipy.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(a_torch, b_torch, M_scipy)
+
+        # Case 2: NumPy dense + torch.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(a_np, b_np, M_torch_sparse)
+
+        # Case 3: scipy.sparse + torch.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(M_scipy, M_torch_sparse)
+
+
 def test_convert_between_backends(nx):
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
@@ -833,6 +875,19 @@ def test_gradients_backends():
             [dl_dw, dl_db] = tape.gradient(manipulated_loss, [w, b])
             assert nx.allclose(dl_dw, w)
             assert nx.allclose(dl_db, b)
+
+
+def test_sqrtm_backward_torch():
+    if not torch:
+        pytest.skip("Torch not available")
+    nx = ot.backend.TorchBackend()
+    torch.manual_seed(42)
+    d = 5
+    A = torch.randn(d, d, dtype=torch.float64, device="cpu")
+    A = A @ A.T
+    A.requires_grad_(True)
+    func = lambda x: nx.sqrtm(x).sum()
+    assert torch.autograd.gradcheck(func, (A,), atol=1e-4, rtol=1e-4)
 
 
 def test_get_backend_none():
