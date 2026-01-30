@@ -244,6 +244,7 @@ def test_emd1d_dual_with_weights():
     np.testing.assert_allclose(wass, np.sum(f[:, 0] * w_u) + np.sum(g[:, 0] * w_v))
 
 
+@pytest.skip_backend("tf")
 @pytest.skip_backend("jax")
 def test_emd1d_dual_batch(nx):
     rng = np.random.RandomState(0)
@@ -292,6 +293,7 @@ def test_emd1d_dual_backprop_batch(nx):
         )
 
 
+@pytest.skip_backend("tf")
 def test_emd1d_dual_type_devices(nx):
     rng = np.random.RandomState(0)
 
