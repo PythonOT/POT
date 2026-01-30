@@ -3007,13 +3007,14 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def index_select(self, input, axis, index):
         return cp.take(input, index, axis)
-    
+
     def nonzero(self, input, as_tuple=False):
         if as_tuple:
             return cp.nonzero(input)
         else:
             L_tuple = cp.nonzero(input)
             return cp.concatenate([t[None] for t in L_tuple], axis=0).T
+
 
 if cp:
     # Only register cp backend if it is installed
@@ -3476,13 +3477,14 @@ class TensorflowBackend(Backend):
 
     def index_select(self, input, axis, index):
         return tf.gather(input, index, axis=axis)
-    
+
     def nonzero(self, input, as_tuple=False):
         if as_tuple:
             return tf.where(input)
         else:
             indices = tf.where(input)
             return tf.reshape(indices, (-1, indices.shape[-1]))
+
 
 if tf:
     # Only register tensorflow backend if it is installed
