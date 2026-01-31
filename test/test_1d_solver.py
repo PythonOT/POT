@@ -94,7 +94,7 @@ def test_wasserstein_1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -178,7 +178,7 @@ def test_emd1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -216,6 +216,107 @@ def test_emd1d_device_tf():
         nx.assert_same_dtype_device(xb, emd)
         nx.assert_same_dtype_device(xb, emd2)
         assert nx.dtype_device(emd)[1].startswith("GPU")
+
+
+def test_emd1d_dual_with_weights():
+    # test emd1d_dual gives similar results as emd
+    n = 20
+    m = 30
+    rng = np.random.RandomState(0)
+    u = rng.randn(n, 1)
+    v = rng.randn(m, 1)
+
+    w_u = rng.uniform(0.0, 1.0, n)
+    w_u = w_u / w_u.sum()
+
+    w_v = rng.uniform(0.0, 1.0, m)
+    w_v = w_v / w_v.sum()
+
+    M = ot.dist(u, v, metric="sqeuclidean")
+
+    G, log = ot.emd(w_u, w_v, M, log=True)
+    wass = log["cost"]
+
+    f, g, wass1d = ot.emd_1d_dual(u, v, w_u, w_v, p=2)
+
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+    np.testing.assert_allclose(wass, np.sum(f[:, 0] * w_u) + np.sum(g[:, 0] * w_v))
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+def test_emd1d_dual_batch(nx):
+    rng = np.random.RandomState(0)
+
+    n = 100
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+
+    X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
+    Xb = nx.from_numpy(X)
+    f, g, res = ot.emd_1d_dual(Xb, Xb, rho_ub, rho_vb, p=2)
+    np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+
+
+def test_emd1d_dual_backprop_batch(nx):
+    rng = np.random.RandomState(0)
+
+    n = 100
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+
+    X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
+    Xb = nx.from_numpy(X)
+
+    if nx.__name__ in ["torch", "jax"]:
+        f, g, res = ot.emd_1d_dual_backprop(Xb, Xb, rho_ub, rho_vb, p=2)
+        np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+
+        cost_dual = nx.sum(f * rho_ub[:, None], axis=0) + nx.sum(
+            g * rho_vb[:, None], axis=0
+        )
+        np.testing.assert_allclose(cost_dual, res)
+    else:
+        np.testing.assert_raises(
+            AssertionError, ot.emd_1d_dual_backprop, Xb, Xb, rho_ub, rho_vb, p=2
+        )
+
+
+@pytest.skip_backend("tf")
+def test_emd1d_dual_type_devices(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    for tp in nx.__type_list__:
+        # print(nx.dtype_device(tp))
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+        f, g, res = ot.emd_1d_dual(xb, xb, rho_ub, rho_vb, p=1)
+        nx.assert_same_dtype_device(xb, res)
+        nx.assert_same_dtype_device(xb, f)
+        nx.assert_same_dtype_device(xb, g)
+
+        if nx.__name__ == "torch" or nx.__name__ == "jax":
+            f, g, res = ot.emd_1d_dual_backprop(xb, xb, rho_ub, rho_vb, p=1)
+            nx.assert_same_dtype_device(xb, res)
+            nx.assert_same_dtype_device(xb, f)
+            nx.assert_same_dtype_device(xb, g)
 
 
 def test_wasserstein_1d_circle():
@@ -267,7 +368,7 @@ def test_wasserstein1d_circle_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
@@ -317,7 +418,7 @@ def test_wasserstein1d_unif_circle_devices(nx):
     rho_u /= rho_u.sum()
 
     for tp in nx.__type_list__:
-        print(nx.dtype_device(tp))
+        # print(nx.dtype_device(tp))
 
         xb, rho_ub = nx.from_numpy(x, rho_u, type_as=tp)
 
