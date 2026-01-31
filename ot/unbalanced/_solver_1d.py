@@ -59,7 +59,7 @@ def uot_1d(
     reg_m,
     u_weights=None,
     v_weights=None,
-    p=1,
+    p=2,
     require_sort=True,
     numItermax=10,
     mode="icdf",
@@ -96,7 +96,7 @@ def uot_1d(
     v_weights: array-like, shape (m, ...), optional
         weights of the second empirical distribution, if None then uniform weights are used
     p: int, optional
-        order of the ground metric used, should be at least 1, default is 1
+        order of the ground metric used, should be at least 1, default is 2
     require_sort: bool, optional
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
