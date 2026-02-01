@@ -46,10 +46,26 @@ def rescale_potentials(f, g, a, b, rho1, rho2, nx):
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
-    tau = (rho1 * rho2) / (rho1 + rho2)
-    num = nx.logsumexp(-f / rho1 + nx.log(a), axis=0)
-    denom = nx.logsumexp(-g / rho2 + nx.log(b), axis=0)
+    if rho1 == float("inf") and rho2 == float("inf"):
+        return nx.zeros(shape=nx.sum(f, axis=0).shape, type_as=f)
+
+    elif rho1 == float("inf"):
+        tau = rho2
+        denom = nx.logsumexp(-g / rho2 + nx.log(b), axis=0)
+        num = nx.log(nx.sum(a, axis=0))
+
+    elif rho2 == float("inf"):
+        tau = rho1
+        num = nx.logsumexp(-f / rho1 + nx.log(a), axis=0)
+        denom = nx.log(nx.sum(b, axis=0))
+
+    else:
+        tau = (rho1 * rho2) / (rho1 + rho2)
+        num = nx.logsumexp(-f / rho1 + nx.log(a), axis=0)
+        denom = nx.logsumexp(-g / rho2 + nx.log(b), axis=0)
+
     transl = tau * (num - denom)
+
     return transl
 
 
@@ -75,6 +91,8 @@ def uot_1d(
     .. math:
         \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
 
+    The mode "backprop" should be preferred, but is available only with backends supporting automatic differentiation (torch and jax)
+
     Parameters
     ----------
     u_values: array-like, shape (n, ...)
@@ -85,12 +103,12 @@ def uot_1d(
         Marginal relaxation term.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-        (TODO?) The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
+        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
         For semi-relaxed case, use either
         :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
         :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
         If :math:`\mathrm{reg_{m}}` is an array,
-        it must have the same backend as input arrays `(a, b)`.
+        it must have the same backend as inxut arrays `(a, b)`.
     u_weights: array-like, shape (n, ...), optional
         weights of the first empirical distribution, if None then uniform weights are used
     v_weights: array-like, shape (m, ...), optional
@@ -167,10 +185,6 @@ def uot_1d(
     gd = nx.zeros(v_weights.shape, type_as=v_weights)
 
     for i in range(numItermax):
-        t = 2.0 / (2.0 + i - 1)
-        f = f + t * (fd - f)
-        g = g + t * (gd - g)
-
         transl = rescale_potentials(
             f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
         )
@@ -178,14 +192,23 @@ def uot_1d(
         f = f + transl[None]
         g = g - transl[None]
 
-        u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
-        v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
+        if reg_m1 != float("inf"):
+            u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
+        else:
+            u_reweighted = u_weights_sorted
+
+        if reg_m2 != float("inf"):
+            v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
+        else:
+            v_reweighted = v_weights_sorted
 
         full_mass = nx.sum(u_reweighted, axis=0)
 
         # Normalize weights
         u_rescaled = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
         v_rescaled = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
+
+        # print(i, fd)
 
         if mode == "icdf":
             fd, gd, loss = emd_1d_dual(
@@ -206,9 +229,9 @@ def uot_1d(
                 require_sort=False,
             )
 
-        # t = 2.0 / (2.0 + i)
-        # f = f + t * (fd - f)
-        # g = g + t * (gd - g)
+        t = 2.0 / (2.0 + i)
+        f = f + t * (fd - f)
+        g = g + t * (gd - g)
 
     if require_sort:
         f = nx.take_along_axis(f, u_rev_sorter, 0)
@@ -219,11 +242,18 @@ def uot_1d(
     # rescale OT loss
     linear_loss = loss * full_mass
 
-    uot_loss = (
-        linear_loss
-        + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True)
-        + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True)
-    )
+    if reg_m1 == float("inf") and reg_m2 == float("inf"):
+        uot_loss = linear_loss
+    elif reg_m1 == float("inf"):
+        uot_loss = linear_loss + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True)
+    elif reg_m2 == float("inf"):
+        uot_loss = linear_loss + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True)
+    else:
+        uot_loss = (
+            linear_loss
+            + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True)
+            + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True)
+        )
 
     if returnCost == "linear":
         out_loss = linear_loss

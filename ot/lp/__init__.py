@@ -28,6 +28,9 @@ from .solver_1d import (
     wasserstein_1d,
     emd_1d_dual,
     emd_1d_dual_backprop,
+)
+
+from .solver_circle import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,

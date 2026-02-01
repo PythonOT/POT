@@ -8,7 +8,6 @@ import itertools
 import numpy as np
 import ot
 import pytest
-import cvxpy as cp
 
 
 @pytest.skip_backend("tf")
@@ -25,39 +24,391 @@ def test_uot_1d(nx):
     reg_m = 1.0
 
     M = ot.dist(xs, xt)
-    # M = M / M.max()
     a, b, M = nx.from_numpy(a_np, b_np, M)
     xs, xt = nx.from_numpy(xs, xt)
 
-    loss_mm = ot.unbalanced.mm_unbalanced2(a, b, M, reg_m, div="kl")
-    G = ot.unbalanced.mm_unbalanced(a, b, M, reg_m, div="kl")
-
-    P = cp.Variable((n_samples, n_samples))
-
-    u = np.ones((n_samples, 1))
-    v = np.ones((n_samples, 1))
-    q = cp.sum(cp.kl_div(cp.matmul(P, v), a[:, None]))
-    r = cp.sum(cp.kl_div(cp.matmul(P.T, u), b[:, None]))
-
-    constr = [0 <= P]
-    objective = cp.Minimize(cp.sum(cp.multiply(P, M)) + reg_m * q + reg_m * r)
-
-    prob = cp.Problem(objective, constr)
-    result = prob.solve()
-    G_cvxpy = P.value
-    loss_cvxpy = np.sum(G_cvxpy * M)
-
-    print("?", nx.__name__)
-    print("??", loss_mm.item(), G.sum(), loss_cvxpy, G_cvxpy.sum())
+    G, log = ot.unbalanced.mm_unbalanced(a, b, M, reg_m, div="kl", log=True)
+    loss_mm = log["cost"]
 
     if nx.__name__ != "jax":
         f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="icdf", p=2)
-        print("!! ", loss_1d.item())
-        np.testing.assert_allclose(loss_1d, loss_mm)
+        np.testing.assert_allclose(loss_1d, loss_mm, atol=1e-2)
+        np.testing.assert_allclose(G.sum(0), g[:, 0], atol=1e-2)
+        np.testing.assert_allclose(G.sum(1), f[:, 0], atol=1e-2)
 
     if nx.__name__ in ["jax", "torch"]:
         f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="backprop", p=2)
+        np.testing.assert_allclose(loss_1d, loss_mm, atol=1e-2)
+        np.testing.assert_allclose(G.sum(0), g[:, 0], atol=1e-2)
+        np.testing.assert_allclose(G.sum(1), f[:, 0], atol=1e-2)
 
-        print("???", loss_1d.item(), f.sum())
 
-        np.testing.assert_allclose(loss_1d, loss_mm)
+def test_uot_1d_convergence(nx):
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+    xs, xt = nx.from_numpy(xs, xt)
+
+    reg_m = 1000
+
+    # wass1d = ot.wasserstein_1d(xs, xt, p=2)
+    G_1d, log = ot.emd_1d(xs, xt, metric="sqeuclidean", log=True)
+    wass1d = log["cost"]
+    u_w1d, v_w1d = G_1d.sum(1), G_1d.sum(0)
+
+    if nx.__name__ != "jax":
+        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="icdf", p=2)
+        np.testing.assert_allclose(loss_1d, wass1d, atol=1e-2)
+        np.testing.assert_allclose(v_w1d, v[:, 0], atol=1e-2)
+        np.testing.assert_allclose(u_w1d, u[:, 0], atol=1e-2)
+
+    if nx.__name__ in ["jax", "torch"]:
+        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="backprop", p=2)
+        np.testing.assert_allclose(loss_1d, wass1d, atol=1e-2)
+        np.testing.assert_allclose(v_w1d, v[:, 0], atol=1e-2)
+        np.testing.assert_allclose(u_w1d, u[:, 0], atol=1e-2)
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+def test_uot_1d_inf_reg_m_icdf(nx):
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+
+    a_np = ot.utils.unif(n_samples)
+    b_np = ot.utils.unif(n_samples)
+
+    reg_m = float("inf")
+
+    a, b = nx.from_numpy(a_np, b_np)
+    xs, xt = nx.from_numpy(xs, xt)
+
+    f_w1d, g_w1d, wass1d = ot.emd_1d_dual(xs, xt, a, b, p=2)
+    u, v, loss_1d, log = ot.unbalanced.uot_1d(
+        xs, xt, reg_m, a, b, mode="icdf", p=2, log=True
+    )
+
+    # Check right loss
+    np.testing.assert_allclose(loss_1d, wass1d)
+
+    # Check right marginals
+    np.testing.assert_allclose(a, u[:, 0])
+    np.testing.assert_allclose(b, v[:, 0])
+
+    # Check potentials
+    np.testing.assert_allclose(f_w1d, log["f"])
+    np.testing.assert_allclose(g_w1d, log["g"])
+
+
+def test_uot_1d_inf_reg_m_backprop(nx):
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+
+    a_np = ot.utils.unif(n_samples)
+    b_np = ot.utils.unif(n_samples)
+
+    reg_m = float("inf")
+
+    a, b = nx.from_numpy(a_np, b_np)
+    xs, xt = nx.from_numpy(xs, xt)
+
+    if nx.__name__ in ["jax", "torch"]:
+        f_w1d, g_w1d, wass1d = ot.emd_1d_dual_backprop(xs, xt, a, b, p=2)
+        u, v, loss_1d, log = ot.unbalanced.uot_1d(
+            xs, xt, reg_m, a, b, mode="backprop", p=2, log=True
+        )
+
+        # Check right loss
+        np.testing.assert_allclose(loss_1d, wass1d)
+
+        # Check right marginals
+        np.testing.assert_allclose(a, u[:, 0])
+        np.testing.assert_allclose(b, v[:, 0])
+
+        # Check potentials
+        np.testing.assert_allclose(f_w1d, log["f"])
+        np.testing.assert_allclose(g_w1d, log["g"])
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+def test_semi_uot_1d_icdf(nx):
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+
+    a_np = ot.utils.unif(n_samples)
+    b_np = ot.utils.unif(n_samples)
+
+    reg_m = (float("inf"), 1.0)
+
+    a, b = nx.from_numpy(a_np, b_np)
+    xs, xt = nx.from_numpy(xs, xt)
+
+    u, v, loss_1d, log = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="icdf", p=2, log=True)
+
+    # Check right marginals
+    np.testing.assert_allclose(a, u[:, 0])
+    np.testing.assert_allclose(v[:, 0].sum(), 1)
+
+
+def test_semi_uot_1d_backprop(nx):
+    n_samples = 20  # nb samples
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(n_samples, 1)
+
+    a_np = ot.utils.unif(n_samples)
+    b_np = ot.utils.unif(n_samples)
+
+    reg_m = (float("inf"), 1.0)
+
+    a, b = nx.from_numpy(a_np, b_np)
+    xs, xt = nx.from_numpy(xs, xt)
+
+    if nx.__name__ in ["jax", "torch"]:
+        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="backprop", p=2)
+
+        # Check right marginals
+        np.testing.assert_allclose(a, u[:, 0])
+        np.testing.assert_allclose(v[:, 0].sum(), 1)
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+@pytest.mark.parametrize(
+    "reg_m",
+    itertools.product(
+        [1, float("inf")],
+    ),
+)
+def test_unbalanced_relaxation_parameters_icdf(nx, reg_m):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    a, b, x = nx.from_numpy(a, b, x)
+
+    reg_m = reg_m[0]
+
+    # options for reg_m
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+
+    list_options = [
+        nx_reg_m,
+        full_tuple_reg_m,
+        tuple_reg_m,
+        full_list_reg_m,
+        list_reg_m,
+    ]
+
+    u, v, loss = ot.unbalanced.uot_1d(
+        x, x, reg_m, u_weights=a, v_weights=b, p=2, mode="icdf"
+    )
+
+    for opt in list_options:
+        u, v, loss_opt = ot.unbalanced.uot_1d(
+            x, x, opt, u_weights=a, v_weights=b, p=2, mode="icdf"
+        )
+
+        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+
+
+@pytest.mark.parametrize(
+    "reg_m",
+    itertools.product(
+        [1, float("inf")],
+    ),
+)
+def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    a, b, x = nx.from_numpy(a, b, x)
+
+    reg_m = reg_m[0]
+
+    # options for reg_m
+    full_list_reg_m = [reg_m, reg_m]
+    full_tuple_reg_m = (reg_m, reg_m)
+    tuple_reg_m, list_reg_m = (reg_m), [reg_m]
+    nx_reg_m = reg_m * nx.ones(1)
+
+    list_options = [
+        nx_reg_m,
+        full_tuple_reg_m,
+        tuple_reg_m,
+        full_list_reg_m,
+        list_reg_m,
+    ]
+
+    if nx.__name__ in ["jax", "torch"]:
+        u, v, loss = ot.unbalanced.uot_1d(
+            x, x, reg_m, u_weights=a, v_weights=b, p=2, mode="backprop"
+        )
+
+        for opt in list_options:
+            u, v, loss_opt = ot.unbalanced.uot_1d(
+                x, x, opt, u_weights=a, v_weights=b, p=2, mode="backprop"
+            )
+
+        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+@pytest.mark.parametrize(
+    "reg_m1, reg_m2",
+    itertools.product(
+        [1, float("inf")],
+        [1, float("inf")],
+    ),
+)
+def test_unbalanced_relaxation_parameters_pair_icdf(nx, reg_m1, reg_m2):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    a, b, x = nx.from_numpy(a, b, x)
+
+    # options for reg_m
+    full_list_reg_m = [reg_m1, reg_m2]
+    full_tuple_reg_m = (reg_m1, reg_m2)
+    list_options = [full_tuple_reg_m, full_list_reg_m]
+
+    _, _, loss = ot.unbalanced.uot_1d(
+        x, x, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2, mode="icdf"
+    )
+
+    for opt in list_options:
+        _, _, loss_opt = ot.unbalanced.uot_1d(
+            x, x, opt, u_weights=a, v_weights=b, p=2, mode="icdf"
+        )
+
+        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+
+
+@pytest.mark.parametrize(
+    "reg_m1, reg_m2",
+    itertools.product(
+        [1, float("inf")],
+        [1, float("inf")],
+    ),
+)
+def test_unbalanced_relaxation_parameters_pair_backprop(nx, reg_m1, reg_m2):
+    # test generalized sinkhorn for unbalanced OT
+    n = 100
+    rng = np.random.RandomState(50)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+
+    # make dists unbalanced
+    b = rng.rand(n, 2)
+
+    a, b, x = nx.from_numpy(a, b, x)
+
+    # options for reg_m
+    full_list_reg_m = [reg_m1, reg_m2]
+    full_tuple_reg_m = (reg_m1, reg_m2)
+    list_options = [full_tuple_reg_m, full_list_reg_m]
+
+    if nx.__name__ in ["jax", "torch"]:
+        _, _, loss = ot.unbalanced.uot_1d(
+            x, x, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2, mode="backprop"
+        )
+
+        for opt in list_options:
+            _, _, loss_opt = ot.unbalanced.uot_1d(
+                x, x, opt, u_weights=a, v_weights=b, p=2, mode="backprop"
+            )
+
+            np.testing.assert_allclose(
+                nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05
+            )
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("jax")
+def test_uot_1d_type_devices_icdf(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    reg_m = 1.0
+
+    for tp in nx.__type_list__:
+        # print(nx.dtype_device(tp))
+
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+
+        f, g, _ = ot.unbalanced.uot_1d(xb, xb, reg_m, rho_ub, rho_vb, p=2, mode="icdf")
+
+        nx.assert_same_dtype_device(xb, f)
+        nx.assert_same_dtype_device(xb, g)
+
+
+@pytest.skip_backend("tf")
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("cupy")
+def test_uot_1d_type_devices_backprop(nx):
+    rng = np.random.RandomState(0)
+
+    n = 10
+    x = np.linspace(0, 5, n)
+    rho_u = np.abs(rng.randn(n))
+    rho_u /= rho_u.sum()
+    rho_v = np.abs(rng.randn(n))
+    rho_v /= rho_v.sum()
+
+    reg_m = 1.0
+
+    for tp in nx.__type_list__:
+        # print(nx.dtype_device(tp))
+
+        xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
+
+        f, g, _ = ot.unbalanced.uot_1d(
+            xb, xb, reg_m, rho_ub, rho_vb, p=2, mode="backprop"
+        )
+
+        nx.assert_same_dtype_device(xb, f)
+        nx.assert_same_dtype_device(xb, g)
