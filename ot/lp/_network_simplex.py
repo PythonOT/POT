@@ -50,7 +50,7 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
         Target dual potential
     a : (ns, ...) numpy.ndarray, float64
         Source histogram (uniform weight if empty list)
-    b : (nt, ....) numpy.ndarray, float64
+    b : (nt, ...) numpy.ndarray, float64
         Target histogram (uniform weight if empty list)
 
     Returns
