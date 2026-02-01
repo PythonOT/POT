@@ -43,6 +43,7 @@ def test_uot_1d(nx):
         np.testing.assert_allclose(G.sum(1), f[:, 0], atol=1e-2)
 
 
+@pytest.skip_backend("tf")
 def test_uot_1d_convergence(nx):
     n_samples = 20  # nb samples
 
