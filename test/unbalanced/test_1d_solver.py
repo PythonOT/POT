@@ -56,7 +56,7 @@ def test_uot_1d_convergence(nx):
     # wass1d = ot.wasserstein_1d(xs, xt, p=2)
     G_1d, log = ot.emd_1d(xs, xt, metric="sqeuclidean", log=True)
     wass1d = log["cost"]
-    u_w1d, v_w1d = G_1d.sum(1), G_1d.sum(0)
+    u_w1d, v_w1d = nx.sum(G_1d, 1), nx.sum(G_1d, 0)
 
     if nx.__name__ != "jax":
         u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, mode="icdf", p=2)
