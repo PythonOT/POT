@@ -9,6 +9,7 @@ using a Kullback-Leibler relaxation.
 """
 
 # Author: Hicham Janati <hicham.janati@inria.fr>
+#         Clément Bonet <clemebt.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
@@ -63,34 +64,10 @@ ot.plot.plot1D_mat(a, b, M, "Cost matrix M")
 
 
 ##############################################################################
-# Solve Unbalanced Sinkhorn
-# -------------------------
-
-# Sinkhorn
-
-epsilon = 0.1  # entropy parameter
-alpha = 1.0  # Unbalanced KL relaxation parameter
-Gs = ot.unbalanced.sinkhorn_unbalanced(a, b, M / M.max(), epsilon, alpha, verbose=True)
-
-pl.figure(3, figsize=(5, 5))
-ot.plot.plot1D_mat(a, b, Gs, "UOT matrix Sinkhorn")
-pl.show()
-
-pl.figure(4, figsize=(6.4, 3))
-pl.plot(x, a, "b", label="Source distribution")
-pl.plot(x, b, "r", label="Target distribution")
-pl.fill(x, Gs.sum(1), "b", alpha=0.5, label="Transported source")
-pl.fill(x, Gs.sum(0), "r", alpha=0.5, label="Transported target")
-pl.legend(loc="upper right")
-pl.title("Distributions and transported mass for UOT")
-pl.show()
-
-print("Mass of reweighted marginals:", Gs.sum())
-
-
-##############################################################################
 # Solve Unbalanced OT with MM Unbalanced
 # -----------------------------------
+
+# %% MM Unbalanced
 
 alpha = 1.0  # Unbalanced KL relaxation parameter
 
@@ -111,6 +88,9 @@ print("Mass of reweighted marginals:", Gs.sum())
 ##############################################################################
 # Solve 1D UOT with Frank-Wolfe
 # -----------------------------
+
+# %% 1D UOT with FW
+
 
 alpha = M.max()  # Unbalanced KL relaxation parameter
 
@@ -133,6 +113,10 @@ print("Mass of reweighted marginals:", a_reweighted.sum())
 ##############################################################################
 # Solve 1D UOT with Frank-Wolfe (backprop mode)
 # -----------------------------
+
+
+# %% 1D UOT with FW (backprop mode)
+
 
 alpha = M.max()  # Unbalanced KL relaxation parameter
 
@@ -159,8 +143,11 @@ print("Mass of reweighted marginals:", a_reweighted.sum())
 
 
 ##############################################################################
-# Solve 1D UOT with Frank-Wolfe with UOT (TO CHECK)
+# Solve 1D USOT with Frank-Wolfe with UOT (TO CHECK)
 # -----------------------------
+
+# %% TEST USOT
+
 
 alpha = M.max()  # Unbalanced KL relaxation parameter
 
@@ -194,6 +181,9 @@ print("Mass of reweighted marginals:", a_reweighted.sum())
 # Solve Unbalanced OT with cvxpy
 # ------------------------------
 
+# %% UOT with cvxpy
+
+
 # (https://colab.research.google.com/github/gpeyre/ot4ml/blob/main/python/5-unbalanced.ipynb)
 
 alpha = M.max()  # Unbalanced KL relaxation parameter
@@ -222,6 +212,34 @@ pl.plot(x, a, "b", label="Source distribution")
 pl.plot(x, b, "r", label="Target distribution")
 pl.fill(x, G.sum(1), "b", alpha=0.5, label="Transported source")
 pl.fill(x, G.sum(0), "r", alpha=0.5, label="Transported target")
+pl.legend(loc="upper right")
+pl.title("Distributions and transported mass for UOT")
+pl.show()
+
+print("Mass of reweighted marginals:", Gs.sum())
+
+
+##############################################################################
+# Solve Unbalanced Sinkhorn
+# -------------------------
+
+# %% Sinkhorn UOT
+
+# Sinkhorn
+
+epsilon = 0.1  # entropy parameter
+alpha = 1.0  # Unbalanced KL relaxation parameter
+Gs = ot.unbalanced.sinkhorn_unbalanced(a, b, M / M.max(), epsilon, alpha, verbose=True)
+
+pl.figure(3, figsize=(5, 5))
+ot.plot.plot1D_mat(a, b, Gs, "UOT matrix Sinkhorn")
+pl.show()
+
+pl.figure(4, figsize=(6.4, 3))
+pl.plot(x, a, "b", label="Source distribution")
+pl.plot(x, b, "r", label="Target distribution")
+pl.fill(x, Gs.sum(1), "b", alpha=0.5, label="Transported source")
+pl.fill(x, Gs.sum(0), "r", alpha=0.5, label="Transported target")
 pl.legend(loc="upper right")
 pl.title("Distributions and transported mass for UOT")
 pl.show()

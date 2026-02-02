@@ -499,7 +499,9 @@ def emd_1d_dual(
     mask_u = u_index[1:, ...] - u_index[:-1, ...]
     mask_u = nx.zero_pad(mask_u, pad_width=[(1, 0)] + (mask_u.ndim - 1) * [(0, 0)])
     mask_v = v_index[1:, ...] - v_index[:-1, ...]
-    mask_v = nx.zero_pad(mask_v, pad_width=[(1, 0)] + (mask_v.ndim - 1) * [(0, 0)])
+    mask_v = nx.zero_pad(
+        mask_v, pad_width=[(1, 0)] + (mask_v.ndim - 1) * [(0, 0)], value=1
+    )
 
     c1 = nx.where((mask_u[:-1, ...] + mask_u[1:, ...]) > 1, -1, 0)
     c1 = nx.cumsum(c1 * diff_dist[:-1, ...], axis=0)

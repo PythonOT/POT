@@ -94,6 +94,8 @@ def test_uot_1d_inf_reg_m_icdf(nx):
         xs, xt, reg_m, a, b, mode="icdf", p=2, log=True
     )
 
+    print("ICDF", loss_1d)
+
     # Check right loss
     np.testing.assert_allclose(loss_1d, wass1d)
 
@@ -126,6 +128,8 @@ def test_uot_1d_inf_reg_m_backprop(nx):
         u, v, loss_1d, log = ot.unbalanced.uot_1d(
             xs, xt, reg_m, a, b, mode="backprop", p=2, log=True
         )
+
+        print("Backprop", loss_1d)
 
         # Check right loss
         np.testing.assert_allclose(loss_1d, wass1d)
