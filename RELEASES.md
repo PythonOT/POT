@@ -20,6 +20,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 - Fix openmp flags on macOS (PR #789)
 - Clean documentation (PR #787)
+- Fix code coverage (PR #791)
 
 
 ## 0.9.6.post1
