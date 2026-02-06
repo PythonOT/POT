@@ -58,6 +58,41 @@ def test_uot_1d_convergence(nx):
         np.testing.assert_allclose(u_w1d, u[:, 0], atol=1e-2)
 
 
+def test_uot_1d_batch(nx):
+    n_samples = 20  # nb samples
+    m_samples = 30
+
+    rng = np.random.RandomState(42)
+    xs = rng.randn(n_samples, 1)
+    xt = rng.randn(m_samples, 1)
+    xs = np.concatenate([xs, xs], axis=1)
+    xt = np.concatenate([xt, xt], axis=1)
+
+    a_np = rng.uniform(0, 1, n_samples)  # unbalanced
+    b_np = ot.utils.unif(m_samples)
+
+    xs, xt, a, b = nx.from_numpy(xs, xt, a_np, b_np)
+
+    reg_m = 1
+
+    if nx.__name__ in ["jax", "torch"]:
+        u1, v1, uot_1d = ot.unbalanced.uot_1d(xs[:, 0], xt[:, 0], reg_m, a, b, p=2)
+        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2)
+
+        np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
+        np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
+
+        u1, v1, uot_1d = ot.unbalanced.uot_1d(
+            xs[:, 0], xt[:, 0], reg_m, a, b, p=2, returnCost="total"
+        )
+        u, v, loss_1d = ot.unbalanced.uot_1d(
+            xs, xt, reg_m, a, b, p=2, returnCost="total"
+        )
+
+        np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
+        np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
+
+
 def test_uot_1d_inf_reg_m_backprop(nx):
     n_samples = 20  # nb samples
 

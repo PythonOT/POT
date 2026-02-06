@@ -56,7 +56,9 @@ from .unbalanced import (
     sinkhorn_unbalanced,
     barycenter_unbalanced,
     sinkhorn_unbalanced2,
+    uot_1d,
     unbalanced_sliced_ot,
+    sliced_unbalanced_ot,
 )
 from .da import sinkhorn_lpl1_mm
 from .sliced import (
@@ -118,7 +120,9 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "uot_1d",
     "unbalanced_sliced_ot",
+    "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",

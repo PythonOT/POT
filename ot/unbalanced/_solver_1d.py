@@ -9,7 +9,7 @@
 
 from ..backend import get_backend
 from ..utils import get_parameter_pair
-from ..lp.solver_1d import emd_1d_dual_backprop
+from ..lp.solver_1d import emd_1d_dual_backprop, wasserstein_1d
 
 
 def rescale_potentials(f, g, a, b, rho1, rho2, nx):
@@ -67,6 +67,35 @@ def rescale_potentials(f, g, a, b, rho1, rho2, nx):
     transl = tau * (num - denom)
 
     return transl
+
+
+def get_reweighted_marginal_uot(
+    f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
+):
+    transl = rescale_potentials(
+        f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
+    )
+
+    f = f + transl[None]
+    g = g - transl[None]
+
+    if reg_m1 != float("inf"):
+        u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
+    else:
+        u_reweighted = u_weights_sorted
+
+    if reg_m2 != float("inf"):
+        v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
+    else:
+        v_reweighted = v_weights_sorted
+
+    full_mass = nx.sum(u_reweighted, axis=0)
+
+    # Normalize weights
+    u_rescaled = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
+    v_rescaled = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
+
+    return f, g, u_rescaled, v_rescaled, full_mass
 
 
 def uot_1d(
@@ -181,28 +210,10 @@ def uot_1d(
     gd = nx.zeros(v_weights.shape, type_as=v_weights)
 
     for i in range(numItermax):
-        transl = rescale_potentials(
+        # FW steps
+        f, g, u_rescaled, v_rescaled, _ = get_reweighted_marginal_uot(
             f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
         )
-
-        f = f + transl[None]
-        g = g - transl[None]
-
-        if reg_m1 != float("inf"):
-            u_reweighted = u_weights_sorted * nx.exp(-f / reg_m1)
-        else:
-            u_reweighted = u_weights_sorted
-
-        if reg_m2 != float("inf"):
-            v_reweighted = v_weights_sorted * nx.exp(-g / reg_m2)
-        else:
-            v_reweighted = v_weights_sorted
-
-        full_mass = nx.sum(u_reweighted, axis=0)
-
-        # Normalize weights
-        u_rescaled = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
-        v_rescaled = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
 
         fd, gd, loss = emd_1d_dual_backprop(
             u_values_sorted,
@@ -217,11 +228,24 @@ def uot_1d(
         f = f + t * (fd - f)
         g = g + t * (gd - g)
 
+    f, g, u_rescaled, v_rescaled, full_mass = get_reweighted_marginal_uot(
+        f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
+    )
+
+    loss = wasserstein_1d(
+        u_values_sorted,
+        v_values_sorted,
+        u_rescaled,
+        v_rescaled,
+        p=p,
+        require_sort=False,
+    )
+
     if require_sort:
         f = nx.take_along_axis(f, u_rev_sorter, 0)
         g = nx.take_along_axis(g, v_rev_sorter, 0)
-        u_reweighted = nx.take_along_axis(u_reweighted, u_rev_sorter, 0)
-        v_reweighted = nx.take_along_axis(v_reweighted, v_rev_sorter, 0)
+        u_reweighted = nx.take_along_axis(u_rescaled, u_rev_sorter, 0) * full_mass
+        v_reweighted = nx.take_along_axis(v_rescaled, v_rev_sorter, 0) * full_mass
 
     # rescale OT loss
     linear_loss = loss * full_mass
@@ -235,8 +259,8 @@ def uot_1d(
     else:
         uot_loss = (
             linear_loss
-            + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True)
-            + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True)
+            + reg_m1 * nx.kl_div(u_reweighted, u_weights, mass=True, axis=0)
+            + reg_m2 * nx.kl_div(v_reweighted, v_weights, mass=True, axis=0)
         )
 
     if returnCost == "linear":

@@ -1015,7 +1015,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
         r"""
         Computes the (Generalized) Kullback-Leibler divergence.
 
@@ -1479,10 +1479,10 @@ class NumpyBackend(Backend):
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = np.sum(p * np.log(p / q + eps), axis=axis)
         if mass:
-            value = value + np.sum(q - p)
+            value = value + np.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -1924,10 +1924,10 @@ class JaxBackend(Backend):
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = jnp.sum(p * jnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + jnp.sum(q - p)
+            value = value + jnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2525,10 +2525,10 @@ class TorchBackend(Backend):
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = torch.sum(p * torch.log(p / q + eps), axis=axis)
         if mass:
-            value = value + torch.sum(q - p)
+            value = value + torch.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2957,10 +2957,10 @@ class CupyBackend(Backend):  # pragma: no cover
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = cp.sum(p * cp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + cp.sum(q - p)
+            value = value + cp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -3424,10 +3424,10 @@ class TensorflowBackend(Backend):
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = tnp.sum(p * tnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + tnp.sum(q - p)
+            value = value + tnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):

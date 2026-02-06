@@ -28,9 +28,14 @@ def sliced_unbalanced_ot(
     log=False,
 ):
     r"""
-    Compute SUOT
+    Compute the Sliced Unbalanced Optimal Transport (SUOT) between two empirical distributions.
+    The 1D UOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
 
-    TODO
+    The Sliced Unbalanced Optimal Transport (SUOT) is defined as
+    .. math:
+        \mathrm{SUOT}(\mu, \nu) = \int_{S^{d-1}} \mathrm{UOT}(P^\theta_\#\mu, P^\theta_\#\nu)\ \mathrm{d}\lambda(\theta)
+
+    with :math:`P^\theta(x)=\langle x,\theta\rangle` and :math:`\lambda` the uniform distribution on the unit sphere.
 
     This function only works in pytorch or jax.
 
@@ -125,13 +130,14 @@ def sliced_unbalanced_ot(
         p,
         require_sort=True,
         numItermax=numItermax,
+        returnCost="total",
     )
 
-    res = nx.mean(projected_uot) ** (1.0 / p)
+    res = nx.mean(projected_uot)
 
     if log:
         dico = {
-            "projection": projections,
+            "projections": projections,
             "projected_uots": projected_uot,
             "a_reweighted": a_reweighted,
             "b_reweighted": b_reweighted,
@@ -139,6 +145,74 @@ def sliced_unbalanced_ot(
         return res, dico
 
     return res
+
+
+def get_reweighted_marginals_usot(
+    f, g, a, b, reg_m1, reg_m2, X_s_sorter, X_t_sorter, nx
+):
+    r"""
+    One step of the FW algorithm for the Unbalanced Sliced OT problem.
+    This function computes the reweighted marginals given the current potentials and the translation term.
+    It returns the current potentials, and the reweighted marginals (normalized by the mass, so that they sum to 1).
+
+    Parameters
+    ----------
+    f: array-like shape (n, ...)
+        Current potential on the source samples
+    g: array-like shape (m, ...)
+        Current potential on the target samples
+    a: array-like shape (n, ...)
+        Current weights on the source samples
+    b: array-like shape (m, ...)
+        Current weights on the target samples
+    reg_m1: float
+        Marginal relaxation term for the source distribution
+    reg_m2: float
+        Marginal relaxation term for the target distribution
+    X_s_sorter: array-like shape (n_projs, n)
+        Sorter for the projected source samples
+    X_t_sorter: array-like shape (n_projs, m)
+        Sorter for the projected target samples
+    nx: module
+        backend module
+
+    Returns
+    -------
+    f: array-like shape (n, ...)
+        Current potential on the source samples
+    g: array-like shape (m, ...)
+        Current potential on the target samples
+    a_reweighted: array-like shape (n, ...)
+        Reweighted weights on the source samples (normalized by the mass)
+    b_reweighted: array-like shape (m, ...)
+        Reweighted weights on the target samples (normalized by the mass)
+    full_mass: array-like shape (...)
+        Mass of the reweighted measures
+    """
+    # translate potentials
+    transl = rescale_potentials(f, g, a, b, reg_m1, reg_m2, nx)
+
+    f = f + transl
+    g = g - transl
+
+    # update measures
+    if reg_m1 != float("inf"):
+        a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
+    else:
+        a_reweighted = a[..., X_s_sorter]
+
+    if reg_m2 != float("inf"):
+        b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
+    else:
+        b_reweighted = b[..., X_t_sorter]
+
+    full_mass = nx.sum(a_reweighted, axis=1)
+
+    # normalize the weights for compatibility with wasserstein_1d
+    a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
+    b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
+
+    return f, g, a_reweighted, b_reweighted, full_mass
 
 
 def unbalanced_sliced_ot(
@@ -152,14 +226,16 @@ def unbalanced_sliced_ot(
     projections=None,
     seed=None,
     numItermax=10,
-    mode="backprop",
     stochastic_proj=False,
     log=False,
 ):
     r"""
-    Compute USOT
+    Compute the Unbalanced Sliced Optimal Transpot (USOT) between two empirical distributions.
+    The USOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
 
-    TODO
+    The Unbalanced SOT problem reads as
+    .. math:
+        \mathrm{USOT}(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_2^2(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
 
     This function only works in pytorch or jax.
 
@@ -192,9 +268,6 @@ def unbalanced_sliced_ot(
     seed: int or RandomState or None, optional
         Seed used for random number generator
     numItermax: int, optional
-    mode: str, optional
-        "icdf" for inverse CDF, "backprop" for backpropagation mode.
-        Default is "icdf".
     stochastic_proj: bool, default False
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
@@ -210,8 +283,8 @@ def unbalanced_sliced_ot(
 
     References
     ----------
-    [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
-    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
+    .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+       Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -269,13 +342,6 @@ def unbalanced_sliced_ot(
     g = nx.zeros(b.shape, type_as=b)
 
     for i in range(numItermax):
-        # Output FW descent direction
-        # translate potentials
-        transl = rescale_potentials(f, g, a, b, reg_m1, reg_m2, nx)
-
-        f = f + transl
-        g = g - transl
-
         # If stochastic version then sample new directions and re-sort data
         # TODO: add functions to sample and project
         if stochastic_proj:
@@ -294,17 +360,11 @@ def unbalanced_sliced_ot(
             X_t_rev_sorter = nx.argsort(X_t_sorter, -1)
             X_t_sorted = nx.take_along_axis(X_t_projections, X_t_sorter, -1)
 
-        # update measures
-        a_reweighted = (a * nx.exp(-f / reg_m1))[..., X_s_sorter]
-        b_reweighted = (b * nx.exp(-g / reg_m2))[..., X_t_sorter]
+        f, g, a_reweighted, b_reweighted, _ = get_reweighted_marginals_usot(
+            f, g, a, b, reg_m1, reg_m2, X_s_sorter, X_t_sorter, nx
+        )
 
-        full_mass = nx.sum(a_reweighted, axis=1)
-
-        # normalize the weights for compatibility with wasserstein_1d
-        a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
-        b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
-
-        fd, gd, loss = emd_1d_dual_backprop(
+        fd, gd, _ = emd_1d_dual_backprop(
             X_s_sorted.T,
             X_t_sorted.T,
             u_weights=a_reweighted.T,
@@ -320,25 +380,51 @@ def unbalanced_sliced_ot(
         f = f + t * (nx.mean(nx.take_along_axis(fd, X_s_rev_sorter, 1), axis=0) - f)
         g = g + t * (nx.mean(nx.take_along_axis(gd, X_t_rev_sorter, 1), axis=0) - g)
 
+    f, g, a_reweighted, b_reweighted, full_mass = get_reweighted_marginals_usot(
+        f, g, a, b, reg_m1, reg_m2, X_s_sorter, X_t_sorter, nx
+    )
+
     ot_loss = wasserstein_1d(
-        X_s_sorted,
-        X_t_sorted,
+        X_s_sorted.T,
+        X_t_sorted.T,
         u_weights=a_reweighted.T,
         v_weights=b_reweighted.T,
         p=p,
         require_sort=False,
     )
+
     sot_loss = nx.mean(ot_loss * full_mass)
 
-    a_reweighted, b_reweighted = a * nx.exp(-f / reg_m1), b * nx.exp(-g / reg_m2)
+    if reg_m1 != float("inf"):
+        a_reweighted = a * nx.exp(-f / reg_m1)
+    else:
+        a_reweighted = a
 
-    uot_loss = (
-        sot_loss
-        + reg_m1 * nx.kl_div(a_reweighted, a, mass=True)
-        + reg_m2 * nx.kl_div(b_reweighted, b, mass=True)
-    )
+    if reg_m2 != float("inf"):
+        b_reweighted = b * nx.exp(-g / reg_m2)
+    else:
+        b_reweighted = b
+
+    if reg_m1 == float("inf") and reg_m2 == float("inf"):
+        uot_loss = sot_loss
+    elif reg_m1 == float("inf"):
+        uot_loss = sot_loss + reg_m2 * nx.kl_div(b_reweighted, b, mass=True)
+    elif reg_m2 == float("inf"):
+        uot_loss = sot_loss + reg_m1 * nx.kl_div(a_reweighted, a, mass=True)
+    else:
+        uot_loss = (
+            sot_loss
+            + reg_m1 * nx.kl_div(a_reweighted, a, mass=True)
+            + reg_m2 * nx.kl_div(b_reweighted, b, mass=True)
+        )
 
     if log:
-        return a_reweighted, b_reweighted, uot_loss, {"projections": projections}
+        dico = {
+            "projections": projections,
+            "sot_loss": sot_loss,
+            "1d_losses": ot_loss,
+            "full_mass": full_mass,
+        }
+        return a_reweighted, b_reweighted, uot_loss, dico
 
     return a_reweighted, b_reweighted, uot_loss
