@@ -219,7 +219,7 @@ def test_emd1d_device_tf():
         assert nx.dtype_device(emd)[1].startswith("GPU")
 
 
-def test_emd1d_dual_with_weights():
+def test_emd1d_dual_with_weights(nx):
     # test emd1d_dual gives similar results as emd
     n = 20
     m = 30
@@ -233,36 +233,18 @@ def test_emd1d_dual_with_weights():
     w_v = rng.uniform(0.0, 1.0, m)
     w_v = w_v / w_v.sum()
 
-    M = ot.dist(u, v, metric="sqeuclidean")
+    u, v, w_u, w_v = nx.from_numpy(u, v, w_u, w_v)
 
+    M = ot.dist(u, v, metric="sqeuclidean")
     G, log = ot.emd(w_u, w_v, M, log=True)
     wass = log["cost"]
 
-    f, g, wass1d = ot.emd_1d_dual(u, v, w_u, w_v, p=2)
+    if nx.__name__ in ["torch", "jax"]:
+        f, g, wass1d = ot.emd_1d_dual_backprop(u, v, w_u, w_v, p=2)
 
-    # check loss is similar
-    np.testing.assert_allclose(wass, wass1d)
-    np.testing.assert_allclose(wass, np.sum(f[:, 0] * w_u) + np.sum(g[:, 0] * w_v))
-
-
-@pytest.skip_backend("tf")
-@pytest.skip_backend("jax")
-def test_emd1d_dual_batch(nx):
-    rng = np.random.RandomState(0)
-
-    n = 100
-    x = np.linspace(0, 5, n)
-    rho_u = np.abs(rng.randn(n))
-    rho_u /= rho_u.sum()
-    rho_v = np.abs(rng.randn(n))
-    rho_v /= rho_v.sum()
-
-    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
-
-    X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
-    Xb = nx.from_numpy(X)
-    f, g, res = ot.emd_1d_dual(Xb, Xb, rho_ub, rho_vb, p=2)
-    np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
+        # check loss is similar
+        np.testing.assert_allclose(wass, wass1d)
+        np.testing.assert_allclose(wass, nx.sum(f[:, 0] * w_u) + nx.sum(g[:, 0] * w_v))
 
 
 def test_emd1d_dual_backprop_batch(nx):
@@ -294,7 +276,6 @@ def test_emd1d_dual_backprop_batch(nx):
         )
 
 
-@pytest.skip_backend("tf")
 def test_emd1d_dual_type_devices(nx):
     rng = np.random.RandomState(0)
 
@@ -308,11 +289,6 @@ def test_emd1d_dual_type_devices(nx):
     for tp in nx.__type_list__:
         # print(nx.dtype_device(tp))
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
-        f, g, res = ot.emd_1d_dual(xb, xb, rho_ub, rho_vb, p=1)
-        nx.assert_same_dtype_device(xb, res)
-        nx.assert_same_dtype_device(xb, f)
-        nx.assert_same_dtype_device(xb, g)
-
         if nx.__name__ == "torch" or nx.__name__ == "jax":
             f, g, res = ot.emd_1d_dual_backprop(xb, xb, rho_ub, rho_vb, p=1)
             nx.assert_same_dtype_device(xb, res)

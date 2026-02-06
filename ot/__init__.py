@@ -44,7 +44,6 @@ from .lp import (
     emd2_lazy,
     emd_1d,
     emd2_1d,
-    emd_1d_dual,
     emd_1d_dual_backprop,
     wasserstein_1d,
     binary_search_circle,

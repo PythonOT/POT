@@ -9,7 +9,7 @@
 
 from ..backend import get_backend
 from ..utils import get_parameter_pair
-from ..lp.solver_1d import emd_1d_dual, emd_1d_dual_backprop
+from ..lp.solver_1d import emd_1d_dual_backprop
 
 
 def rescale_potentials(f, g, a, b, rho1, rho2, nx):
@@ -78,7 +78,6 @@ def uot_1d(
     p=2,
     require_sort=True,
     numItermax=10,
-    mode="icdf",
     returnCost="linear",
     log=False,
 ):
@@ -91,7 +90,7 @@ def uot_1d(
     .. math:
         \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
 
-    The mode "backprop" should be preferred, but is available only with backends supporting automatic differentiation (torch and jax)
+    This function only works in pytorch or jax.
 
     Parameters
     ----------
@@ -119,9 +118,6 @@ def uot_1d(
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
     numItermax: int, optional
-    mode: str, optional
-        "icdf" for inverse CDF, "backprop" for backpropagation mode.
-        Default is "icdf".
     returnCost: string, optional (default = "linear")
         If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
         If `returnCost` = "total", then return the total unbalanced OT loss.
@@ -143,12 +139,12 @@ def uot_1d(
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
-    assert mode in ["backprop", "icdf"]
-
     if u_weights is not None and v_weights is not None:
         nx = get_backend(u_values, v_values, u_weights, v_weights)
     else:
         nx = get_backend(u_values, v_values)
+
+    assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -208,26 +204,14 @@ def uot_1d(
         u_rescaled = u_reweighted / nx.sum(u_reweighted, axis=0, keepdims=True)
         v_rescaled = v_reweighted / nx.sum(v_reweighted, axis=0, keepdims=True)
 
-        # print(i, fd)
-
-        if mode == "icdf":
-            fd, gd, loss = emd_1d_dual(
-                u_values_sorted,
-                v_values_sorted,
-                u_weights=u_rescaled,
-                v_weights=v_rescaled,
-                p=p,
-                require_sort=False,
-            )
-        elif mode == "backprop":
-            fd, gd, loss = emd_1d_dual_backprop(
-                u_values_sorted,
-                v_values_sorted,
-                u_weights=u_rescaled,
-                v_weights=v_rescaled,
-                p=p,
-                require_sort=False,
-            )
+        fd, gd, loss = emd_1d_dual_backprop(
+            u_values_sorted,
+            v_values_sorted,
+            u_weights=u_rescaled,
+            v_weights=v_rescaled,
+            p=p,
+            require_sort=False,
+        )
 
         t = 2.0 / (2.0 + i)
         f = f + t * (fd - f)

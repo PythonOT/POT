@@ -11,7 +11,7 @@ from ..backend import get_backend
 from ..utils import get_parameter_pair, list_to_array
 from ..sliced import get_random_projections
 from ._solver_1d import rescale_potentials, uot_1d
-from ..lp.solver_1d import emd_1d_dual, emd_1d_dual_backprop, wasserstein_1d
+from ..lp.solver_1d import emd_1d_dual_backprop, wasserstein_1d
 
 
 def sliced_unbalanced_ot(
@@ -25,13 +25,14 @@ def sliced_unbalanced_ot(
     projections=None,
     seed=None,
     numItermax=10,
-    mode="backprop",
     log=False,
 ):
     r"""
     Compute SUOT
 
     TODO
+
+    This function only works in pytorch or jax.
 
     Parameters
     ----------
@@ -62,9 +63,6 @@ def sliced_unbalanced_ot(
     seed: int or RandomState or None, optional
         Seed used for random number generator
     numItermax: int, optional
-    mode: str, optional
-        "icdf" for inverse CDF, "backprop" for backpropagation mode.
-        Default is "icdf".
     log: bool, optional
         if True, returns the projections used and their associated UOTs and reweighted marginals.
 
@@ -78,8 +76,6 @@ def sliced_unbalanced_ot(
     [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
     Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
     """
-    assert mode in ["backprop", "icdf"]
-
     X_s, X_t = list_to_array(X_s, X_t)
 
     if a is not None and b is not None and projections is None:
@@ -90,6 +86,8 @@ def sliced_unbalanced_ot(
         nx = get_backend(X_s, X_t, projections)
     else:
         nx = get_backend(X_s, X_t)
+
+    assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -126,7 +124,6 @@ def sliced_unbalanced_ot(
         b,
         p,
         require_sort=True,
-        mode=mode,
         numItermax=numItermax,
     )
 
@@ -163,6 +160,8 @@ def unbalanced_sliced_ot(
     Compute USOT
 
     TODO
+
+    This function only works in pytorch or jax.
 
     Parameters
     ----------
@@ -214,8 +213,6 @@ def unbalanced_sliced_ot(
     [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
     Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
     """
-    assert mode in ["backprop", "icdf"]
-
     X_s, X_t = list_to_array(X_s, X_t)
 
     if a is not None and b is not None and projections is None:
@@ -226,6 +223,8 @@ def unbalanced_sliced_ot(
         nx = get_backend(X_s, X_t, projections)
     else:
         nx = get_backend(X_s, X_t)
+
+    assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -305,28 +304,15 @@ def unbalanced_sliced_ot(
         a_reweighted = a_reweighted / nx.sum(a_reweighted, axis=1, keepdims=True)
         b_reweighted = b_reweighted / nx.sum(b_reweighted, axis=1, keepdims=True)
 
-        # solve for new potentials
-        if mode == "icdf":
-            fd, gd, loss = emd_1d_dual(
-                X_s_sorted.T,
-                X_t_sorted.T,
-                u_weights=a_reweighted.T,
-                v_weights=b_reweighted.T,
-                p=p,
-                require_sort=False,
-            )
-            fd, gd = fd.T, gd.T
-
-        elif mode == "backprop":
-            fd, gd, loss = emd_1d_dual_backprop(
-                X_s_sorted.T,
-                X_t_sorted.T,
-                u_weights=a_reweighted.T,
-                v_weights=b_reweighted.T,
-                p=p,
-                require_sort=False,
-            )
-            fd, gd = fd.T, gd.T
+        fd, gd, loss = emd_1d_dual_backprop(
+            X_s_sorted.T,
+            X_t_sorted.T,
+            u_weights=a_reweighted.T,
+            v_weights=b_reweighted.T,
+            p=p,
+            require_sort=False,
+        )
+        fd, gd = fd.T, gd.T
 
         # default step for FW
         t = 2.0 / (2.0 + i)

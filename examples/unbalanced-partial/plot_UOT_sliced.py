@@ -115,7 +115,6 @@ _, log = ot.unbalanced.sliced_unbalanced_ot(
     p,
     numItermax=10,
     projections=dir_torch.T,
-    mode="backprop",
     log=True,
 )
 A_SUOT, B_SUOT = log["a_reweighted"].T, log["b_reweighted"].T
@@ -133,7 +132,6 @@ A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
     p,
     numItermax=10,
     projections=dir_torch.T,
-    mode="backprop",
 )
 
 

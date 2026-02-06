@@ -26,7 +26,6 @@ from .solver_1d import (
     emd_1d,
     emd2_1d,
     wasserstein_1d,
-    emd_1d_dual,
     emd_1d_dual_backprop,
 )
 
