@@ -507,6 +507,11 @@ def emd_1d_dual_backprop(
             ).sum()
 
         f, g = jax.grad(ot_1d, argnums=[0, 1])(u_weights, v_weights)
+
+        C = nx.sum(f * u_weights, axis=0, keepdims=True)
+        f = f - C
+        g = g + C
+
         cost_output = wasserstein_1d(
             u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort
         )
