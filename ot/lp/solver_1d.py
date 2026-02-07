@@ -501,16 +501,14 @@ def emd_1d_dual_backprop(
     elif nx.__name__ == "jax":
         import jax
 
+        jax.config.update("jax_enable_x64", True)
+
         def ot_1d(a, b):
             return wasserstein_1d(
                 u_values, v_values, a, b, p=p, require_sort=require_sort
             ).sum()
 
         f, g = jax.grad(ot_1d, argnums=[0, 1])(u_weights, v_weights)
-
-        C = nx.sum(f * u_weights, axis=0, keepdims=True)
-        f = f - C
-        g = g + C
 
         cost_output = wasserstein_1d(
             u_values, v_values, u_weights, v_weights, p=p, require_sort=require_sort

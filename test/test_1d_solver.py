@@ -251,13 +251,13 @@ def test_emd1d_dual_backprop_batch(nx):
     rng = np.random.RandomState(0)
 
     n = 100
-    x = np.linspace(0, 5, n)
+
     rho_u = np.abs(rng.randn(n))
     rho_u /= rho_u.sum()
     rho_v = np.abs(rng.randn(n))
     rho_v /= rho_v.sum()
 
-    xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v)
+    rho_ub, rho_vb = nx.from_numpy(rho_u, rho_v)
 
     X = np.stack((np.linspace(0, 5, n), np.linspace(0, 5, n) * 10), -1)
     Xb = nx.from_numpy(X)
