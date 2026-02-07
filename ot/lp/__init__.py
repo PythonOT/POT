@@ -26,6 +26,10 @@ from .solver_1d import (
     emd_1d,
     emd2_1d,
     wasserstein_1d,
+    emd_1d_dual_backprop,
+)
+
+from .solver_circle import (
     binary_search_circle,
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
@@ -43,6 +47,8 @@ __all__ = [
     "emd_1d",
     "emd2_1d",
     "wasserstein_1d",
+    "emd_1d_dual",
+    "emd_1d_dual_backprop",
     "generalized_free_support_barycenter",
     "binary_search_circle",
     "wasserstein_circle",
