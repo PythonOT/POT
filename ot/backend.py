@@ -129,6 +129,21 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
             4,
             24,
         )
+
+        @jax.custom_jvp
+        def norm_1d_jax(z):
+            return jnp.abs(z)
+
+        @norm_1d_jax.defjvp
+        def norm_1d_jax_jvp(primals, tangents):
+            (z,) = primals
+            z_is_zero = jnp.all(jnp.logical_not(z))
+            clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
+            primals, tangents = jax.jvp(
+                functools.partial(jnp.abs), (clean_z,), tangents
+            )
+            return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
+
     except ImportError:
         jax = False
         jax_type = float
@@ -1562,20 +1577,6 @@ class NumpyBackend(Backend):
 
 
 _register_backend_implementation(NumpyBackend)
-
-
-@jax.custom_jvp
-def norm_1d_jax(z):
-    return jnp.abs(z)
-
-
-@norm_1d_jax.defjvp
-def norm_1d_jax_jvp(primals, tangents):
-    (z,) = primals
-    z_is_zero = jnp.all(jnp.logical_not(z))
-    clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
-    primals, tangents = jax.jvp(functools.partial(jnp.abs), (clean_z,), tangents)
-    return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
 
 
 class JaxBackend(Backend):
