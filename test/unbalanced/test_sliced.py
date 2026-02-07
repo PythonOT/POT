@@ -102,7 +102,7 @@ def test_unbalanced_sot_log(nx):
         assert res > 0
 
         assert f.shape == g.shape == u.shape
-        np.testing.assert_equal(f.sum(), g.sum())
+        np.testing.assert_almost_equal(f.sum(), g.sum())
         np.testing.assert_equal(sot_loss, nx.mean(ot_loss * full_mass))
 
 

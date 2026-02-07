@@ -72,6 +72,41 @@ def rescale_potentials(f, g, a, b, rho1, rho2, nx):
 def get_reweighted_marginal_uot(
     f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
 ):
+    r"""
+    One step of the FW algorithm for the 1D UOT problem with KL regularization.
+    This function computes the reweighted marginals given the current dual potentials.
+    It returns the current potentials, and the reweighted marginals (normalized by the mass so that they sum to 1).
+
+    Parameters
+    ----------
+    f: array-like, shape (n, ...)
+        first dual potential
+    g: array-like, shape (m, ...)
+        second dual potential
+    u_weights_sorted: array-like, shape (n, ...)
+        weights of the first empirical distribution, sorted w.r.t. the support
+    v_weights_sorted: array-like, shape (m, ...)
+        weights of the second empirical distribution, sorted w.r.t. the support
+    reg_m1: float
+        Marginal relaxation term for the first marginal
+    reg_m2: float
+        Marginal relaxation term for the second marginal
+    nx: module
+        backend module
+
+    Returns
+    -------
+    f: array-like, shape (n, ...)
+        first dual potential
+    g: array-like, shape (m, ...)
+        second dual potential
+    u_rescaled: array-like, shape (n, ...)
+        reweighted first marginal, normalized by the mass
+    v_rescaled: array-like, shape (m, ...)
+        reweighted second marginal, normalized by the mass
+    full_mass: array-like, shape (...)
+        mass of the reweighted marginals
+    """
     transl = rescale_potentials(
         f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
     )

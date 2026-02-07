@@ -9,7 +9,7 @@ using a Kullback-Leibler relaxation.
 """
 
 # Author: Hicham Janati <hicham.janati@inria.fr>
-#         Clément Bonet <clemebt.bonet.mapp@polytechnique.edu>
+#         Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
@@ -102,7 +102,6 @@ a_reweighted, b_reweighted, loss = ot.unbalanced.uot_1d(
     u_weights=torch.tensor(a, dtype=torch.float64),
     v_weights=torch.tensor(b, dtype=torch.float64),
     p=2,
-    mode="backprop",
 )
 
 pl.figure(4, figsize=(6.4, 3))
@@ -132,7 +131,6 @@ a_reweighted, b_reweighted, loss = ot.unbalanced.unbalanced_sliced_ot(
     alpha,
     torch.tensor(a, dtype=torch.float64),
     torch.tensor(b, dtype=torch.float64),
-    mode="backprop",
     p=2,
 )
 
