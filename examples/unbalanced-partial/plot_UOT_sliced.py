@@ -12,6 +12,7 @@ removes outliers of the original marginals.
 """
 
 # Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
+#         Nicolas Courty <nicolas.courty@irisa.fr>
 #
 # License: MIT License
 

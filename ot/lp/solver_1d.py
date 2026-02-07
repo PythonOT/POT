@@ -415,12 +415,12 @@ def emd_1d_dual_backprop(
     Computes the 1 dimensional OT loss between two (batched) empirical
     distributions
 
-    .. math:
+    .. math::
         OT_{loss} = \int_0^1 |cdf_u^{-1}(q) - cdf_v^{-1}(q)|^p dq
 
     and returns the dual potentials and the loss, i.e. such that
 
-    .. math:
+    .. math::
         OT_{loss}(u,v) = \int f(x)\mathrm{d}u(x) + \int g(y)\mathrm{d}v(y).
 
     We do so by backpropagating through the `wasserstein_1d` function. Thus, the function

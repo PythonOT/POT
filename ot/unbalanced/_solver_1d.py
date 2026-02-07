@@ -39,6 +39,7 @@ def rescale_potentials(f, g, a, b, rho1, rho2, nx):
     transl: array-like, shape (...)
         optimal translation
 
+
     .. _references-uot:
     References
     ----------
@@ -73,7 +74,7 @@ def get_reweighted_marginal_uot(
     f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
 ):
     r"""
-    One step of the FW algorithm for the 1D UOT problem with KL regularization.
+    One step of the FW algorithm for the 1D UOT problem with KL regularization, see :ref:`[73] <references-uot>`.
     This function computes the reweighted marginals given the current dual potentials.
     It returns the current potentials, and the reweighted marginals (normalized by the mass so that they sum to 1).
 
@@ -106,6 +107,14 @@ def get_reweighted_marginal_uot(
         reweighted second marginal, normalized by the mass
     full_mass: array-like, shape (...)
         mass of the reweighted marginals
+
+
+    .. _references-uot:
+    References
+    ----------
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
     transl = rescale_potentials(
         f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
@@ -151,8 +160,11 @@ def uot_1d(
     as proposed in :ref:`[73] <references-uot>`.
 
     The unbalanced OT problem reads
-    .. math:
+
+    .. math::
         \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
+
+    where :math:`\pi^1:(x,y)\mapsto x` and :math:`\pi^2:(x,y)\mapsto y` are the projections on the first and second marginals.
 
     This function only works in pytorch or jax.
 
@@ -195,6 +207,7 @@ def uot_1d(
         Second marginal reweighted
     loss: float/array-like, shape (...)
         The batched 1D UOT
+
 
     .. _references-uot:
     References

@@ -71,7 +71,7 @@ ot.plot.plot1D_mat(a, b, M, "Cost matrix M")
 
 alpha = 1.0  # Unbalanced KL relaxation parameter
 
-Gs = ot.unbalanced.mm_unbalanced(a, b, M / M.max(), alpha, verbose=False)
+Gs, log = ot.unbalanced.mm_unbalanced(a, b, M / M.max(), alpha, verbose=False, log=True)
 
 pl.figure(4, figsize=(6.4, 3))
 pl.plot(x, a, "b", label="Source distribution")
@@ -83,14 +83,15 @@ pl.title("Distributions and transported mass for UOT")
 pl.show()
 
 print("Mass of reweighted marginals:", Gs.sum())
+print("Unbalanced OT loss:", log["total_cost"] * M.max())
 
 
 ##############################################################################
-# Solve 1D UOT with Frank-Wolfe (backprop mode)
+# Solve 1D UOT with Frank-Wolfe
 # -----------------------------
 
 
-# %% 1D UOT with FW (backprop mode)
+# %% 1D UOT with FW
 
 
 alpha = M.max()  # Unbalanced KL relaxation parameter
@@ -114,82 +115,7 @@ pl.title("Distributions and transported mass for UOT")
 pl.show()
 
 print("Mass of reweighted marginals:", a_reweighted.sum())
-
-
-##############################################################################
-# Solve 1D USOT with Frank-Wolfe with UOT (TO CHECK)
-# -----------------------------
-
-# %% TEST USOT
-
-
-alpha = M.max()  # Unbalanced KL relaxation parameter
-
-a_reweighted, b_reweighted, loss = ot.unbalanced.unbalanced_sliced_ot(
-    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
-    torch.tensor(x.reshape((n, 1)), dtype=torch.float64),
-    alpha,
-    torch.tensor(a, dtype=torch.float64),
-    torch.tensor(b, dtype=torch.float64),
-    p=2,
-)
-
-
-# plot the transported mass
-# -------------------------
-
-pl.figure(4, figsize=(6.4, 3))
-pl.plot(x, a, "b", label="Source distribution")
-pl.plot(x, b, "r", label="Target distribution")
-pl.fill(x, a_reweighted.numpy(), "b", alpha=0.5, label="Transported source")
-pl.fill(x, b_reweighted.numpy(), "r", alpha=0.5, label="Transported target")
-pl.legend(loc="upper right")
-pl.title("Distributions and transported mass for UOT")
-pl.show()
-
-print("Mass of reweighted marginals:", a_reweighted.sum())
-
-
-##############################################################################
-# Solve Unbalanced OT with cvxpy
-# ------------------------------
-
-# %% UOT with cvxpy
-
-
-# (https://colab.research.google.com/github/gpeyre/ot4ml/blob/main/python/5-unbalanced.ipynb)
-
-alpha = M.max()  # Unbalanced KL relaxation parameter
-n, m = a.shape[0], b.shape[0]
-
-P = cp.Variable((n, m))
-
-u = np.ones((n, 1))
-v = np.ones((m, 1))
-q = cp.sum(cp.kl_div(cp.matmul(P, v), a[:, None]))
-r = cp.sum(cp.kl_div(cp.matmul(P.T, u), b[:, None]))
-
-constr = [0 <= P]
-# uncomment to perform balanced OT
-# constr = [0 <= P, cp.matmul(P,u)==a[:,None], cp.matmul(P.T,v)==b[:,None]]
-
-objective = cp.Minimize(cp.sum(cp.multiply(P, M)) + alpha * q + alpha * r)
-
-prob = cp.Problem(objective, constr)
-result = prob.solve()
-
-G = P.value
-
-pl.figure(4, figsize=(6.4, 3))
-pl.plot(x, a, "b", label="Source distribution")
-pl.plot(x, b, "r", label="Target distribution")
-pl.fill(x, G.sum(1), "b", alpha=0.5, label="Transported source")
-pl.fill(x, G.sum(0), "r", alpha=0.5, label="Transported target")
-pl.legend(loc="upper right")
-pl.title("Distributions and transported mass for UOT")
-pl.show()
-
-print("Mass of reweighted marginals:", Gs.sum())
+print("Unbalanced OT loss:", loss)
 
 
 ##############################################################################

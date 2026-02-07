@@ -32,7 +32,8 @@ def sliced_unbalanced_ot(
     The 1D UOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
 
     The Sliced Unbalanced Optimal Transport (SUOT) is defined as
-    .. math:
+
+    .. math::
         \mathrm{SUOT}(\mu, \nu) = \int_{S^{d-1}} \mathrm{UOT}(P^\theta_\#\mu, P^\theta_\#\nu)\ \mathrm{d}\lambda(\theta)
 
     with :math:`P^\theta(x)=\langle x,\theta\rangle` and :math:`\lambda` the uniform distribution on the unit sphere.
@@ -76,10 +77,12 @@ def sliced_unbalanced_ot(
     loss: float/array-like, shape (...)
         SUOT
 
+
+    .. _references-uot:
     References
     ----------
     [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
-    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research
+    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -151,7 +154,7 @@ def get_reweighted_marginals_usot(
     f, g, a, b, reg_m1, reg_m2, X_s_sorter, X_t_sorter, nx
 ):
     r"""
-    One step of the FW algorithm for the Unbalanced Sliced OT problem.
+    One step of the FW algorithm for the Unbalanced Sliced OT problem, see Algorithm 1 and 3 in :ref:`[82] <references-uot>`.
     This function computes the reweighted marginals given the current potentials and the translation term.
     It returns the current potentials, and the reweighted marginals (normalized by the mass, so that they sum to 1).
 
@@ -188,6 +191,13 @@ def get_reweighted_marginals_usot(
         Reweighted weights on the target samples (normalized by the mass)
     full_mass: array-like shape (...)
         Mass of the reweighted measures
+
+
+    .. _references-uot:
+    References
+    ----------
+    [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
     # translate potentials
     transl = rescale_potentials(f, g, a, b, reg_m1, reg_m2, nx)
@@ -234,7 +244,8 @@ def unbalanced_sliced_ot(
     The USOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
 
     The Unbalanced SOT problem reads as
-    .. math:
+
+    .. math::
         \mathrm{USOT}(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_2^2(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
 
     This function only works in pytorch or jax.
