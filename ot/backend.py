@@ -89,6 +89,7 @@ Performance
 import os
 import time
 import warnings
+import functools
 
 import numpy as np
 import scipy
@@ -1563,6 +1564,20 @@ class NumpyBackend(Backend):
 _register_backend_implementation(NumpyBackend)
 
 
+@jax.custom_jvp
+def norm_1d_jax(z):
+    return jnp.abs(z)
+
+
+@norm_1d_jax.defjvp
+def norm_1d_jax_jvp(primals, tangents):
+    (z,) = primals
+    z_is_zero = jnp.all(jnp.logical_not(z))
+    clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
+    primals, tangents = jax.jvp(functools.partial(jnp.abs), (clean_z,), tangents)
+    return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
+
+
 class JaxBackend(Backend):
     """
     JAX implementation of the backend
@@ -1684,7 +1699,7 @@ class JaxBackend(Backend):
         return jnp.dot(a, b)
 
     def abs(self, a):
-        return jnp.abs(a)
+        return norm_1d_jax(a)
 
     def exp(self, a):
         return jnp.exp(a)
