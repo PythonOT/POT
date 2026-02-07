@@ -263,12 +263,13 @@ def test_emd1d_dual_backprop_batch(nx):
     Xb = nx.from_numpy(X)
 
     if nx.__name__ in ["torch", "jax"]:
-        f, g, res = ot.emd_1d_dual_backprop(Xb, Xb, rho_ub, rho_vb, p=2)
+        f, g, res = ot.emd_1d_dual_backprop(Xb, Xb + 1e-9, rho_ub, rho_vb, p=2)
         np.testing.assert_almost_equal(100 * res[0], res[1], decimal=4)
 
         cost_dual = nx.sum(f * rho_ub[:, None], axis=0) + nx.sum(
             g * rho_vb[:, None], axis=0
         )
+
         np.testing.assert_allclose(cost_dual, res)
     else:
         np.testing.assert_raises(

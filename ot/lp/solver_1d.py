@@ -501,8 +501,6 @@ def emd_1d_dual_backprop(
     elif nx.__name__ == "jax":
         import jax
 
-        jax.config.update("jax_enable_x64", True)
-
         def ot_1d(a, b):
             return wasserstein_1d(
                 u_values, v_values, a, b, p=p, require_sort=require_sort
