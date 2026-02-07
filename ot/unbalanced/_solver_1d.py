@@ -263,11 +263,6 @@ def uot_1d(
             f, g, u_weights_sorted, v_weights_sorted, reg_m1, reg_m2, nx
         )
 
-        # ADD THIS: Numerical stability clip
-        if nx.__name__ == "jax":
-            u_rescaled = nx.clip(u_rescaled, 1e-9, 1.0)
-            v_rescaled = nx.clip(v_rescaled, 1e-9, 1.0)
-
         fd, gd, loss = emd_1d_dual_backprop(
             u_values_sorted,
             v_values_sorted,
