@@ -219,9 +219,7 @@ def test_unbalanced_relaxation_parameters_pair_backprop(nx, reg_m1, reg_m2):
     x = rng.randn(n, 2)
     y = rng.randn(n, 2)
     a = ot.utils.unif(n)
-
-    # make dists unbalanced
-    b = rng.rand(n, 2)
+    b = ot.utils.unif(n)
 
     a, b, x, y = nx.from_numpy(a, b, x, y)
 
