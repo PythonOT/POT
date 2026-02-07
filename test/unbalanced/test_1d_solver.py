@@ -167,12 +167,13 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
     rng = np.random.RandomState(50)
 
     x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
     a = ot.utils.unif(n)
 
     # make dists unbalanced
     b = rng.rand(n, 2)
 
-    a, b, x = nx.from_numpy(a, b, x)
+    a, b, x, y = nx.from_numpy(a, b, x, y)
 
     reg_m = reg_m[0]
 
@@ -191,11 +192,11 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
     ]
 
     if nx.__name__ in ["jax", "torch"]:
-        u, v, loss = ot.unbalanced.uot_1d(x, x, reg_m, u_weights=a, v_weights=b, p=2)
+        u, v, loss = ot.unbalanced.uot_1d(x, y, reg_m, u_weights=a, v_weights=b, p=2)
 
         for opt in list_options:
             u, v, loss_opt = ot.unbalanced.uot_1d(
-                x, x, opt, u_weights=a, v_weights=b, p=2
+                x, y, opt, u_weights=a, v_weights=b, p=2
             )
 
             np.testing.assert_allclose(
@@ -216,12 +217,13 @@ def test_unbalanced_relaxation_parameters_pair_backprop(nx, reg_m1, reg_m2):
     rng = np.random.RandomState(50)
 
     x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
     a = ot.utils.unif(n)
 
     # make dists unbalanced
     b = rng.rand(n, 2)
 
-    a, b, x = nx.from_numpy(a, b, x)
+    a, b, x, y = nx.from_numpy(a, b, x, y)
 
     # options for reg_m
     full_list_reg_m = [reg_m1, reg_m2]
@@ -230,12 +232,12 @@ def test_unbalanced_relaxation_parameters_pair_backprop(nx, reg_m1, reg_m2):
 
     if nx.__name__ in ["jax", "torch"]:
         _, _, loss = ot.unbalanced.uot_1d(
-            x, x, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2
+            x, y, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2
         )
 
         for opt in list_options:
             _, _, loss_opt = ot.unbalanced.uot_1d(
-                x, x, opt, u_weights=a, v_weights=b, p=2
+                x, y, opt, u_weights=a, v_weights=b, p=2
             )
 
             np.testing.assert_allclose(
