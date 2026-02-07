@@ -81,8 +81,8 @@ def sliced_unbalanced_ot(
     .. _references-uot:
     References
     ----------
-    [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
-    Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
+    .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
+       Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -292,6 +292,8 @@ def unbalanced_sliced_ot(
     loss: float/array-like, shape (...)
         USOT
 
+
+    .. _references-uot:
     References
     ----------
     .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).

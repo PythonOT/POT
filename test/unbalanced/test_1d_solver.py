@@ -134,10 +134,10 @@ def test_semi_uot_1d_backprop(nx):
     a_np = ot.utils.unif(n_samples)
     b_np = ot.utils.unif(n_samples)
 
-    reg_m = (float("inf"), 1.0)
-
     a, b = nx.from_numpy(a_np, b_np)
     xs, xt = nx.from_numpy(xs, xt)
+
+    reg_m = (float("inf"), 1.0)
 
     if nx.__name__ in ["jax", "torch"]:
         u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
@@ -145,6 +145,15 @@ def test_semi_uot_1d_backprop(nx):
         # Check right marginals
         np.testing.assert_allclose(a, u[:, 0])
         np.testing.assert_allclose(v[:, 0].sum(), 1)
+
+    reg_m = (1.0, float("inf"))
+
+    if nx.__name__ in ["jax", "torch"]:
+        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
+
+        # Check right marginals
+        np.testing.assert_allclose(b, v[:, 0])
+        np.testing.assert_allclose(u[:, 0].sum(), 1)
 
 
 @pytest.mark.parametrize(
@@ -154,7 +163,6 @@ def test_semi_uot_1d_backprop(nx):
     ),
 )
 def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
-    # test generalized sinkhorn for unbalanced OT
     n = 100
     rng = np.random.RandomState(50)
 
@@ -190,7 +198,9 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
                 x, x, opt, u_weights=a, v_weights=b, p=2
             )
 
-        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
+            np.testing.assert_allclose(
+                nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05
+            )
 
 
 @pytest.mark.parametrize(
