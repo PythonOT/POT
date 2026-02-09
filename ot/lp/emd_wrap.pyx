@@ -23,6 +23,7 @@ cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
     int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -286,3 +287,41 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
     flow_values = flow_values[:n_flows_out]
 
     return flow_sources, flow_targets, flow_values, cost, alpha, beta, result_code
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"] b, np.ndarray[double, ndim=2, mode="c"] coords_a, np.ndarray[double, ndim=2, mode="c"] coords_b, str metric='sqeuclidean', uint64_t max_iter=100000):
+    """Solves the Earth Movers distance problem with lazy cost computation from coordinates."""
+    cdef int n1 = coords_a.shape[0]
+    cdef int n2 = coords_b.shape[0]
+    cdef int dim = coords_a.shape[1]
+    cdef int result_code = 0
+    cdef double cost = 0
+    cdef int metric_code
+    
+    # Validate dimension consistency
+    if coords_b.shape[1] != dim:
+        raise ValueError(f"Coordinate dimension mismatch: coords_a has {dim} dimensions but coords_b has {coords_b.shape[1]}")
+    
+    metric_map = {
+        'sqeuclidean': 0,
+        'euclidean': 1,
+        'cityblock': 2
+    }
+    
+    try:
+        metric_code = metric_map[metric]
+    except KeyError:
+        raise ValueError(f"Unknown metric: '{metric}'. Supported metrics are: {list(metric_map.keys())}")
+        
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
+    cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
+    cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros([n1, n2])
+    if not len(a):
+        a = np.ones((n1,)) / n1
+    if not len(b):
+        b = np.ones((n2,)) / n2
+    with nogil:
+        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+    return G, cost, alpha, beta, result_code

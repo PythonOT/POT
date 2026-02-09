@@ -412,13 +412,14 @@ def co_optimal_transport2(
     warmstart : dictionary, optional (default = None)
         Contains 4 keys:
             - "duals_sample" and "duals_feature" whose values are
-            tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
-            Initialization of sample and feature dual vectors
-            if using Sinkhorn algorithm. Zero vectors by default.
+              tuples of 2 vectors of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
+              Initialization of sample and feature dual vectors
+              if using Sinkhorn algorithm. Zero vectors by default.
+
             - "pi_sample" and "pi_feature" whose values are matrices
-            of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
-            Initialization of sample and feature couplings.
-            Uniform distributions by default.
+              of size (n_sample_x, n_sample_y) and (n_feature_x, n_feature_y).
+              Initialization of sample and feature couplings.
+              Uniform distributions by default.
     nits_bcd : int, optional (default = 100)
         Number of Block Coordinate Descent (BCD) iterations to solve COOT.
     tol_bcd : float, optional (default = 1e-7)

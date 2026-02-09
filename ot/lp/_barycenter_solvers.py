@@ -427,16 +427,20 @@ def generalized_free_support_barycenter(
 def ot_barycenter_energy(measure_locations, measure_weights, X, a, cost_list, nx=None):
     r"""
     Computes the energy of the OT barycenter functional for a given barycenter
-    support `X` and weights `a`: .. math::
+    support `X` and weights `a`:
+
+    .. math::
         V(X, a) = \sum_{k=1}^K w_k \mathcal{T}_{c_k}(X, a, Y_k, b_k),
 
-    where: - :math:`X` (n, d) is the barycenter support, - :math:`a` (n) is the
-    barycenter weights, - :math:`Y_k` (m_k, d_k) is the k-th measure support
-      (`measure_locations[k]`),
+    where:
+
+    - :math:`X` (n, d) is the barycenter support,
+    - :math:`a` (n) is the barycenter weights,
+    - :math:`Y_k` (m_k, d_k) is the k-th measure support (`measure_locations[k]`),
     - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
     - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
-         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
-         (which computes the pairwise cost matrix)
+      \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
+      (which computes the pairwise cost matrix)
     - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the
       barycenter measure and the k-th measure with respect to the cost
       :math:`c_k`.

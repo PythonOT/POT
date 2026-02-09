@@ -832,7 +832,7 @@ alignment between two distributions can be expressed as the one minimizing:
 
     s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
-where ::math:`C1` is the distance matrix between samples in the source
+where :math:`C1` is the distance matrix between samples in the source
 distribution and :math:`C2` the one between samples in the target,
 :math:`L(C1_{i,k},C2_{j,l})` is a measure of similarity between
 :math:`C1_{i,k}` and :math:`C2_{j,l}` often chosen as

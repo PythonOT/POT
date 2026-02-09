@@ -2,18 +2,26 @@
 
 ## 0.9.7.dev0
 
-This new release adds support for sparse cost matrices in the exact EMD solver. Users can now pass sparse cost matrices (e.g., k-NN graphs, sparse graphs) and receive sparse transport plans, significantly reducing memory footprint for large-scale problems. The implementation is backend-agnostic, automatically handling scipy.sparse for NumPy and torch.sparse for PyTorch, and preserves full gradient computation capabilities for automatic differentiation in PyTorch. This enables efficient solving of OT problems on graphs with millions of nodes where only a sparse subset of edges have finite costs.
+This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
 
 #### New features 
+- Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
-- Geomloss function now handles both scalar and slice indices for i and j. Using backend agnostic reshaping. Allows to do plan[i,:] and plan[:,j] (PR #785)
+- Geomloss function now handles both scalar and slice indices for i and j (PR #785)
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 
 #### Closed issues
-- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration  (PR #785)
+
+- Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
+- Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
 - Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
+- Fix openmp flags on macOS (PR #789)
+- Clean documentation (PR #787)
+- Fix code coverage (PR #791)
+
 
 ## 0.9.6.post1
 

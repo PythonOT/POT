@@ -272,7 +272,7 @@ def mm_unbalanced2(
         By default, solve the unregularized problem
     c : array-like (dim_a, dim_b), optional (default = None)
         Reference measure for the regularization.
-        If None, then use :math:`\mathbf{c} = mathbf{a} mathbf{b}^T`.
+        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
     div: string, optional
         Divergence to quantify the difference between the marginals.
         Can take two values: 'kl' (Kullback-Leibler) or 'l2' (half-squared)

@@ -13,7 +13,7 @@ import warnings
 
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
-from .emd_wrap import emd_c, emd_c_sparse, check_result
+from .emd_wrap import emd_c, emd_c_sparse, emd_c_lazy, check_result
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):
@@ -320,20 +320,20 @@ def emd(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     if is_sparse:
@@ -471,7 +471,7 @@ def emd2(
 
     .. note:: This function will cast the computed transport plan and
         transportation loss to the data type of the provided input with the
-        following priority: :math:`\mathbf{a}`, then :math:`\mathbf{b}`,
+        following priority : :math:`\mathbf{a}`, then :math:`\mathbf{b}`,
         then :math:`\mathbf{M}` if marginals are not provided.
         Casting to an integer tensor might result in a loss of precision.
         If this behaviour is unwanted, please make sure to provide a
@@ -591,21 +591,21 @@ def emd2(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
     # if empty array given then use uniform distributions
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     a0, b0 = a, b
@@ -775,3 +775,180 @@ def emd2(
     res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
     return res
+
+
+def emd2_lazy(
+    X_a,
+    X_b,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    numItermax=100000,
+    log=False,
+    return_matrix=True,
+    center_dual=True,
+    check_marginals=True,
+):
+    r"""Solves the Earth Movers distance problem with lazy cost computation and returns the loss
+
+    .. math::
+        \min_\gamma \quad \langle \gamma, \mathbf{M}(\mathbf{X}_a, \mathbf{X}_b) \rangle_F
+
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
+
+             \gamma^T \mathbf{1} = \mathbf{b}
+
+             \gamma \geq 0
+
+    where :
+
+    - :math:`\mathbf{M}(\mathbf{X}_a, \mathbf{X}_b)` is computed on-the-fly from coordinates
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
+
+    .. note:: This function computes distances on-the-fly during the network simplex algorithm,
+        avoiding the O(ns*nt) memory cost of pre-computing the full cost matrix. Memory usage
+        is O(ns+nt) instead.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+
+    Parameters
+    ----------
+    X_a : (ns, dim) array-like, float64
+        Source sample coordinates
+    X_b : (nt, dim) array-like, float64
+        Target sample coordinates
+    a : (ns,) array-like, float64, optional
+        Source histogram (uniform weight if None)
+    b : (nt,) array-like, float64, optional
+        Target histogram (uniform weight if None)
+    metric : str, optional (default='sqeuclidean')
+        Distance metric for cost computation. Options:
+
+        - 'sqeuclidean': Squared Euclidean distance
+        - 'euclidean': Euclidean distance
+        - 'cityblock': Manhattan/L1 distance
+
+    numItermax : int, optional (default=100000)
+        Maximum number of iterations before stopping if not converged
+    log: boolean, optional (default=False)
+        If True, returns a dictionary containing the cost, dual variables,
+        and optionally the transport plan (sparse format)
+    return_matrix: boolean, optional (default=False)
+        If True, returns the optimal transportation matrix in the log (sparse format)
+    center_dual: boolean, optional (default=True)
+        If True, centers the dual potential using :py:func:`ot.lp.center_ot_dual`
+    check_marginals: bool, optional (default=True)
+        If True, checks that the marginals mass are equal
+
+    Returns
+    -------
+    W: float
+        Optimal transportation loss
+    log: dict
+        If input log is True, a dictionary containing:
+
+        - cost: the optimal transportation cost
+        - u, v: dual variables
+        - warning: solver status message
+        - result_code: solver return code
+        - G: (optional) sparse transport plan if return_matrix=True
+
+    See Also
+    --------
+    ot.emd2 : EMD with pre-computed cost matrix
+    ot.lp.emd_c_lazy : Low-level C++ lazy solver
+    """
+
+    a, b, X_a, X_b = list_to_array(a, b, X_a, X_b)
+    nx = get_backend(a, b, X_a, X_b)
+
+    n1, n2 = X_a.shape[0], X_b.shape[0]
+
+    if X_a.shape[1] != X_b.shape[1]:
+        raise ValueError(
+            f"X_a and X_b must have the same number of dimensions, "
+            f"got {X_a.shape[1]} and {X_b.shape[1]}"
+        )
+
+    if a is not None and len(a) != 0:
+        type_as = a
+    elif b is not None and len(b) != 0:
+        type_as = b
+    else:
+        type_as = X_a
+
+    if a is None or len(a) == 0:
+        a = nx.ones((n1,), type_as=type_as) / n1
+    if b is None or len(b) == 0:
+        b = nx.ones((n2,), type_as=type_as) / n2
+
+    a0, b0 = a, b
+
+    # Convert to numpy for C++ backend
+    X_a_np = nx.to_numpy(X_a)
+    X_b_np = nx.to_numpy(X_b)
+    a_np = nx.to_numpy(a)
+    b_np = nx.to_numpy(b)
+
+    X_a_np = np.asarray(X_a_np, dtype=np.float64, order="C")
+    X_b_np = np.asarray(X_b_np, dtype=np.float64, order="C")
+    a_np = np.asarray(a_np, dtype=np.float64)
+    b_np = np.asarray(b_np, dtype=np.float64)
+
+    assert (
+        a_np.shape[0] == n1 and b_np.shape[0] == n2
+    ), "Dimension mismatch, check dimensions of X_a/X_b with a and b"
+
+    if check_marginals:
+        np.testing.assert_almost_equal(
+            a_np.sum(),
+            b_np.sum(),
+            err_msg="a and b vector must have the same sum",
+            decimal=6,
+        )
+    b_np = b_np * a_np.sum() / b_np.sum()
+
+    G, cost, u, v, result_code = emd_c_lazy(
+        a_np, b_np, X_a_np, X_b_np, metric, numItermax
+    )
+
+    if center_dual:
+        u, v = center_ot_dual(u, v, a_np, b_np)
+
+    if not nx.is_floating_point(type_as):
+        warnings.warn(
+            "Input histogram consists of integer. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your input "
+            "histogram consists of floating point elements.",
+            stacklevel=2,
+        )
+
+    G_backend = nx.from_numpy(G, type_as=type_as)
+
+    cost_backend = nx.set_gradients(
+        nx.from_numpy(cost, type_as=type_as),
+        (a0, b0),
+        (
+            nx.from_numpy(u - np.mean(u), type_as=type_as),
+            nx.from_numpy(v - np.mean(v), type_as=type_as),
+        ),
+    )
+
+    check_result(result_code)
+
+    if log or return_matrix:
+        log_dict = {
+            "cost": cost_backend,
+            "u": nx.from_numpy(u, type_as=type_as),
+            "v": nx.from_numpy(v, type_as=type_as),
+            "warning": check_result(result_code),
+            "result_code": result_code,
+        }
+        if return_matrix:
+            log_dict["G"] = G_backend
+        return cost_backend, log_dict
+    else:
+        return cost_backend

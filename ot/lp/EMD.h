@@ -51,5 +51,21 @@ int EMD_wrap_sparse(
     uint64_t maxIter             // Maximum iterations for solver
 );
 
+int EMD_wrap_lazy(
+    int n1,                      // Number of source points
+    int n2,                      // Number of target points
+    double *X,                   // Source weights (n1)
+    double *Y,                   // Target weights (n2)
+    double *coords_a,            // Source coordinates (n1 x dim)
+    double *coords_b,            // Target coordinates (n2 x dim)
+    int dim,                     // Dimension of coordinates
+    int metric,                  // Distance metric: 0=sqeuclidean, 1=euclidean, 2=cityblock
+    double *G,                   // Output: transport plan (n1 x n2)
+    double *alpha,               // Output: dual variables for sources (n1)
+    double *beta,                // Output: dual variables for targets (n2)
+    double *cost,                // Output: total transportation cost
+    uint64_t maxIter             // Maximum iterations for solver
+);
+
 
 #endif

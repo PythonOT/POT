@@ -41,6 +41,7 @@ from . import gmm
 from .lp import (
     emd,
     emd2,
+    emd2_lazy,
     emd_1d,
     emd2_1d,
     wasserstein_1d,
@@ -82,6 +83,7 @@ __version__ = "0.9.7.dev0"
 __all__ = [
     "emd",
     "emd2",
+    "emd2_lazy",
     "emd_1d",
     "sinkhorn",
     "sinkhorn2",

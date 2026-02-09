@@ -270,9 +270,9 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     See Also
     --------
     ot.partial.partial_wasserstein_lagrange: Partial Wasserstein with
-    regularization on the marginals
+                                             regularization on the marginals
     ot.partial.entropic_partial_wasserstein: Partial Wasserstein with a
-    entropic regularization parameter
+                                             entropic regularization parameter
     """
 
     a, b, M = list_to_array(a, b, M)
@@ -586,7 +586,7 @@ def gwgrad_partial(C1, C2, T):
     as the marginals may not sum to 1.
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.gwggrad` instead.
+        `ot.gromov.gwggrad` instead.
 
     Parameters
     ----------
@@ -629,7 +629,7 @@ def gwloss_partial(C1, C2, T):
     """Compute the GW loss.
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.gwloss` instead.
+        `ot.gromov.gwloss` instead.
 
     Parameters
     ----------
@@ -700,7 +700,7 @@ def partial_gromov_wasserstein(
     :ref:`[29] <references-partial-gromov-wasserstein>`
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.partial_gromov_wasserstein` instead.
+        `ot.gromov.partial_gromov_wasserstein` instead.
 
     Parameters
     ----------
@@ -908,7 +908,7 @@ def partial_gromov_wasserstein2(
     :ref:`[29] <references-partial-gromov-wasserstein2>`
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.partial_gromov_wasserstein2` instead.
+        `ot.gromov.partial_gromov_wasserstein2` instead.
 
     Parameters
     ----------
@@ -1048,7 +1048,7 @@ def entropic_partial_gromov_wasserstein(
     partial GW in :ref:`[29] <references-entropic-partial-gromov-wasserstein>`
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.entropic_partial_gromov_wasserstein` instead.
+        `ot.gromov.entropic_partial_gromov_wasserstein` instead.
 
     Parameters
     ----------
@@ -1099,7 +1099,7 @@ def entropic_partial_gromov_wasserstein(
 
     Returns
     -------
-    :math:`gamma` : ndarray, shape (dim_a, dim_b)
+    gamma : ndarray, shape (dim_a, dim_b)
         Optimal transportation matrix for the given parameters
     log : dict
         log dictionary returned only if `log` is `True`
@@ -1219,7 +1219,7 @@ def entropic_partial_gromov_wasserstein2(
     partial GW in :ref:`[29] <references-entropic-partial-gromov-wasserstein2>`
 
     .. note:: This function will be deprecated in a near future, please use
-    `ot.gromov.entropic_partial_gromov_wasserstein2` instead.
+        `ot.gromov.entropic_partial_gromov_wasserstein2` instead.
 
     Parameters
     ----------

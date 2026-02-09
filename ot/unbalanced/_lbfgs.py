@@ -183,9 +183,9 @@ def lbfgsb_unbalanced(
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
     - :math:`\mathrm{div_m}` is a divergence, either Kullback-Leibler divergence,
-    or half-squared :math:`\ell_2` divergence, or Total variation
+      or half-squared :math:`\ell_2` divergence, or Total variation
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler divergence,
-    or half-squared :math:`\ell_2` divergence
+      or half-squared :math:`\ell_2` divergence
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. First, it converts all arrays into Numpy arrays,
@@ -372,9 +372,9 @@ def lbfgsb_unbalanced2(
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
     - :math:`\mathrm{div_m}` is a divergence, either Kullback-Leibler divergence,
-    or half-squared :math:`\ell_2` divergence, or Total variation
+      or half-squared :math:`\ell_2` divergence, or Total variation
     - :math:`\mathrm{div}` is a divergence, either Kullback-Leibler divergence,
-    or half-squared :math:`\ell_2` divergence
+      or half-squared :math:`\ell_2` divergence
 
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. First, it converts all arrays into Numpy arrays,

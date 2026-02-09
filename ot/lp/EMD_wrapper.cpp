@@ -371,3 +371,107 @@ int EMD_wrap_sparse(
     }
     return ret;
 }
+
+int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, 
+                  int dim, int metric, double *G, double *alpha, double *beta, 
+                  double *cost, uint64_t maxIter) {
+    using namespace lemon;
+    typedef FullBipartiteDigraph Digraph;
+    DIGRAPH_TYPEDEFS(Digraph);
+    
+    // Filter source nodes with non-zero weights
+    std::vector<int> idx_a;
+    std::vector<double> weights_a_filtered;
+    std::vector<double> coords_a_filtered;
+    
+    // Reserve space to avoid reallocations
+    idx_a.reserve(n1);
+    weights_a_filtered.reserve(n1);
+    coords_a_filtered.reserve(n1 * dim);
+    
+    for (int i = 0; i < n1; i++) {
+        if (X[i] > 0) {
+            idx_a.push_back(i);
+            weights_a_filtered.push_back(X[i]);
+            for (int d = 0; d < dim; d++) {
+                coords_a_filtered.push_back(coords_a[i * dim + d]);
+            }
+        }
+    }
+    int n = idx_a.size();
+    
+    // Filter target nodes with non-zero weights
+    std::vector<int> idx_b;
+    std::vector<double> weights_b_filtered;
+    std::vector<double> coords_b_filtered;
+    
+    // Reserve space to avoid reallocations
+    idx_b.reserve(n2);
+    weights_b_filtered.reserve(n2);
+    coords_b_filtered.reserve(n2 * dim);
+    
+    for (int j = 0; j < n2; j++) {
+        if (Y[j] > 0) {
+            idx_b.push_back(j);
+            weights_b_filtered.push_back(-Y[j]);  // Demand is negative supply
+            for (int d = 0; d < dim; d++) {
+                coords_b_filtered.push_back(coords_b[j * dim + d]);
+            }
+        }
+    }
+    int m = idx_b.size();
+    
+    if (n == 0 || m == 0) {
+        *cost = 0.0;
+        return 0;
+    }
+    
+    // Create full bipartite graph
+    Digraph di(n, m);
+    
+    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(
+        di, true, (int)(n + m), (uint64_t)(n) * (uint64_t)(m), maxIter
+    );
+    
+    // Set supplies
+    net.supplyMap(&weights_a_filtered[0], n, &weights_b_filtered[0], m);
+    
+    // Enable lazy cost computation - costs will be computed on-the-fly
+    net.setLazyCost(&coords_a_filtered[0], &coords_b_filtered[0], dim, metric, n, m);
+    
+    // Run solver
+    int ret = net.run();
+    
+    if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
+        *cost = 0;
+        
+        // Initialize output arrays
+        for (int i = 0; i < n1 * n2; i++) G[i] = 0.0;
+        for (int i = 0; i < n1; i++) alpha[i] = 0.0;
+        for (int i = 0; i < n2; i++) beta[i] = 0.0;
+        
+        // Extract solution
+        Arc a;
+        di.first(a);
+        for (; a != INVALID; di.next(a)) {
+            int i = di.source(a);
+            int j = di.target(a) - n;
+            
+            int orig_i = idx_a[i];
+            int orig_j = idx_b[j];
+            
+            double flow = net.flow(a);
+            G[orig_i * n2 + orig_j] = flow;
+            
+            alpha[orig_i] = -net.potential(i);
+            beta[orig_j] = net.potential(j + n);
+            
+            if (flow > 0) {
+                double c = net.computeLazyCost(i, j);
+                *cost += flow * c;
+            }
+        }
+    }
+    
+    return ret;
+}

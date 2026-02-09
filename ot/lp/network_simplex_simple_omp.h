@@ -703,7 +703,6 @@ namespace lemon_omp {
 			return *this;
 		}
 
-
 		/// \brief Set the supply values of the nodes.
 		///
 		/// This function sets the supply values of the nodes.
