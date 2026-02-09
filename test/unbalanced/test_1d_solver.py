@@ -156,6 +156,7 @@ def test_semi_uot_1d_backprop(nx):
         np.testing.assert_allclose(u[:, 0].sum(), 1)
 
 
+@pytest.skip_backend("jax")  # problem with jax on macOS
 @pytest.mark.parametrize(
     "reg_m",
     itertools.product(
@@ -204,6 +205,7 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
             )
 
 
+@pytest.skip_backend("jax")  # problem with jax on macOS
 @pytest.mark.parametrize(
     "reg_m1, reg_m2",
     itertools.product(

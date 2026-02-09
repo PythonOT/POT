@@ -10,11 +10,6 @@ import ot
 import pytest
 
 
-# Classical sliced tests
-# Check inf <-> SW
-# Checks regs, semi-unbalanced etc
-
-
 def test_sliced_uot_same_dist(nx):
     n = 100
     rng = np.random.RandomState(0)

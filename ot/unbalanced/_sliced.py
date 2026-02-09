@@ -38,7 +38,7 @@ def sliced_unbalanced_ot(
 
     with :math:`P^\theta(x)=\langle x,\theta\rangle` and :math:`\lambda` the uniform distribution on the unit sphere.
 
-    This function only works in pytorch or jax.
+    This function only works in pytorch or jax (but is not maintained in jax).
 
     Parameters
     ----------
@@ -76,6 +76,8 @@ def sliced_unbalanced_ot(
     -------
     loss: float/array-like, shape (...)
         SUOT
+    log: dict, optional
+        If `log` is True, then returns a dictionary containing the projection directions used, the projected UOTs, and reweighted marginals on each slices.
 
 
     .. _references-uot:
@@ -124,6 +126,7 @@ def sliced_unbalanced_ot(
     X_s_projections = nx.dot(X_s, projections)  # shape (n, n_projs)
     X_t_projections = nx.dot(X_t, projections)
 
+    # Compute UOT on each slice
     a_reweighted, b_reweighted, projected_uot = uot_1d(
         X_s_projections,
         X_t_projections,
@@ -236,7 +239,6 @@ def unbalanced_sliced_ot(
     projections=None,
     seed=None,
     numItermax=10,
-    stochastic_proj=False,
     log=False,
 ):
     r"""
@@ -248,7 +250,7 @@ def unbalanced_sliced_ot(
     .. math::
         \mathrm{USOT}(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_2^2(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
 
-    This function only works in pytorch or jax.
+    This function only works in pytorch or jax (but is not maintained in jax).
 
     Parameters
     ----------
@@ -279,7 +281,6 @@ def unbalanced_sliced_ot(
     seed: int or RandomState or None, optional
         Seed used for random number generator
     numItermax: int, optional
-    stochastic_proj: bool, default False
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
 
@@ -291,6 +292,8 @@ def unbalanced_sliced_ot(
         Second marginal reweighted
     loss: float/array-like, shape (...)
         USOT
+    log: dict, optional
+        If `log` is True, then returns a dictionary containing the projection directions used, the 1D OT losses, the SOT loss and the full mass of reweighted marginals.
 
 
     .. _references-uot:
@@ -331,48 +334,30 @@ def unbalanced_sliced_ot(
 
     d = X_s.shape[1]
 
-    if projections is None and not stochastic_proj:
+    if projections is None:
         projections = get_random_projections(
             d, n_projections, seed, backend=nx, type_as=X_s
         )
     else:
         n_projections = projections.shape[1]
 
-    if not stochastic_proj:
-        X_s_projections = nx.dot(X_s, projections).T  # shape (n_projs, n)
-        X_t_projections = nx.dot(X_t, projections).T
+    # Compute projections of the samples, and sort them for later use in the FW algorithm
+    X_s_projections = nx.dot(X_s, projections).T  # shape (n_projs, n)
+    X_t_projections = nx.dot(X_t, projections).T
 
-        X_s_sorter = nx.argsort(X_s_projections, -1)
-        X_s_rev_sorter = nx.argsort(X_s_sorter, -1)
-        X_s_sorted = nx.take_along_axis(X_s_projections, X_s_sorter, -1)
+    X_s_sorter = nx.argsort(X_s_projections, -1)
+    X_s_rev_sorter = nx.argsort(X_s_sorter, -1)
+    X_s_sorted = nx.take_along_axis(X_s_projections, X_s_sorter, -1)
 
-        X_t_sorter = nx.argsort(X_t_projections, -1)
-        X_t_rev_sorter = nx.argsort(X_t_sorter, -1)
-        X_t_sorted = nx.take_along_axis(X_t_projections, X_t_sorter, -1)
+    X_t_sorter = nx.argsort(X_t_projections, -1)
+    X_t_rev_sorter = nx.argsort(X_t_sorter, -1)
+    X_t_sorted = nx.take_along_axis(X_t_projections, X_t_sorter, -1)
 
     # Initialize potentials - WARNING: They correspond to non-sorted samples
     f = nx.zeros(a.shape, type_as=a)
     g = nx.zeros(b.shape, type_as=b)
 
     for i in range(numItermax):
-        # If stochastic version then sample new directions and re-sort data
-        # TODO: add functions to sample and project
-        if stochastic_proj:
-            projections = get_random_projections(
-                d, n_projections, seed, backend=nx, type_as=X_s
-            )
-
-            X_s_projections = nx.dot(X_s, projections)
-            X_t_projections = nx.dot(X_t, projections)
-
-            X_s_sorter = nx.argsort(X_s_projections, -1)
-            X_s_rev_sorter = nx.argsort(X_s_sorter, -1)
-            X_s_sorted = nx.take_along_axis(X_s_projections, X_s_sorter, -1)
-
-            X_t_sorter = nx.argsort(X_t_projections, -1)
-            X_t_rev_sorter = nx.argsort(X_t_sorter, -1)
-            X_t_sorted = nx.take_along_axis(X_t_projections, X_t_sorter, -1)
-
         f, g, a_reweighted, b_reweighted, _ = get_reweighted_marginals_usot(
             f, g, a, b, reg_m1, reg_m2, X_s_sorter, X_t_sorter, nx
         )
