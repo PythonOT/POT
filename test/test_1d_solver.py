@@ -247,6 +247,7 @@ def test_emd1d_dual_with_weights(nx):
         np.testing.assert_allclose(wass, nx.sum(f[:, 0] * w_u) + nx.sum(g[:, 0] * w_v))
 
 
+@pytest.skip_backend("jax")  # problem with jax on macOS
 def test_emd1d_dual_backprop_batch(nx):
     rng = np.random.RandomState(0)
 
