@@ -1,5 +1,13 @@
 # Releases
 
+
+## Upcomming 0.9.7.post1
+
+#### New features
+The next release will add cost functions between linear operators following [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920).
+
+
+
 ## 0.9.7.dev0
 
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
