@@ -123,27 +123,12 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         from jax.extend.backend import get_backend as _jax_get_backend
 
         jax_type = jax.numpy.ndarray
-        # jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
         jax_new_version = tuple([float(s) for s in jax.__version__.split(".")]) > (
             0,
             4,
             24,
+            0,
         )
-
-        @jax.custom_jvp
-        def norm_1d_jax(z):
-            return jnp.abs(z)
-
-        @norm_1d_jax.defjvp
-        def norm_1d_jax_jvp(primals, tangents):
-            (z,) = primals
-            z_is_zero = jnp.all(jnp.logical_not(z))
-            clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
-            primals, tangents = jax.jvp(
-                functools.partial(jnp.abs), (clean_z,), tangents
-            )
-            return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
-
     except ImportError:
         jax = False
         jax_type = float
