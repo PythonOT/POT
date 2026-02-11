@@ -5,10 +5,10 @@ Sliced Unbalanced optimal transport
 ===================================
 
 This example illustrates the behavior of Sliced UOT versus
-Unbalanced Sliced OT.
-
-The first one removes outliers on each slice while the second one
+Unbalanced Sliced OT, introduced in [82]. The first one removes outliers on each slice while the second one
 removes outliers of the original marginals.
+
+[82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025). Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
 """
 
 # Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
@@ -22,6 +22,7 @@ import ot
 import torch
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.animation as animation
 
 from sklearn.neighbors import KernelDensity
 
@@ -32,57 +33,55 @@ from sklearn.neighbors import KernelDensity
 
 # %% parameters
 
-get_rot = lambda theta: np.array(
-    [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
-)
-
-
-# regular distribution of Gaussians around a circle
-def make_blobs_reg(n_samples, n_blobs, scale=0.5):
-    per_blob = int(n_samples / n_blobs)
-    result = np.random.randn(per_blob, 2) * scale + 5
-    theta = (2 * np.pi) / (n_blobs)
-    for r in range(1, n_blobs):
-        new_blob = (np.random.randn(per_blob, 2) * scale + 5).dot(get_rot(theta * r))
-        result = np.vstack((result, new_blob))
-    return result
-
-
-def make_blobs_random(n_samples, n_blobs, scale=0.5, offset=3):
-    per_blob = int(n_samples / n_blobs)
-    result = np.random.randn(per_blob, 2) * scale + np.random.randn(1, 2) * offset
-    for r in range(1, n_blobs):
-        new_blob = np.random.randn(per_blob, 2) * scale + np.random.randn(1, 2) * offset
-        result = np.vstack((result, new_blob))
-    return result
-
-
-def make_spiral(n_samples, noise=0.5):
-    n = np.sqrt(np.random.rand(n_samples, 1)) * 780 * (2 * np.pi) / 360
-    d1x = -np.cos(n) * n + np.random.rand(n_samples, 1) * noise
-    d1y = np.sin(n) * n + np.random.rand(n_samples, 1) * noise
-    return np.array(np.hstack((d1x, d1y)))
-
-
-n_samples = 500
-expe = "outlier"
-
 np.random.seed(42)
 
-nb_outliers = 200
-Xs = make_blobs_random(n_samples=n_samples, scale=0.2, n_blobs=1, offset=0) - 0.5
-Xs_outlier = make_blobs_random(
-    n_samples=nb_outliers, scale=0.05, n_blobs=1, offset=0
-) - [2, 0.5]
-
-Xs = np.vstack((Xs, Xs_outlier))
-Xt = make_blobs_random(n_samples=n_samples, scale=0.2, n_blobs=1, offset=0) + 1.5
-y = np.hstack(([0] * (n_samples + nb_outliers), [1] * n_samples))
-X = np.vstack((Xs, Xt))
+n_samples = 25  # 500
+nb_outliers = 10  # 200
 
 
-Xs_torch = torch.from_numpy(Xs).type(torch.float)
-Xt_torch = torch.from_numpy(Xt).type(torch.float)
+mu_s = np.array([0, 0]) - 0.5
+cov_s = 0.2**2 * np.array([[1, 0], [0, 1]])
+
+mu_s_outliers = -np.array([2, 0.5])
+cov_s_outliers = 0.05**2 * np.array([[1, 0], [0, 1]])
+
+mu_t = np.array([0, 0]) + 1.5
+cov_t = 0.2**2 * np.array([[1, 0], [0, 1]])
+
+
+def generate_dataset(n_samples):
+    # Generate source data (with outliers)
+    Xs = ot.datasets.make_2D_samples_gauss(n_samples, mu_s, cov_s)
+    Xs_outlier = ot.datasets.make_2D_samples_gauss(
+        nb_outliers, mu_s_outliers, cov_s_outliers
+    )
+
+    Xs = np.vstack((Xs, Xs_outlier))
+    Xs_torch = torch.from_numpy(Xs).type(torch.float)
+
+    # Generate target data
+    Xt = ot.datasets.make_2D_samples_gauss(n_samples, mu_t, cov_t)
+    Xt_torch = torch.from_numpy(Xt).type(torch.float)
+
+    return Xs_torch, Xt_torch
+
+
+Xs, Xt = generate_dataset(n_samples)
+
+pl.figure(1)
+pl.scatter(Xs[:, 0], Xs[:, 1], color="blue", label="Source data")
+pl.scatter(Xt[:, 0], Xt[:, 1], color="red", label="Target data")
+pl.xlim(-2.4, 2.4)
+pl.ylim(-1, 2.2)
+pl.legend()
+pl.show()
+
+
+##############################################################################
+# Compute SUOT and USOT
+# -------------
+
+# %%
 
 p = 2
 num_proj = 180
@@ -95,20 +94,16 @@ thetas = np.linspace(0, np.pi, num_proj)
 dir = np.array([(np.cos(theta), np.sin(theta)) for theta in thetas])
 dir_torch = torch.from_numpy(dir).type(torch.float)
 
-Xps = (Xs_torch @ dir_torch.T).T  # shape (n_projs, n)
-Xpt = (Xt_torch @ dir_torch.T).T
+Xps = (Xs @ dir_torch.T).T  # shape (n_projs, n)
+Xpt = (Xt @ dir_torch.T).T
 
-##############################################################################
-# Compute SUOT and USOT
-# -------------
-
-# %%
 
 rho1_SUOT = 1
 rho2_SUOT = 1
+
 _, log = ot.unbalanced.sliced_unbalanced_ot(
-    Xs_torch,
-    Xt_torch,
+    Xs,
+    Xt,
     (rho1_SUOT, rho2_SUOT),
     a,
     b,
@@ -123,9 +118,10 @@ A_SUOT, B_SUOT = log["a_reweighted"].T, log["b_reweighted"].T
 
 rho1_USOT = 1
 rho2_USOT = 1
+
 A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
-    Xs_torch,
-    Xt_torch,
+    Xs,
+    Xt,
     (rho1_USOT, rho2_USOT),
     a,
     b,
@@ -134,6 +130,196 @@ A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
     numItermax=10,
     projections=dir_torch.T,
 )
+
+
+##############################################################################
+# Sliced Unbalanced OT
+# --------------------
+# SUOT averages UOT problems on different slices. Depending on the slice, SUOT can keep or get rid of the outlier mode.
+
+# %%
+
+get_rot = lambda theta: np.array(
+    [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
+)
+
+# visu parameters
+nb_slices = 180  # 60
+offset_degree = int(180 / nb_slices)
+
+delta_degree = np.pi / nb_slices
+colors = plt.cm.Reds(np.linspace(0.3, 1, nb_slices))
+
+X1 = np.array([-4, 0])
+X2 = np.array([4, 0])
+
+# max_weights = max(A_SUOT.max(), B_SUOT.max())
+
+
+pl.figure(1)
+
+
+def _update_plot(i):
+    weights_src = A_SUOT[i * offset_degree, :].cpu().numpy()
+    weights_tgt = B_SUOT[i * offset_degree, :].cpu().numpy()
+
+    max_weights = max(weights_src.max(), weights_tgt.max())
+
+    weights_src /= max_weights
+    weights_tgt /= max_weights
+
+    R = get_rot(delta_degree * (-i))
+
+    X1_r = X1.dot(R)
+    X2_r = X2.dot(R)
+
+    pl.clf()
+
+    pl.plot(
+        [X1_r[0], X2_r[0]], [X1_r[1], X2_r[1]], color=colors[i], alpha=0.8, zorder=0
+    )
+
+    pl.scatter(
+        Xs[:, 0],
+        Xs[:, 1],
+        s=100 * weights_src,
+        alpha=weights_src,
+        zorder=1,
+        color="blue",
+        label="Source data",
+        edgecolor="black",
+    )
+    pl.scatter(
+        Xt[:, 0],
+        Xt[:, 1],
+        s=100 * weights_tgt,
+        alpha=weights_tgt,
+        zorder=1,
+        color="red",
+        label="Target data",
+        edgecolors="black",
+    )
+
+    pl.xlim(-2.4, 2.4)
+    pl.ylim(-1, 2.2)
+
+    return 1
+
+
+weights_src = A_SUOT[0, :].cpu().numpy()
+weights_tgt = B_SUOT[0, :].cpu().numpy()
+
+max_weights = max(weights_src.max(), weights_tgt.max())
+
+weights_src /= max_weights
+weights_tgt /= max_weights
+
+X1_r, X2_r = X1, X2
+pl.plot(
+    [X1_r[0], X2_r[0]],
+    [X1_r[1], X2_r[1]],
+    color=colors[0],
+    alpha=0.8,
+    zorder=0,
+    label="Directions",
+)
+pl.scatter(
+    Xs[:, 0],
+    Xs[:, 1],
+    s=100 * weights_src,
+    alpha=weights_src,
+    zorder=1,
+    color="blue",
+    label="Source data",
+    edgecolor="black",
+)
+pl.scatter(
+    Xt[:, 0],
+    Xt[:, 1],
+    s=100 * weights_tgt,
+    alpha=weights_tgt,
+    zorder=1,
+    color="red",
+    label="Target data",
+    edgecolors="black",
+)
+
+pl.xlim(-2.4, 2.4)
+pl.ylim(-1, 2.2)
+
+ani = animation.FuncAnimation(
+    pl.gcf(),
+    _update_plot,
+    nb_slices,
+    interval=100,  # , repeat_delay=2000
+)
+
+
+##############################################################################
+# Unbalanced Sliced OT
+# --------------------
+# USOT is able to get rid of the outlier mode on all slices, as it reweights the original distributions.
+
+# %%
+
+# visu parameters
+nb_slices = 3
+offset_degree = int(180 / nb_slices)
+
+delta_degree = np.pi / nb_slices
+colors = plt.cm.Reds(np.linspace(0.3, 1, nb_slices))
+
+plt.figure(1)
+
+for i in range(nb_slices):
+    weights_src = A_USOT.cpu().numpy()
+    weights_tgt = B_USOT.cpu().numpy()
+
+    max_weights = max(weights_src.max(), weights_tgt.max())
+
+    weights_src /= max_weights
+    weights_tgt /= max_weights
+
+    R = get_rot(delta_degree * (-i))
+    X1_r = X1.dot(R)
+    X2_r = X2.dot(R)
+    if i == 0:
+        pl.plot(
+            [X1_r[0], X2_r[0]],
+            [X1_r[1], X2_r[1]],
+            color=colors[i],
+            alpha=0.8,
+            zorder=0,
+            label="Directions",
+        )
+    else:
+        pl.plot(
+            [X1_r[0], X2_r[0]], [X1_r[1], X2_r[1]], color=colors[i], alpha=0.8, zorder=0
+        )
+
+pl.scatter(
+    Xs[:, 0],
+    Xs[:, 1],
+    s=100 * weights_src,
+    alpha=weights_src,
+    zorder=1,
+    color="blue",
+    label="Source data",
+    edgecolors="black",
+)
+pl.scatter(
+    Xt[:, 0],
+    Xt[:, 1],
+    s=100 * weights_tgt,
+    alpha=weights_tgt,
+    zorder=1,
+    color="red",
+    label="Target data",
+    edgecolors="black",
+)
+pl.xlim(-2.4, 2.4)
+pl.ylim(-1, 2.2)
+pl.show()
 
 
 ##############################################################################
@@ -156,7 +342,18 @@ def kde_sklearn(x, x_grid, weights=None, bandwidth=0.2, **kwargs):
 
 
 def plot_slices(
-    col, nb_slices, x_grid, Xps, Xpt, Xps_weights, Xpt_weights, method, rho1, rho2
+    col,
+    nb_slices,
+    x_grid,
+    Xps,
+    Xpt,
+    Xps_weights,
+    Xpt_weights,
+    method,
+    rho1,
+    rho2,
+    offset_degree,
+    bw=0.05,
 ):
     for i in range(nb_slices):
         ax = plt.subplot2grid((nb_slices, 3), (i, col))
@@ -175,13 +372,13 @@ def plot_slices(
         pdf_source_without_w = kde_sklearn(samples_src, x_grid, bandwidth=bw)
         pdf_target_without_w = kde_sklearn(samples_tgt, x_grid, bandwidth=bw)
 
-        ax.plot(x_grid, pdf_source, color=c2, alpha=0.8, lw=2)
+        ax.plot(x_grid, pdf_source, color="blue", alpha=0.8, lw=2)
         ax.fill(x_grid, pdf_source_without_w, ec="grey", fc="grey", alpha=0.3)
-        ax.fill(x_grid, pdf_source, ec=c2, fc=c2, alpha=0.3)
+        ax.fill(x_grid, pdf_source, ec="blue", fc="blue", alpha=0.3)
 
-        ax.plot(x_grid, pdf_target, color=c1, alpha=0.8, lw=2)
+        ax.plot(x_grid, pdf_target, color="red", alpha=0.8, lw=2)
         ax.fill(x_grid, pdf_target_without_w, ec="grey", fc="grey", alpha=0.3)
-        ax.fill(x_grid, pdf_target, ec=c2, fc=c1, alpha=0.3)
+        ax.fill(x_grid, pdf_target, ec="blue", fc="red", alpha=0.3)
 
         ax.set_xlim(xlim_min, xlim_max)
 
@@ -209,17 +406,62 @@ def plot_slices(
 
 # %%
 
-c1 = np.array(mpl.colors.to_rgb("red"))
-c2 = np.array(mpl.colors.to_rgb("blue"))
+get_rot = lambda theta: np.array(
+    [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
+)
+
+n_samples = 500
+nb_outliers = 200
+
+Xs, Xt = generate_dataset(n_samples)
+
+Xps = (Xs @ dir_torch.T).T  # shape (n_projs, n)
+Xpt = (Xt @ dir_torch.T).T
+
+a = torch.ones(Xs.shape[0], dtype=torch.float)
+b = torch.ones(Xt.shape[0], dtype=torch.float)
+
+rho1_SUOT = 1
+rho2_SUOT = 1
+
+_, log = ot.unbalanced.sliced_unbalanced_ot(
+    Xs,
+    Xt,
+    (rho1_SUOT, rho2_SUOT),
+    a,
+    b,
+    num_proj,
+    p,
+    numItermax=10,
+    projections=dir_torch.T,
+    log=True,
+)
+A_SUOT, B_SUOT = log["a_reweighted"].T, log["b_reweighted"].T
+
+
+rho1_USOT = 1
+rho2_USOT = 1
+
+A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
+    Xs,
+    Xt,
+    (rho1_USOT, rho2_USOT),
+    a,
+    b,
+    num_proj,
+    p,
+    numItermax=10,
+    projections=dir_torch.T,
+)
+
 
 # define plotting grid
 xlim_min = -3
 xlim_max = 3
 x_grid = np.linspace(xlim_min, xlim_max, 200)
-bw = 0.05
 
 # visu parameters
-nb_slices = 3  # 4
+nb_slices = 3
 offset_degree = int(180 / nb_slices)
 
 delta_degree = np.pi / nb_slices
@@ -227,7 +469,6 @@ colors = plt.cm.Reds(np.linspace(0.3, 1, nb_slices))
 
 X1 = np.array([-4, 0])
 X2 = np.array([4, 0])
-
 
 fig = plt.figure(figsize=(9, 3))
 
@@ -251,8 +492,8 @@ for i in range(nb_slices):
             [X1_r[0], X2_r[0]], [X1_r[1], X2_r[1]], color=colors[i], alpha=0.8, zorder=0
         )
 
-ax1.scatter(Xs[:, 0], Xs[:, 1], zorder=1, color=c2, label="Source data")
-ax1.scatter(Xt[:, 0], Xt[:, 1], zorder=1, color=c1, label="Target data")
+ax1.scatter(Xs[:, 0], Xs[:, 1], zorder=1, color="blue", label="Source data")
+ax1.scatter(Xt[:, 0], Xt[:, 1], zorder=1, color="red", label="Target data")
 ax1.set_xlim([-3, 3])
 ax1.set_ylim([-3, 3])
 ax1.set_yticks([])
@@ -265,10 +506,30 @@ fig.subplots_adjust(hspace=0)
 fig.subplots_adjust(wspace=0.15)
 
 plot_slices(
-    1, nb_slices, x_grid, Xps, Xpt, A_SUOT, B_SUOT, "SUOT", rho1_SUOT, rho2_SUOT
+    1,
+    nb_slices,
+    x_grid,
+    Xps,
+    Xpt,
+    A_SUOT,
+    B_SUOT,
+    "SUOT",
+    rho1_SUOT,
+    rho2_SUOT,
+    offset_degree,
 )
 plot_slices(
-    2, nb_slices, x_grid, Xps, Xpt, A_USOT, B_USOT, "USOT", rho1_USOT, rho2_USOT
+    2,
+    nb_slices,
+    x_grid,
+    Xps,
+    Xpt,
+    A_USOT,
+    B_USOT,
+    "USOT",
+    rho1_USOT,
+    rho2_USOT,
+    offset_degree,
 )
 
 plt.show()
