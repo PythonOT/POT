@@ -54,6 +54,7 @@
 #include <map>
 #endif
 #include <cmath>
+#include <cstring>
 //#include "core.h"
 //#include "lmath.h"
 
@@ -348,7 +349,6 @@ namespace lemon {
 
     private:
         // Warmstart data
-        CostVector _warmstart_pi;  // Stores warmstart potentials
         bool _warmstart_provided;  // Flag indicating warmstart is available
         bool _warmstart_tree_built;  // Flag: tree was built by warmstartInit()
 
@@ -786,20 +786,17 @@ namespace lemon {
         /// \param n Number of source nodes (compressed, non-zero supply)
         /// \param m Number of target nodes (compressed, non-zero supply)
         ///
-        /// Note: The sign convention matches EMD potential extraction:
-        /// alpha = -pi[source], beta = +pi[target]
-        /// The internal pi convention: reduced cost = cost[arc] + pi[source] - pi[target]
-        /// So: pi[source_i] = -alpha[i], pi[target_j] = beta[j]
         void setWarmstartPotentials(const Cost* alpha, const Cost* beta, int n, int m) {
-            // Store warmstart potentials with correct sign AND node ID mapping.
             // Graph source nodes: 0..n-1, stored at internal index _node_id(i)
             // Graph target nodes: n..n+m-1, stored at internal index _node_id(n+j)
             // _node_id(k) = _node_num - k - 1 (reversal mapping)
+            // Note: warmstartInit() will refine these by recomputing from the tree structure.
+
             for (int i = 0; i < n; ++i) {
-                _warmstart_pi[_node_id(i)] = -alpha[i];  // pi[source] = -alpha
+                _pi[_node_id(i)] = -alpha[i];  // pi[source] = -alpha
             }
             for (int j = 0; j < m; ++j) {
-                _warmstart_pi[_node_id(n + j)] = beta[j];  // pi[target] = +beta
+                _pi[_node_id(n + j)] = beta[j];  // pi[target] = +beta
             }
             _warmstart_provided = true;
         }
@@ -947,7 +944,6 @@ namespace lemon {
             _supply.resize(all_node_num);
             _flow.resize(max_arc_num);
             _pi.resize(all_node_num);
-            _warmstart_pi.resize(all_node_num);  // Initialize warmstart storage
 
             _parent.resize(all_node_num);
             _pred.resize(all_node_num);
@@ -1127,56 +1123,56 @@ namespace lemon {
             }
             if (fabs(_sum_supply) > _EPSILON) return false;
             _sum_supply = 0;
-
-            // Compute ART_COST (same as init())
-            Cost ART_COST;
-            if (std::numeric_limits<Cost>::is_exact) {
-                ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
-            } else {
-                ART_COST = 0;
-                for (ArcsType i = 0; i != _arc_num; ++i) {
-                    if (_cost[i] > ART_COST) ART_COST = _cost[i];
-                }
-                ART_COST = (ART_COST + 1) * _node_num;
-            }
-
-            // Initialize all real arcs as STATE_LOWER with zero flow
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                _state[i] = STATE_LOWER;
-            }
-
-            // STEP 1: Build MST using partial sort + union-find
             int tree_edges = 0;
             std::vector<ArcsType> tree_arcs;
             tree_arcs.reserve(_node_num);
+            Cost ART_COST = 0;
 
             {
-                std::vector<ArcsType> arc_order(_arc_num);
-                std::vector<Cost> arc_absrc(_arc_num);
-                for (ArcsType e = 0; e < _arc_num; ++e) {
-                    arc_order[e] = e;
-                    arc_absrc[e] = fabs(_cost[e] + _warmstart_pi[_source[e]] - _warmstart_pi[_target[e]]);
-                }
-
                 ArcsType K = std::min((ArcsType)(4 * _node_num), _arc_num);
-                if (K < _arc_num) {
-                    std::nth_element(arc_order.begin(), arc_order.begin() + K, arc_order.end(),
-                        [&](ArcsType a, ArcsType b) {
-                            return arc_absrc[a] < arc_absrc[b];
-                        });
+
+                // Max-heap: (|reduced_cost|, arc_index).  We keep the K smallest.
+
+                typedef std::pair<Cost, ArcsType> HeapEntry;
+                std::priority_queue<HeapEntry> maxheap;
+
+                for (ArcsType e = 0; e < _arc_num; ++e) {
+                    _state[e] = STATE_LOWER;
+                    Cost c = _cost[e];
+                    if (c > ART_COST) ART_COST = c;
+                    Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
+                    if ((ArcsType)maxheap.size() < K) {
+                        maxheap.push({rc, e});
+                    } else if (rc < maxheap.top().first) {
+                        maxheap.pop();
+                        maxheap.push({rc, e});
+                    }
+                }
+                if (std::numeric_limits<Cost>::is_exact) {
+                    ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
+                } else {
+                    ART_COST = (ART_COST + 1) * _node_num;
                 }
 
-                std::sort(arc_order.begin(), arc_order.begin() + K,
-                    [&](ArcsType a, ArcsType b) {
-                        return arc_absrc[a] < arc_absrc[b];
+                std::vector<HeapEntry> candidates;
+                candidates.reserve(maxheap.size());
+                while (!maxheap.empty()) {
+                    candidates.push_back(maxheap.top());
+                    maxheap.pop();
+                }
+                
+                std::sort(candidates.begin(), candidates.end(),
+                    [](const HeapEntry& a, const HeapEntry& b) {
+                        return a.first < b.first;
                     });
 
+                // Kruskal's MST with union-find
                 std::vector<int> uf_parent(_node_num);
                 std::vector<int> uf_rank(_node_num, 0);
                 for (int i = 0; i < _node_num; ++i) uf_parent[i] = i;
 
-                for (ArcsType idx = 0; idx < K && tree_edges < _node_num - 1; ++idx) {
-                    ArcsType e = arc_order[idx];
+                for (ArcsType idx = 0; idx < (ArcsType)candidates.size() && tree_edges < _node_num - 1; ++idx) {
+                    ArcsType e = candidates[idx].second;
                     int s = _source[e];
                     int t = _target[e];
                     int rs = s, rt = t;
@@ -1190,9 +1186,13 @@ namespace lemon {
                     tree_edges++;
                 }
 
+                // Fallback: if K best weren't enough to span, scan remaining arcs
                 if (tree_edges < _node_num - 1) {
-                    for (ArcsType idx = K; idx < _arc_num && tree_edges < _node_num - 1; ++idx) {
-                        ArcsType e = arc_order[idx];
+                    std::vector<bool> considered(_arc_num, false);
+                    for (auto& c : candidates) considered[c.second] = true;
+
+                    for (ArcsType e = 0; e < _arc_num && tree_edges < _node_num - 1; ++e) {
+                        if (considered[e]) continue;
                         int s = _source[e];
                         int t = _target[e];
                         int rs = s, rt = t;
@@ -1477,11 +1477,7 @@ namespace lemon {
                 ART_COST = (ART_COST + 1) * _node_num;
             }
 
-            // Initialize arc maps
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                //_flow[i] = 0; //by default, the sparse matrix is empty
-                _state[i] = STATE_LOWER;
-            }
+            memset(&_state[0], STATE_LOWER, _arc_num);
 
             // Set data for the artificial root node
             _root = _node_num;
@@ -1592,7 +1588,7 @@ namespace lemon {
                         _cost[f] = ART_COST;
                         _source[e] = _root;
                         _target[e] = u;
-                        //_flow[e] = 0; //by default, the sparse matrix is empty
+                        //_flow[e] = 0;
                         _cost[e] = 0;
                         _state[e] = STATE_LOWER;
                         ++f;

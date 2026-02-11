@@ -111,6 +111,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // Solve the problem with the network simplex algorithm
 
     int ret=net.run();
+
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
