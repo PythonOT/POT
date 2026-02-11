@@ -1126,6 +1126,37 @@ def test_emd2_sparse_vs_dense_gradients():
     assert np.abs(grad_values.sum() - 1.0) < 1e-7
 
 
+def test_emd_warmstart():
+    # Test that warmstarting the network simplex from partial duals
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(x, y)
+
+    # run solver with limited iterations (stop early)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    # resume from the partial duals with full iterations
+    G_warm, log_warm = ot.emd(a, b, M, log=True, warmstart_dual=(u_partial, v_partial))
+
+    # cold-start reference
+    G_cold, log_cold = ot.emd(a, b, M, log=True)
+
+    # costs should match
+    np.testing.assert_allclose(G_warm, G_cold, rtol=1e-7, atol=1e-10)
+    np.testing.assert_allclose(log_warm["cost"], log_cold["cost"], rtol=1e-7)
+
+    # Both should satisfy marginal constraints
+    np.testing.assert_allclose(G_warm.sum(1), a, atol=1e-7)
+    np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
+
+
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal
