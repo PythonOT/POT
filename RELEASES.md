@@ -21,6 +21,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
 - Fix openmp flags on macOS (PR #789)
 - Clean documentation (PR #787)
+- Fix code coverage (PR #791)
+- Fix test of the version of jax in `ot.backend` (PR #794)
 
 
 ## 0.9.6.post1
