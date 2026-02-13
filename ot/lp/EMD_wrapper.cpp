@@ -19,6 +19,8 @@
 #include "EMD.h"
 #include <cstdint>
 #include <unordered_map>
+#include <chrono>
+#include <cstdio>
 
 
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
@@ -27,6 +29,9 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
+    using clk = std::chrono::high_resolution_clock;
+    auto t_total_start = clk::now();
+    auto t0 = clk::now();
     uint64_t n, m, cur;
 
     typedef FullBipartiteDigraph Digraph;
@@ -57,7 +62,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     std::vector<uint64_t> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, (int) (n + m), n * m, maxIter);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, false, (int) (n + m), n * m, maxIter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
@@ -81,20 +86,36 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         }
     }
 
-
+    auto t200 = clk::now();
     net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
+    auto t1 = clk::now();
+    double ms_setup = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    double supply_setup = std::chrono::duration<double, std::milli>(t1 - t200).count();
+
     // Set the cost of each edge
-    int64_t idarc = 0;
-    for (uint64_t i=0; i<n; i++) {
-        for (uint64_t j=0; j<m; j++) {
-            double val=*(D+indI[i]*n2+indJ[j]);
-            net.setCost(di.arcFromId(idarc), val);
-            ++idarc;
+    auto t2 = clk::now();
+    if (n == (uint64_t)n1 && m == (uint64_t)n2) {
+        // No zero-mass filtering: D layout matches arc layout exactly
+        // Just pass the pointer — zero copy!
+        net.setDenseCostMatrix(D, n2);
+    } else {
+        // Zero-mass nodes were filtered: must copy costs with indirection
+        int64_t idarc = 0;
+        for (uint64_t i=0; i<n; i++) {
+            for (uint64_t j=0; j<m; j++) {
+                double val=*(D+indI[i]*n2+indJ[j]);
+                net.setCost(di.arcFromId(idarc), val);
+                ++idarc;
+            }
         }
     }
 
+    auto t3 = clk::now();
+    double ms_cost = std::chrono::duration<double, std::milli>(t3 - t2).count();
+
     // Set warmstart potentials if provided
+    auto t4 = clk::now();
     if (alpha_init != nullptr && beta_init != nullptr) {
         // Compress warmstart potentials to only non-zero entries
         std::vector<double> alpha_compressed(n);
@@ -108,26 +129,59 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         net.setWarmstartPotentials(&alpha_compressed[0], &beta_compressed[0], (int)n, (int)m);
     }
 
-    // Solve the problem with the network simplex algorithm
+    auto t5 = clk::now();
+    double ms_warmstart = std::chrono::duration<double, std::milli>(t5 - t4).count();
 
+    // Solve the problem with the network simplex algorithm
+    auto t6 = clk::now();
     int ret=net.run();
+    auto t7 = clk::now();
+    double ms_solve = std::chrono::duration<double, std::milli>(t7 - t6).count();
 
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
-        Arc a; di.first(a);
-        for (; a != INVALID; di.next(a)) {
-            i = di.source(a);
-            j = di.target(a);
-            double flow = net.flow(a);
-            *cost += flow * (*(D+indI[i]*n2+indJ[j-n]));
-            *(G+indI[i]*n2+indJ[j-n]) = flow;
-            *(alpha + indI[i]) = -net.potential(i);
-            *(beta + indJ[j-n]) = net.potential(j);
+
+        // Extract potentials directly from _pi (already public)
+        // potential(graph_node) = _pi[_node_num - graph_node - 1]
+        int node_num = net.nodeNum();
+        for (uint64_t ii = 0; ii < n; ii++) {
+            *(alpha + indI[ii]) = -net._pi[node_num - (int)ii - 1];
+        }
+        for (uint64_t jj = 0; jj < m; jj++) {
+            *(beta + indJ[jj]) = net._pi[node_num - (int)(jj + n) - 1];
         }
 
+        // Extract flows: iterate _flow directly, skip zeros
+        // For ~16M arcs, only ~n+m-1 ≈ 8K have non-zero flow
+        int64_t arc_num = net.arcNum();
+        for (int64_t a = 0; a < arc_num; a++) {
+            double flow = net._flow[a];
+            if (flow != 0) {
+                // Without arc mixing: graph arc g = arc_num - a - 1
+                int64_t g = arc_num - a - 1;
+                i = g / m;       // compressed source index
+                j = g % m;       // compressed target index
+                uint64_t D_idx = indI[i] * n2 + indJ[j];
+                *cost += flow * D[D_idx];
+                G[D_idx] = flow;
+            }
+        }
     }
 
+    auto t8 = clk::now();
+    double ms_result = std::chrono::duration<double, std::milli>(t8 - t7).count();
+    double ms_total = std::chrono::duration<double, std::milli>(t8 - t_total_start).count();
+
+    fprintf(stderr, "\n[EMD_wrap timing] n=%llu m=%llu arcs=%llu\n",
+            (unsigned long long)n, (unsigned long long)m, (unsigned long long)(n*m));
+    fprintf(stderr, "  Setup (graph+supply):  %8.3f ms\n", ms_setup);
+    fprintf(stderr, " Supply setup: %8.3f ms\n", supply_setup); 
+    fprintf(stderr, "  Cost setting:          %8.3f ms\n", ms_cost);
+    fprintf(stderr, "  Warmstart setup:       %8.3f ms\n", ms_warmstart);
+    fprintf(stderr, "  Simplex solve:         %8.3f ms\n", ms_solve);
+    fprintf(stderr, "  Result extraction:     %8.3f ms\n", ms_result);
+    fprintf(stderr, "  TOTAL:                 %8.3f ms\n", ms_total);
 
     return ret;
 }

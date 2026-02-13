@@ -234,7 +234,8 @@ namespace lemon {
         MAX(std::numeric_limits<Value>::max()),
         INF(std::numeric_limits<Value>::has_infinity ?
             std::numeric_limits<Value>::infinity() : MAX),
-        _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0)
+        _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0),
+        _dense_cost(false), _D_ptr(nullptr), _D_n2(0)
         {
             // Reset data structures
             reset();
@@ -346,6 +347,11 @@ namespace lemon {
         const double* _coords_b;
         int _dim;
         int _metric; // 0: sqeuclidean, 1: euclidean, 2: cityblock
+
+        // Dense cost matrix pointer (lazy access, no copy)
+        bool _dense_cost;
+        const double* _D_ptr;  // pointer to row-major cost matrix
+        int _D_n2;             // number of columns in D (original n2)
 
     private:
         // Warmstart data
@@ -480,7 +486,10 @@ namespace lemon {
 
             // Get cost for an arc (either from pre-computed array or compute lazily)
             inline Cost getCost(ArcsType e) const {
-                if (!_ns._lazy_cost) {
+                if (_ns._dense_cost) {
+                    // Dense matrix mode: read directly from D pointer
+                    return _ns._D_ptr[_ns._arc_num - e - 1];
+                } else if (!_ns._lazy_cost) {
                     return _cost[e];
                 } else {
                     // For lazy mode, compute cost from coordinates inline
@@ -560,7 +569,12 @@ namespace lemon {
 
     public:
 
-
+        // Public accessors for efficient result extraction
+        ArcsType arcNum() const { return _arc_num; }
+        int nodeNum() const { return _node_num; }
+        int n1() const { return _n1; }
+        int n2() const { return _n2; }
+        Cost pi(int internal_node) const { return _pi[internal_node]; }
 
         int _init_nb_nodes;
         ArcsType _init_nb_arcs;
@@ -632,6 +646,23 @@ namespace lemon {
             return *this;
         }
 
+        /// \brief Set a dense cost matrix pointer for lazy access.
+        ///
+        /// This function stores a pointer to the cost matrix D (row-major)
+        /// so that costs can be read directly without copying.
+        /// Requires arc_mixing=false and n==n1, m==n2 (no zero-mass filtering).
+        ///
+        /// \param D Pointer to the n1 x n2 cost matrix (row-major)
+        /// \param n2 Number of columns in D
+        ///
+        /// \return <tt>(*this)</tt>
+        NetworkSimplexSimple& setDenseCostMatrix(const double* D, int n2) {
+            _dense_cost = true;
+            _D_ptr = D;
+            _D_n2 = n2;
+            return *this;
+        }
+
         /// \brief Compute cost lazily from coordinates.
         ///
         /// Computes the distance between source node i and target node j
@@ -676,17 +707,24 @@ namespace lemon {
         /// \param arc_id The arc ID
         /// \return Cost of the arc
         inline Cost getCostForArc(ArcsType arc_id) const {
-            if (!_lazy_cost) {
+            if (_dense_cost) {
+                // Dense matrix mode: read directly from D pointer
+                // For artificial arcs (>= _arc_num), read from _cost array
+                if (arc_id >= _arc_num) {
+                    return _cost[arc_id];
+                }
+                // Without arc mixing: internal arc_id maps to graph arc = _arc_num - arc_id - 1
+                // graph arc g encodes source i = g / m, target j = g % m
+                // cost = D[i * _D_n2 + j] = D[g] (since m == _D_n2)
+                return _D_ptr[_arc_num - arc_id - 1];
+            } else if (!_lazy_cost) {
                 return _cost[arc_id];
             } else {
                 // For artificial arcs (>= _arc_num), return 0
-                // These are not real transport arcs
                 if (arc_id >= _arc_num) {
                     return 0;
                 }
                 // Compute lazily from coordinates
-                // _source and _target use reversed node numbering: _node_id(n) = _node_num - n - 1
-                // Recover original indices: i = _node_num - _source[arc_id] - 1, j = _n2 - _target[arc_id] - 1
                 int i = _node_num - _source[arc_id] - 1;
                 int j = _n2 - _target[arc_id] - 1;
                 return computeLazyCost(i, j);
@@ -1035,7 +1073,14 @@ namespace lemon {
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            if (!_lazy_cost) {
+            if (_dense_cost) {
+                // Dense matrix mode: compute cost from D pointer
+                for (ArcsType i=0; i<_flow.size(); i++) {
+                    if (_flow[i] != 0) {
+                        c += _flow[i] * Number(getCostForArc(i));
+                    }
+                }
+            } else if (!_lazy_cost) {
                 for (ArcsType i=0; i<_flow.size(); i++)
                     c += _flow[i] * Number(_cost[i]);
             } else {
@@ -1138,7 +1183,7 @@ namespace lemon {
 
                 for (ArcsType e = 0; e < _arc_num; ++e) {
                     _state[e] = STATE_LOWER;
-                    Cost c = _cost[e];
+                    Cost c = getCostForArc(e);
                     if (c > ART_COST) ART_COST = c;
                     Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
                     if ((ArcsType)maxheap.size() < K) {
@@ -1437,9 +1482,9 @@ namespace lemon {
                     ArcsType e = _pred[u];
                     int v = _parent[u];
                     if (_forward[u]) {
-                        _pi[u] = _pi[v] - _cost[e];
+                        _pi[u] = _pi[v] - getCostForArc(e);
                     } else {
-                        _pi[u] = _pi[v] + _cost[e];
+                        _pi[u] = _pi[v] + getCostForArc(e);
                     }
                     u = _thread[u];
                 }
