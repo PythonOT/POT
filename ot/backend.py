@@ -89,6 +89,7 @@ Performance
 import os
 import time
 import warnings
+import functools
 
 import numpy as np
 import scipy
@@ -128,6 +129,24 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
             24,
             0,
         )
+
+        @jax.custom_jvp
+        def norm_1d_jax(z):
+            return jnp.abs(z)
+
+        @norm_1d_jax.defjvp
+        def norm_1d_jax_jvp(primals, tangents):
+            """
+            Enforce the gradient in 0 of jnp.abs to be 0
+            """
+            (z,) = primals
+            z_is_zero = jnp.all(jnp.logical_not(z))
+            clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
+            primals, tangents = jax.jvp(
+                functools.partial(jnp.abs), (clean_z,), tangents
+            )
+            return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
+
     except ImportError:
         jax = False
         jax_type = float
@@ -593,7 +612,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         """
         Limits the values in a tensor.
 
@@ -1020,7 +1039,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
         r"""
         Computes the (Generalized) Kullback-Leibler divergence.
 
@@ -1147,6 +1166,22 @@ class Backend:
         Compute the sign and (natural) logarithm of the determinant of an array.
 
         See: https://numpy.org/doc/stable/reference/generated/numpy.linalg.slogdet.html
+        """
+        raise NotImplementedError()
+
+    def index_select(self, input, axis, index):
+        r"""
+        Returns a new tensor which indexes the input tensor along dimension dim using the entries in index.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.index_select.html
+        """
+        raise NotImplementedError()
+
+    def nonzero(self, input, as_tuple=False):
+        r"""
+        Returns a tensor containing the indices of all non-zero elements of input.
+
+        See: https://docs.pytorch.org/docs/stable/generated/torch.nonzero.html
         """
         raise NotImplementedError()
 
@@ -1291,7 +1326,7 @@ class NumpyBackend(Backend):
     def outer(self, a, b):
         return np.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1468,10 +1503,10 @@ class NumpyBackend(Backend):
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = np.sum(p * np.log(p / q + eps), axis=axis)
         if mass:
-            value = value + np.sum(q - p)
+            value = value + np.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -1532,6 +1567,16 @@ class NumpyBackend(Backend):
 
     def slogdet(self, a):
         return np.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return np.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return np.nonzero(input)
+        else:
+            L_tuple = np.nonzero(input)
+            return np.concatenate([t[None] for t in L_tuple], axis=0).T
 
 
 _register_backend_implementation(NumpyBackend)
@@ -1658,7 +1703,7 @@ class JaxBackend(Backend):
         return jnp.dot(a, b)
 
     def abs(self, a):
-        return jnp.abs(a)
+        return norm_1d_jax(a)
 
     def exp(self, a):
         return jnp.exp(a)
@@ -1708,7 +1753,7 @@ class JaxBackend(Backend):
     def outer(self, a, b):
         return jnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1903,10 +1948,10 @@ class JaxBackend(Backend):
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = jnp.sum(p * jnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + jnp.sum(q - p)
+            value = value + jnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -1950,6 +1995,16 @@ class JaxBackend(Backend):
 
     def slogdet(self, a):
         return jnp.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return jnp.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return jnp.nonzero(input)
+        else:
+            L_tuple = jnp.nonzero(input)
+            return jnp.concatenate([t[None] for t in L_tuple], axis=0).T
 
 
 if jax:
@@ -2205,7 +2260,7 @@ class TorchBackend(Backend):
     def outer(self, a, b):
         return torch.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2494,10 +2549,10 @@ class TorchBackend(Backend):
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = torch.sum(p * torch.log(p / q + eps), axis=axis)
         if mass:
-            value = value + torch.sum(q - p)
+            value = value + torch.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2544,6 +2599,12 @@ class TorchBackend(Backend):
 
     def slogdet(self, a):
         return torch.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return torch.index_select(input, axis, index)
+
+    def nonzero(self, input, as_tuple=False):
+        return torch.nonzero(input, as_tuple=as_tuple)
 
 
 if torch:
@@ -2706,7 +2767,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def outer(self, a, b):
         return cp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2920,10 +2981,10 @@ class CupyBackend(Backend):  # pragma: no cover
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = cp.sum(p * cp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + cp.sum(q - p)
+            value = value + cp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2967,6 +3028,16 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def slogdet(self, a):
         return cp.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return cp.take(input, index, axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return cp.nonzero(input)
+        else:
+            L_tuple = cp.nonzero(input)
+            return cp.concatenate([t[None] for t in L_tuple], axis=0).T
 
 
 if cp:
@@ -3140,7 +3211,7 @@ class TensorflowBackend(Backend):
     def outer(self, a, b):
         return tnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -3377,10 +3448,10 @@ class TensorflowBackend(Backend):
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = tnp.sum(p * tnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + tnp.sum(q - p)
+            value = value + tnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -3427,6 +3498,16 @@ class TensorflowBackend(Backend):
 
     def slogdet(self, a):
         return tf.linalg.slogdet(a)
+
+    def index_select(self, input, axis, index):
+        return tf.gather(input, index, axis=axis)
+
+    def nonzero(self, input, as_tuple=False):
+        if as_tuple:
+            return tf.where(input)
+        else:
+            indices = tf.where(input)
+            return tf.reshape(indices, (-1, indices.shape[-1]))
 
 
 if tf:
