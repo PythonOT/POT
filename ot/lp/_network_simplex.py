@@ -238,7 +238,7 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
-    warmstart_dual: tuple of two arrays (alpha, beta), optional (default=None)
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
         Warmstart dual potentials to accelerate convergence. Should be a tuple
         (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
         These potentials are used to guide initial pivots in the network simplex.
