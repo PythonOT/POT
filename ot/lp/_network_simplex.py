@@ -172,6 +172,7 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -237,6 +238,11 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -373,8 +379,18 @@ def emd(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
     else:
+        # Prepare warmstart if provided
+        alpha_init = None
+        beta_init = None
+        if potentials_init is not None:
+            alpha_init, beta_init = potentials_init
+            alpha_init = np.asarray(alpha_init, dtype=np.float64)
+            beta_init = np.asarray(beta_init, dtype=np.float64)
+
         # Dense solver
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+        G, cost, u, v, result_code = emd_c(
+            a, b, M, numItermax, numThreads, alpha_init, beta_init
+        )
 
     # ============================================================================
     # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
@@ -448,6 +464,7 @@ def emd2(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -513,6 +530,11 @@ def emd2(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -656,8 +678,18 @@ def emd2(
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
         else:
+            # Prepare warmstart if provided
+            alpha_init = None
+            beta_init = None
+            if potentials_init is not None:
+                alpha_init, beta_init = potentials_init
+                alpha_init = np.asarray(alpha_init, dtype=np.float64)
+                beta_init = np.asarray(beta_init, dtype=np.float64)
+
             # Solve dense EMD
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+            G, cost, u, v, result_code = emd_c(
+                a, b, M, numItermax, numThreads, alpha_init, beta_init
+            )
 
         # Center dual potentials
         if center_dual:
