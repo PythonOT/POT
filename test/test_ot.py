@@ -1126,7 +1126,7 @@ def test_emd2_sparse_vs_dense_gradients():
     assert np.abs(grad_values.sum() - 1.0) < 1e-7
 
 
-def test_emd_warmstart():
+def test_emd__dual_warmstart():
     # Test that warmstarting the network simplex from partial duals
     n = 100
     rng = np.random.RandomState(42)
@@ -1143,7 +1143,7 @@ def test_emd_warmstart():
     v_partial = log_partial["v"]
 
     # resume from the partial duals with full iterations
-    G_warm, log_warm = ot.emd(a, b, M, log=True, warmstart_dual=(u_partial, v_partial))
+    G_warm, log_warm = ot.emd(a, b, M, log=True, potentials_init=(u_partial, v_partial))
 
     # cold-start reference
     G_cold, log_cold = ot.emd(a, b, M, log=True)
@@ -1155,6 +1155,16 @@ def test_emd_warmstart():
     # Both should satisfy marginal constraints
     np.testing.assert_allclose(G_warm.sum(1), a, atol=1e-7)
     np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
+
+    # Test emd2 with warmstart
+    cost_warm_emd2, log_warm_emd2 = ot.emd2(
+        a, b, M, log=True, potentials_init=(u_partial, v_partial)
+    )
+    cost_cold_emd2, log_cold_emd2 = ot.emd2(a, b, M, log=True)
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
 
 
 def check_duality_gap(a, b, M, G, u, v, cost):
