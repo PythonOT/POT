@@ -129,7 +129,9 @@ def solve(
     plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
-        Initialization of the OT dual potentials for iterative methods, by default None
+        Initialization of the OT dual potentials for iterative methods (Sinkhorn,
+        unbalanced) or warmstart for exact EMD solver. For EMD, these potentials
+        are used to guide initial pivots in the network simplex. By default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
@@ -328,6 +330,7 @@ def solve(
                 log=True,
                 return_matrix=True,
                 numThreads=n_threads,
+                potentials_init=potentials_init,
             )
 
             value = value_linear
@@ -1445,7 +1448,9 @@ def solve_sample(
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
-        Initialization of the OT dual potentials for iterative methods, by default None
+        Initialization of the OT dual potentials for iterative methods (Sinkhorn,
+        unbalanced) or warmstart for exact EMD solver. For EMD, these potentials
+        are used to guide initial pivots in the network simplex. By default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional

@@ -14,6 +14,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 
 #### New features 
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
+- Add Warmstart feature to the EMD solver for existing potentials (PR #793)
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
 - Geomloss function now handles both scalar and slice indices for i and j (PR #785)
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)

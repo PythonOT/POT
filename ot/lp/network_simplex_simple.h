@@ -46,12 +46,15 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdio>
+#include <queue>
+#include <stack>
 #ifdef HASHMAP
 #include <hash_map>
 #else
 #include <map>
 #endif
 #include <cmath>
+#include <cstring>
 //#include "core.h"
 //#include "lmath.h"
 
@@ -345,6 +348,10 @@ namespace lemon {
         int _metric; // 0: sqeuclidean, 1: euclidean, 2: cityblock
 
     private:
+        // Warmstart data
+        bool _warmstart_provided;  // Flag indicating warmstart is available
+        bool _warmstart_tree_built;  // Flag: tree was built by warmstartInit()
+
         // Data for storing the spanning tree structure
         IntVector _parent;
         ArcVector _pred;
@@ -768,6 +775,32 @@ namespace lemon {
             return *this;
         }
 
+        /// \brief Set initial dual potentials for warmstart.
+        ///
+        /// This function sets warmstart dual potentials that will be used
+        /// to guide the initial pivots in the network simplex algorithm.
+        /// The potentials should come from a previous solution (e.g., Sinkhorn or EMD).
+        ///
+        /// \param alpha Source node potentials (size n), where alpha[i] = -pi[source_i]
+        /// \param beta Target node potentials (size m), where beta[j] = +pi[target_j]
+        /// \param n Number of source nodes (compressed, non-zero supply)
+        /// \param m Number of target nodes (compressed, non-zero supply)
+        ///
+        void setWarmstartPotentials(const Cost* alpha, const Cost* beta, int n, int m) {
+            // Graph source nodes: 0..n-1, stored at internal index _node_id(i)
+            // Graph target nodes: n..n+m-1, stored at internal index _node_id(n+j)
+            // _node_id(k) = _node_num - k - 1 (reversal mapping)
+            // Note: warmstartInit() will refine these by recomputing from the tree structure.
+
+            for (int i = 0; i < n; ++i) {
+                _pi[_node_id(i)] = -alpha[i];  // pi[source] = -alpha
+            }
+            for (int j = 0; j < m; ++j) {
+                _pi[_node_id(n + j)] = beta[j];  // pi[target] = +beta
+            }
+            _warmstart_provided = true;
+        }
+
         /// @}
 
         /// \name Execution Control
@@ -809,7 +842,15 @@ namespace lemon {
         /// \see ProblemType, PivotRule
         /// \see resetParams(), reset()
         ProblemType run() {
-            if (!init()) return INFEASIBLE;
+
+            if (_warmstart_provided) {
+                if (!warmstartInit()) return INFEASIBLE;
+                _warmstart_tree_built = true;
+            } else {
+                if (!init()) return INFEASIBLE;
+                _warmstart_tree_built = false;
+            }
+
             return start();
         }
 
@@ -857,6 +898,8 @@ namespace lemon {
                 _cost[i] = 1;
             }
             _stype = GEQ;
+            _warmstart_provided = false;
+            _warmstart_tree_built = false;  // Reset warmstart flag
             return *this;
         }
 
@@ -1069,6 +1112,345 @@ namespace lemon {
 
     private:
 
+        // WARMSTART: Build spanning tree from dual potentials
+        bool warmstartInit() {
+            if (_node_num == 0) return false;
+
+            // Check supply balance
+            _sum_supply = 0;
+            for (int i = 0; i != _node_num; ++i) {
+                _sum_supply += _supply[i];
+            }
+            if (fabs(_sum_supply) > _EPSILON) return false;
+            _sum_supply = 0;
+            int tree_edges = 0;
+            std::vector<ArcsType> tree_arcs;
+            tree_arcs.reserve(_node_num);
+            Cost ART_COST = 0;
+
+            {
+                ArcsType K = std::min((ArcsType)(4 * _node_num), _arc_num);
+
+                // Max-heap: (|reduced_cost|, arc_index).  We keep the K smallest.
+
+                typedef std::pair<Cost, ArcsType> HeapEntry;
+                std::priority_queue<HeapEntry> maxheap;
+
+                for (ArcsType e = 0; e < _arc_num; ++e) {
+                    _state[e] = STATE_LOWER;
+                    Cost c = _cost[e];
+                    if (c > ART_COST) ART_COST = c;
+                    Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
+                    if ((ArcsType)maxheap.size() < K) {
+                        maxheap.push({rc, e});
+                    } else if (rc < maxheap.top().first) {
+                        maxheap.pop();
+                        maxheap.push({rc, e});
+                    }
+                }
+                if (std::numeric_limits<Cost>::is_exact) {
+                    ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
+                } else {
+                    ART_COST = (ART_COST + 1) * _node_num;
+                }
+
+                std::vector<HeapEntry> candidates;
+                candidates.reserve(maxheap.size());
+                while (!maxheap.empty()) {
+                    candidates.push_back(maxheap.top());
+                    maxheap.pop();
+                }
+                
+                std::sort(candidates.begin(), candidates.end(),
+                    [](const HeapEntry& a, const HeapEntry& b) {
+                        return a.first < b.first;
+                    });
+
+                // Kruskal's MST with union-find
+                std::vector<int> uf_parent(_node_num);
+                std::vector<int> uf_rank(_node_num, 0);
+                for (int i = 0; i < _node_num; ++i) uf_parent[i] = i;
+
+                for (ArcsType idx = 0; idx < (ArcsType)candidates.size() && tree_edges < _node_num - 1; ++idx) {
+                    ArcsType e = candidates[idx].second;
+                    int s = _source[e];
+                    int t = _target[e];
+                    int rs = s, rt = t;
+                    while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
+                    while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
+                    if (rs == rt) continue;
+                    if (uf_rank[rs] < uf_rank[rt]) std::swap(rs, rt);
+                    uf_parent[rt] = rs;
+                    if (uf_rank[rs] == uf_rank[rt]) uf_rank[rs]++;
+                    tree_arcs.push_back(e);
+                    tree_edges++;
+                }
+
+                // Fallback: if K best weren't enough to span, scan remaining arcs
+                if (tree_edges < _node_num - 1) {
+                    std::vector<bool> considered(_arc_num, false);
+                    for (auto& c : candidates) considered[c.second] = true;
+
+                    for (ArcsType e = 0; e < _arc_num && tree_edges < _node_num - 1; ++e) {
+                        if (considered[e]) continue;
+                        int s = _source[e];
+                        int t = _target[e];
+                        int rs = s, rt = t;
+                        while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
+                        while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
+                        if (rs == rt) continue;
+                        if (uf_rank[rs] < uf_rank[rt]) std::swap(rs, rt);
+                        uf_parent[rt] = rs;
+                        if (uf_rank[rs] == uf_rank[rt]) uf_rank[rs]++;
+                        tree_arcs.push_back(e);
+                        tree_edges++;
+                    }
+                }
+            }
+
+            std::vector<int> tree_adj_deg(_node_num, 0);
+            for (int k = 0; k < tree_edges; ++k) {
+                ArcsType e = tree_arcs[k];
+                tree_adj_deg[_source[e]]++;
+                tree_adj_deg[_target[e]]++;
+            }
+            std::vector<int> tree_adj_start(_node_num + 1, 0);
+            for (int i = 0; i < _node_num; ++i) {
+                tree_adj_start[i + 1] = tree_adj_start[i] + tree_adj_deg[i];
+            }
+            int total_adj = tree_adj_start[_node_num];
+            std::vector<int> tree_adj_node(total_adj);
+            std::vector<ArcsType> tree_adj_arc(total_adj);
+            std::vector<int> tree_adj_pos(_node_num, 0);
+            for (int k = 0; k < tree_edges; ++k) {
+                ArcsType e = tree_arcs[k];
+                int s = _source[e], t = _target[e];
+                int ps = tree_adj_start[s] + tree_adj_pos[s]++;
+                tree_adj_node[ps] = t;
+                tree_adj_arc[ps] = e;
+                int pt = tree_adj_start[t] + tree_adj_pos[t]++;
+                tree_adj_node[pt] = s;
+                tree_adj_arc[pt] = e;
+            }
+
+            // STEP 2: Set up artificial arcs
+            _search_arc_num = _arc_num;
+            _all_arc_num = _arc_num + _node_num;
+            _root = _node_num;
+
+            for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
+                _state[e] = STATE_TREE;
+                if (_supply[u] >= 0) {
+                    _source[e] = u;
+                    _target[e] = _root;
+                    _cost[e] = 0;
+                    _flow[e] = _supply[u];
+                } else {
+                    _source[e] = _root;
+                    _target[e] = u;
+                    _cost[e] = ART_COST;
+                    _flow[e] = -_supply[u];
+                }
+            }
+
+            // Root node setup
+            _parent[_root] = -1;
+            _pred[_root] = -1;
+            _supply[_root] = -_sum_supply;
+            _pi[_root] = 0;
+
+            // STEP 3: BFS from root to build tree structure
+            std::vector<bool> is_rep(_node_num, false);
+            std::vector<bool> visited(_node_num, false);
+
+            for (int u = 0; u < _node_num; ++u) {
+                if (visited[u]) continue;
+                is_rep[u] = true;
+                
+                _parent[u] = _root;
+                _pred[u] = _arc_num + u;
+                _forward[u] = (_supply[u] >= 0);  // same as init()
+                _state[_arc_num + u] = STATE_TREE;
+                visited[u] = true;
+
+                std::queue<int> bfs_queue;
+                bfs_queue.push(u);
+                while (!bfs_queue.empty()) {
+                    int v = bfs_queue.front();
+                    bfs_queue.pop();
+                    for (int k = tree_adj_start[v]; k < tree_adj_start[v + 1]; ++k) {
+                        int w = tree_adj_node[k];
+                        ArcsType arc_e = tree_adj_arc[k];
+                        if (visited[w]) continue;
+                        visited[w] = true;
+                        
+                        _parent[w] = v;
+                        _pred[w] = arc_e;
+                        _state[arc_e] = STATE_TREE;
+                        _forward[w] = (_source[arc_e] == w);
+                        
+                        _state[_arc_num + w] = STATE_LOWER;
+                        _flow[_arc_num + w] = 0;
+                        
+                        bfs_queue.push(w);
+                    }
+                }
+            }
+
+            // STEP 4: Build thread (preorder traversal)
+            {
+                std::vector<std::vector<int>> children(_node_num + 1);
+                for (int u = 0; u < _node_num; ++u) {
+                    children[_parent[u]].push_back(u);
+                }
+
+                std::vector<int> preorder;
+                preorder.reserve(_node_num + 1);
+                std::stack<int> dfs_stack;
+                dfs_stack.push(_root);
+                while (!dfs_stack.empty()) {
+                    int v = dfs_stack.top();
+                    dfs_stack.pop();
+                    preorder.push_back(v);
+                    for (int i = (int)children[v].size() - 1; i >= 0; --i) {
+                        dfs_stack.push(children[v][i]);
+                    }
+                }
+
+                for (int i = 0; i < (int)preorder.size() - 1; ++i) {
+                    _thread[preorder[i]] = preorder[i + 1];
+                }
+                _thread[preorder.back()] = preorder[0];
+
+                for (int u = 0; u <= _node_num; ++u) {
+                    _rev_thread[_thread[u]] = u;
+                }
+
+                for (int u = 0; u <= _node_num; ++u) {
+                    _succ_num[u] = 1;
+                }
+                for (int i = (int)preorder.size() - 1; i > 0; --i) {
+                    int u = preorder[i];
+                    _succ_num[_parent[u]] += _succ_num[u];
+                }
+
+                std::vector<int> pos(_node_num + 1);
+                for (int i = 0; i < (int)preorder.size(); ++i) {
+                    pos[preorder[i]] = i;
+                }
+                for (int i = 0; i < (int)preorder.size(); ++i) {
+                    int u = preorder[i];
+                    _last_succ[u] = preorder[pos[u] + _succ_num[u] - 1];
+                }
+            }
+
+            // STEP 5: Compute flows on tree arcs
+            {
+                std::vector<Value> net(_node_num + 1);
+                for (int u = 0; u <= _node_num; ++u) {
+                    net[u] = _supply[u];
+                }
+                
+                std::vector<int> preorder;
+                preorder.reserve(_node_num + 1);
+                int cur = _root;
+                for (int i = 0; i <= _node_num; ++i) {
+                    preorder.push_back(cur);
+                    cur = _thread[cur];
+                }
+                
+                int ejected = 0;
+                for (int i = (int)preorder.size() - 1; i > 0; --i) {
+                    int u = preorder[i];
+                    ArcsType e = _pred[u];
+                    
+                    Value f = _forward[u] ? net[u] : -net[u];
+                    
+                    if (f >= 0) {
+                        _flow[e] = f;
+                        net[_parent[u]] += net[u];
+                    } else {
+                        if (e < _arc_num) {
+                            _state[e] = STATE_LOWER;
+                            _flow[e] = 0;
+                        }
+                        // Reconnect u to root via artificial arc
+                        ArcsType art_e = _arc_num + u;
+                        _parent[u] = _root;
+                        _pred[u] = art_e;
+                        _forward[u] = (_source[art_e] == u);
+                        _state[art_e] = STATE_TREE;
+                        
+                        Value art_f = _forward[u] ? net[u] : -net[u];
+                        _flow[art_e] = art_f >= 0 ? art_f : -art_f;
+                        if (art_f < 0) {
+                            _forward[u] = !_forward[u];
+                            _flow[art_e] = -art_f;
+                        }
+                        
+                        net[_root] += net[u];
+                        ejected++;
+                    }
+                }
+                if (ejected > 0) {
+                    std::vector<std::vector<int>> children2(_node_num + 1);
+                    for (int u = 0; u < _node_num; ++u) {
+                        children2[_parent[u]].push_back(u);
+                    }
+                    // DFS preorder
+                    std::vector<int> preorder2;
+                    preorder2.reserve(_node_num + 1);
+                    std::stack<int> dfs2;
+                    dfs2.push(_root);
+                    while (!dfs2.empty()) {
+                        int v = dfs2.top(); dfs2.pop();
+                        preorder2.push_back(v);
+                        for (int j = (int)children2[v].size() - 1; j >= 0; --j) {
+                            dfs2.push(children2[v][j]);
+                        }
+                    }
+                    for (int i = 0; i < (int)preorder2.size() - 1; ++i) {
+                        _thread[preorder2[i]] = preorder2[i + 1];
+                    }
+                    _thread[preorder2.back()] = preorder2[0];
+                    for (int u = 0; u <= _node_num; ++u) {
+                        _rev_thread[_thread[u]] = u;
+                    }
+                    for (int u = 0; u <= _node_num; ++u) _succ_num[u] = 1;
+                    for (int i = (int)preorder2.size() - 1; i > 0; --i) {
+                        _succ_num[_parent[preorder2[i]]] += _succ_num[preorder2[i]];
+                    }
+                    std::vector<int> pos2(_node_num + 1);
+                    for (int i = 0; i < (int)preorder2.size(); ++i) pos2[preorder2[i]] = i;
+                    for (int i = 0; i < (int)preorder2.size(); ++i) {
+                        int u = preorder2[i];
+                        _last_succ[u] = preorder2[pos2[u] + _succ_num[u] - 1];
+                    }
+                }
+            }
+
+            // STEP 6: Compute potentials from the final tree
+            {
+                _pi[_root] = 0;
+                int u = _thread[_root];
+                while (u != _root) {
+                    ArcsType e = _pred[u];
+                    int v = _parent[u];
+                    if (_forward[u]) {
+                        _pi[u] = _pi[v] - _cost[e];
+                    } else {
+                        _pi[u] = _pi[v] + _cost[e];
+                    }
+                    u = _thread[u];
+                }
+            }
+
+            // Initialize in_arc to a valid value
+            in_arc = 0;
+
+            return true;
+        }
+
         // Initialize internal data structures
         bool init() {
             if (_node_num == 0) return false;
@@ -1095,11 +1477,7 @@ namespace lemon {
                 ART_COST = (ART_COST + 1) * _node_num;
             }
 
-            // Initialize arc maps
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                //_flow[i] = 0; //by default, the sparse matrix is empty
-                _state[i] = STATE_LOWER;
-            }
+            memset(&_state[0], STATE_LOWER, _arc_num);
 
             // Set data for the artificial root node
             _root = _node_num;
@@ -1210,7 +1588,7 @@ namespace lemon {
                         _cost[f] = ART_COST;
                         _source[e] = _root;
                         _target[e] = u;
-                        //_flow[e] = 0; //by default, the sparse matrix is empty
+                        //_flow[e] = 0;
                         _cost[e] = 0;
                         _state[e] = STATE_LOWER;
                         ++f;
@@ -1461,7 +1839,6 @@ namespace lemon {
             if (_sum_supply >= 0) {
                 if (supply_nodes.size() == 1 && demand_nodes.size() == 1) {
                     // Perform a reverse graph search from the sink to the source
-                    //typename GR::template NodeMap<bool> reached(_graph, false);
                     BoolVector reached(_node_num, false);
                     Node s = supply_nodes[0], t = demand_nodes[0];
                     std::vector<Node> stack;
@@ -1549,8 +1926,10 @@ namespace lemon {
             PivotRuleImpl pivot(*this);
 			ProblemType retVal = OPTIMAL;
 
-            // Perform heuristic initial pivots
-            if (!initialPivots()) return UNBOUNDED;
+            // Perform heuristic initial pivots (skip if warmstart tree was built)
+            if (!_warmstart_tree_built) {
+                if (!initialPivots()) return UNBOUNDED;
+            }
 
             uint64_t iter_number = 0;
             //pivot.setDantzig(true);

@@ -20,7 +20,7 @@ import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
     int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
@@ -42,7 +42,7 @@ def check_result(result_code):
  
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, uint64_t max_iter, int numThreads):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, uint64_t max_iter, int numThreads, alpha_init=None, beta_init=None):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -81,6 +81,10 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : uint64_t
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
+    alpha_init : (ns,) numpy.ndarray, float64, optional
+        Initial dual potentials for sources (warmstart)
+    beta_init : (nt,) numpy.ndarray, float64, optional
+        Initial dual potentials for targets (warmstart)
 
     Returns
     -------
@@ -101,6 +105,12 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([0, 0])
 
     cdef np.ndarray[double, ndim=1, mode="c"] Gv=np.zeros(0)
+    
+    # Warmstart potentials
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha_init_c
+    cdef np.ndarray[double, ndim=1, mode="c"] beta_init_c
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
 
     if not len(a):
         a=np.ones((n1,))/n1
@@ -110,11 +120,18 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
     # init OT matrix
     G=np.zeros([n1, n2])
+    
+    # Setup warmstart pointers if provided
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_c = np.ascontiguousarray(alpha_init, dtype=np.float64)
+        beta_init_c = np.ascontiguousarray(beta_init, dtype=np.float64)
+        alpha_init_ptr = <double*> alpha_init_c.data
+        beta_init_ptr = <double*> beta_init_c.data
 
     # calling the function
     with nogil:
         if numThreads == 1:
-            result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+            result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
         else:
             result_code = EMD_wrap_omp(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, numThreads)
     return G, cost, alpha, beta, result_code
