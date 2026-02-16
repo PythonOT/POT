@@ -235,7 +235,8 @@ namespace lemon {
         INF(std::numeric_limits<Value>::has_infinity ?
             std::numeric_limits<Value>::infinity() : MAX),
         _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0),
-        _dense_cost(false), _D_ptr(nullptr), _D_n2(0)
+        _dense_cost(false), _D_ptr(nullptr), _D_n2(0),
+        _warmstart_provided(false), _warmstart_tree_built(false)
         {
             // Reset data structures
             reset();
@@ -495,7 +496,7 @@ namespace lemon {
                     // For lazy mode, compute cost from coordinates inline
                     // _source and _target use reversed node numbering
                     int i = _ns._node_num - _source[e] - 1;
-                    int j = _ns._n2 - _target[e] - 1;
+                    int j = _ns._node_num - _target[e] - 1 - _ns._n1;
                     
                     const double* xa = _ns._coords_a + i * _ns._dim;
                     const double* xb = _ns._coords_b + j * _ns._dim;
@@ -725,8 +726,9 @@ namespace lemon {
                     return 0;
                 }
                 // Compute lazily from coordinates
-                int i = _node_num - _source[arc_id] - 1;
-                int j = _n2 - _target[arc_id] - 1;
+                // Convert internal node IDs back to graph node IDs, then to coordinate indices
+                int i = _node_num - _source[arc_id] - 1;  // graph source in [0, _n1-1]
+                int j = _node_num - _target[arc_id] - 1 - _n1;  // graph target in [_n1, _node_num-1] -> [0, _n2-1]
                 return computeLazyCost(i, j);
             }
         }
@@ -1088,7 +1090,7 @@ namespace lemon {
                 for (ArcsType i=0; i<_flow.size(); i++) {
                     if (_flow[i] != 0) {
                         int src = _node_num - _source[i] - 1;
-                        int tgt = _n2 - _target[i] - 1;
+                        int tgt = _node_num - _target[i] - 1 - _n1;
                         c += _flow[i] * Number(computeLazyCost(src, tgt));
                     }
                 }
