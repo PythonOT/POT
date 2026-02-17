@@ -355,6 +355,7 @@ int EMD_wrap_sparse(
     
     // Initialize warmstart if provided
     if (alpha_init != nullptr && beta_init != nullptr) {
+        // Map original indices to graph indices for warmstart
         std::vector<double> alpha_filtered(n);
         std::vector<double> beta_filtered(m);
         for (uint64_t i = 0; i < n; i++) {
@@ -473,6 +474,7 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     
     // Initialize warmstart if provided
     if (alpha_init != nullptr && beta_init != nullptr) {
+        // Map original indices to graph indices for warmstart
         std::vector<double> alpha_filtered(n);
         std::vector<double> beta_filtered(m);
         for (int i = 0; i < n; i++) {
