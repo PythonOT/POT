@@ -820,6 +820,7 @@ def emd2_lazy(
     return_matrix=True,
     center_dual=True,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem with lazy cost computation and returns the loss
 
@@ -873,6 +874,9 @@ def emd2_lazy(
         If True, centers the dual potential using :py:func:`ot.lp.center_ot_dual`
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal
+    potentials_init : tuple of (ns,) and (nt,) arrays, optional
+        Initial dual potentials (u, v) to warmstart the solver. If provided,
+        the solver starts from these potentials instead of a cold start.
 
     Returns
     -------
@@ -942,8 +946,18 @@ def emd2_lazy(
         )
     b_np = b_np * a_np.sum() / b_np.sum()
 
+    # Handle warmstart potentials
+    alpha_init_np = None
+    beta_init_np = None
+    if potentials_init is not None:
+        alpha_init, beta_init = potentials_init
+        alpha_init_np = nx.to_numpy(alpha_init)
+        beta_init_np = nx.to_numpy(beta_init)
+        alpha_init_np = np.asarray(alpha_init_np, dtype=np.float64, order="C")
+        beta_init_np = np.asarray(beta_init_np, dtype=np.float64, order="C")
+
     G, cost, u, v, result_code = emd_c_lazy(
-        a_np, b_np, X_a_np, X_b_np, metric, numItermax
+        a_np, b_np, X_a_np, X_b_np, metric, numItermax, alpha_init_np, beta_init_np
     )
 
     if center_dual:
