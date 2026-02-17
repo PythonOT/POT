@@ -1206,6 +1206,29 @@ def test_emd_lazy_warmstart():
     assert "u" in log_warm and "v" in log_warm
     assert len(log_warm["u"]) == n and len(log_warm["v"]) == n
 
+    # Test emd2_lazy with warmstart (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        potentials_init=(u_partial, v_partial),
+    )
+    cost_cold_emd2, log_cold_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+    )
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
 
 def test_emd_sparse_warmstart():
     n = 100
@@ -1278,6 +1301,16 @@ def test_emd_sparse_warmstart():
     # Check that we got valid flows
     assert len(flow_sources) > 0, "Should have non-zero flows"
     assert len(flow_sources) == len(flow_targets) == len(flow_values)
+
+    # Test emd2 with warmstart for sparse (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = ot.emd2(
+        a, b, M, log=True, potentials_init=(u_partial, v_partial)
+    )
+    cost_cold_emd2, log_cold_emd2 = ot.emd2(a, b, M, log=True)
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
 
 
 def check_duality_gap(a, b, M, G, u, v, cost):
