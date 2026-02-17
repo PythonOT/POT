@@ -57,7 +57,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     std::vector<uint64_t> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, false, (int) (n + m), n * m, maxIter);
+    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(di, true, (int) (n + m), n * m, maxIter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
@@ -80,22 +80,17 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
             indJ[cur++]=i;
         }
     }
+
+
     net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
     // Set the cost of each edge
-    if (n == (uint64_t)n1 && m == (uint64_t)n2) {
-        // No zero-mass filtering: D layout matches arc layout exactly
-        // Just pass the pointer — zero copy!
-        net.setDenseCostMatrix(D, n2);
-    } else {
-        // Zero-mass nodes were filtered: must copy costs with indirection
-        int64_t idarc = 0;
-        for (uint64_t i=0; i<n; i++) {
-            for (uint64_t j=0; j<m; j++) {
-                double val=*(D+indI[i]*n2+indJ[j]);
-                net.setCost(di.arcFromId(idarc), val);
-                ++idarc;
-            }
+    int64_t idarc = 0;
+    for (uint64_t i=0; i<n; i++) {
+        for (uint64_t j=0; j<m; j++) {
+            double val=*(D+indI[i]*n2+indJ[j]);
+            net.setCost(di.arcFromId(idarc), val);
+            ++idarc;
         }
     }
 
@@ -114,38 +109,25 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     }
 
     // Solve the problem with the network simplex algorithm
+
     int ret=net.run();
 
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
+        Arc a; di.first(a);
+        for (; a != INVALID; di.next(a)) {
+            i = di.source(a);
+            j = di.target(a);
+            double flow = net.flow(a);
+            *cost += flow * (*(D+indI[i]*n2+indJ[j-n]));
+            *(G+indI[i]*n2+indJ[j-n]) = flow;
+            *(alpha + indI[i]) = -net.potential(i);
+            *(beta + indJ[j-n]) = net.potential(j);
+        }
 
-        // Extract potentials directly from _pi (already public)
-        // potential(graph_node) = _pi[_node_num - graph_node - 1]
-        int node_num = net.nodeNum();
-        for (uint64_t ii = 0; ii < n; ii++) {
-            *(alpha + indI[ii]) = -net._pi[node_num - (int)ii - 1];
-        }
-        for (uint64_t jj = 0; jj < m; jj++) {
-            *(beta + indJ[jj]) = net._pi[node_num - (int)(jj + n) - 1];
-        }
-
-        // Extract flows: iterate _flow directly, skip zeros
-        // For ~16M arcs, only ~n+m-1 ≈ 8K have non-zero flow
-        int64_t arc_num = net.arcNum();
-        for (int64_t a = 0; a < arc_num; a++) {
-            double flow = net._flow[a];
-            if (flow != 0) {
-                // Without arc mixing: graph arc g = arc_num - a - 1
-                int64_t g = arc_num - a - 1;
-                i = g / m;       // compressed source index
-                j = g % m;       // compressed target index
-                uint64_t D_idx = indI[i] * n2 + indJ[j];
-                *cost += flow * D[D_idx];
-                G[D_idx] = flow;
-            }
-        }
     }
+
 
     return ret;
 }
@@ -271,7 +253,9 @@ int EMD_wrap_sparse(
     double *alpha,
     double *beta,
     double *cost,
-    uint64_t maxIter
+    uint64_t maxIter,
+    double *alpha_init,
+    double *beta_init
 ) {
     using namespace lemon;
     
@@ -369,6 +353,21 @@ int EMD_wrap_sparse(
         }
     }
     
+    // Initialize warmstart if provided
+    if (alpha_init != nullptr && beta_init != nullptr) {
+        std::vector<double> alpha_filtered(n);
+        std::vector<double> beta_filtered(m);
+        for (uint64_t i = 0; i < n; i++) {
+            uint64_t orig_i = indI[i];
+            alpha_filtered[i] = alpha_init[orig_i];
+        }
+        for (uint64_t j = 0; j < m; j++) {
+            uint64_t orig_j = indJ[j];
+            beta_filtered[j] = beta_init[orig_j];
+        }
+        net.setWarmstartPotentials(&alpha_filtered[0], &beta_filtered[0], n, m);
+    }
+    
     int ret = net.run();
 
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
@@ -407,7 +406,7 @@ int EMD_wrap_sparse(
 
 int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, 
                   int dim, int metric, double *G, double *alpha, double *beta, 
-                  double *cost, uint64_t maxIter) {
+                  double *cost, uint64_t maxIter, double *alpha_init, double *beta_init) {
     using namespace lemon;
     typedef FullBipartiteDigraph Digraph;
     DIGRAPH_TYPEDEFS(Digraph);
@@ -471,6 +470,21 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     
     // Enable lazy cost computation - costs will be computed on-the-fly
     net.setLazyCost(&coords_a_filtered[0], &coords_b_filtered[0], dim, metric, n, m);
+    
+    // Initialize warmstart if provided
+    if (alpha_init != nullptr && beta_init != nullptr) {
+        std::vector<double> alpha_filtered(n);
+        std::vector<double> beta_filtered(m);
+        for (int i = 0; i < n; i++) {
+            int orig_i = idx_a[i];
+            alpha_filtered[i] = alpha_init[orig_i];
+        }
+        for (int j = 0; j < m; j++) {
+            int orig_j = idx_b[j];
+            beta_filtered[j] = beta_init[orig_j];
+        }
+        net.setWarmstartPotentials(&alpha_filtered[0], &beta_filtered[0], n, m);
+    }
     
     // Run solver
     int ret = net.run();

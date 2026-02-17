@@ -1772,6 +1772,7 @@ def solve_sample(
             numItermax=max_iter if max_iter is not None else 100000,
             log=True,
             return_matrix=True,
+            potentials_init=potentials_init,
         )
 
         res = OTResult(

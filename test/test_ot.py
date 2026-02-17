@@ -1167,6 +1167,152 @@ def test_emd__dual_warmstart():
     np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
 
 
+def test_emd_lazy_warmstart():
+    n = 100
+    rng = np.random.RandomState(42)
+
+    X_s = rng.randn(n, 2)
+    X_t = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(X_s, X_t, metric="sqeuclidean")
+
+    # run dense solver with limited iterations (stop early)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    from ot.lp import emd2_lazy
+
+    # resume from the partial duals with full iterations
+    cost_warm, log_warm = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        potentials_init=(u_partial, v_partial),
+    )
+
+    # cold-start reference
+    cost_cold, log_cold = emd2_lazy(X_s, X_t, a, b, metric="sqeuclidean", log=True)
+
+    # costs should match
+    np.testing.assert_allclose(cost_warm, cost_cold, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm, log_cold["cost"], rtol=1e-7)
+
+    # Check that warmstart returns valid potentials
+    assert "u" in log_warm and "v" in log_warm
+    assert len(log_warm["u"]) == n and len(log_warm["v"]) == n
+
+    # Test emd2_lazy with warmstart (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        potentials_init=(u_partial, v_partial),
+    )
+    cost_cold_emd2, log_cold_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+    )
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
+
+def test_emd_sparse_warmstart():
+    n = 100
+    rng = np.random.RandomState(42)
+
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+
+    # Create a cost matrix and solve with limited iterations (stop early)
+    M = rng.rand(n, n)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    # resume from the partial duals with full iterations
+    G_warm, log_warm = ot.emd(a, b, M, log=True, potentials_init=(u_partial, v_partial))
+
+    # cold-start reference
+    G_cold, log_cold = ot.emd(a, b, M, log=True)
+
+    # costs should match
+    np.testing.assert_allclose(G_warm, G_cold, rtol=1e-7, atol=1e-10)
+    np.testing.assert_allclose(log_warm["cost"], log_cold["cost"], rtol=1e-7)
+
+    # Both should satisfy marginal constraints
+    np.testing.assert_allclose(G_warm.sum(1), a, atol=1e-7)
+    np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
+
+    # Test sparse solver directly with warmstart via COO format
+    import scipy.sparse as sp
+    from ot.lp.emd_wrap import emd_c_sparse
+
+    row_indices = np.repeat(np.arange(n), n).astype(np.uint64)
+    col_indices = np.tile(np.arange(n), n).astype(np.uint64)
+    costs = M.ravel()
+
+    (
+        flow_sources,
+        flow_targets,
+        flow_values,
+        cost_warm_sparse,
+        alpha_warm,
+        beta_warm,
+        result_code,
+    ) = emd_c_sparse(
+        a,
+        b,
+        row_indices,
+        col_indices,
+        costs,
+        max_iter=100000,
+        alpha_init=u_partial,
+        beta_init=v_partial,
+    )
+
+    (
+        flow_sources_cold,
+        flow_targets_cold,
+        flow_values_cold,
+        cost_cold_sparse,
+        alpha_cold,
+        beta_cold,
+        result_code_cold,
+    ) = emd_c_sparse(a, b, row_indices, col_indices, costs, max_iter=100000)
+
+    # Costs should match
+    np.testing.assert_allclose(cost_warm_sparse, cost_cold_sparse, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_sparse, log_cold["cost"], rtol=1e-7)
+
+    # Check that we got valid flows
+    assert len(flow_sources) > 0, "Should have non-zero flows"
+    assert len(flow_sources) == len(flow_targets) == len(flow_values)
+
+    # Test emd2 with warmstart for sparse (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = ot.emd2(
+        a, b, M, log=True, potentials_init=(u_partial, v_partial)
+    )
+    cost_cold_emd2, log_cold_emd2 = ot.emd2(a, b, M, log=True)
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
+
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal
