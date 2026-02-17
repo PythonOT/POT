@@ -19,8 +19,6 @@
 #include "EMD.h"
 #include <cstdint>
 #include <unordered_map>
-#include <chrono>
-#include <cstdio>
 
 
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
@@ -29,9 +27,6 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
-    using clk = std::chrono::high_resolution_clock;
-    auto t_total_start = clk::now();
-    auto t0 = clk::now();
     uint64_t n, m, cur;
 
     typedef FullBipartiteDigraph Digraph;
@@ -85,16 +80,9 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
             indJ[cur++]=i;
         }
     }
-
-    auto t200 = clk::now();
     net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
 
-    auto t1 = clk::now();
-    double ms_setup = std::chrono::duration<double, std::milli>(t1 - t0).count();
-    double supply_setup = std::chrono::duration<double, std::milli>(t1 - t200).count();
-
     // Set the cost of each edge
-    auto t2 = clk::now();
     if (n == (uint64_t)n1 && m == (uint64_t)n2) {
         // No zero-mass filtering: D layout matches arc layout exactly
         // Just pass the pointer — zero copy!
@@ -111,11 +99,7 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         }
     }
 
-    auto t3 = clk::now();
-    double ms_cost = std::chrono::duration<double, std::milli>(t3 - t2).count();
-
     // Set warmstart potentials if provided
-    auto t4 = clk::now();
     if (alpha_init != nullptr && beta_init != nullptr) {
         // Compress warmstart potentials to only non-zero entries
         std::vector<double> alpha_compressed(n);
@@ -129,14 +113,8 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         net.setWarmstartPotentials(&alpha_compressed[0], &beta_compressed[0], (int)n, (int)m);
     }
 
-    auto t5 = clk::now();
-    double ms_warmstart = std::chrono::duration<double, std::milli>(t5 - t4).count();
-
     // Solve the problem with the network simplex algorithm
-    auto t6 = clk::now();
     int ret=net.run();
-    auto t7 = clk::now();
-    double ms_solve = std::chrono::duration<double, std::milli>(t7 - t6).count();
 
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
@@ -168,20 +146,6 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
             }
         }
     }
-
-    auto t8 = clk::now();
-    double ms_result = std::chrono::duration<double, std::milli>(t8 - t7).count();
-    double ms_total = std::chrono::duration<double, std::milli>(t8 - t_total_start).count();
-
-    fprintf(stderr, "\n[EMD_wrap timing] n=%llu m=%llu arcs=%llu\n",
-            (unsigned long long)n, (unsigned long long)m, (unsigned long long)(n*m));
-    fprintf(stderr, "  Setup (graph+supply):  %8.3f ms\n", ms_setup);
-    fprintf(stderr, " Supply setup: %8.3f ms\n", supply_setup); 
-    fprintf(stderr, "  Cost setting:          %8.3f ms\n", ms_cost);
-    fprintf(stderr, "  Warmstart setup:       %8.3f ms\n", ms_warmstart);
-    fprintf(stderr, "  Simplex solve:         %8.3f ms\n", ms_solve);
-    fprintf(stderr, "  Result extraction:     %8.3f ms\n", ms_result);
-    fprintf(stderr, "  TOTAL:                 %8.3f ms\n", ms_total);
 
     return ret;
 }

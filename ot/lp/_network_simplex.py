@@ -379,6 +379,24 @@ def emd(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
     else:
+        row_mask = asel
+        col_mask = bsel
+        need_filter = np.any(~row_mask) or np.any(~col_mask)
+
+        if need_filter:
+            row_idx = np.flatnonzero(row_mask)
+            col_idx = np.flatnonzero(col_mask)
+            a_solver = a[row_idx]
+            b_solver = b[col_idx]
+            M_solver = M[np.ix_(row_idx, col_idx)]
+            M_solver = np.asarray(M_solver, dtype=np.float64, order="C")
+        else:
+            row_idx = None
+            col_idx = None
+            a_solver = a
+            b_solver = b
+            M_solver = M
+
         # Prepare warmstart if provided
         alpha_init = None
         beta_init = None
@@ -386,11 +404,25 @@ def emd(
             alpha_init, beta_init = potentials_init
             alpha_init = np.asarray(alpha_init, dtype=np.float64)
             beta_init = np.asarray(beta_init, dtype=np.float64)
+            if need_filter:
+                alpha_init = alpha_init[row_mask]
+                beta_init = beta_init[col_mask]
 
         # Dense solver
         G, cost, u, v, result_code = emd_c(
-            a, b, M, numItermax, numThreads, alpha_init, beta_init
+            a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
         )
+
+        if need_filter:
+            G_full = np.zeros((n1, n2), dtype=G.dtype)
+            G_full[np.ix_(row_idx, col_idx)] = G
+            G = G_full
+
+            u_full = np.zeros((n1,), dtype=u.dtype)
+            v_full = np.zeros((n2,), dtype=v.dtype)
+            u_full[row_mask] = u
+            v_full[col_mask] = v
+            u, v = u_full, v_full
 
     # ============================================================================
     # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
@@ -678,6 +710,24 @@ def emd2(
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
         else:
+            row_mask = asel
+            col_mask = bsel
+            need_filter = np.any(~row_mask) or np.any(~col_mask)
+
+            if need_filter:
+                row_idx = np.flatnonzero(row_mask)
+                col_idx = np.flatnonzero(col_mask)
+                a_solver = a[row_idx]
+                b_solver = b[col_idx]
+                M_solver = M[np.ix_(row_idx, col_idx)]
+                M_solver = np.asarray(M_solver, dtype=np.float64, order="C")
+            else:
+                row_idx = None
+                col_idx = None
+                a_solver = a
+                b_solver = b
+                M_solver = M
+
             # Prepare warmstart if provided
             alpha_init = None
             beta_init = None
@@ -685,11 +735,31 @@ def emd2(
                 alpha_init, beta_init = potentials_init
                 alpha_init = np.asarray(alpha_init, dtype=np.float64)
                 beta_init = np.asarray(beta_init, dtype=np.float64)
+                if need_filter:
+                    alpha_init = alpha_init[row_mask]
+                    beta_init = beta_init[col_mask]
 
             # Solve dense EMD
             G, cost, u, v, result_code = emd_c(
-                a, b, M, numItermax, numThreads, alpha_init, beta_init
+                a_solver,
+                b_solver,
+                M_solver,
+                numItermax,
+                numThreads,
+                alpha_init,
+                beta_init,
             )
+
+            if need_filter:
+                G_full = np.zeros((n1, n2), dtype=G.dtype)
+                G_full[np.ix_(row_idx, col_idx)] = G
+                G = G_full
+
+                u_full = np.zeros((n1,), dtype=u.dtype)
+                v_full = np.zeros((n2,), dtype=v.dtype)
+                u_full[row_mask] = u
+                v_full[col_mask] = v
+                u, v = u_full, v_full
 
         # Center dual potentials
         if center_dual:
