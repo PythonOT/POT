@@ -97,7 +97,7 @@ setup(
                 include_dirs=[
                     numpy.get_include(),
                     os.path.join(ROOT, "deps/eigen"),
-                    os.path.join(ROOT, "ot/lp"),
+                    os.path.join(ROOT, "ot/bsp"),
                 ],
                 extra_compile_args=compile_args,
                 extra_link_args=link_args,
