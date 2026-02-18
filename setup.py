@@ -49,8 +49,10 @@ if openmp_supported:
     compile_args += flags
     link_args += flags
 
+compile_args += ["/std:c++17" if sys.platform == "win32" else ""]  # Needed for ot/bsp
+
 if sys.platform.startswith("darwin"):
-    compile_args.append("-std=c++17")  # Need for ot/bsp
+    compile_args.append("-std=c++17")  # Needed for ot/bsp
     sdk_path = subprocess.check_output(["xcrun", "--show-sdk-path"])
     os.environ["CFLAGS"] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
