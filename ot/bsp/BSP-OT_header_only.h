@@ -10,12 +10,9 @@
 #include <numeric>
 #include <vector>
 #include <Eigen/Sparse>
-
-// #include <filesystem>
 #include <ranges>
 
 namespace BSPOT {
-// namespace fs = std::filesystem;
 
 // using scalar = double;
 using scalar = float;
