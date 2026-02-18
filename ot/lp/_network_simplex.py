@@ -175,7 +175,7 @@ def _compute_active_subset(a, b, M, row_mask, col_mask):
     return need_filter, row_idx, col_idx, a[row_idx], b[col_idx], M_solver
 
 
-def _inflate_dense_solution(
+def _inflate_from_active_subset(
     G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n_rows, n_cols
 ):
     """Embed the filtered dense solution back into the full support."""
@@ -424,48 +424,27 @@ def emd(
     else:
         row_mask = asel
         col_mask = bsel
-        need_filter = np.any(~row_mask) or np.any(~col_mask)
+        (
+            need_filter,
+            row_idx,
+            col_idx,
+            a_solver,
+            b_solver,
+            M_solver,
+        ) = _compute_active_subset(a, b, M, row_mask, col_mask)
 
-        if need_filter:
-            row_idx = np.flatnonzero(row_mask)
-            col_idx = np.flatnonzero(col_mask)
-            a_solver = a[row_idx]
-            b_solver = b[col_idx]
-            M_solver = M[np.ix_(row_idx, col_idx)]
-            M_solver = np.asarray(M_solver, dtype=np.float64, order="C")
-        else:
-            row_idx = None
-            col_idx = None
-            a_solver = a
-            b_solver = b
-            M_solver = M
-
-        # Prepare warmstart if provided
-        alpha_init = None
-        beta_init = None
-        if potentials_init is not None:
-            alpha_init, beta_init = potentials_init
-            alpha_init = np.asarray(alpha_init, dtype=np.float64)
-            beta_init = np.asarray(beta_init, dtype=np.float64)
-            if need_filter:
-                alpha_init = alpha_init[row_mask]
-                beta_init = beta_init[col_mask]
+        alpha_init, beta_init = _prepare_warmstart(
+            potentials_init, need_filter, row_mask, col_mask
+        )
 
         # Dense solver
         G, cost, u, v, result_code = emd_c(
             a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
         )
 
-        if need_filter:
-            G_full = np.zeros((n1, n2), dtype=G.dtype)
-            G_full[np.ix_(row_idx, col_idx)] = G
-            G = G_full
-
-            u_full = np.zeros((n1,), dtype=u.dtype)
-            v_full = np.zeros((n2,), dtype=v.dtype)
-            u_full[row_mask] = u
-            v_full[col_mask] = v
-            u, v = u_full, v_full
+        G, u, v = _inflate_from_active_subset(
+            G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n1, n2
+        )
 
     # ============================================================================
     # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
@@ -777,7 +756,7 @@ def emd2(
                 beta_init,
             )
 
-            G, u, v = _inflate_dense_solution(
+            G, u, v = _inflate_from_active_subset(
                 G, u, v, need_filter, row_idx, col_idx, asel, bsel, n1, n2
             )
 
