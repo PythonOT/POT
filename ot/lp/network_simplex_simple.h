@@ -236,7 +236,8 @@ namespace lemon {
             std::numeric_limits<Value>::infinity() : MAX),
         _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0),
         _dense_cost(false), _D_ptr(nullptr), _D_n2(0),
-        _warmstart_provided(false), _warmstart_tree_built(false)
+        _warmstart_provided(false), _warmstart_tree_built(false),
+        _max_cost(0), _has_max_cost(false)
         {
             // Reset data structures
             reset();
@@ -327,6 +328,8 @@ namespace lemon {
         // Parameters of the problem
         SupplyType _stype;
         Value _sum_supply;
+        Cost _max_cost;
+        bool _has_max_cost;
 
         inline int _node_id(int n) const {return _node_num-n-1;} ;
 
@@ -602,7 +605,12 @@ namespace lemon {
         NetworkSimplexSimple& costMap(const CostMap& map) {
             Arc a; _graph.first(a);
             for (; a != INVALID; _graph.next(a)) {
-                _cost[getArcID(a)] = map[a];
+                Cost c = map[a];
+                _cost[getArcID(a)] = c;
+                if (!_has_max_cost || c > _max_cost) {
+                    _max_cost = c;
+                    _has_max_cost = true;
+                }
             }
             return *this;
         }
@@ -620,6 +628,10 @@ namespace lemon {
         template<typename Value>
         NetworkSimplexSimple& setCost(const Arc& arc, const Value cost) {
             _cost[getArcID(arc)] = cost;
+            if (!_has_max_cost || cost > _max_cost) {
+                _max_cost = cost;
+                _has_max_cost = true;
+            }
             return *this;
         }
 
@@ -661,6 +673,12 @@ namespace lemon {
             _dense_cost = true;
             _D_ptr = D;
             _D_n2 = n2;
+            // Precompute max cost once for reuse in init()
+            _has_max_cost = true;
+            _max_cost = D[0];
+            for (ArcsType i = 1; i != _arc_num; ++i) {
+                if (D[i] > _max_cost) _max_cost = D[i];
+            }
             return *this;
         }
 
@@ -932,13 +950,15 @@ namespace lemon {
         ///
         /// \see reset(), run()
         NetworkSimplexSimple& resetParams() {
-            for (int i = 0; i != _node_num; ++i) {
-                _supply[i] = 0;
-            }
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                _cost[i] = 1;
+            // Fast fills over contiguous storage
+            std::fill_n(_supply.begin(), _node_num, Value(0));
+            // In dense/lazy modes, real-arc costs are not read from _cost.
+            // Keep the default fill for the regular explicit-cost mode only.
+            if (!_dense_cost && !_lazy_cost) {
+                std::fill_n(_cost.begin(), _arc_num, Cost(1));
             }
             _stype = GEQ;
+            _has_max_cost = false;
             _warmstart_provided = false;
             _warmstart_tree_built = false;  // Reset warmstart flag
             return *this;
@@ -1014,7 +1034,7 @@ namespace lemon {
                     if ((i += k) >= _arc_num) i = ++j;
                 }
             } else {
-                // Store the arcs in the original order
+                // Store the arcs in the original order without extra permutation work
                 ArcsType i = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a), ++i) {
@@ -1524,12 +1544,30 @@ namespace lemon {
             if (std::numeric_limits<Cost>::is_exact) {
                 ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
             } else {
-                ART_COST = 0;
-                for (ArcsType i = 0; i != _arc_num; ++i) {
-                    Cost c = getCostForArc(i);
-                    if (c > ART_COST) ART_COST = c;
+                // Prefer precomputed max to avoid rescans on repeated runs
+                Cost max_cost = 0;
+                if (_has_max_cost) {
+                    max_cost = _max_cost;
+                } else if (_dense_cost) {
+                    max_cost = *_D_ptr;
+                    for (ArcsType i = 1; i != _arc_num; ++i) {
+                        if (_D_ptr[i] > max_cost) max_cost = _D_ptr[i];
+                    }
+                } else if (!_lazy_cost) {
+                    max_cost = _cost[0];
+                    for (ArcsType i = 1; i != _arc_num; ++i) {
+                        if (_cost[i] > max_cost) max_cost = _cost[i];
+                    }
+                } else {
+                    // Lazy cost: fall back to on-the-fly computation
+                    for (ArcsType i = 0; i != _arc_num; ++i) {
+                        Cost c = getCostForArc(i);
+                        if (c > max_cost) max_cost = c;
+                    }
                 }
-                ART_COST = (ART_COST + 1) * _node_num;
+                ART_COST = (max_cost + 1) * _node_num;
+                _max_cost = max_cost;
+                _has_max_cost = true;
             }
 
             memset(&_state[0], STATE_LOWER, _arc_num);
