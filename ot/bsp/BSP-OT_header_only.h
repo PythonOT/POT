@@ -4,7 +4,6 @@
 #define BSP_OT_HEADER_ONLY
 #endif
 
-
 #pragma once
 #include <Eigen/Dense>
 #include <numeric>
