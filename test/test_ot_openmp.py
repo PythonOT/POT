@@ -3,7 +3,7 @@ import numpy as np
 
 
 def test_omp_emd2():
-    # test emd2 and emd2 with openmp for simple identity
+    # test emd2 with openmp for simple identity issues
     n = 1000
     rng = np.random.RandomState(0)
 
