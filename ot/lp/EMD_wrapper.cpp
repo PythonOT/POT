@@ -22,7 +22,8 @@
 
 
 int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
-                double* alpha, double* beta, double *cost, uint64_t maxIter)  {
+                double* alpha, double* beta, double *cost, uint64_t maxIter,
+                double* alpha_init, double* beta_init)  {
     // beware M and C are stored in row major C style!!!
 
     using namespace lemon;
@@ -93,10 +94,24 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
         }
     }
 
+    // Set warmstart potentials if provided
+    if (alpha_init != nullptr && beta_init != nullptr) {
+        // Compress warmstart potentials to only non-zero entries
+        std::vector<double> alpha_compressed(n);
+        std::vector<double> beta_compressed(m);
+        for (uint64_t i = 0; i < n; i++) {
+            alpha_compressed[i] = alpha_init[indI[i]];
+        }
+        for (uint64_t j = 0; j < m; j++) {
+            beta_compressed[j] = beta_init[indJ[j]];
+        }
+        net.setWarmstartPotentials(&alpha_compressed[0], &beta_compressed[0], (int)n, (int)m);
+    }
 
     // Solve the problem with the network simplex algorithm
 
     int ret=net.run();
+
     uint64_t i, j;
     if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
         *cost = 0;
@@ -238,7 +253,9 @@ int EMD_wrap_sparse(
     double *alpha,
     double *beta,
     double *cost,
-    uint64_t maxIter
+    uint64_t maxIter,
+    double *alpha_init,
+    double *beta_init
 ) {
     using namespace lemon;
     
@@ -336,6 +353,22 @@ int EMD_wrap_sparse(
         }
     }
     
+    // Initialize warmstart if provided
+    if (alpha_init != nullptr && beta_init != nullptr) {
+        // Map original indices to graph indices for warmstart
+        std::vector<double> alpha_filtered(n);
+        std::vector<double> beta_filtered(m);
+        for (uint64_t i = 0; i < n; i++) {
+            uint64_t orig_i = indI[i];
+            alpha_filtered[i] = alpha_init[orig_i];
+        }
+        for (uint64_t j = 0; j < m; j++) {
+            uint64_t orig_j = indJ[j];
+            beta_filtered[j] = beta_init[orig_j];
+        }
+        net.setWarmstartPotentials(&alpha_filtered[0], &beta_filtered[0], n, m);
+    }
+    
     int ret = net.run();
 
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
@@ -374,7 +407,7 @@ int EMD_wrap_sparse(
 
 int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, 
                   int dim, int metric, double *G, double *alpha, double *beta, 
-                  double *cost, uint64_t maxIter) {
+                  double *cost, uint64_t maxIter, double *alpha_init, double *beta_init) {
     using namespace lemon;
     typedef FullBipartiteDigraph Digraph;
     DIGRAPH_TYPEDEFS(Digraph);
@@ -438,6 +471,22 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     
     // Enable lazy cost computation - costs will be computed on-the-fly
     net.setLazyCost(&coords_a_filtered[0], &coords_b_filtered[0], dim, metric, n, m);
+    
+    // Initialize warmstart if provided
+    if (alpha_init != nullptr && beta_init != nullptr) {
+        // Map original indices to graph indices for warmstart
+        std::vector<double> alpha_filtered(n);
+        std::vector<double> beta_filtered(m);
+        for (int i = 0; i < n; i++) {
+            int orig_i = idx_a[i];
+            alpha_filtered[i] = alpha_init[orig_i];
+        }
+        for (int j = 0; j < m; j++) {
+            int orig_j = idx_b[j];
+            beta_filtered[j] = beta_init[orig_j];
+        }
+        net.setWarmstartPotentials(&alpha_filtered[0], &beta_filtered[0], n, m);
+    }
     
     // Run solver
     int ret = net.run();
