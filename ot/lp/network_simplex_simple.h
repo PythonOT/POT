@@ -679,10 +679,10 @@ namespace lemon {
             if (!_lazy_cost) {
                 return _cost[arc_id];
             } else {
-                // For artificial arcs (>= _arc_num), return 0
-                // These are not real transport arcs
+                // For artificial arcs (>= _arc_num), return stored cost
+                // (0 for positive supply, ART_COST for negative supply)
                 if (arc_id >= _arc_num) {
-                    return 0;
+                    return _cost[arc_id];
                 }
                 // Compute lazily from coordinates
                 // _source and _target use reversed node numbering: _node_id(n) = _node_num - n - 1
@@ -1138,7 +1138,13 @@ namespace lemon {
 
                 for (ArcsType e = 0; e < _arc_num; ++e) {
                     _state[e] = STATE_LOWER;
-                    Cost c = _cost[e];
+                    Cost c;
+                    if (_lazy_cost) {
+                        // Compute cost on-the-fly for lazy mode
+                        c = getCostForArc(e);
+                    } else {
+                        c = _cost[e];
+                    }
                     if (c > ART_COST) ART_COST = c;
                     Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
                     if ((ArcsType)maxheap.size() < K) {
@@ -1436,10 +1442,11 @@ namespace lemon {
                 while (u != _root) {
                     ArcsType e = _pred[u];
                     int v = _parent[u];
+                    Cost c = getCostForArc(e);
                     if (_forward[u]) {
-                        _pi[u] = _pi[v] - _cost[e];
+                        _pi[u] = _pi[v] - c;
                     } else {
-                        _pi[u] = _pi[v] + _cost[e];
+                        _pi[u] = _pi[v] + c;
                     }
                     u = _thread[u];
                 }

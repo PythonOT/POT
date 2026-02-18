@@ -22,8 +22,8 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
-    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter) nogil
-    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
+    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -233,7 +233,9 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
                 np.ndarray[uint64_t, ndim=1, mode="c"] edge_sources,
                 np.ndarray[uint64_t, ndim=1, mode="c"] edge_targets,
                 np.ndarray[double, ndim=1, mode="c"] edge_costs,
-                uint64_t max_iter):
+                uint64_t max_iter,
+                np.ndarray[double, ndim=1, mode="c"] alpha_init=None,
+                np.ndarray[double, ndim=1, mode="c"] beta_init=None):
     """
     Sparse EMD solver using cost matrix in COO (Coordinate) sparse format.
     
@@ -255,6 +257,10 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
         Cost for each edge (non-zero values in COO format)
     max_iter : uint64_t
         Maximum number of iterations
+    alpha_init : (n1,) array, float64, optional
+        Initial dual variables for sources (warmstart)
+    beta_init : (n2,) array, float64, optional
+        Initial dual variables for targets (warmstart)
 
     Returns
     -------
@@ -287,6 +293,12 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
     cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
 
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_ptr = <double*> alpha_init.data
+        beta_init_ptr = <double*> beta_init.data
+    
     with nogil:
         result_code = EMD_wrap_sparse(
             n1, n2,
@@ -295,7 +307,8 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
             <uint64_t*> edge_sources.data, <uint64_t*> edge_targets.data, <double*> edge_costs.data,
             <uint64_t*> flow_sources.data, <uint64_t*> flow_targets.data, <double*> flow_values.data,
             &n_flows_out,
-            <double*> alpha.data, <double*> beta.data, &cost, max_iter
+            <double*> alpha.data, <double*> beta.data, &cost, max_iter,
+            alpha_init_ptr, beta_init_ptr
         )
 
     # Trim to actual number of flows
@@ -308,7 +321,7 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"] b, np.ndarray[double, ndim=2, mode="c"] coords_a, np.ndarray[double, ndim=2, mode="c"] coords_b, str metric='sqeuclidean', uint64_t max_iter=100000):
+def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"] b, np.ndarray[double, ndim=2, mode="c"] coords_a, np.ndarray[double, ndim=2, mode="c"] coords_b, str metric='sqeuclidean', uint64_t max_iter=100000, np.ndarray[double, ndim=1, mode="c"] alpha_init=None, np.ndarray[double, ndim=1, mode="c"] beta_init=None):
     """Solves the Earth Movers distance problem with lazy cost computation from coordinates."""
     cdef int n1 = coords_a.shape[0]
     cdef int n2 = coords_b.shape[0]
@@ -339,6 +352,13 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
         a = np.ones((n1,)) / n1
     if not len(b):
         b = np.ones((n2,)) / n2
+    
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_ptr = <double*> alpha_init.data
+        beta_init_ptr = <double*> beta_init.data
+    
     with nogil:
-        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
     return G, cost, alpha, beta, result_code
