@@ -49,8 +49,10 @@ if openmp_supported:
     compile_args += flags
     link_args += flags
 
+compile_args += ["/std:c++17" if sys.platform == "win32" else ""]  # Needed for ot/bsp
+
 if sys.platform.startswith("darwin"):
-    compile_args.append("-stdlib=libc++")
+    compile_args.append("-std=c++17")  # Needed for ot/bsp
     sdk_path = subprocess.check_output(["xcrun", "--show-sdk-path"])
     os.environ["CFLAGS"] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
 
@@ -84,6 +86,21 @@ setup(
                 include_dirs=[numpy.get_include(), os.path.join(ROOT, "ot/partial")],
                 extra_compile_args=compile_args,
                 language="c++",
+            ),
+            Extension(
+                name="ot.bsp.bsp_wrap",
+                sources=[
+                    "ot/bsp/bsp_wrap.pyx",
+                    "ot/bsp/bsp_wrapper.cpp",
+                ],  # cython/c++ src files
+                language="c++",
+                include_dirs=[
+                    numpy.get_include(),
+                    os.path.join(ROOT, "deps/eigen"),
+                    os.path.join(ROOT, "ot/bsp"),
+                ],
+                extra_compile_args=compile_args,
+                extra_link_args=link_args,
             ),
         ]
     ),

@@ -28,6 +28,8 @@ jobs:
 
     - name: Checking Out Repository
       uses: actions/checkout@v4
+      with:
+        submodules: true
     # Install Python & Packages
     - uses: actions/setup-python@v4
       with:
@@ -43,6 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -70,6 +75,9 @@ jobs:
         android: true
         dotnet: true
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -95,6 +103,9 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'no ci')"
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -122,6 +133,8 @@ jobs:
 
      steps:
      - uses: actions/checkout@v4
+       with:
+        submodules: true
      - name: Set up Python ${{ matrix.python-version }}
        uses: actions/setup-python@v5
        with:
@@ -150,6 +163,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:

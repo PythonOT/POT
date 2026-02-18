@@ -12,3 +12,8 @@ include ot/lp/network_simplex_simple.h
 include ot/lp/network_simplex_simple_omp.h
 include ot/lp/sparse_bipartitegraph.h
 include ot/partial/partial_cython.pyx
+include ot/bsp/BSP-OT_header_only.
+include ot/bsp/bsp_wrapper.cpp
+include ot/bsp/bsp_wrapper.h
+include ot/bsp/bsp_wrap.pyx
+include deps/eigen/Eigen/*
