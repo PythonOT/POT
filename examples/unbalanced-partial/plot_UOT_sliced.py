@@ -94,10 +94,16 @@ thetas = np.linspace(0, np.pi, num_proj)
 dir = np.array([(np.cos(theta), np.sin(theta)) for theta in thetas])
 dir_torch = torch.from_numpy(dir).type(torch.float)
 
+# Coordinates of the projections
 Xps = (Xs @ dir_torch.T).T  # shape (n_projs, n)
 Xpt = (Xt @ dir_torch.T).T
 
+# Projections on the lines
+projs_Xps = Xps[:, :, None] * dir_torch[:, None, :]  # shape (n_projs, n, p)
+projs_Xpt = Xpt[:, :, None] * dir_torch[:, None, :]
 
+
+# Compute SUOT
 rho1_SUOT = 1
 rho2_SUOT = 1
 
@@ -116,6 +122,7 @@ _, log = ot.unbalanced.sliced_unbalanced_ot(
 A_SUOT, B_SUOT = log["a_reweighted"].T, log["b_reweighted"].T
 
 
+# Compute USOT
 rho1_USOT = 1
 rho2_USOT = 1
 
@@ -164,9 +171,10 @@ def _update_plot(i):
     weights_tgt = B_SUOT[i * offset_degree, :].cpu().numpy()
 
     max_weights = max(weights_src.max(), weights_tgt.max())
+    min_weights = min(weights_src.min(), weights_tgt.min())
 
-    weights_src /= max_weights
-    weights_tgt /= max_weights
+    weights_src = 0.1 + 0.9 * (weights_src - min_weights) / (max_weights - min_weights)
+    weights_tgt = 0.1 + 0.9 * (weights_tgt - min_weights) / (max_weights - min_weights)
 
     R = get_rot(delta_degree * (-i))
 
@@ -178,6 +186,22 @@ def _update_plot(i):
     pl.plot(
         [X1_r[0], X2_r[0]], [X1_r[1], X2_r[1]], color=colors[i], alpha=0.8, zorder=0
     )
+
+    for j in range(len(Xs)):
+        pl.plot(
+            [Xs[j, 0], projs_Xps[i * offset_degree, j, 0]],
+            [Xs[j, 1], projs_Xps[i * offset_degree, j, 1]],
+            c="blue",
+            alpha=weights_src[j],
+        )
+
+    for j in range(len(Xt)):
+        pl.plot(
+            [Xt[j, 0], projs_Xpt[i * offset_degree, j, 0]],
+            [Xt[j, 1], projs_Xpt[i * offset_degree, j, 1]],
+            c="red",
+            alpha=weights_tgt[j],
+        )
 
     pl.scatter(
         Xs[:, 0],
@@ -210,11 +234,13 @@ weights_src = A_SUOT[0, :].cpu().numpy()
 weights_tgt = B_SUOT[0, :].cpu().numpy()
 
 max_weights = max(weights_src.max(), weights_tgt.max())
+min_weights = min(weights_src.min(), weights_tgt.min())
 
-weights_src /= max_weights
-weights_tgt /= max_weights
+weights_src = 0.1 + 0.9 * (weights_src - min_weights) / (max_weights - min_weights)
+weights_tgt = 0.1 + 0.9 * (weights_tgt - min_weights) / (max_weights - min_weights)
 
 X1_r, X2_r = X1, X2
+
 pl.plot(
     [X1_r[0], X2_r[0]],
     [X1_r[1], X2_r[1]],
@@ -223,6 +249,23 @@ pl.plot(
     zorder=0,
     label="Directions",
 )
+
+for j in range(len(Xs)):
+    pl.plot(
+        [Xs[j, 0], projs_Xps[0, j, 0]],
+        [Xs[j, 1], projs_Xps[0, j, 1]],
+        c="blue",
+        alpha=weights_src[j],
+    )
+
+for j in range(len(Xt)):
+    pl.plot(
+        [Xt[j, 0], projs_Xpt[0, j, 0]],
+        [Xt[j, 1], projs_Xpt[0, j, 1]],
+        c="red",
+        alpha=weights_tgt[j],
+    )
+
 pl.scatter(
     Xs[:, 0],
     Xs[:, 1],
@@ -276,9 +319,10 @@ for i in range(nb_slices):
     weights_tgt = B_USOT.cpu().numpy()
 
     max_weights = max(weights_src.max(), weights_tgt.max())
+    min_weights = min(weights_src.min(), weights_tgt.min())
 
-    weights_src /= max_weights
-    weights_tgt /= max_weights
+    weights_src = 0.1 + 0.9 * (weights_src - min_weights) / (max_weights - min_weights)
+    weights_tgt = 0.1 + 0.9 * (weights_tgt - min_weights) / (max_weights - min_weights)
 
     R = get_rot(delta_degree * (-i))
     X1_r = X1.dot(R)
@@ -355,6 +399,35 @@ def plot_slices(
     offset_degree,
     bw=0.05,
 ):
+    """
+    Plot the density (using a kernel estimator) of the projections on each of the slices.
+
+    Parameters
+    ----------
+    col: int
+        Column of the subplot
+    nb_slices: int
+        Number of slices on which we project
+    x_grid: numpy array
+        Grid of the x-abscisse
+    Xps: array-like of shape (nb_slices, n_points)
+        Projections of the 1st marginal in 1D
+    Xpt: array-like of shape (nb_slices, m_points)
+        Projections of the 2nd marginal in 1D
+    Xps_weights: array_like of shape (nb_slices, n_points)
+        Weights of the projections Xps
+    Xpt_weights: array_like of shape (nb_slices, m_points)
+        Weights of the projections Xpt
+    method: str
+        Legend
+    rho1: int
+        Legend
+    rho2: int
+        Legend
+    offset_degree: int
+    bw: float
+        Bandwidth for the KDE estimation
+    """
     for i in range(nb_slices):
         ax = plt.subplot2grid((nb_slices, 3), (i, col))
         if len(Xps_weights.shape) > 1:  # SUOT
@@ -400,7 +473,7 @@ def plot_slices(
 ##############################################################################
 # Plot reweighted distributions on several slices
 # -------------
-# We plot the reweighted distributions on several slices. We see that for SUOT,
+# We plot the reweighted distributions on several slices (replicating Figure 1 of [82]). We see that for SUOT,
 # the mode of outliers is kept of some slices (e.g. for :math:`\theta=120°`) while USOT
 # is able to get rid of the outlier mode.
 

@@ -21,7 +21,6 @@ import ot
 import ot.plot
 from ot.datasets import make_1D_gauss as gauss
 import torch
-import cvxpy as cp
 
 ##############################################################################
 # Generate data

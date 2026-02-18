@@ -146,68 +146,66 @@ def uot_1d(
     log=False,
 ):
     r"""
-       Solves the 1D unbalanced OT problem with KL regularization.
-       The function implements the Frank-Wolfe algorithm to solve the dual problem,
-       as proposed in :ref:`[73] <references-uot>`.
+    Solves the 1D unbalanced OT problem with KL regularization.
+    The function implements the Frank-Wolfe algorithm to solve the dual problem,
+    as proposed in :ref:`[73] <references-uot>`.
 
-       The unbalanced OT problem reads
+    The unbalanced OT problem reads
 
-       .. math::
-           \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
+    .. math::
+        \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
 
-    `
+    This function only works in pytorch or jax (but is not maintained in jax).
 
-       This function only works in pytorch or jax (but is not maintained in jax).
+    Parameters
+    ----------
+    u_values: array-like, shape (n, ...)
+        locations of the first empirical distribution
+    v_values: array-like, shape (m, ...)
+        locations of the second empirical distribution
+    reg_m: float or indexable object of length 1 or 2
+        Marginal relaxation term.
+        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
+        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
+        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
+        For semi-relaxed case, use either
+        :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
+        :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
+        If :math:`\mathrm{reg_{m}}` is an array,
+        it must have the same backend as inxut arrays `(a, b)`.
+    u_weights: array-like, shape (n, ...), optional
+        weights of the first empirical distribution, if None then uniform weights are used
+    v_weights: array-like, shape (m, ...), optional
+        weights of the second empirical distribution, if None then uniform weights are used
+    p: int, optional
+        order of the ground metric used, should be at least 1, default is 2
+    require_sort: bool, optional
+        sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
+        the function, default is True
+    numItermax: int, optional
+    returnCost: string, optional (default = "linear")
+        If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
+        If `returnCost` = "total", then return the total unbalanced OT loss.
+    log: bool, optional
 
-       Parameters
-       ----------
-       u_values: array-like, shape (n, ...)
-           locations of the first empirical distribution
-       v_values: array-like, shape (m, ...)
-           locations of the second empirical distribution
-       reg_m: float or indexable object of length 1 or 2
-           Marginal relaxation term.
-           If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
-           then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-           The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
-           For semi-relaxed case, use either
-           :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
-           :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
-           If :math:`\mathrm{reg_{m}}` is an array,
-           it must have the same backend as inxut arrays `(a, b)`.
-       u_weights: array-like, shape (n, ...), optional
-           weights of the first empirical distribution, if None then uniform weights are used
-       v_weights: array-like, shape (m, ...), optional
-           weights of the second empirical distribution, if None then uniform weights are used
-       p: int, optional
-           order of the ground metric used, should be at least 1, default is 2
-       require_sort: bool, optional
-           sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
-           the function, default is True
-       numItermax: int, optional
-       returnCost: string, optional (default = "linear")
-           If `returnCost` = "linear", then return the linear part of the unbalanced OT loss.
-           If `returnCost` = "total", then return the total unbalanced OT loss.
-       log: bool, optional
-
-       Returns
-       -------
-       u_reweighted: array-like shape (n, ...)
-           First marginal reweighted
-       v_reweighted: array-like shape (m, ...)
-           Second marginal reweighted
-       loss: float/array-like, shape (...)
-           The batched 1D UOT
-       log: dict, optional
-           If `log` is True, then returns a dictionary containing the dual potentials, the total cost and the linear cost.
+    Returns
+    -------
+    u_reweighted: array-like shape (n, ...)
+        First marginal reweighted
+    v_reweighted: array-like shape (m, ...)
+        Second marginal reweighted
+    loss: float/array-like, shape (...)
+        The batched 1D UOT
+    log: dict, optional
+        If `log` is True, then returns a dictionary containing the dual potentials, the total cost and the linear cost.
 
 
-       .. _references-uot:
-       References
-       ---------
-       .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
-          Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
-          In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
+    .. _references-uot:
+    References
+    ---------
+    .. [73] Séjourné, T., Vialard, F. X., & Peyré, G. (2022).
+       Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
+       In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
     if u_weights is not None and v_weights is not None:
         nx = get_backend(u_values, v_values, u_weights, v_weights)
