@@ -163,6 +163,49 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
+def _compute_active_subset(a, b, M, row_mask, col_mask):
+    """Return filtered inputs restricted to the rows/columns with mass."""
+    need_filter = np.any(~row_mask) or np.any(~col_mask)
+    if not need_filter:
+        return need_filter, None, None, a, b, M
+
+    row_idx = np.flatnonzero(row_mask)
+    col_idx = np.flatnonzero(col_mask)
+    M_solver = np.asarray(M[np.ix_(row_idx, col_idx)], dtype=np.float64, order="C")
+    return need_filter, row_idx, col_idx, a[row_idx], b[col_idx], M_solver
+
+
+def _inflate_from_active_subset(
+    G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n_rows, n_cols
+):
+    """Embed the filtered dense solution back into the full support."""
+    if not need_filter:
+        return G, u, v
+
+    G_full = np.zeros((n_rows, n_cols), dtype=G.dtype)
+    G_full[np.ix_(row_idx, col_idx)] = G
+
+    u_full = np.zeros((n_rows,), dtype=u.dtype)
+    v_full = np.zeros((n_cols,), dtype=v.dtype)
+    u_full[row_mask] = u
+    v_full[col_mask] = v
+    return G_full, u_full, v_full
+
+
+def _prepare_warmstart(potentials_init, need_filter, row_mask, col_mask):
+    """Return warm-start potentials filtered to the active support."""
+    if potentials_init is None:
+        return None, None
+
+    alpha_init, beta_init = potentials_init
+    alpha_init = np.asarray(alpha_init, dtype=np.float64)
+    beta_init = np.asarray(beta_init, dtype=np.float64)
+    if need_filter:
+        alpha_init = alpha_init[row_mask]
+        beta_init = beta_init[col_mask]
+    return alpha_init, beta_init
+
+
 def emd(
     a,
     b,
@@ -172,6 +215,7 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -237,6 +281,11 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -373,8 +422,29 @@ def emd(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
     else:
+        row_mask = asel
+        col_mask = bsel
+        (
+            need_filter,
+            row_idx,
+            col_idx,
+            a_solver,
+            b_solver,
+            M_solver,
+        ) = _compute_active_subset(a, b, M, row_mask, col_mask)
+
+        alpha_init, beta_init = _prepare_warmstart(
+            potentials_init, need_filter, row_mask, col_mask
+        )
+
         # Dense solver
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+        G, cost, u, v, result_code = emd_c(
+            a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
+        )
+
+        G, u, v = _inflate_from_active_subset(
+            G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n1, n2
+        )
 
     # ============================================================================
     # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
@@ -448,6 +518,7 @@ def emd2(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -513,6 +584,11 @@ def emd2(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -656,8 +732,33 @@ def emd2(
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
         else:
+            (
+                need_filter,
+                row_idx,
+                col_idx,
+                a_solver,
+                b_solver,
+                M_solver,
+            ) = _compute_active_subset(a, b, M, asel, bsel)
+
+            alpha_init, beta_init = _prepare_warmstart(
+                potentials_init, need_filter, asel, bsel
+            )
+
             # Solve dense EMD
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+            G, cost, u, v, result_code = emd_c(
+                a_solver,
+                b_solver,
+                M_solver,
+                numItermax,
+                numThreads,
+                alpha_init,
+                beta_init,
+            )
+
+            G, u, v = _inflate_from_active_subset(
+                G, u, v, need_filter, row_idx, col_idx, asel, bsel, n1, n2
+            )
 
         # Center dual potentials
         if center_dual:
@@ -788,6 +889,7 @@ def emd2_lazy(
     return_matrix=True,
     center_dual=True,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem with lazy cost computation and returns the loss
 
@@ -841,6 +943,9 @@ def emd2_lazy(
         If True, centers the dual potential using :py:func:`ot.lp.center_ot_dual`
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal
+    potentials_init : tuple of (ns,) and (nt,) arrays, optional
+        Initial dual potentials (u, v) to warmstart the solver. If provided,
+        the solver starts from these potentials instead of a cold start.
 
     Returns
     -------
@@ -910,8 +1015,18 @@ def emd2_lazy(
         )
     b_np = b_np * a_np.sum() / b_np.sum()
 
+    # Handle warmstart potentials
+    alpha_init_np = None
+    beta_init_np = None
+    if potentials_init is not None:
+        alpha_init, beta_init = potentials_init
+        alpha_init_np = nx.to_numpy(alpha_init)
+        beta_init_np = nx.to_numpy(beta_init)
+        alpha_init_np = np.asarray(alpha_init_np, dtype=np.float64, order="C")
+        beta_init_np = np.asarray(beta_init_np, dtype=np.float64, order="C")
+
     G, cost, u, v, result_code = emd_c_lazy(
-        a_np, b_np, X_a_np, X_b_np, metric, numItermax
+        a_np, b_np, X_a_np, X_b_np, metric, numItermax, alpha_init_np, beta_init_np
     )
 
     if center_dual:
