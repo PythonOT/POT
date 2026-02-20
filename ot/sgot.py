@@ -17,7 +17,6 @@ eigenspaces.
 
 import numpy as np
 import ot
-from sklearn.utils.extmath import randomized_svd
 from ot.backend import get_backend
 
 ###
@@ -26,166 +25,12 @@ from ot.backend import get_backend
 
 #####################################################################################################################################
 #####################################################################################################################################
-### PRINCIPAL ANGLE METRICS ###
-#####################################################################################################################################
-#####################################################################################################################################
-
-
-def hs_metric(Ds, Rs, Ls, Dt, Rt, Lt, sampfreqs: int = 1, sampfreqt: int = 1):
-    """Compute the Hilbert-Schmidt (Frobenius) distance between two operators.
-
-    Parameters
-    ----------
-    Ds: array-like, shape (n_s,)
-        Source eigenvalues.
-    Rs: array-like, shape (L, n_s)
-        Source right eigenvectors.
-    Ls: array-like, shape (L, n_s)
-        Source left eigenvectors.
-    Dt: array-like, shape (n_t,)
-        Target eigenvalues.
-    Rt: array-like, shape (L, n_t)
-        Target right eigenvectors.
-    Lt: array-like, shape (L, n_t)
-        Target left eigenvectors.
-    sampfreqs: int, optional, sampling frequency for the source operator with default 1
-    sampfreqt: int, optional, sampling frequency for the target operator with default 1
-
-    Returns
-    ----------
-    dist: float, Frobenius norm
-    """
-    Ts = Rs @ (np.exp(Ds / sampfreqs).reshape(-1, 1) * Ls.conj().T)
-    Tt = Rt @ (np.exp(Dt / sampfreqt).reshape(-1, 1) * Lt.conj().T)
-    C = Ts - Tt
-    return np.linalg.norm(C, "fro")
-
-
-def operator_metric(
-    Ds,
-    Rs,
-    Ls,
-    Dt,
-    Rt,
-    Lt,
-    sampfreqs: int = 1,
-    sampfreqt: int = 1,
-    exact: bool = False,
-    n_iter: int = 5,
-    random_state: int = None,
-):
-    """Compute the spectral norm distance between two reconstructed operators.
-
-    Parameters
-    ----------
-    Ds: array-like, shape (n_s,)
-        Source eigenvalues.
-    Rs: array-like, shape (L, n_s)
-        Source right eigenvectors.
-    Ls: array-like, shape (L, n_s)
-        Source left eigenvectors.
-    Dt: array-like, shape (n_t,)
-        Target eigenvalues.
-    Rt: array-like, shape (L, n_t)
-        Target right eigenvectors.
-    Lt: array-like, shape (L, n_t)
-        Target left eigenvectors.
-    sampfreqs: int, optional
-        Sampling frequency for the source operator with default 1
-    sampfreqt: int, optional
-        Sampling frequency for the target operator with default 1
-    exact: bool, optional
-    n_iter: int, optional
-    random_state: int or None, optional
-
-    Returns
-    ----------
-    dist: float
-    """
-    Ts = Rs @ (np.exp(Ds / sampfreqs).reshape(-1, 1) * Ls.conj().T)
-    Tt = Rt @ (np.exp(Dt / sampfreqt).reshape(-1, 1) * Lt.conj().T)
-    C = Ts - Tt
-    if exact:
-        return np.linalg.norm(C, 2)
-    else:
-        _, S, _ = randomized_svd(
-            C.real, n_components=1, n_iter=n_iter, random_state=random_state
-        )
-    return S[0]
-
-
-def principal_angles_via_svd(A, B):
-    """Compute principal angles between two subspaces using SVD of QA^T QB.
-
-    Parameters
-        A: array-like, shape (d, p) whose columns span the first subspace
-        B: array-like, shape (d, q) whose columns span the second subspace
-
-    Returns
-        angle: sorted principal angles (in radians), shape (min(p, q),)
-    """
-    QA, _ = np.linalg.qr(A, mode="reduced")
-    QB, _ = np.linalg.qr(B, mode="reduced")
-    C = QA.T @ QB
-    # SVD of small matrix C
-    _, S, _ = np.linalg.svd(C, full_matrices=False)
-    S = np.clip(S, -1.0, 1.0)
-    angles = np.arccos(S)
-    return np.sort(angles)
-
-
-def principal_angles_distance(
-    Ds,
-    Rs,
-    Ls,
-    Dt,
-    Rt,
-    Lt,
-):
-    """Compute a principal angles distance between two spectral decompositions.
-
-    Parameters
-    ----------
-    Ds: array-like, shape (n_s,)
-        Source eigenvalues.
-    Rs: array-like, shape (L, n_s)
-        Source right eigenvectors.
-    Ls: array-like, shape (L, n_s)
-        Source left eigenvectors.
-    Dt: array-like, shape (n_t,)
-        Target eigenvalues.
-    Rt: array-like, shape (L, n_t)
-        Target right eigenvectors.
-    Lt: array-like, shape (L, n_t)
-        Target left eigenvectors.
-
-    Returns
-    -------
-    dist: float
-        Principal-angles distance between the two decompositions.
-    """
-    ns = Rs.shape[1]
-    nt = Rt.shape[1]
-    Ms = np.vstack(
-        [(ls[:, None] * rs.conj()[None, :]).flatten() for ls, rs in zip(Ls.T, Rs.T)]
-    ).T
-    Mt = np.vstack(
-        [(lt[:, None] * rt.conj()[None, :]).flatten() for lt, rt in zip(Lt.T, Rt.T)]
-    ).T
-    angles = principal_angles_via_svd(Ms, Mt)
-    if angles.shape[0] != max(ns, nt):
-        angles = np.hstack([angles, np.pi / 2 * np.ones(max(ns, nt) - angles.shape[0])])
-    return np.sqrt(np.sum(angles**2))
-
-
-#####################################################################################################################################
-#####################################################################################################################################
 ### OT METRIC ###
 #####################################################################################################################################
 #####################################################################################################################################
 
 
-def principal_grassman_matrix(Ps, Pt, eps: float = 1e-12):
+def principal_grassman_matrix(Ps, Pt, eps: float = 1e-12, nx=None):
     """Compute the unitary Grassmann matrix for source and target domains.
 
     Parameters
@@ -202,19 +47,25 @@ def principal_grassman_matrix(Ps, Pt, eps: float = 1e-12):
     C : np.ndarray, shape (n_ds, n_dt)
         Grassmann matrix between source and target subspaces.
     """
-    ns = np.linalg.norm(Ps, axis=0, keepdims=True)
-    nt = np.linalg.norm(Pt, axis=0, keepdims=True)
-    ns = np.maximum(ns, eps)
-    nt = np.maximum(nt, eps)
+    if nx is None:
+        nx = get_backend(Ps, Pt)
+
+    Ps = nx.asarray(Ps)
+    Pt = nx.asarray(Pt)
+
+    ns = nx.sqrt(nx.sum(Ps * nx.conj(Ps), axis=0, keepdims=True))
+    nt = nx.sqrt(nx.sum(Pt * nx.conj(Pt), axis=0, keepdims=True))
+
+    ns = nx.clip(ns, eps, 1e300)
+    nt = nx.clip(nt, eps, 1e300)
 
     Psn = Ps / ns
     Ptn = Pt / nt
 
-    C = Psn.conj().T @ Ptn
-    return C
+    return nx.dot(nx.conj(Psn).T, Ptn)
 
 
-def eigenvector_chordal_cost_matrix(Rs, Ls, Rt, Lt):
+def eigenvector_chordal_cost_matrix(Rs, Ls, Rt, Lt, nx=None):
     """Compute pairwise Grassmann matrices for source and target domains.
 
     Parameters
@@ -233,13 +84,20 @@ def eigenvector_chordal_cost_matrix(Rs, Ls, Rt, Lt):
     C: np.ndarray, shape (n_s, n_t)
         Eigenvector chordal cost matrix.
     """
-    Cr = principal_grassman_matrix(Rs, Rt)
-    Cl = principal_grassman_matrix(Ls, Lt)
-    C = np.sqrt(1 - np.clip((Cr * Cl).real, a_min=0, a_max=1))
-    return C
+    if nx is None:
+        nx = get_backend(Rs, Ls, Rt, Lt)
+
+    Cr = principal_grassman_matrix(Rs, Rt, nx=nx)
+    Cl = principal_grassman_matrix(Ls, Lt, nx=nx)
+
+    prod = nx.real(Cr * Cl)
+    prod = nx.clip(prod, 0.0, 1.0)
+    return nx.sqrt(1.0 - prod)
 
 
-def eigenvalue_cost_matrix(Ds, Dt, real_scale: float = 1.0, imag_scale: float = 1.0):
+def eigenvalue_cost_matrix(
+    Ds, Dt, real_scale: float = 1.0, imag_scale: float = 1.0, nx=None
+):
     """Compute pairwise eigenvalue distances for source and target domains.
 
     Parameters
@@ -258,19 +116,35 @@ def eigenvalue_cost_matrix(Ds, Dt, real_scale: float = 1.0, imag_scale: float = 
     C: np.ndarray, shape (n_s, n_t)
         Eigenvalue cost matrix.
     """
-    Dsn = Ds.real * real_scale + 1j * Ds.imag * imag_scale
-    Dtn = Dt.real * real_scale + 1j * Dt.imag * imag_scale
-    C = np.abs(Dsn[:, None] - Dtn[None, :])
-    return C
+    if nx is None:
+        nx = get_backend(Ds, Dt)
+
+    Ds = nx.asarray(Ds)
+    Dt = nx.asarray(Dt)
+    Dsn = nx.real(Ds) * real_scale + 1j * nx.imag(Ds) * imag_scale
+    Dtn = nx.real(Dt) * real_scale + 1j * nx.imag(Dt) * imag_scale
+    return nx.abs(Dsn[:, None] - Dtn[None, :])
 
 
-def ChordalCostFunction(
-    real_scale: float = 1.0, imag_scale: float = 1.0, alpha: float = 0.5, p: int = 2
+def chordal_cost_matrix(
+    Ds, Rs, Ls, Dt, Rt, Lt, real_scale=1.0, imag_scale=1.0, alpha=0.5, p=2, nx=None
 ):
-    """Generate the chordal cost function.
+    """Compute the chordal cost matrix between source and target spectral decompositions.
 
     Parameters
     ----------
+    Ds: array-like, shape (n_s,)
+        Source eigenvalues.
+    Rs: array-like, shape (L, n_s)
+        Source right eigenvectors.
+    Ls: array-like, shape (L, n_s)
+        Source left eigenvectors.
+    Dt: array-like, shape (n_t,)
+        Target eigenvalues.
+    Rt: array-like, shape (L, n_t)
+        Target right eigenvectors.
+    Lt: array-like, shape (L, n_t)
+        Target left eigenvectors.
     real_scale: float, optional
         Scale factor for real parts, default 1.0.
     imag_scale: float, optional
@@ -282,43 +156,20 @@ def ChordalCostFunction(
 
     Returns
     ----------
-    cost_function: Chordal cost function.
+    C: np.ndarray, shape (n_s, n_t)
+        Chordal cost matrix.
     """
-
-    def cost_function(Ds, Rs, Ls, Dt, Rt, Lt) -> np.ndarray:
-        """Compute the chordal cost matrix between source and target spectral decompositions.
-
-        Parameters
-        ----------
-        Ds: array-like, shape (n_s,)
-            Source eigenvalues.
-        Rs: array-like, shape (L, n_s)
-            Source right eigenvectors.
-        Ls: array-like, shape (L, n_s)
-            Source left eigenvectors.
-        Dt: array-like, shape (n_t,)
-            Target eigenvalues.
-        Rt: array-like, shape (L, n_t)
-            Target right eigenvectors.
-        Lt: array-like, shape (L, n_t)
-            Target left eigenvectors.
-
-        Returns
-        ----------
-        C: np.ndarray, shape (n_s, n_t)
-            Chordal cost matrix.
-        """
-        CD = eigenvalue_cost_matrix(
-            Ds, Dt, real_scale=real_scale, imag_scale=imag_scale
-        )
-        CC = eigenvector_chordal_cost_matrix(Rs, Ls, Rt, Lt)
-        C = alpha * CD + (1 - alpha) * CC
-        return C**p
-
-    return cost_function
+    if nx is None:
+        nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
+    CD = eigenvalue_cost_matrix(
+        Ds, Dt, real_scale=real_scale, imag_scale=imag_scale, nx=nx
+    )
+    CC = eigenvector_chordal_cost_matrix(Rs, Ls, Rt, Lt, nx=nx)
+    C = alpha * CD + (1.0 - alpha) * CC
+    return C**p
 
 
-def ot_plan(C, Ws=None, Wt=None):
+def ot_plan(C, Ws=None, Wt=None, nx=None):
     """Compute the optimal transport plan for a given cost matrix and marginals.
 
     Parameters
@@ -335,14 +186,35 @@ def ot_plan(C, Ws=None, Wt=None):
     P: np.ndarray, shape (n, m)
         Optimal transport plan.
     """
+    if nx is None:
+        nx = get_backend(C)
+
+    C = nx.asarray(C)
+    n, m = C.shape
+
     if Ws is None:
-        Ws = np.ones(C.shape[0]) / C.shape[0]
+        Ws = nx.ones((n,), dtype=C.dtype) / float(n)
+    else:
+        Ws = nx.asarray(Ws)
+
     if Wt is None:
-        Wt = np.ones(C.shape[1]) / C.shape[1]
-    return ot.emd(Ws, Wt, C)
+        Wt = nx.ones((m,), dtype=C.dtype) / float(m)
+    else:
+        Wt = nx.asarray(Wt)
+
+    Ws = Ws / nx.sum(Ws)
+    Wt = Wt / nx.sum(Wt)
+
+    C_real = nx.real(C)
+
+    C_np = ot.backend.to_numpy(C_real)
+    Ws_np = ot.backend.to_numpy(Ws)
+    Wt_np = ot.backend.to_numpy(Wt)
+
+    return ot.emd(Ws_np, Wt_np, C_np)
 
 
-def ot_score(C, P, p: int = 2) -> float:
+def ot_score(C, P, p: int = 2, nx=None):
     """Compute the OT score (distance) given a cost matrix and a transport plan.
 
     Parameters
@@ -359,7 +231,11 @@ def ot_score(C, P, p: int = 2) -> float:
     dist: float
         OT score (distance).
     """
-    return np.sum(C * P) ** (1 / p)
+    if nx is None:
+        nx = get_backend(C)
+    C = nx.asarray(C)
+    P = nx.asarray(P)
+    return float(nx.sum(C * P) ** (1.0 / p))
 
 
 def chordal_metric(
@@ -373,6 +249,7 @@ def chordal_metric(
     imag_scale: float = 1.0,
     alpha: float = 0.5,
     p: int = 2,
+    nx=None,
 ):
     """Compute the chordal OT metric between two spectral decompositions.
 
@@ -404,10 +281,24 @@ def chordal_metric(
     dist: float
         Chordal OT metric value.
     """
-    cost_fn = ChordalCostFunction(real_scale, imag_scale, alpha, p)
-    C = cost_fn(Ds, Rs, Ls, Dt, Rt, Lt)
-    P = ot_plan(C)
-    return ot_score(C, P, p)
+    if nx is None:
+        nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
+
+    C = chordal_cost_matrix(
+        Ds,
+        Rs,
+        Ls,
+        Dt,
+        Rt,
+        Lt,
+        real_scale=real_scale,
+        imag_scale=imag_scale,
+        alpha=alpha,
+        p=p,
+        nx=nx,
+    )
+    P = ot_plan(C, nx=nx)
+    return ot_score(C, P, p=p, nx=nx)
 
 
 #####################################################################################################################################
@@ -435,7 +326,7 @@ def _normalize_columns(A, nx, eps=1e-12):
         Column-normalized array.
     """
     nrm = nx.sqrt(nx.sum(A * nx.conj(A), axis=0, keepdims=True))
-    nrm = nx.maximum(nrm, eps)
+    nrm = nx.clip(nrm, eps, 1e300)
     return A / nrm
 
 
@@ -479,7 +370,7 @@ def _delta_matrix_1d_hs(Rs, Ls, Rt, Lt, nx=None, eps=1e-12):
     Cl = nx.dot(nx.conj(Lsn).T, Ltn)
 
     delta = nx.abs(Cr * Cl)
-    delta = nx.minimum(nx.maximum(delta, 0.0), 1.0)
+    delta = nx.clip(delta, 0.0, 1.0)
     return delta
 
 
@@ -504,52 +395,72 @@ def _atoms_from_operator(T, r=None, sort_mode="closest_to_1"):
     L: np.ndarray, shape (d, r)
         Dual left eigenvectors.
     """
-    T = np.asarray(T)
+    nx = get_backend(T)
+    T = nx.asarray(T)
+
     if T.ndim != 2 or T.shape[0] != T.shape[1]:
         raise ValueError(f"T must be a square 2D array; got shape {T.shape}")
 
-    d = T.shape[0]
+    d = int(T.shape[0])
     if r is None:
         r = d
     r = int(r)
     if not (1 <= r <= d):
         raise ValueError(f"r must be an integer in [1, {d}], got r={r}")
 
-    evals, evecs = np.linalg.eig(T)
+    T_np = ot.backend.to_numpy(T)
+    evals_np, evecs_np = np.linalg.eig(T_np)
 
     if sort_mode == "closest_to_1":
-        order = np.argsort(np.abs(evals - 1.0))
+        order = np.argsort(np.abs(evals_np - 1.0))
     elif sort_mode == "closest_to_0":
-        order = np.argsort(np.abs(evals))
+        order = np.argsort(np.abs(evals_np))
     elif sort_mode == "largest_mag":
-        order = np.argsort(-np.abs(evals))
+        order = np.argsort(-np.abs(evals_np))
     else:
         raise ValueError(
             "sort_mode must be one of 'closest_to_1', 'closest_to_0', or 'largest_mag'"
         )
 
     idx = order[:r]
-    D = evals[idx]
-    R = evecs[:, idx]
+    D_np = evals_np[idx]
+    R_np = evecs_np[:, idx]
 
-    evalsL, evecsL = np.linalg.eig(T.conj().T)
+    evalsL_np, evecsL_np = np.linalg.eig(T_np.conj().T)
 
-    L = np.zeros((d, r), dtype=complex)
+    L_np = np.zeros((d, r), dtype=np.complex128)
     used = set()
 
-    for i, lam in enumerate(D):
-        targets = np.abs(evalsL - np.conj(lam))
+    for i, lam in enumerate(D_np):
+        targets = np.abs(evalsL_np - np.conj(lam))
         for j in np.argsort(targets):
             if j not in used:
                 used.add(j)
-                L[:, i] = evecsL[:, j]
+                L_np[:, i] = evecsL_np[:, j]
                 break
 
-    G = L.conj().T @ R
-    if np.linalg.matrix_rank(G) < r:
+    if hasattr(nx, "from_numpy"):
+        D = nx.from_numpy(D_np, type_as=T)
+        R = nx.from_numpy(R_np, type_as=T)
+        L = nx.from_numpy(L_np, type_as=T)
+    else:
+        D = nx.asarray(D_np)
+        R = nx.asarray(R_np)
+        L = nx.asarray(L_np)
+
+    G = nx.dot(nx.conj(L).T, R)
+
+    G_np = ot.backend.to_numpy(G)
+    if np.linalg.matrix_rank(G_np) < r:
         raise ValueError("Dual normalization failed: L^* R is singular.")
 
-    L = L @ np.linalg.inv(G).conj().T
+    invG_H_np = np.linalg.inv(G_np).conj().T
+    if hasattr(nx, "from_numpy"):
+        invG_H = nx.from_numpy(invG_H_np, type_as=T)
+    else:
+        invG_H = nx.asarray(invG_H_np)
+
+    L = nx.dot(L, invG_H)
 
     return D, R, L
 
@@ -584,7 +495,7 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
         nx = get_backend(delta)
 
     delta = nx.asarray(delta)
-    delta = nx.minimum(nx.maximum(delta, 0.0), 1.0)
+    delta = nx.clip(delta, 0.0, 1.0)
 
     if grassman_metric == "geodesic":
         return nx.arccos(delta) ** 2
@@ -593,7 +504,7 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
     if grassman_metric == "procrustes":
         return 2.0 * (1.0 - delta)
     if grassman_metric == "martin":
-        return -nx.log(nx.maximum(delta**2, eps))
+        return -nx.log(nx.clip(delta**2, eps, 1e300))
     raise ValueError(f"Unknown grassman_metric: {grassman_metric}")
 
 
@@ -603,33 +514,34 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
 #####################################################################################################################################
 #####################################################################################################################################
 def cost(
-    D1,
-    R1,
-    L1,
-    D2,
-    R2,
-    L2,
+    Ds,
+    Rs,
+    Ls,
+    Dt,
+    Rt,
+    Lt,
     eta=0.5,
     p=2,
     grassman_metric="chordal",
     real_scale=1.0,
     imag_scale=1.0,
+    nx=None,
 ):
     """Compute the SGOT cost matrix between two spectral decompositions.
 
     Parameters
     ----------
-    D1: array-like, shape (n_1,) or (n_1, n_1)
+    Ds: array-like, shape (n_s,) or (n_s, n_s)
         Eigenvalues of operator T1 (or diagonal matrix).
-    R1: array-like, shape (L, n_1)
+    Rs: array-like, shape (L, n_s)
         Right eigenvectors of operator T1.
-    L1: array-like, shape (L, n_1)
+    Ls: array-like, shape (L, n_s)
         Left eigenvectors of operator T1.
-    D2: array-like, shape (n_2,) or (n_2, n_2)
+    Dt: array-like, shape (n_t,) or (n_t, n_t)
         Eigenvalues of operator T2 (or diagonal matrix).
-    R2: array-like, shape (L, n_2)
+    Rt: array-like, shape (L, n_t)
         Right eigenvectors of operator T2.
-    L2: array-like, shape (L, n_2)
+    Lt: array-like, shape (L, n_t)
         Left eigenvectors of operator T2.
     eta: float, optional
         Weighting between spectral and Grassmann terms, default 0.5.
@@ -644,21 +556,22 @@ def cost(
 
     Returns
     ----------
-    C: array-like, shape (n_1, n_2)
+    C: array-like, shape (n_s, n_t)
         SGOT cost matrix.
     """
-    nx = get_backend(D1, R1, L1, D2, R2, L2)
+    if nx is None:
+        nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
 
-    D1 = nx.asarray(D1)
-    D2 = nx.asarray(D2)
-    if len(D1.shape) == 2:
-        lam1 = nx.diag(D1)
+    Ds = nx.asarray(Ds)
+    Dt = nx.asarray(Dt)
+    if len(Ds.shape) == 2:
+        lam1 = nx.diag(Ds)
     else:
-        lam1 = D1.reshape((-1,))
-    if len(D2.shape) == 2:
-        lam2 = nx.diag(D2)
+        lam1 = Ds.reshape((-1,))
+    if len(Dt.shape) == 2:
+        lam2 = nx.diag(Dt)
     else:
-        lam2 = D2.reshape((-1,))
+        lam2 = Dt.reshape((-1,))
 
     lam1 = lam1.astype(complex)
     lam2 = lam2.astype(complex)
@@ -667,7 +580,7 @@ def cost(
     lam2s = nx.real(lam2) * real_scale + 1j * nx.imag(lam2) * imag_scale
     C_lambda = nx.abs(lam1s[:, None] - lam2s[None, :]) ** 2
 
-    delta = _delta_matrix_1d_hs(R1, L1, R2, L2, nx=nx)
+    delta = _delta_matrix_1d_hs(Rs, Ls, Rt, Lt, nx=nx)
     C_grass = _grassmann_distance_squared(delta, grassman_metric=grassman_metric, nx=nx)
 
     C2 = eta * C_lambda + (1.0 - eta) * C_grass
@@ -677,12 +590,12 @@ def cost(
 
 
 def metric(
-    D1,
-    R1,
-    L1,
-    D2,
-    R2,
-    L2,
+    Ds,
+    Rs,
+    Ls,
+    Dt,
+    Rt,
+    Lt,
     eta=0.5,
     p=2,
     q=1,
@@ -691,22 +604,23 @@ def metric(
     imag_scale=1.0,
     Ws=None,
     Wt=None,
+    nx=None,
 ):
     """Compute the SGOT metric between two spectral decompositions.
 
     Parameters
     ----------
-    D1: array-like, shape (n_1,) or (n_1, n_1)
+    Ds: array-like, shape (n_s,) or (n_s, n_s)
         Eigenvalues of operator T1 (or diagonal matrix).
-    R1: array-like, shape (L, n_1)
+    Rs: array-like, shape (L, n_s)
         Right eigenvectors of operator T1.
-    L1: array-like, shape (L, n_1)
+    Ls: array-like, shape (L, n_s)
         Left eigenvectors of operator T1.
-    D2: array-like, shape (n_2,) or (n_2, n_2)
+    Dt: array-like, shape (n_t,) or (n_t, n_t)
         Eigenvalues of operator T2 (or diagonal matrix).
-    R2: array-like, shape (L, n_2)
+    Rt: array-like, shape (L, n_t)
         Right eigenvectors of operator T2.
-    L2: array-like, shape (L, n_2)
+    Lt: array-like, shape (L, n_t)
         Left eigenvectors of operator T2.
     eta: float, optional
         Weighting between spectral and Grassmann terms, default 0.5.
@@ -720,9 +634,9 @@ def metric(
         Scale factor for real parts, default 1.0.
     imag_scale: float, optional
         Scale factor for imaginary parts, default 1.0.
-    Ws: array-like, shape (n_1,), optional
+    Ws: array-like, shape (n_s,), optional
         Source distribution. If None, uses a uniform distribution.
-    Wt: array-like, shape (n_2,), optional
+    Wt: array-like, shape (n_t,), optional
         Target distribution. If None, uses a uniform distribution.
 
     Returns
@@ -730,21 +644,24 @@ def metric(
     dist: float
         SGOT metric value.
     """
+    if nx is None:
+        nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
+
     C = cost(
-        D1,
-        R1,
-        L1,
-        D2,
-        R2,
-        L2,
+        Ds,
+        Rs,
+        Ls,
+        Dt,
+        Rt,
+        Lt,
         eta=eta,
         p=p,
         grassman_metric=grassman_metric,
         real_scale=real_scale,
         imag_scale=imag_scale,
+        nx=nx,
     )
 
-    nx = get_backend(C)
     n, m = C.shape
 
     if Ws is None:
@@ -760,13 +677,8 @@ def metric(
     Ws = Ws / nx.sum(Ws)
     Wt = Wt / nx.sum(Wt)
 
-    C_np = ot.backend.to_numpy(C)
-    Ws_np = ot.backend.to_numpy(Ws)
-    Wt_np = ot.backend.to_numpy(Wt)
-
-    P = ot_plan(C_np, Ws=Ws_np, Wt=Wt_np)
-    obj = ot_score(C_np, P, p=p)
-
+    P = ot_plan(C, Ws=Ws, Wt=Wt, nx=nx)
+    obj = ot_score(C, P, p=p, nx=nx)
     return float(obj) ** (1.0 / float(q))
 
 
@@ -805,9 +717,9 @@ def metric_from_operator(
         Scale factor for real parts, default 1.0.
     imag_scale: float, optional
         Scale factor for imaginary parts, default 1.0.
-    Ws: array-like, shape (n_1,), optional
+    Ws: array-like, shape (n_s,), optional
         Source distribution. If None, uses a uniform distribution.
-    Wt: array-like, shape (n_2,), optional
+    Wt: array-like, shape (n_t,), optional
         Target distribution. If None, uses a uniform distribution.
 
     Returns
@@ -815,16 +727,16 @@ def metric_from_operator(
     dist: float
         SGOT metric value.
     """
-    D1, R1, L1 = _atoms_from_operator(T1, r=r, sort_mode="closest_to_1")
-    D2, R2, L2 = _atoms_from_operator(T2, r=r, sort_mode="closest_to_1")
+    Ds, Rs, Ls = _atoms_from_operator(T1, r=r, sort_mode="closest_to_1")
+    Dt, Rt, Lt = _atoms_from_operator(T2, r=r, sort_mode="closest_to_1")
 
     return metric(
-        D1,
-        R1,
-        L1,
-        D2,
-        R2,
-        L2,
+        Ds,
+        Rs,
+        Ls,
+        Dt,
+        Rt,
+        Lt,
         eta=eta,
         p=p,
         q=q,
@@ -863,16 +775,18 @@ def operator_estimator(
     T_hat: np.ndarray, shape (d, d)
         Estimated linear operator.
     """
-    X = np.asarray(X)
+    nx = get_backend(X, Y) if Y is not None else get_backend(X)
+
+    X = nx.asarray(X)
 
     if Y is None:
-        if X.ndim != 2 or X.shape[0] < 2:
+        if X.ndim != 2 or int(X.shape[0]) < 2:
             raise ValueError("If Y is None, X must be 2D with at least 2 samples/rows.")
         X0 = X[:-1]
         Y0 = X[1:]
     else:
-        Y = np.asarray(Y)
-        if X.shape != Y.shape:
+        Y = nx.asarray(Y)
+        if tuple(X.shape) != tuple(Y.shape):
             raise ValueError(
                 f"X and Y must have the same shape; got {X.shape} vs {Y.shape}"
             )
@@ -892,26 +806,54 @@ def operator_estimator(
     if Xc.ndim != 2 or Yc.ndim != 2:
         raise ValueError("X and Y must be 2D arrays after processing.")
 
-    d, n = Xc.shape
-    if Yc.shape != (d, n):
+    d, n = int(Xc.shape[0]), int(Xc.shape[1])
+    if tuple(Yc.shape) != (d, n):
         raise ValueError(
             f"After formatting, expected Y to have shape {(d, n)}, got {Yc.shape}"
         )
 
     if force_complex:
-        Xc = Xc.astype(complex)
-        Yc = Yc.astype(complex)
+        Xc_np = ot.backend.to_numpy(Xc)  # explicit backend->NumPy copy
+        Yc_np = ot.backend.to_numpy(Yc)
+        Xc_np = Xc_np.astype(np.complex128, copy=False)
+        Yc_np = Yc_np.astype(np.complex128, copy=False)
+        if hasattr(nx, "from_numpy"):
+            Xc = nx.from_numpy(Xc_np, type_as=Xc)
+            Yc = nx.from_numpy(Yc_np, type_as=Yc)
+        else:
+            Xc = nx.asarray(Xc_np)
+            Yc = nx.asarray(Yc_np)
 
-    XXH = Xc @ Xc.conj().T
-    YXH = Yc @ Xc.conj().T
-    A = XXH + ref * np.eye(d, dtype=XXH.dtype)
+    XXH = nx.dot(Xc, nx.conj(Xc).T)
+    YXH = nx.dot(Yc, nx.conj(Xc).T)
+    A = XXH + ref * nx.eye(d, type_as=XXH)
 
-    T_hat = np.linalg.solve(A.T.conj(), YXH.T.conj()).T.conj()
+    AH = nx.conj(A).T
+    BH = nx.conj(YXH).T
+
+    AH_np = ot.backend.to_numpy(AH)  # explicit backend->NumPy copy
+    BH_np = ot.backend.to_numpy(BH)
+    Xsol_np = np.linalg.solve(AH_np, BH_np)
+
+    if hasattr(nx, "from_numpy"):
+        Xsol = nx.from_numpy(Xsol_np, type_as=YXH)
+    else:
+        Xsol = nx.asarray(Xsol_np)
+
+    T_hat = nx.conj(Xsol).T
 
     if r is not None:
+        r = int(r)
         if not (1 <= r <= d):
             raise ValueError(f"r must be in [1, {d}], got r={r}")
-        U, S, Vh = np.linalg.svd(T_hat, full_matrices=False)
-        T_hat = (U[:, :r] * S[:r]) @ Vh[:r, :]
+
+        T_np = ot.backend.to_numpy(T_hat)  # explicit backend->NumPy copy
+        U, S, Vh = np.linalg.svd(T_np, full_matrices=False)
+        T_np = (U[:, :r] * S[:r]) @ Vh[:r, :]
+
+        if hasattr(nx, "from_numpy"):
+            T_hat = nx.from_numpy(T_np, type_as=T_hat)
+        else:
+            T_hat = nx.asarray(T_np)
 
     return T_hat
