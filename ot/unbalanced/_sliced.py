@@ -8,7 +8,7 @@ Sliced Unbalanced OT solvers
 # License: MIT License
 
 from ..backend import get_backend
-from ..utils import get_parameter_pair, list_to_array
+from ..utils import get_parameter_pair
 from ..sliced import get_random_projections
 from ._solver_1d import rescale_potentials, uot_1d
 from ..lp.solver_1d import emd_1d_dual_backprop, wasserstein_1d
@@ -38,7 +38,7 @@ def sliced_unbalanced_ot(
 
     with :math:`P^\theta(x)=\langle x,\theta\rangle` and :math:`\lambda` the uniform distribution on the unit sphere.
 
-    This function only works in pytorch or jax (but is not maintained in jax).
+    .. warning:: This function only works in pytorch or jax as it uses autodifferentiation to compute the 1D UOT problems. It is not maintained in jax.
 
     Parameters
     ----------
@@ -48,14 +48,11 @@ def sliced_unbalanced_ot(
         samples in the target domain
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
-        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
-        For semi-relaxed case, use either
-        :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
-        :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
-        If :math:`\mathrm{reg_{m}}` is an array,
-        it must have the same backend as input arrays `(a, b, M)`.
+        If `reg_m` is a scalar or an indexable object of length 1,
+        then the same `reg_m` is applied to both marginal relaxations.
+        The balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If `reg_m` is an array, it must have the same backend as input arrays `(X_s, X_t)`.
     a : ndarray, shape (n_samples_a,), optional
         samples weights in the source domain
     b : ndarray, shape (n_samples_b,), optional
@@ -86,16 +83,7 @@ def sliced_unbalanced_ot(
     .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
        Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
-    X_s, X_t = list_to_array(X_s, X_t)
-
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 
@@ -250,7 +238,7 @@ def unbalanced_sliced_ot(
     .. math::
         \mathrm{USOT}(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_2^2(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
 
-    This function only works in pytorch or jax (but is not maintained in jax).
+    .. warning:: This function only works in pytorch or jax as it uses autodifferentiation to compute the 1D potentials. It is not maintained in jax.
 
     Parameters
     ----------
@@ -260,14 +248,11 @@ def unbalanced_sliced_ot(
         samples in the target domain
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
-        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
-        For semi-relaxed case, use either
-        :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
-        :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
-        If :math:`\mathrm{reg_{m}}` is an array,
-        it must have the same backend as input arrays `(a, b, M)`.
+        If `reg_m` is a scalar or an indexable object of length 1,
+        then the same `reg_m` is applied to both marginal relaxations.
+        The balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If `reg_m` is an array, it must have the same backend as input arrays `(X_s, X_t)`.
     a : ndarray, shape (n_samples_a,), optional
         samples weights in the source domain
     b : ndarray, shape (n_samples_b,), optional
@@ -302,16 +287,7 @@ def unbalanced_sliced_ot(
     .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
        Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
     """
-    X_s, X_t = list_to_array(X_s, X_t)
-
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 

@@ -61,10 +61,7 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
         Target centered dual potential
 
     """
-    if a is not None and b is not None:
-        nx = get_backend(alpha0, beta0, a, b)
-    else:
-        nx = get_backend(alpha0, beta0)
+    nx = get_backend(alpha0, beta0, a, b)
 
     n = alpha0.shape[0]
     m = beta0.shape[0]

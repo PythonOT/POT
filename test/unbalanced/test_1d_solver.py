@@ -10,6 +10,9 @@ import ot
 import pytest
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_uot_1d(nx):
     n_samples = 20  # nb samples
 
@@ -29,13 +32,15 @@ def test_uot_1d(nx):
     G, log = ot.unbalanced.mm_unbalanced(a, b, M, reg_m, div="kl", log=True)
     loss_mm = log["cost"]
 
-    if nx.__name__ in ["jax", "torch"]:
-        f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
-        np.testing.assert_allclose(loss_1d, loss_mm, atol=1e-2)
-        np.testing.assert_allclose(G.sum(0), g[:, 0], atol=1e-2)
-        np.testing.assert_allclose(G.sum(1), f[:, 0], atol=1e-2)
+    f, g, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
+    np.testing.assert_allclose(loss_1d, loss_mm, atol=1e-2)
+    np.testing.assert_allclose(G.sum(0), g[:, 0], atol=1e-2)
+    np.testing.assert_allclose(G.sum(1), f[:, 0], atol=1e-2)
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_uot_1d_convergence(nx):
     n_samples = 20  # nb samples
 
@@ -51,13 +56,15 @@ def test_uot_1d_convergence(nx):
     wass1d = log["cost"]
     u_w1d, v_w1d = nx.sum(G_1d, 1), nx.sum(G_1d, 0)
 
-    if nx.__name__ in ["jax", "torch"]:
-        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
-        np.testing.assert_allclose(loss_1d, wass1d, atol=1e-2)
-        np.testing.assert_allclose(v_w1d, v[:, 0], atol=1e-2)
-        np.testing.assert_allclose(u_w1d, u[:, 0], atol=1e-2)
+    u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
+    np.testing.assert_allclose(loss_1d, wass1d, atol=1e-2)
+    np.testing.assert_allclose(v_w1d, v[:, 0], atol=1e-2)
+    np.testing.assert_allclose(u_w1d, u[:, 0], atol=1e-2)
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_uot_1d_batch(nx):
     n_samples = 20  # nb samples
     m_samples = 30
@@ -75,24 +82,24 @@ def test_uot_1d_batch(nx):
 
     reg_m = 1
 
-    if nx.__name__ in ["jax", "torch"]:
-        u1, v1, uot_1d = ot.unbalanced.uot_1d(xs[:, 0], xt[:, 0], reg_m, a, b, p=2)
-        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2)
+    u1, v1, uot_1d = ot.unbalanced.uot_1d(xs[:, 0], xt[:, 0], reg_m, a, b, p=2)
+    u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2)
 
-        np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
-        np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
+    np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
+    np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
 
-        u1, v1, uot_1d = ot.unbalanced.uot_1d(
-            xs[:, 0], xt[:, 0], reg_m, a, b, p=2, returnCost="total"
-        )
-        u, v, loss_1d = ot.unbalanced.uot_1d(
-            xs, xt, reg_m, a, b, p=2, returnCost="total"
-        )
+    u1, v1, uot_1d = ot.unbalanced.uot_1d(
+        xs[:, 0], xt[:, 0], reg_m, a, b, p=2, returnCost="total"
+    )
+    u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2, returnCost="total")
 
-        np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
-        np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
+    np.testing.assert_allclose(loss_1d[0], loss_1d[1], atol=1e-5)
+    np.testing.assert_allclose(loss_1d[0], uot_1d, atol=1e-5)
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_uot_1d_inf_reg_m_backprop(nx):
     n_samples = 20  # nb samples
 
@@ -108,22 +115,24 @@ def test_uot_1d_inf_reg_m_backprop(nx):
     a, b = nx.from_numpy(a_np, b_np)
     xs, xt = nx.from_numpy(xs, xt)
 
-    if nx.__name__ in ["jax", "torch"]:
-        f_w1d, g_w1d, wass1d = ot.emd_1d_dual_backprop(xs, xt, a, b, p=2)
-        u, v, loss_1d, log = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2, log=True)
+    f_w1d, g_w1d, wass1d = ot.emd_1d_dual_backprop(xs, xt, a, b, p=2)
+    u, v, loss_1d, log = ot.unbalanced.uot_1d(xs, xt, reg_m, a, b, p=2, log=True)
 
-        # Check right loss
-        np.testing.assert_allclose(loss_1d, wass1d)
+    # Check right loss
+    np.testing.assert_allclose(loss_1d, wass1d)
 
-        # Check right marginals
-        np.testing.assert_allclose(a, u[:, 0])
-        np.testing.assert_allclose(b, v[:, 0])
+    # Check right marginals
+    np.testing.assert_allclose(a, u[:, 0])
+    np.testing.assert_allclose(b, v[:, 0])
 
-        # Check potentials
-        np.testing.assert_allclose(f_w1d, log["f"])
-        np.testing.assert_allclose(g_w1d, log["g"])
+    # Check potentials
+    np.testing.assert_allclose(f_w1d, log["f"])
+    np.testing.assert_allclose(g_w1d, log["g"])
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_semi_uot_1d_backprop(nx):
     n_samples = 20  # nb samples
 
@@ -139,24 +148,25 @@ def test_semi_uot_1d_backprop(nx):
 
     reg_m = (float("inf"), 1.0)
 
-    if nx.__name__ in ["jax", "torch"]:
-        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
+    u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
 
-        # Check right marginals
-        np.testing.assert_allclose(a, u[:, 0])
-        np.testing.assert_allclose(v[:, 0].sum(), 1)
+    # Check right marginals
+    np.testing.assert_allclose(a, u[:, 0])
+    np.testing.assert_allclose(v[:, 0].sum(), 1)
 
     reg_m = (1.0, float("inf"))
 
-    if nx.__name__ in ["jax", "torch"]:
-        u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
+    u, v, loss_1d = ot.unbalanced.uot_1d(xs, xt, reg_m, p=2)
 
-        # Check right marginals
-        np.testing.assert_allclose(b, v[:, 0])
-        np.testing.assert_allclose(u[:, 0].sum(), 1)
+    # Check right marginals
+    np.testing.assert_allclose(b, v[:, 0])
+    np.testing.assert_allclose(u[:, 0].sum(), 1)
 
 
 @pytest.skip_backend("jax")  # problem with jax on macOS
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m",
     itertools.product(
@@ -192,20 +202,18 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
         list_reg_m,
     ]
 
-    if nx.__name__ in ["jax", "torch"]:
-        u, v, loss = ot.unbalanced.uot_1d(x, y, reg_m, u_weights=a, v_weights=b, p=2)
+    u, v, loss = ot.unbalanced.uot_1d(x, y, reg_m, u_weights=a, v_weights=b, p=2)
 
-        for opt in list_options:
-            u, v, loss_opt = ot.unbalanced.uot_1d(
-                x, y, opt, u_weights=a, v_weights=b, p=2
-            )
+    for opt in list_options:
+        u, v, loss_opt = ot.unbalanced.uot_1d(x, y, opt, u_weights=a, v_weights=b, p=2)
 
-            np.testing.assert_allclose(
-                nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05
-            )
+        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
 
 
 @pytest.skip_backend("jax")  # problem with jax on macOS
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m1, reg_m2",
     itertools.product(
@@ -230,19 +238,14 @@ def test_unbalanced_relaxation_parameters_pair_backprop(nx, reg_m1, reg_m2):
     full_tuple_reg_m = (reg_m1, reg_m2)
     list_options = [full_tuple_reg_m, full_list_reg_m]
 
-    if nx.__name__ in ["jax", "torch"]:
-        _, _, loss = ot.unbalanced.uot_1d(
-            x, y, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2
-        )
+    _, _, loss = ot.unbalanced.uot_1d(
+        x, y, (reg_m1, reg_m2), u_weights=a, v_weights=b, p=2
+    )
 
-        for opt in list_options:
-            _, _, loss_opt = ot.unbalanced.uot_1d(
-                x, y, opt, u_weights=a, v_weights=b, p=2
-            )
+    for opt in list_options:
+        _, _, loss_opt = ot.unbalanced.uot_1d(x, y, opt, u_weights=a, v_weights=b, p=2)
 
-            np.testing.assert_allclose(
-                nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05
-            )
+        np.testing.assert_allclose(nx.to_numpy(loss), nx.to_numpy(loss_opt), atol=1e-05)
 
 
 def test_uot_1d_type_devices_backprop(nx):

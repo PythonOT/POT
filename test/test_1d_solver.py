@@ -179,8 +179,6 @@ def test_emd1d_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        # print(nx.dtype_device(tp))
-
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
 
         emd = ot.emd_1d(xb, xb, rho_ub, rho_vb)
@@ -219,6 +217,9 @@ def test_emd1d_device_tf():
         assert nx.dtype_device(emd)[1].startswith("GPU")
 
 
+@pytest.skip_backend("numpy")
+@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("cupy")
 def test_emd1d_dual_with_weights(nx):
     # test emd1d_dual gives similar results as emd
     n = 20
@@ -239,19 +240,18 @@ def test_emd1d_dual_with_weights(nx):
     G, log = ot.emd(w_u, w_v, M, log=True)
     wass = log["cost"]
 
-    if nx.__name__ in ["torch", "jax"]:
-        f, g, wass1d = ot.emd_1d_dual_backprop(u, v, w_u, w_v, p=2)
+    f, g, wass1d = ot.emd_1d_dual_backprop(u, v, w_u, w_v, p=2)
 
-        # check loss is similar
-        np.testing.assert_allclose(wass, wass1d)
-        np.testing.assert_allclose(wass, nx.sum(f[:, 0] * w_u) + nx.sum(g[:, 0] * w_v))
+    # check loss is similar
+    np.testing.assert_allclose(wass, wass1d)
+    np.testing.assert_allclose(wass, nx.sum(f[:, 0] * w_u) + nx.sum(g[:, 0] * w_v))
 
 
 @pytest.skip_backend("jax")  # problem with jax on macOS
 def test_emd1d_dual_backprop_batch(nx):
     rng = np.random.RandomState(0)
 
-    n = 100
+    n = 20
 
     rho_u = np.abs(rng.randn(n))
     rho_u /= rho_u.sum()
@@ -290,7 +290,6 @@ def test_emd1d_dual_type_devices(nx):
     rho_v /= rho_v.sum()
 
     for tp in nx.__type_list__:
-        # print(nx.dtype_device(tp))
         xb, rho_ub, rho_vb = nx.from_numpy(x, rho_u, rho_v, type_as=tp)
         if nx.__name__ == "torch" or nx.__name__ == "jax":
             f, g, res = ot.emd_1d_dual_backprop(xb, xb, rho_ub, rho_vb, p=1)

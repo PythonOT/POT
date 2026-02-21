@@ -155,7 +155,7 @@ def uot_1d(
     .. math::
         \mathrm{UOT}(\mu,\nu) = \min_{\gamma \in \mathcal{M}_{+}(\mathbb{R}\times\mathbb{R})} W_2^2(\pi^1_\#\gamma,\pi^2_\#\gamma) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi^1_\#\gamma|\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi^2_\#\gamma|\nu).
 
-    This function only works in pytorch or jax (but is not maintained in jax).
+    .. warning:: This function only works in pytorch or jax as it uses autodifferentiation to compute the potentials. It is not maintained in jax.
 
     Parameters
     ----------
@@ -165,14 +165,11 @@ def uot_1d(
         locations of the second empirical distribution
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term.
-        If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
-        then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`\mathrm{reg_{m}}=float("inf")`.
-        For semi-relaxed case, use either
-        :math:`\mathrm{reg_{m}}=(float("inf"), scalar)` or
-        :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
-        If :math:`\mathrm{reg_{m}}` is an array,
-        it must have the same backend as inxut arrays `(a, b)`.
+        If `reg_m` is a scalar or an indexable object of length 1,
+        then the same `reg_m` is applied to both marginal relaxations.
+        The balanced OT can be recovered using `reg_m=float("inf")`.
+        For semi-relaxed case, use either `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
+        If `reg_m` is an array, it must have the same backend as input arrays `(u_values, v_values)`.
     u_weights: array-like, shape (n, ...), optional
         weights of the first empirical distribution, if None then uniform weights are used
     v_weights: array-like, shape (m, ...), optional
@@ -207,10 +204,7 @@ def uot_1d(
        Faster unbalanced optimal transport: Translation invariant sinkhorn and 1-d frank-wolfe.
        In International Conference on Artificial Intelligence and Statistics (pp. 4995-5021). PMLR.
     """
-    if u_weights is not None and v_weights is not None:
-        nx = get_backend(u_values, v_values, u_weights, v_weights)
-    else:
-        nx = get_backend(u_values, v_values)
+    nx = get_backend(u_values, v_values, u_weights, v_weights)
 
     assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 

@@ -46,10 +46,9 @@ def quantile_function(qs, cws, xs, return_index=False):
     else:
         cws = cws.T
         qs = qs.T
-    # idx = nx.searchsorted(cws, qs).T
-    # return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
     idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
+
     if return_index:
         return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0), idx
     else:
@@ -423,8 +422,7 @@ def emd_1d_dual_backprop(
     .. math::
         OT_{loss}(u,v) = \int f(x)\mathrm{d}u(x) + \int g(y)\mathrm{d}v(y).
 
-    We do so by backpropagating through the `wasserstein_1d` function. Thus, the function
-    only works in torch and jax.
+    .. warning:: This function only works in pytorch or jax as it backpropagates through the `wasserstein_1d` function.
 
     Parameters
     ----------
@@ -451,10 +449,7 @@ def emd_1d_dual_backprop(
     loss: float/array-like, shape (...)
         the batched EMD
     """
-    if u_weights is not None and v_weights is not None:
-        nx = get_backend(u_values, v_values, u_weights, v_weights)
-    else:
-        nx = get_backend(u_values, v_values)
+    nx = get_backend(u_values, v_values, u_weights, v_weights)
 
     assert nx.__name__ in ["torch", "jax"], "Function only valid in torch and jax"
 
