@@ -850,6 +850,15 @@ def test_gradients_backends():
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
 
+        with jax.checking_leaks():
+
+            def f(x):
+                return nx.sum(nx.abs(x))
+
+            grad_val = jax.grad(f)(nx.zeros((3,)))
+
+        np.testing.assert_allclose(grad_val, nx.zeros((3,)))
+
     if tf:
         nx = ot.backend.TensorflowBackend()
         w = tf.Variable(tf.random.normal((3, 2)), name="w")
