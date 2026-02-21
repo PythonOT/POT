@@ -134,14 +134,7 @@ def sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -247,14 +240,7 @@ def max_sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -458,10 +444,7 @@ def sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
@@ -547,10 +530,7 @@ def sliced_wasserstein_sphere_unif(
     """
     d = X_s.shape[-1]
 
-    if a is not None:
-        nx = get_backend(X_s, a)
-    else:
-        nx = get_backend(X_s)
+    nx = get_backend(X_s, a)
 
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
@@ -634,10 +614,7 @@ def linear_sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(

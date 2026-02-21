@@ -324,10 +324,7 @@ def binary_search_circle(
     """
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
 
-    if u_weights is not None and v_weights is not None:
-        nx = get_backend(u_values, v_values, u_weights, v_weights)
-    else:
-        nx = get_backend(u_values, v_values)
+    nx = get_backend(u_values, v_values, u_weights, v_weights)
 
     n = u_values.shape[0]
     m = v_values.shape[0]
@@ -474,10 +471,7 @@ def wasserstein1_circle(
     .. Code R: https://gitlab.gwdg.de/shundri/circularOT/-/tree/master/
     """
 
-    if u_weights is not None and v_weights is not None:
-        nx = get_backend(u_values, v_values, u_weights, v_weights)
-    else:
-        nx = get_backend(u_values, v_values)
+    nx = get_backend(u_values, v_values, u_weights, v_weights)
 
     n = u_values.shape[0]
     m = v_values.shape[0]
@@ -684,10 +678,7 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     .. [46] Bonet, C., Berg, P., Courty, N., Septier, F., Drumetz, L., & Pham, M. T. (2023). Spherical sliced-wasserstein. International Conference on Learning Representations.
     """
 
-    if u_weights is not None:
-        nx = get_backend(u_values, u_weights)
-    else:
-        nx = get_backend(u_values)
+    nx = get_backend(u_values, u_weights)
 
     n = u_values.shape[0]
 
@@ -742,10 +733,7 @@ def linear_circular_embedding(x, u_values, u_weights=None, require_sort=True):
     ----------
     .. [78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
-    if u_weights is not None:
-        nx = get_backend(u_values, u_weights)
-    else:
-        nx = get_backend(u_values)
+    nx = get_backend(u_values, u_weights)
 
     n = u_values.shape[0]
     u_values = u_values % 1
@@ -820,10 +808,7 @@ def linear_circular_ot(u_values, v_values=None, u_weights=None, v_weights=None):
     ----------
     .. [78] Martin, R. D., Medri, I., Bai, Y., Liu, X., Yan, K., Rohde, G. K., & Kolouri, S. (2024). LCOT: Linear Circular Optimal Transport. International Conference on Learning Representations.
     """
-    if u_weights is not None:
-        nx = get_backend(u_values, u_weights)
-    else:
-        nx = get_backend(u_values)
+    nx = get_backend(u_values, u_weights)
 
     n = u_values.shape[0]
     u_values = u_values % 1

@@ -12,6 +12,7 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf, get_backend
+from ot.lp._network_simplex import center_ot_dual
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -1324,3 +1325,36 @@ def check_duality_gap(a, b, M, G, u, v, cost):
     np.testing.assert_array_almost_equal(
         (M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2], np.zeros(ind1.size)
     )
+
+
+def test_batch_center_ot_dual(nx):
+    n = 100
+    rng = np.random.RandomState(42)
+
+    X_s = rng.randn(n, 2)
+    X_t = rng.randn(n, 2)
+
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+
+    X_s, X_t, a, b = nx.from_numpy(X_s, X_t, a, b)
+
+    M = ot.dist(X_s, X_t, metric="sqeuclidean")
+
+    # run dense solver with limited iterations (stop early)
+    G, log = ot.emd(a, b, M, log=True)
+    u = log["u"]
+    v = log["v"]
+
+    alpha, beta = center_ot_dual(u, v)
+    alpha2, beta2 = center_ot_dual(u, v, a, b)
+
+    np.testing.assert_allclose(alpha, alpha2)
+    np.testing.assert_allclose(beta, beta2)
+
+    u_concat = nx.concatenate([u[:, None], u[:, None]], axis=1)
+    v_concat = nx.concatenate([v[:, None], v[:, None]], axis=1)
+
+    alpha_concat, beta_concat = center_ot_dual(u_concat, v_concat)
+    np.testing.assert_allclose(alpha, alpha_concat[:, 0])
+    np.testing.assert_allclose(beta, beta_concat[:, 0])
