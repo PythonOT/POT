@@ -11,7 +11,7 @@ import pytest
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_uot_1d(nx):
     n_samples = 20  # nb samples
@@ -39,7 +39,7 @@ def test_uot_1d(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_uot_1d_convergence(nx):
     n_samples = 20  # nb samples
@@ -63,7 +63,7 @@ def test_uot_1d_convergence(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_uot_1d_batch(nx):
     n_samples = 20  # nb samples
@@ -98,7 +98,7 @@ def test_uot_1d_batch(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_uot_1d_inf_reg_m_backprop(nx):
     n_samples = 20  # nb samples
@@ -131,7 +131,7 @@ def test_uot_1d_inf_reg_m_backprop(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_semi_uot_1d_backprop(nx):
     n_samples = 20  # nb samples
@@ -165,7 +165,7 @@ def test_semi_uot_1d_backprop(nx):
 
 @pytest.skip_backend("jax")  # problem with jax on macOS
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m",
@@ -212,7 +212,7 @@ def test_unbalanced_relaxation_parameters_backprop(nx, reg_m):
 
 @pytest.skip_backend("jax")  # problem with jax on macOS
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m1, reg_m2",

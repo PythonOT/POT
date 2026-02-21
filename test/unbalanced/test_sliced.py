@@ -11,7 +11,7 @@ import pytest
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_sliced_uot_same_dist(nx):
     n = 100
@@ -30,7 +30,7 @@ def test_sliced_uot_same_dist(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_sliced_uot_bad_shapes(nx):
     n = 100
@@ -50,7 +50,7 @@ def test_sliced_uot_bad_shapes(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_sliced_uot_log(nx):
     n = 100
@@ -79,7 +79,7 @@ def test_sliced_uot_log(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_usot_log(nx):
     n = 100
@@ -108,7 +108,7 @@ def test_usot_log(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_1d_sliced_equals_uot(nx):
     n = 100
@@ -142,7 +142,7 @@ def test_1d_sliced_equals_uot(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_sliced_projections(nx):
     n = 100
@@ -178,7 +178,7 @@ def test_sliced_projections(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_sliced_inf_reg_m(nx):
     n_samples = 20  # nb samples
@@ -211,7 +211,7 @@ def test_sliced_inf_reg_m(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_semi_usot_1d(nx):
     n_samples = 20  # nb samples
@@ -246,7 +246,7 @@ def test_semi_usot_1d(nx):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m",
@@ -295,7 +295,7 @@ def test_sliced_unbalanced_relaxation_parameters(nx, reg_m):
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 @pytest.mark.parametrize(
     "reg_m1, reg_m2",

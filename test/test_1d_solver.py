@@ -218,7 +218,7 @@ def test_emd1d_device_tf():
 
 
 @pytest.skip_backend("numpy")
-@pytest.skip_backend("tensorflow")
+@pytest.skip_backend("tf")
 @pytest.skip_backend("cupy")
 def test_emd1d_dual_with_weights(nx):
     # test emd1d_dual gives similar results as emd
