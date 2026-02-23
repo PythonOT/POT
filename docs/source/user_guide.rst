@@ -244,7 +244,7 @@ b is defined as
 
     .. math::
 
-        W_p(a,b)=(\min_{\gamma \in \mathbb{R}_+^{m\times n}} \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|_p)^\frac{1}{p}
+        W_p(a,b)=\left(\min_{\gamma \in \mathbb{R}_+^{m\times n}} \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|^p\right)^{\frac{1}{p}}
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
