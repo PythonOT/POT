@@ -34,7 +34,7 @@ def sliced_unbalanced_ot(
     The Sliced Unbalanced Optimal Transport (SUOT) is defined as
 
     .. math::
-        \mathrm{SUOT}(\mu, \nu) = \int_{S^{d-1}} \mathrm{UOT}(P^\theta_\#\mu, P^\theta_\#\nu)\ \mathrm{d}\lambda(\theta)
+        \mathrm{SUOT}_p^p(\mu, \nu) = \int_{S^{d-1}} \mathrm{UOT}_p^p(P^\theta_\#\mu, P^\theta_\#\nu)\ \mathrm{d}\lambda(\theta)
 
     with :math:`P^\theta(x)=\langle x,\theta\rangle` and :math:`\lambda` the uniform distribution on the unit sphere.
 
@@ -236,7 +236,7 @@ def unbalanced_sliced_ot(
     The Unbalanced SOT problem reads as
 
     .. math::
-        \mathrm{USOT}(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_2^2(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
+        \mathrm{USOT}_p^p(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_p^p(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
 
     .. warning:: This function only works in pytorch or jax as it uses autodifferentiation to compute the 1D potentials. It is not maintained in jax.
 
