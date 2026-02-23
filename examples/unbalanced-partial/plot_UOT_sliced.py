@@ -16,12 +16,13 @@ removes outliers of the original marginals.
 #
 # License: MIT License
 
+# sphinx_gallery_thumbnail_number 4
+
 import numpy as np
 import matplotlib.pylab as pl
 import ot
 import torch
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import matplotlib.animation as animation
 
 from sklearn.neighbors import KernelDensity
