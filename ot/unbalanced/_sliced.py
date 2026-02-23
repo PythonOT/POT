@@ -29,7 +29,7 @@ def sliced_unbalanced_ot(
 ):
     r"""
     Compute the Sliced Unbalanced Optimal Transport (SUOT) between two empirical distributions.
-    The 1D UOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
+    The 1D UOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm, see :ref:`[82] <references-suot>`.
 
     The Sliced Unbalanced Optimal Transport (SUOT) is defined as
 
@@ -77,11 +77,16 @@ def sliced_unbalanced_ot(
         If `log` is True, then returns a dictionary containing the projection directions used, the projected UOTs, and reweighted marginals on each slices.
 
 
-    .. _references-uot:
+    .. _references-suot:
     References
     ----------
     .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
        Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
+
+    See Also
+    --------
+    ot.unbalanced.uot_1d: 1D OT problem
+    ot.unbalanced.unbalanced_sliced_ot: Unbalanced SOT problem
     """
     nx = get_backend(X_s, X_t, a, b, projections)
 
@@ -230,13 +235,13 @@ def unbalanced_sliced_ot(
     log=False,
 ):
     r"""
-    Compute the Unbalanced Sliced Optimal Transpot (USOT) between two empirical distributions.
-    The USOT problem is computed with KL regularization and solved with a Frank-Wolfe algorithm in the dual, see :ref:`[82] <references-uot>`.
-
+    Compute the Unbalanced Sliced Optimal Transpot (USOT) with KL regularization between two empirical distributions.
     The Unbalanced SOT problem reads as
 
     .. math::
-        \mathrm{USOT}_p^p(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_p^p(\pi_1, \pi_2) + \lambda_1 \mathrm{KL}(\pi_1||\mu) + \lambda_2 \mathrm{KL}(\pi_2||\nu).
+        \mathrm{USOT}_p^p(\mu, \nu) = \inf_{\pi_1,\pi_2} \mathrm{SW}_p^p(\pi_1, \pi_2) + \mathrm{reg_{m}}_1 \mathrm{KL}(\pi_1||\mu) + \mathrm{reg_{m}}_2 \mathrm{KL}(\pi_2||\nu).
+
+    The USOT problem is solved with a Frank-Wolfe algorithm as proposed in :ref:`[82] <references-usot>`.
 
     .. warning:: This function only works in pytorch or jax as it uses autodifferentiation to compute the 1D potentials. It is not maintained in jax.
 
@@ -267,7 +272,7 @@ def unbalanced_sliced_ot(
         Seed used for random number generator
     numItermax: int, optional
     log: bool, optional
-        if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+        if True, returns the sot loss, the projections used, their associated EMD and the full mass of the reweighted marginals.
 
     Returns
     -------
@@ -281,11 +286,16 @@ def unbalanced_sliced_ot(
         If `log` is True, then returns a dictionary containing the projection directions used, the 1D OT losses, the SOT loss and the full mass of reweighted marginals.
 
 
-    .. _references-uot:
+    .. _references-usot:
     References
     ----------
     .. [82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2025).
        Slicing Unbalanced Optimal Transport. Transactions on Machine Learning Research.
+
+    See Also
+    --------
+    ot.unbalanced.uot_1d: 1D OT problem
+    ot.unbalanced.sliced_unbalanced_ot: SUOT problem
     """
     nx = get_backend(X_s, X_t, a, b, projections)
 
