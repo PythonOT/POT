@@ -622,7 +622,7 @@ def test_solve_sample_lazy_emd(nx, metric):
     # Lazy solver: compute distances on-the-fly
     sol_lazy = ot.solve_sample(X_sb, X_tb, ab, bb, lazy=True, metric=metric)
 
-    # Check that results match
+    # Check that optimal costs match
     np.testing.assert_allclose(
         nx.to_numpy(sol_standard.value),
         nx.to_numpy(sol_lazy.value),
@@ -631,12 +631,32 @@ def test_solve_sample_lazy_emd(nx, metric):
         err_msg=f"Lazy EMD cost mismatch for metric {metric}",
     )
 
+    # Check that the lazy plan has the same cost when evaluated against M
+    # (OT can have multiple optimal plans with the same cost)
+    cost_standard = nx.to_numpy(nx.sum(sol_standard.plan * M))
+    cost_lazy = nx.to_numpy(nx.sum(sol_lazy.plan * M))
     np.testing.assert_allclose(
-        nx.to_numpy(sol_standard.plan),
-        nx.to_numpy(sol_lazy.plan),
+        cost_standard,
+        cost_lazy,
         rtol=1e-10,
         atol=1e-10,
-        err_msg=f"Lazy EMD plan mismatch for metric {metric}",
+        err_msg=f"Lazy EMD plan cost mismatch for metric {metric}",
+    )
+
+    # Check that the lazy plan satisfies marginal constraints
+    np.testing.assert_allclose(
+        nx.to_numpy(nx.sum(sol_lazy.plan, axis=1)),
+        nx.to_numpy(ab),
+        rtol=1e-6,
+        atol=1e-8,
+        err_msg=f"Lazy EMD row marginal mismatch for metric {metric}",
+    )
+    np.testing.assert_allclose(
+        nx.to_numpy(nx.sum(sol_lazy.plan, axis=0)),
+        nx.to_numpy(bb),
+        rtol=1e-6,
+        atol=1e-8,
+        err_msg=f"Lazy EMD column marginal mismatch for metric {metric}",
     )
 
 
