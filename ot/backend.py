@@ -2305,7 +2305,25 @@ class TorchBackend(Backend):
 
     def astype(self, a, dtype):
         if isinstance(dtype, str):
-            dtype = getattr(torch, dtype, None)
+            # Map common numpy-style string dtypes to torch dtypes explicitly.
+            # This makes backend.astype robust across torch versions and aliases.
+            mapping = {
+                "float32": torch.float32,
+                "float64": torch.float64,
+                "float": torch.float32,
+                "double": torch.float64,
+                "complex64": getattr(torch, "complex64", None),
+                "complex128": getattr(torch, "complex128", None),
+            }
+            torch_dtype = mapping.get(dtype)
+            if torch_dtype is None:
+                # Fallback: try direct attribute lookup (e.g. torch.float16)
+                torch_dtype = getattr(torch, dtype, None)
+            if torch_dtype is None:
+                raise ValueError(
+                    f"Unsupported dtype for TorchBackend.astype: {dtype!r}"
+                )
+            dtype = torch_dtype
         return a.to(dtype=dtype)
 
     def repeat(self, a, repeats, axis=None):
