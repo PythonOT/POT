@@ -16,7 +16,7 @@ removes outliers of the original marginals.
 #
 # License: MIT License
 
-# sphinx_gallery_thumbnail_number 4
+# sphinx_gallery_thumbnail_number = 4
 
 import numpy as np
 import matplotlib.pylab as pl
