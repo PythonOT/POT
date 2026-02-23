@@ -50,9 +50,9 @@ def quantile_function(qs, cws, xs, return_index=False):
     idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
 
     if return_index:
-        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0), idx
+        return nx.take_along_axis(xs, idx, axis=0), idx
     else:
-        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
+        return nx.take_along_axis(xs, idx, axis=0)
 
 
 def wasserstein_1d(

@@ -296,3 +296,25 @@ def test_emd1d_dual_type_devices(nx):
             nx.assert_same_dtype_device(xb, res)
             nx.assert_same_dtype_device(xb, f)
             nx.assert_same_dtype_device(xb, g)
+
+
+def test_index_quantile_function(nx):
+    n = 10
+    rng = np.random.RandomState(0)
+    u = rng.randn(
+        n,
+    )
+    a = ot.unif(n)
+
+    u, a = nx.from_numpy(u, a)
+    u = nx.sort(u)
+
+    quantiles = nx.cumsum(a)
+
+    q = ot.lp.solver_1d.quantile_function(quantiles, quantiles, u)
+    q2, idx = ot.lp.solver_1d.quantile_function(
+        quantiles, quantiles, u, return_index=True
+    )
+
+    np.testing.assert_allclose(q, q2)
+    np.testing.assert_allclose(nx.to_numpy(idx), np.arange(n))
