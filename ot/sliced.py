@@ -938,15 +938,15 @@ def min_pivot_sliced(
     .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
             Plans. arXiv preprint 2506.03661.
 
-        Examples
+    Examples
     --------
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = min_pivot_sliced(x, y, thetas=thetas)
     >>> plan
-    [[0 0.5]
-    [0.5 0]]
+    array([[0 0.5]
+    [0.5 0]])
     >>> cost
     2.125
     """
@@ -1095,8 +1095,8 @@ def expected_sliced(
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = expected_sliced(x, y, thetas=thetas)
     >>> plan
-    [[0.25, 0.25],
-           [0.25, 0.25]]
+    array([[0.25, 0.25],
+           [0.25, 0.25]])
     >>> cost
     2.625
     """

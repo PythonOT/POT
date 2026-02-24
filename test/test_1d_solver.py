@@ -318,3 +318,24 @@ def test_index_quantile_function(nx):
 
     np.testing.assert_allclose(q, q2)
     np.testing.assert_allclose(nx.to_numpy(idx), np.arange(n))
+
+
+def test_wasserstein_1d_plan():
+    rng = np.random.RandomState(0)
+
+    n = 10
+    m = 4
+    d = 1
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, d)
+    y = rng.randn(m, d)
+    a = rng.uniform(0, 1, n)
+    a /= a.sum()
+    b = rng.uniform(0, 1, m)
+    b /= b.sum()
+
+    _, plan_1d = wasserstein_1d(x, y, a, b, p=2, return_plan=True)
+    plan_1d = plan_1d[0].toarray()
+    plan_emd = ot.emd(a, b, ot.dist(x, y))
+    np.testing.assert_allclose(plan_1d, plan_emd, atol=1e-05)

@@ -86,13 +86,13 @@ def wasserstein_1d(
     Parameters
     ----------
     u_values: array-like, shape (n, ...)
-        locations of the first empirical distribution
+        locations of the first empirical distributions
     v_values: array-like, shape (m, ...)
-        locations of the second empirical distribution
+        locations of the second empirical distributions
     u_weights: array-like, shape (n, ...), optional
-        weights of the first empirical distribution, if None then uniform weights are used
+        weights of the first empirical distributions, if None then uniform weights are used
     v_weights: array-like, shape (m, ...), optional
-        weights of the second empirical distribution, if None then uniform weights are used
+        weights of the second empirical distributions, if None then uniform weights are used
     p: int, optional
         order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
     require_sort: bool, optional
@@ -105,6 +105,9 @@ def wasserstein_1d(
     -------
     cost: float/array-like, shape (...)
         the batched EMD
+    plan: list of coo_matrix, optional
+        if return_plan is True, returns the list of the optimal transport plans
+        between the two (batched) measures as a coo_matrix, default is False
 
     References
     ----------

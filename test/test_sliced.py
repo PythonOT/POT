@@ -836,10 +836,10 @@ def test_min_pivot_sliced():
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
 
     # identity of the indiscernibles
-    _, min_cost = ot.min_pivot_sliced(x, x, a, a, n_proj=10)
+    _, min_cost = ot.sliced.min_pivot_sliced(x, x, a, a, n_proj=10)
     np.testing.assert_almost_equal(min_cost, 0.0)
 
-    plan, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
+    _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
 
     # result should be an upper-bound of W2 and relatively close
     w2 = ot.emd2(a, b, ot.dist(x, y))
