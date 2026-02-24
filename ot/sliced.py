@@ -945,8 +945,8 @@ def min_pivot_sliced(
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = min_pivot_sliced(x, y, thetas=thetas)
     >>> plan
-    array([[0 0.5]
-    [0.5 0]])
+    array([[0. , 0.5],
+           [0.5, 0. ]])
     >>> cost
     2.125
     """
