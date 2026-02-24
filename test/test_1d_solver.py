@@ -3,6 +3,7 @@
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty <ncourty@irisa.fr>
 #         Clément Bonet <clement.bonet.mapp@polytechnique.edu>
+#         Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -313,7 +314,7 @@ def test_index_quantile_function(nx):
 
     q = ot.lp.solver_1d.quantile_function(quantiles, quantiles, u)
     q2, idx = ot.lp.solver_1d.quantile_function(
-        quantiles, quantiles, u, idx_xs=nx.arange(n)
+        quantiles, quantiles, u, return_index=True
     )
 
     np.testing.assert_allclose(q, q2)

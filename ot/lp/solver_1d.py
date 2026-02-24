@@ -6,6 +6,7 @@ Exact solvers for the 1D Wasserstein distance using cvxopt
 # Author: Remi Flamary <remi.flamary@unice.fr>
 # Author: Nicolas Courty <ncourty@irisa.fr>
 # Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
+# Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -18,7 +19,7 @@ from ..utils import list_to_array
 from ._network_simplex import center_ot_dual
 
 
-def quantile_function(qs, cws, xs, idx_xs=None):
+def quantile_function(qs, cws, xs, return_index=False):
     r"""Computes the quantile function of an empirical distribution
 
     Parameters
@@ -29,8 +30,8 @@ def quantile_function(qs, cws, xs, idx_xs=None):
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
-    idx_xs: array-like, shape (n, ...)
-        associated indices. If None, do not return them
+    return_index: bool, optional
+        if True, returns also the associated indices. If False, do not return them
 
     Returns
     -------
@@ -50,12 +51,8 @@ def quantile_function(qs, cws, xs, idx_xs=None):
 
     idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
 
-    if (
-        idx_xs is not None
-    ):  # returns the quantiles and their associated (reorederd) indices
-        return nx.take_along_axis(xs, idx, axis=0), nx.take_along_axis(
-            idx_xs, idx, axis=0
-        )
+    if return_index:
+        return nx.take_along_axis(xs, idx, axis=0), idx
     else:
         return nx.take_along_axis(xs, idx, axis=0)
 
@@ -152,11 +149,11 @@ def wasserstein_1d(
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
     if return_plan:
-        u_quantiles, u_quantiles_idx = quantile_function(
-            qs, u_cumweights, u_values, idx_xs=u_sorter
+        u_quantiles, idx_u = quantile_function(
+            qs, u_cumweights, u_values, return_index=True
         )
-        v_quantiles, v_quantiles_idx = quantile_function(
-            qs, v_cumweights, v_values, idx_xs=v_sorter
+        v_quantiles, idx_v = quantile_function(
+            qs, v_cumweights, v_values, return_index=True
         )
     else:
         u_quantiles = quantile_function(qs, u_cumweights, u_values)
@@ -167,6 +164,8 @@ def wasserstein_1d(
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
     if return_plan:
+        u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
+        v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
         plan = [
             nx.coo_matrix(
                 delta[:, k],
