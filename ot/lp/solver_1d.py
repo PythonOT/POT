@@ -138,6 +138,9 @@ def wasserstein_1d(
 
         u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
         v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
+    else:
+        u_sorter = None
+        v_sorter = None
 
     u_cumweights = nx.cumsum(u_weights, 0)
     v_cumweights = nx.cumsum(v_weights, 0)
