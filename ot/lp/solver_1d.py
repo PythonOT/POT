@@ -18,19 +18,15 @@ from ..utils import list_to_array
 from ._network_simplex import center_ot_dual
 
 
-def quantile_function(qs, cws, xs, return_index=False):
+def quantile_function(qs, cws, xs, idx_xs=None):
     r"""Computes the quantile function of an empirical distribution
 
     Parameters
-    ----------
-    qs: array-like, shape (n,)
-        Quantiles at which the quantile function is evaluated
-    cws: array-like, shape (m, ...)
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
-    return_index: bool
-
+    idx_xs: array-like, shape (n, ...)
+        associated indices. If None, do not return them
     Returns
     -------
     q: array-like, shape (..., n)
@@ -46,13 +42,13 @@ def quantile_function(qs, cws, xs, return_index=False):
     else:
         cws = cws.T
         qs = qs.T
-
-    idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
-
-    if return_index:
-        return nx.take_along_axis(xs, idx, axis=0), idx
+    idx = nx.searchsorted(cws, qs).T
+    if idx_xs is not None:
+        return nx.take_along_axis(
+            xs, nx.clip(idx, 0, n - 1), axis=0
+        ), nx.take_along_axis(idx_xs, nx.clip(idx, 0, n - 1), axis=0)
     else:
-        return nx.take_along_axis(xs, idx, axis=0)
+        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
 
 
 def wasserstein_1d(
