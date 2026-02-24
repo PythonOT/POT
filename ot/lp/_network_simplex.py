@@ -13,7 +13,7 @@ import warnings
 
 from ..utils import list_to_array, check_number_threads
 from ..backend import get_backend
-from .emd_wrap import emd_c, emd_c_sparse, check_result
+from .emd_wrap import emd_c, emd_c_sparse, emd_c_lazy, check_result
 
 
 def center_ot_dual(alpha0, beta0, a=None, b=None):
@@ -44,31 +44,43 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
 
     Parameters
     ----------
-    alpha0 : (ns,) numpy.ndarray, float64
+    alpha0 : (ns, ...) numpy.ndarray, float64
         Source dual potential
-    beta0 : (nt,) numpy.ndarray, float64
+    beta0 : (nt, ...) numpy.ndarray, float64
         Target dual potential
-    a : (ns,) numpy.ndarray, float64
+    a : (ns, ...) numpy.ndarray, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt, ...) numpy.ndarray, float64
         Target histogram (uniform weight if empty list)
 
     Returns
     -------
-    alpha : (ns,) numpy.ndarray, float64
+    alpha : (ns, ...) numpy.ndarray, float64
         Source centered dual potential
-    beta : (nt,) numpy.ndarray, float64
+    beta : (nt, ...) numpy.ndarray, float64
         Target centered dual potential
 
     """
+    nx = get_backend(alpha0, beta0, a, b)
+
+    n = alpha0.shape[0]
+    m = beta0.shape[0]
+
     # if no weights are provided, use uniform
     if a is None:
-        a = np.ones(alpha0.shape[0]) / alpha0.shape[0]
+        a = nx.full(alpha0.shape, 1.0 / n, type_as=alpha0)
+    elif a.ndim != alpha0.ndim:
+        a = nx.repeat(a[..., None], alpha0.shape[-1], -1)
+
     if b is None:
-        b = np.ones(beta0.shape[0]) / beta0.shape[0]
+        b = nx.full(beta0.shape, 1.0 / m, type_as=beta0)
+    elif b.ndim != beta0.ndim:
+        b = nx.repeat(b[..., None], beta0.shape[-1], -1)
 
     # compute constant that balances the weighted sums of the duals
-    c = (b.dot(beta0) - a.dot(alpha0)) / (a.sum() + b.sum())
+    ips = nx.sum(b * beta0, axis=0) - nx.sum(a * alpha0, axis=0)
+    denom = nx.sum(a, axis=0) + nx.sum(b, axis=0)
+    c = ips / denom
 
     # update duals
     alpha = alpha0 + c
@@ -163,6 +175,49 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
+def _compute_active_subset(a, b, M, row_mask, col_mask):
+    """Return filtered inputs restricted to the rows/columns with mass."""
+    need_filter = np.any(~row_mask) or np.any(~col_mask)
+    if not need_filter:
+        return need_filter, None, None, a, b, M
+
+    row_idx = np.flatnonzero(row_mask)
+    col_idx = np.flatnonzero(col_mask)
+    M_solver = np.asarray(M[np.ix_(row_idx, col_idx)], dtype=np.float64, order="C")
+    return need_filter, row_idx, col_idx, a[row_idx], b[col_idx], M_solver
+
+
+def _inflate_from_active_subset(
+    G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n_rows, n_cols
+):
+    """Embed the filtered dense solution back into the full support."""
+    if not need_filter:
+        return G, u, v
+
+    G_full = np.zeros((n_rows, n_cols), dtype=G.dtype)
+    G_full[np.ix_(row_idx, col_idx)] = G
+
+    u_full = np.zeros((n_rows,), dtype=u.dtype)
+    v_full = np.zeros((n_cols,), dtype=v.dtype)
+    u_full[row_mask] = u
+    v_full[col_mask] = v
+    return G_full, u_full, v_full
+
+
+def _prepare_warmstart(potentials_init, need_filter, row_mask, col_mask):
+    """Return warm-start potentials filtered to the active support."""
+    if potentials_init is None:
+        return None, None
+
+    alpha_init, beta_init = potentials_init
+    alpha_init = np.asarray(alpha_init, dtype=np.float64)
+    beta_init = np.asarray(beta_init, dtype=np.float64)
+    if need_filter:
+        alpha_init = alpha_init[row_mask]
+        beta_init = beta_init[col_mask]
+    return alpha_init, beta_init
+
+
 def emd(
     a,
     b,
@@ -172,6 +227,7 @@ def emd(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the OT matrix
 
@@ -237,6 +293,11 @@ def emd(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -320,20 +381,20 @@ def emd(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     if is_sparse:
@@ -373,8 +434,29 @@ def emd(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
     else:
+        row_mask = asel
+        col_mask = bsel
+        (
+            need_filter,
+            row_idx,
+            col_idx,
+            a_solver,
+            b_solver,
+            M_solver,
+        ) = _compute_active_subset(a, b, M, row_mask, col_mask)
+
+        alpha_init, beta_init = _prepare_warmstart(
+            potentials_init, need_filter, row_mask, col_mask
+        )
+
         # Dense solver
-        G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+        G, cost, u, v, result_code = emd_c(
+            a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
+        )
+
+        G, u, v = _inflate_from_active_subset(
+            G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n1, n2
+        )
 
     # ============================================================================
     # POST-PROCESS DUAL VARIABLES AND CREATE TRANSPORT PLAN
@@ -448,6 +530,7 @@ def emd2(
     center_dual=True,
     numThreads=1,
     check_marginals=True,
+    potentials_init=None,
 ):
     r"""Solves the Earth Movers distance problem and returns the loss
 
@@ -471,7 +554,7 @@ def emd2(
 
     .. note:: This function will cast the computed transport plan and
         transportation loss to the data type of the provided input with the
-        following priority: :math:`\mathbf{a}`, then :math:`\mathbf{b}`,
+        following priority : :math:`\mathbf{a}`, then :math:`\mathbf{b}`,
         then :math:`\mathbf{M}` if marginals are not provided.
         Casting to an integer tensor might result in a loss of precision.
         If this behaviour is unwanted, please make sure to provide a
@@ -513,6 +596,11 @@ def emd2(
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
+    potentials_init: tuple of two arrays (alpha, beta), optional (default=None)
+        Warmstart dual potentials to accelerate convergence. Should be a tuple
+        (alpha, beta) where alpha is shape (ns,) and beta is shape (nt,).
+        These potentials are used to guide initial pivots in the network simplex.
+        Typically obtained from a previous EMD solve or Sinkhorn approximation.
 
     .. note:: The solver automatically detects sparse format using the backend's
         :py:meth:`issparse` method. For sparse inputs:
@@ -591,21 +679,21 @@ def emd2(
         if edge_costs.dtype != np.float64:
             edge_costs = edge_costs.astype(np.float64)
 
-    if len(a) != 0:
+    if a is not None and len(a) != 0:
         type_as = a
-    elif len(b) != 0:
+    elif b is not None and len(b) != 0:
         type_as = b
     else:
-        type_as = a
+        type_as = a if a is not None else b
 
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
 
     # if empty array given then use uniform distributions
-    if len(a) == 0:
+    if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
-    if len(b) == 0:
+    if b is None or len(b) == 0:
         b = nx.ones((n2,), type_as=type_as) / n2
 
     a0, b0 = a, b
@@ -656,8 +744,33 @@ def emd2(
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
         else:
+            (
+                need_filter,
+                row_idx,
+                col_idx,
+                a_solver,
+                b_solver,
+                M_solver,
+            ) = _compute_active_subset(a, b, M, asel, bsel)
+
+            alpha_init, beta_init = _prepare_warmstart(
+                potentials_init, need_filter, asel, bsel
+            )
+
             # Solve dense EMD
-            G, cost, u, v, result_code = emd_c(a, b, M, numItermax, numThreads)
+            G, cost, u, v, result_code = emd_c(
+                a_solver,
+                b_solver,
+                M_solver,
+                numItermax,
+                numThreads,
+                alpha_init,
+                beta_init,
+            )
+
+            G, u, v = _inflate_from_active_subset(
+                G, u, v, need_filter, row_idx, col_idx, asel, bsel, n1, n2
+            )
 
         # Center dual potentials
         if center_dual:
@@ -775,3 +888,194 @@ def emd2(
     res = list(map(f, [b[:, i].copy() for i in range(nb)]))
 
     return res
+
+
+def emd2_lazy(
+    X_a,
+    X_b,
+    a=None,
+    b=None,
+    metric="sqeuclidean",
+    numItermax=100000,
+    log=False,
+    return_matrix=True,
+    center_dual=True,
+    check_marginals=True,
+    potentials_init=None,
+):
+    r"""Solves the Earth Movers distance problem with lazy cost computation and returns the loss
+
+    .. math::
+        \min_\gamma \quad \langle \gamma, \mathbf{M}(\mathbf{X}_a, \mathbf{X}_b) \rangle_F
+
+        s.t. \ \gamma \mathbf{1} = \mathbf{a}
+
+             \gamma^T \mathbf{1} = \mathbf{b}
+
+             \gamma \geq 0
+
+    where :
+
+    - :math:`\mathbf{M}(\mathbf{X}_a, \mathbf{X}_b)` is computed on-the-fly from coordinates
+    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are the sample weights
+
+    .. note:: This function computes distances on-the-fly during the network simplex algorithm,
+        avoiding the O(ns*nt) memory cost of pre-computing the full cost matrix. Memory usage
+        is O(ns+nt) instead.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends. But the algorithm uses the C++ CPU backend
+        which can lead to copy overhead on GPU arrays.
+
+    Parameters
+    ----------
+    X_a : (ns, dim) array-like, float64
+        Source sample coordinates
+    X_b : (nt, dim) array-like, float64
+        Target sample coordinates
+    a : (ns,) array-like, float64, optional
+        Source histogram (uniform weight if None)
+    b : (nt,) array-like, float64, optional
+        Target histogram (uniform weight if None)
+    metric : str, optional (default='sqeuclidean')
+        Distance metric for cost computation. Options:
+
+        - 'sqeuclidean': Squared Euclidean distance
+        - 'euclidean': Euclidean distance
+        - 'cityblock': Manhattan/L1 distance
+
+    numItermax : int, optional (default=100000)
+        Maximum number of iterations before stopping if not converged
+    log: boolean, optional (default=False)
+        If True, returns a dictionary containing the cost, dual variables,
+        and optionally the transport plan (sparse format)
+    return_matrix: boolean, optional (default=False)
+        If True, returns the optimal transportation matrix in the log (sparse format)
+    center_dual: boolean, optional (default=True)
+        If True, centers the dual potential using :py:func:`ot.lp.center_ot_dual`
+    check_marginals: bool, optional (default=True)
+        If True, checks that the marginals mass are equal
+    potentials_init : tuple of (ns,) and (nt,) arrays, optional
+        Initial dual potentials (u, v) to warmstart the solver. If provided,
+        the solver starts from these potentials instead of a cold start.
+
+    Returns
+    -------
+    W: float
+        Optimal transportation loss
+    log: dict
+        If input log is True, a dictionary containing:
+
+        - cost: the optimal transportation cost
+        - u, v: dual variables
+        - warning: solver status message
+        - result_code: solver return code
+        - G: (optional) sparse transport plan if return_matrix=True
+
+    See Also
+    --------
+    ot.emd2 : EMD with pre-computed cost matrix
+    ot.lp.emd_c_lazy : Low-level C++ lazy solver
+    """
+
+    a, b, X_a, X_b = list_to_array(a, b, X_a, X_b)
+    nx = get_backend(a, b, X_a, X_b)
+
+    n1, n2 = X_a.shape[0], X_b.shape[0]
+
+    if X_a.shape[1] != X_b.shape[1]:
+        raise ValueError(
+            f"X_a and X_b must have the same number of dimensions, "
+            f"got {X_a.shape[1]} and {X_b.shape[1]}"
+        )
+
+    if a is not None and len(a) != 0:
+        type_as = a
+    elif b is not None and len(b) != 0:
+        type_as = b
+    else:
+        type_as = X_a
+
+    if a is None or len(a) == 0:
+        a = nx.ones((n1,), type_as=type_as) / n1
+    if b is None or len(b) == 0:
+        b = nx.ones((n2,), type_as=type_as) / n2
+
+    a0, b0 = a, b
+
+    # Convert to numpy for C++ backend
+    X_a_np = nx.to_numpy(X_a)
+    X_b_np = nx.to_numpy(X_b)
+    a_np = nx.to_numpy(a)
+    b_np = nx.to_numpy(b)
+
+    X_a_np = np.asarray(X_a_np, dtype=np.float64, order="C")
+    X_b_np = np.asarray(X_b_np, dtype=np.float64, order="C")
+    a_np = np.asarray(a_np, dtype=np.float64)
+    b_np = np.asarray(b_np, dtype=np.float64)
+
+    assert (
+        a_np.shape[0] == n1 and b_np.shape[0] == n2
+    ), "Dimension mismatch, check dimensions of X_a/X_b with a and b"
+
+    if check_marginals:
+        np.testing.assert_almost_equal(
+            a_np.sum(),
+            b_np.sum(),
+            err_msg="a and b vector must have the same sum",
+            decimal=6,
+        )
+    b_np = b_np * a_np.sum() / b_np.sum()
+
+    # Handle warmstart potentials
+    alpha_init_np = None
+    beta_init_np = None
+    if potentials_init is not None:
+        alpha_init, beta_init = potentials_init
+        alpha_init_np = nx.to_numpy(alpha_init)
+        beta_init_np = nx.to_numpy(beta_init)
+        alpha_init_np = np.asarray(alpha_init_np, dtype=np.float64, order="C")
+        beta_init_np = np.asarray(beta_init_np, dtype=np.float64, order="C")
+
+    G, cost, u, v, result_code = emd_c_lazy(
+        a_np, b_np, X_a_np, X_b_np, metric, numItermax, alpha_init_np, beta_init_np
+    )
+
+    if center_dual:
+        u, v = center_ot_dual(u, v, a_np, b_np)
+
+    if not nx.is_floating_point(type_as):
+        warnings.warn(
+            "Input histogram consists of integer. The transport plan will be "
+            "casted accordingly, possibly resulting in a loss of precision. "
+            "If this behaviour is unwanted, please make sure your input "
+            "histogram consists of floating point elements.",
+            stacklevel=2,
+        )
+
+    G_backend = nx.from_numpy(G, type_as=type_as)
+
+    cost_backend = nx.set_gradients(
+        nx.from_numpy(cost, type_as=type_as),
+        (a0, b0),
+        (
+            nx.from_numpy(u - np.mean(u), type_as=type_as),
+            nx.from_numpy(v - np.mean(v), type_as=type_as),
+        ),
+    )
+
+    check_result(result_code)
+
+    if log or return_matrix:
+        log_dict = {
+            "cost": cost_backend,
+            "u": nx.from_numpy(u, type_as=type_as),
+            "v": nx.from_numpy(v, type_as=type_as),
+            "warning": check_result(result_code),
+            "result_code": result_code,
+        }
+        if return_matrix:
+            log_dict["G"] = G_backend
+        return cost_backend, log_dict
+    else:
+        return cost_backend

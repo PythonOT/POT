@@ -54,13 +54,32 @@ def get_sinkhorn_geomloss_lazytensor(
     shape = (X_a.shape[0], X_b.shape[0])
 
     def func(i, j, X_a, X_b, f, g, a, b, metric, blur):
+        X_a_i = X_a[i]
+        X_b_j = X_b[j]
+
+        if X_a_i.ndim == 1:
+            X_a_i = X_a_i[None, :]
+        if X_b_j.ndim == 1:
+            X_b_j = X_b_j[None, :]
+
         if metric == "sqeuclidean":
-            C = dist(X_a[i], X_b[j], metric=metric) / 2
+            C = dist(X_a_i, X_b_j, metric=metric) / 2
         else:
-            C = dist(X_a[i], X_b[j], metric=metric)
-        return nx.exp((f[i, None] + g[None, j] - C) / (blur**2)) * (
-            a[i, None] * b[None, j]
-        )
+            C = dist(X_a_i, X_b_j, metric=metric)
+
+        # Robust broadcasting using nx backend (handles both numpy and torch)
+        # For scalars, slice to keep 1D; for arrays, index directly
+        f_i = f[i : i + 1] if isinstance(i, int) else f[i]
+        g_j = g[j : j + 1] if isinstance(j, int) else g[j]
+        a_i = a[i : i + 1] if isinstance(i, int) else a[i]
+        b_j = b[j : j + 1] if isinstance(j, int) else b[j]
+
+        f_i = nx.reshape(f_i, (-1, 1))
+        g_j = nx.reshape(g_j, (1, -1))
+        a_i = nx.reshape(a_i, (-1, 1))
+        b_j = nx.reshape(b_j, (1, -1))
+
+        return nx.squeeze(nx.exp((f_i + g_j - C) / (blur**2)) * a_i * b_j)
 
     T = LazyTensor(
         shape, func, X_a=X_a, X_b=X_b, f=f, g=g, a=a, b=b, metric=metric, blur=blur
@@ -106,7 +125,7 @@ def empirical_sinkhorn2_geomloss(
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
     scaling algorithm as proposed in and computed in log space for
     better stability and epsilon-scaling. The solution is computed in a lazy way
-    using the Geomloss [60] and the KeOps library [61].
+    using the Geomloss [60]_ and the KeOps library [61]_.
 
     Parameters
     ----------

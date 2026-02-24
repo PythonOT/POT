@@ -43,8 +43,13 @@ namespace lemon {
 
     mutable std::vector<std::vector<Arc>> _in_arcs;   // _in_arcs[node] = incoming arc IDs
     mutable bool _in_arcs_built;
+    
+    // Position tracking for O(1) iteration
+    mutable std::vector<int64_t> _arc_to_out_pos;  // _arc_to_out_pos[arc_id] = position in _arc_ids
+    mutable std::vector<int64_t> _arc_to_in_pos;   // _arc_to_in_pos[arc_id] = position in _in_arcs[target]
+    mutable bool _position_maps_built;
 
-    SparseBipartiteDigraphBase() : _node_num(0), _arc_num(0), _n1(0), _n2(0), _in_arcs_built(false) {}
+    SparseBipartiteDigraphBase() : _node_num(0), _arc_num(0), _n1(0), _n2(0), _in_arcs_built(false), _position_maps_built(false) {}
 
     void construct(int n1, int n2) {
       _node_num = n1 + n2;
@@ -58,6 +63,9 @@ namespace lemon {
       _arc_ids.clear();
       _in_arcs.clear();
       _in_arcs_built = false;
+      _arc_to_out_pos.clear();
+      _arc_to_in_pos.clear();
+      _position_maps_built = false;
     }
 
     void build_in_arcs() const {
@@ -71,6 +79,31 @@ namespace lemon {
       }
 
       _in_arcs_built = true;
+    }
+    
+    void build_position_maps() const {
+      if (_position_maps_built) return;
+      
+      _arc_to_out_pos.resize(_arc_num);
+      _arc_to_in_pos.resize(_arc_num);
+      
+      // Build outgoing arc position map from CSR structure
+      for (int64_t pos = 0; pos < _arc_num; ++pos) {
+        Arc arc_id = _arc_ids[pos];
+        _arc_to_out_pos[arc_id] = pos;
+      }
+      
+      // Build incoming arc position map
+      build_in_arcs();
+      for (Node node = 0; node < _node_num; ++node) {
+        const std::vector<Arc>& in = _in_arcs[node];
+        for (size_t pos = 0; pos < in.size(); ++pos) {
+          Arc arc_id = in[pos];
+          _arc_to_in_pos[arc_id] = pos;
+        }
+      }
+      
+      _position_maps_built = true;
     }
 
   public:
@@ -212,18 +245,14 @@ namespace lemon {
 
     void nextOut(Arc& arc) const {
       if (arc < 0) return;
-
+      
+      build_position_maps();
+      
+      int64_t pos = _arc_to_out_pos[arc];
       Node src = _arc_sources[arc];
-      int64_t start = _row_ptr[src];
       int64_t end = _row_ptr[src + 1];
-
-      for (int64_t i = start; i < end; ++i) {
-        if (_arc_ids[i] == arc) {
-          arc = (i + 1 < end) ? _arc_ids[i + 1] : Arc(-1);
-          return;
-        }
-      }
-      arc = -1;
+      
+      arc = (pos + 1 < end) ? _arc_ids[pos + 1] : Arc(-1);
     }
 
     void firstIn(Arc& arc, const Node& node) const {
@@ -240,18 +269,14 @@ namespace lemon {
 
     void nextIn(Arc& arc) const {
       if (arc < 0) return;
-
+      
+      build_position_maps();
+      
+      int64_t pos = _arc_to_in_pos[arc];
       Node tgt = _arc_targets[arc];
       const std::vector<Arc>& in = _in_arcs[tgt];
-
-      // Find current arc in the list and return next one
-      for (size_t i = 0; i < in.size(); ++i) {
-        if (in[i] == arc) {
-          arc = (i + 1 < in.size()) ? in[i + 1] : Arc(-1);
-          return;
-        }
-      }
-      arc = -1;
+      
+      arc = (pos + 1 < in.size()) ? in[pos + 1] : Arc(-1);
     }
   };
 

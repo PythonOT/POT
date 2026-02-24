@@ -8,7 +8,7 @@ General OT solvers with unified API
 # License: MIT License
 
 from .utils import OTResult, dist
-from .lp import emd2, wasserstein_1d
+from .lp import emd2, emd2_lazy, wasserstein_1d
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import (
@@ -129,7 +129,9 @@ def solve(
     plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
-        Initialization of the OT dual potentials for iterative methods, by default None
+        Initialization of the OT dual potentials for iterative methods (Sinkhorn,
+        unbalanced) or warmstart for exact EMD solver. For EMD, these potentials
+        are used to guide initial pivots in the network simplex. By default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
@@ -328,6 +330,7 @@ def solve(
                 log=True,
                 return_matrix=True,
                 numThreads=n_threads,
+                potentials_init=potentials_init,
             )
 
             value = value_linear
@@ -1445,7 +1448,9 @@ def solve_sample(
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
-        Initialization of the OT dual potentials for iterative methods, by default None
+        Initialization of the OT dual potentials for iterative methods (Sinkhorn,
+        unbalanced) or warmstart for exact EMD solver. For EMD, these potentials
+        are used to guide initial pivots in the network simplex. By default None
     tol : _type_, optional
         Tolerance for solution precision, by default None (default values in each solvers)
     verbose : bool, optional
@@ -1745,6 +1750,37 @@ def solve_sample(
             tol,
             verbose,
             grad,
+        )
+
+        return res
+
+    elif (
+        lazy
+        and method is None
+        and (reg is None or reg == 0)
+        and unbalanced is None
+        and X_a is not None
+        and X_b is not None
+    ):
+        # Use lazy EMD solver with coordinates (no regularization, balanced)
+        value_linear, log = emd2_lazy(
+            X_a,
+            X_b,
+            a,
+            b,
+            metric=metric,
+            numItermax=max_iter if max_iter is not None else 100000,
+            log=True,
+            return_matrix=True,
+            potentials_init=potentials_init,
+        )
+
+        res = OTResult(
+            potentials=(log["u"], log["v"]),
+            value=value_linear,
+            value_linear=value_linear,
+            plan=log["G"],
+            status=log["warning"] if log["warning"] is not None else "Converged",
         )
 
         return res

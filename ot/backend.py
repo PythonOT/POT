@@ -89,12 +89,13 @@ Performance
 import os
 import time
 import warnings
+import functools
 
 import numpy as np
 import scipy
 import scipy.linalg
 import scipy.special as special
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_matrix, issparse
 
 DISABLE_TORCH_KEY = "POT_BACKEND_DISABLE_PYTORCH"
 DISABLE_JAX_KEY = "POT_BACKEND_DISABLE_JAX"
@@ -122,7 +123,30 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         from jax.extend.backend import get_backend as _jax_get_backend
 
         jax_type = jax.numpy.ndarray
-        jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
+        jax_new_version = tuple([float(s) for s in jax.__version__.split(".")]) > (
+            0,
+            4,
+            24,
+            0,
+        )
+
+        @jax.custom_jvp
+        def norm_1d_jax(z):
+            return jnp.abs(z)
+
+        @norm_1d_jax.defjvp
+        def norm_1d_jax_jvp(primals, tangents):
+            """
+            Enforce the gradient in 0 of jnp.abs to be 0
+            """
+            (z,) = primals
+            z_is_zero = jnp.all(jnp.logical_not(z))
+            clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
+            primals, tangents = jax.jvp(
+                functools.partial(jnp.abs), (clean_z,), tangents
+            )
+            return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
+
     except ImportError:
         jax = False
         jax_type = float
@@ -588,7 +612,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         """
         Limits the values in a tensor.
 
@@ -802,9 +826,9 @@ class Backend:
         r"""
         Creates a sparse tensor in COOrdinate format.
 
-        This function follows the api from :any:`scipy.sparse.coo_matrix`
+        This function follows the api from :any:`scipy.sparse.coo_array`
 
-        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_array.html
         """
         raise NotImplementedError()
 
@@ -1015,7 +1039,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
         r"""
         Computes the (Generalized) Kullback-Leibler divergence.
 
@@ -1286,7 +1310,7 @@ class NumpyBackend(Backend):
     def outer(self, a, b):
         return np.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1354,9 +1378,9 @@ class NumpyBackend(Backend):
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         if type_as is None:
-            return coo_matrix((data, (rows, cols)), shape=shape)
+            return coo_array((data, (rows, cols)), shape=shape)
         else:
-            return coo_matrix((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
+            return coo_array((data, (rows, cols)), shape=shape, dtype=type_as.dtype)
 
     def issparse(self, a):
         return issparse(a)
@@ -1384,9 +1408,9 @@ class NumpyBackend(Backend):
             return a
 
     def sparse_coo_data(self, a):
-        # Convert to COO format if needed
-        if not isinstance(a, coo_matrix):
-            a_coo = coo_matrix(a)
+        # Convert to COO array format if needed
+        if not isinstance(a, coo_array):
+            a_coo = coo_array(a)
         else:
             a_coo = a
 
@@ -1463,10 +1487,10 @@ class NumpyBackend(Backend):
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = np.sum(p * np.log(p / q + eps), axis=axis)
         if mass:
-            value = value + np.sum(q - p)
+            value = value + np.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -1653,7 +1677,7 @@ class JaxBackend(Backend):
         return jnp.dot(a, b)
 
     def abs(self, a):
-        return jnp.abs(a)
+        return norm_1d_jax(a)
 
     def exp(self, a):
         return jnp.exp(a)
@@ -1703,7 +1727,7 @@ class JaxBackend(Backend):
     def outer(self, a, b):
         return jnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1815,9 +1839,7 @@ class JaxBackend(Backend):
         # JAX doesn't support sparse matrices, so this shouldn't be called
         # But if it is, convert the dense array to sparse using scipy
         a_np = self.to_numpy(a)
-        from scipy.sparse import coo_matrix
-
-        a_coo = coo_matrix(a_np)
+        a_coo = coo_array(a_np)
         return a_coo.row, a_coo.col, a_coo.data, a_coo.shape
 
     def where(self, condition, x=None, y=None):
@@ -1900,10 +1922,10 @@ class JaxBackend(Backend):
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = jnp.sum(p * jnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + jnp.sum(q - p)
+            value = value + jnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2202,7 +2224,7 @@ class TorchBackend(Backend):
     def outer(self, a, b):
         return torch.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2491,10 +2513,10 @@ class TorchBackend(Backend):
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = torch.sum(p * torch.log(p / q + eps), axis=axis)
         if mass:
-            value = value + torch.sum(q - p)
+            value = value + torch.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2703,7 +2725,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def outer(self, a, b):
         return cp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2804,10 +2826,10 @@ class CupyBackend(Backend):  # pragma: no cover
         rows = self.from_numpy(rows)
         cols = self.from_numpy(cols)
         if type_as is None:
-            return cupyx.scipy.sparse.coo_matrix((data, (rows, cols)), shape=shape)
+            return cupyx.scipy.sparse.coo_array((data, (rows, cols)), shape=shape)
         else:
             with cp.cuda.Device(type_as.device):
-                return cupyx.scipy.sparse.coo_matrix(
+                return cupyx.scipy.sparse.coo_array(
                     (data, (rows, cols)), shape=shape, dtype=type_as.dtype
                 )
 
@@ -2917,10 +2939,10 @@ class CupyBackend(Backend):  # pragma: no cover
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = cp.sum(p * cp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + cp.sum(q - p)
+            value = value + cp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -3137,7 +3159,7 @@ class TensorflowBackend(Backend):
     def outer(self, a, b):
         return tnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -3377,10 +3399,10 @@ class TensorflowBackend(Backend):
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = tnp.sum(p * tnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + tnp.sum(q - p)
+            value = value + tnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):

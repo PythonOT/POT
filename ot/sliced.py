@@ -7,6 +7,7 @@ Sliced OT Distances
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
 #         Eloi Tanguy <eloi.tanguy@math.cnrs.fr>
 #         Laetitia Chapel <laetitia.chapel@irisa.fr>
+#         Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
@@ -137,14 +138,7 @@ def sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -196,7 +190,7 @@ def max_sliced_wasserstein_distance(
     Computes a Monte-Carlo approximation of the max p-Sliced Wasserstein distance
 
     .. math::
-        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta _in
+        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta \in
         \mathcal{U}(\mathbb{S}^{d-1})}{\max} [\mathcal{W}_p^p(\theta_\#
         \mu, \theta_\# \nu)]^{\frac{1}{p}}
 
@@ -250,14 +244,7 @@ def max_sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -344,6 +331,7 @@ def projection_sphere_to_circle(
     Projection of :math:`x\in S^{d-1}` on circles using coordinates on [0,1[.
 
     To get the projection on the circle, we use the following formula:
+
     .. math::
         P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}
 
@@ -460,10 +448,7 @@ def sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
@@ -549,10 +534,7 @@ def sliced_wasserstein_sphere_unif(
     """
     d = X_s.shape[-1]
 
-    if a is not None:
-        nx = get_backend(X_s, a)
-    else:
-        nx = get_backend(X_s)
+    nx = get_backend(X_s, a)
 
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
@@ -641,10 +623,7 @@ def linear_sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
