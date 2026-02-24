@@ -313,7 +313,7 @@ def test_index_quantile_function(nx):
 
     q = ot.lp.solver_1d.quantile_function(quantiles, quantiles, u)
     q2, idx = ot.lp.solver_1d.quantile_function(
-        quantiles, quantiles, u, return_index=True
+        quantiles, quantiles, u, idx_xs=nx.arange(n)
     )
 
     np.testing.assert_allclose(q, q2)

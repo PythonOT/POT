@@ -22,11 +22,16 @@ def quantile_function(qs, cws, xs, idx_xs=None):
     r"""Computes the quantile function of an empirical distribution
 
     Parameters
+    ----------
+    qs: array-like, shape (n,)
+        Quantiles at which the quantile function is evaluated
+    cws: array-like, shape (m, ...)
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
     idx_xs: array-like, shape (n, ...)
         associated indices. If None, do not return them
+
     Returns
     -------
     q: array-like, shape (..., n)
@@ -42,13 +47,15 @@ def quantile_function(qs, cws, xs, idx_xs=None):
     else:
         cws = cws.T
         qs = qs.T
-    idx = nx.searchsorted(cws, qs).T
+
+    idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
+
     if idx_xs is not None:
-        return nx.take_along_axis(
-            xs, nx.clip(idx, 0, n - 1), axis=0
-        ), nx.take_along_axis(idx_xs, nx.clip(idx, 0, n - 1), axis=0)
+        return nx.take_along_axis(xs, idx, axis=0), nx.take_along_axis(
+            idx_xs, idx, axis=0
+        )
     else:
-        return nx.take_along_axis(xs, nx.clip(idx, 0, n - 1), axis=0)
+        return nx.take_along_axis(xs, idx, axis=0)
 
 
 def wasserstein_1d(
@@ -137,10 +144,10 @@ def wasserstein_1d(
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
     u_quantiles, u_quantiles_idx = quantile_function(
-        qs, u_cumweights, u_values, u_sorter
+        qs, u_cumweights, u_values, idx_xs=u_sorter
     )
     v_quantiles, v_quantiles_idx = quantile_function(
-        qs, v_cumweights, v_values, v_sorter
+        qs, v_cumweights, v_values, idx_xs=v_sorter
     )
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
@@ -157,10 +164,24 @@ def wasserstein_1d(
             )
             for k in range(delta.shape[1])
         ]
-    if return_plan:
-        return nx.sum(delta * nx.power(diff_quantiles, p), axis=0), plan
+    if p == 1:
+        w_1d = nx.sum(delta * diff_quantiles, axis=0)
     else:
-        return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+        w_1d = nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+    if return_plan:
+        return w_1d, plan
+    else:
+        return w_1d
+
+    # u_quantiles = quantile_function(qs, u_cumweights, u_values)
+    # v_quantiles = quantile_function(qs, v_cumweights, v_values)
+    # qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
+    # delta = qs[1:, ...] - qs[:-1, ...]
+    # diff_quantiles = nx.abs(u_quantiles - v_quantiles)
+
+    # if p == 1:
+    #    return nx.sum(delta * diff_quantiles, axis=0)
+    # return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
 
 
 def emd_1d(

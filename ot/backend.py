@@ -3276,6 +3276,9 @@ class TensorflowBackend(Backend):
         if type_as is not None:
             data = self.from_numpy(data, type_as=type_as)
 
+        rows = tf.cast(rows, dtype=tf.int64)
+        cols = tf.cast(cols, dtype=tf.int64)
+
         sparse_tensor = tf.sparse.SparseTensor(
             indices=tnp.stack([rows, cols]).T, values=data, dense_shape=shape
         )

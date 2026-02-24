@@ -669,7 +669,7 @@ def sliced_plans(
     a=None,
     b=None,
     metric="sqeuclidean",
-    p=2,
+    p=1,
     thetas=None,
     warm_theta=None,
     n_proj=None,
