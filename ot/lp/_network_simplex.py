@@ -44,31 +44,43 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
 
     Parameters
     ----------
-    alpha0 : (ns,) numpy.ndarray, float64
+    alpha0 : (ns, ...) numpy.ndarray, float64
         Source dual potential
-    beta0 : (nt,) numpy.ndarray, float64
+    beta0 : (nt, ...) numpy.ndarray, float64
         Target dual potential
-    a : (ns,) numpy.ndarray, float64
+    a : (ns, ...) numpy.ndarray, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt, ...) numpy.ndarray, float64
         Target histogram (uniform weight if empty list)
 
     Returns
     -------
-    alpha : (ns,) numpy.ndarray, float64
+    alpha : (ns, ...) numpy.ndarray, float64
         Source centered dual potential
-    beta : (nt,) numpy.ndarray, float64
+    beta : (nt, ...) numpy.ndarray, float64
         Target centered dual potential
 
     """
+    nx = get_backend(alpha0, beta0, a, b)
+
+    n = alpha0.shape[0]
+    m = beta0.shape[0]
+
     # if no weights are provided, use uniform
     if a is None:
-        a = np.ones(alpha0.shape[0]) / alpha0.shape[0]
+        a = nx.full(alpha0.shape, 1.0 / n, type_as=alpha0)
+    elif a.ndim != alpha0.ndim:
+        a = nx.repeat(a[..., None], alpha0.shape[-1], -1)
+
     if b is None:
-        b = np.ones(beta0.shape[0]) / beta0.shape[0]
+        b = nx.full(beta0.shape, 1.0 / m, type_as=beta0)
+    elif b.ndim != beta0.ndim:
+        b = nx.repeat(b[..., None], beta0.shape[-1], -1)
 
     # compute constant that balances the weighted sums of the duals
-    c = (b.dot(beta0) - a.dot(alpha0)) / (a.sum() + b.sum())
+    ips = nx.sum(b * beta0, axis=0) - nx.sum(a * alpha0, axis=0)
+    denom = nx.sum(a, axis=0) + nx.sum(b, axis=0)
+    c = ips / denom
 
     # update duals
     alpha = alpha0 + c
