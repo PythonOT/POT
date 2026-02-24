@@ -41,11 +41,6 @@ n_proj = 50
 thetas = get_random_projections(d, n_proj).T
 alpha = 0.3
 
-
-# proj_X = X @ thetas.T
-# proj_Y = Y @ thetas.T
-
-
 ##############################################################################
 # Compute min-Pivot Sliced permutation
 # ------------------------------------

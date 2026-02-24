@@ -3257,9 +3257,12 @@ class TensorflowBackend(Backend):
         sparse_tensor = tf.sparse.SparseTensor(
             indices=tnp.stack([rows, cols]).T, values=data, dense_shape=shape
         )
-        # if type_as is not None:
-        #     sparse_tensor = self.from_numpy(sparse_tensor, type_as=type_as)
-        # SparseTensor are not subscriptable so we use dense tensors
+        # avoid duplicate indices by summing them up
+        sparse_tensor = tf.sparse.reorder(sparse_tensor)
+        sparse_tensor = tf.sparse.reduce_sum(
+            tf.sparse.expand_dims(sparse_tensor, axis=0), axis=0
+        )
+
         return self.todense(sparse_tensor)
 
     def issparse(self, a):

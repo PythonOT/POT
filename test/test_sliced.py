@@ -16,6 +16,19 @@ from ot.backend import tf, torch
 from contextlib import nullcontext
 
 
+def test_env():
+    import sys
+
+    print(sys.executable)
+
+
+# def test_backend():
+#    import os
+#    print("DISABLE:", os.environ.get("POT_BACKEND_DISABLE_PYTORCH"))
+#    import torch
+#    print("TORCH:", torch.__version__)
+
+
 def test_get_random_projections():
     rng = np.random.RandomState(0)
     projections = get_random_projections(1000, 50, rng)
@@ -973,8 +986,10 @@ def test_sliced_plans_backends(nx):
     _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, dense=True, thetas=thetas)
     np.testing.assert_almost_equal(min_cost_b, min_cost)
 
-    # for sliced_plans
-    thetas = ot.sliced.get_random_projections(d, n_proj, seed=0, backend=nx).T
+    # for thetas
+    thetas_b = ot.sliced.get_random_projections(
+        d, n_proj, seed=0, backend=nx, type_as=x_b
+    ).T
 
     # test with the minkowski metric
-    ot.sliced.min_pivot_sliced(x, y, thetas=thetas, metric="minkowski")
+    ot.sliced.min_pivot_sliced(x_b, y_b, thetas=thetas_b, metric="minkowski")

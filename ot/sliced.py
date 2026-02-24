@@ -827,7 +827,7 @@ def sliced_plans(
                     )
                 else:
                     warnings.warn(
-                        "TensorFlow sparse indexing is limited, converting to dense"
+                        "TensorFlow multiple indexing is forbidden, converting to dense"
                     )
             plan_dense = [nx.todense(plan[k]) for k in range(n_proj)]
             idx_non_zeros = [nx.where(plan_dense[k] != 0) for k in range(n_proj)]
@@ -839,12 +839,22 @@ def sliced_plans(
                 for k in range(n_proj)
             ]
         else:
-            costs = [
-                nx.sum(dist(plan[k].row, plan[k].col) * plan[k].data)
-                for k in range(n_proj)
-            ]
+            if str(nx) == "torch":
+                plan = [plan[k].coalesce() for k in range(n_proj)]
+                costs = [
+                    nx.sum(
+                        dist(plan[k].indices()[0], plan[k].indices()[1])
+                        * plan[k].values()
+                    )
+                    for k in range(n_proj)
+                ]
+            else:
+                costs = [
+                    nx.sum(dist(plan[k].row, plan[k].col) * plan[k].data)
+                    for k in range(n_proj)
+                ]
 
-    if dense and not (str(nx) == "jax"):
+    if dense and str(nx) not in ["tf", "jax"]:
         plan = [nx.todense(plan[k]) for k in range(n_proj)]
     elif str(nx) in ["tf", "jax"]:
         if not is_perm:
@@ -954,7 +964,7 @@ def min_pivot_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = min_pivot_sliced(x, y, thetas)
+    >>> plan, cost = min_pivot_sliced(x, y, thetas=thetas)
     >>> plan
     [[0 0.5]
     [0.5 0]]
@@ -1009,11 +1019,8 @@ def min_pivot_sliced(
 
     if dense:
         plan = nx.todense(plan)
-    elif str(nx) == "jax":
-        warnings.warn(
-            "JAX does not support sparse matrices, converting to\
-        dense"
-        )
+    elif str(nx) in ["tf", "jax"]:
+        warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
         plan = nx.todense(plan)
 
     if log:
@@ -1064,8 +1071,8 @@ def expected_sliced(
         Source histogram (default is uniform weight)
     b : ndarray of float64, shape (m,), optional
         Target histogram (default is uniform weight)
-    thetas : torch.Tensor, optional
-        A tensor of shape (n_proj, d) representing the projection directions.
+    thetas : array-like, optional
+        An array-like of shape (n_proj, d) representing the projection directions.
         If None, random directions will be generated. Default is None.
     metric: str, optional (default='sqeuclidean')
         Metric to be used. Only works with either of the strings
@@ -1109,14 +1116,13 @@ def expected_sliced(
     >>> thetas=np.array([[1, 0], [0, 1]])
     >>> plan, cost = expected_sliced(x, y, thetas=thetas)
     >>> plan
-    [[0.25 0.25]
-    [0.25 0.25]]
+    [[0.25, 0.25],
+           [0.25, 0.25]]
     >>> cost
     2.625
     """
 
     X, Y = list_to_array(X, Y)
-
     if a is not None and b is not None and thetas is None:
         nx = get_backend(X, Y, a, b)
     elif a is not None and b is not None and thetas is not None:
@@ -1160,9 +1166,14 @@ def expected_sliced(
         weights = nx.ones(n_proj) / n_proj
 
     log_dict["weights"] = weights
-    weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
-    X_idx = nx.concatenate([G[i].row for i in range(len(G))])
-    Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
+    if str(nx) == "torch":
+        weights = nx.concatenate([G[i].values() * weights[i] for i in range(len(G))])
+        X_idx = nx.concatenate([G[i].indices()[0] for i in range(len(G))])
+        Y_idx = nx.concatenate([G[i].indices()[1] for i in range(len(G))])
+    else:
+        weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
+        X_idx = nx.concatenate([G[i].row for i in range(len(G))])
+        Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
     plan = nx.coo_matrix(weights, X_idx, Y_idx, shape=(n, m), type_as=weights)
 
     if beta == 0.0:  # otherwise already computed above

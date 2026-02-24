@@ -41,6 +41,7 @@ if tf:
 
 
 backend_list = get_backend_list()
+print(backend_list)
 
 
 @pytest.fixture(params=backend_list)
