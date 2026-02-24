@@ -50,7 +50,9 @@ def quantile_function(qs, cws, xs, idx_xs=None):
 
     idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
 
-    if idx_xs is not None:
+    if (
+        idx_xs is not None
+    ):  # returns the quantiles and their associated (reorederd) indices
         return nx.take_along_axis(xs, idx, axis=0), nx.take_along_axis(
             idx_xs, idx, axis=0
         )
@@ -139,19 +141,24 @@ def wasserstein_1d(
         u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
         v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
     else:
-        u_sorter = None
-        v_sorter = None
+        u_sorter = nx.arange(n)
+        v_sorter = nx.arange(m)
 
     u_cumweights = nx.cumsum(u_weights, 0)
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-    u_quantiles, u_quantiles_idx = quantile_function(
-        qs, u_cumweights, u_values, idx_xs=u_sorter
-    )
-    v_quantiles, v_quantiles_idx = quantile_function(
-        qs, v_cumweights, v_values, idx_xs=v_sorter
-    )
+    if return_plan:
+        u_quantiles, u_quantiles_idx = quantile_function(
+            qs, u_cumweights, u_values, idx_xs=u_sorter
+        )
+        v_quantiles, v_quantiles_idx = quantile_function(
+            qs, v_cumweights, v_values, idx_xs=v_sorter
+        )
+    else:
+        u_quantiles = quantile_function(qs, u_cumweights, u_values)
+        v_quantiles = quantile_function(qs, v_cumweights, v_values)
+
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)

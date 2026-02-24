@@ -840,13 +840,9 @@ def test_min_pivot_sliced():
     np.testing.assert_almost_equal(min_cost, 0.0)
 
     plan, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
-    print(plan)
-    print(plan.sum(0), plan.sum(1))
-    print(a, b)
 
     # result should be an upper-bound of W2 and relatively close
     w2 = ot.emd2(a, b, ot.dist(x, y))
-    print(ot.emd(a, b, ot.dist(x, y)))
     assert min_cost >= w2
     assert min_cost <= 1.5 * w2
 
