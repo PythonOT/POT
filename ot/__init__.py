@@ -44,6 +44,7 @@ from .lp import (
     emd2_lazy,
     emd_1d,
     emd2_1d,
+    emd_1d_dual_backprop,
     wasserstein_1d,
     binary_search_circle,
     wasserstein_circle,
@@ -51,7 +52,14 @@ from .lp import (
     linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
-from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
+from .unbalanced import (
+    sinkhorn_unbalanced,
+    barycenter_unbalanced,
+    sinkhorn_unbalanced2,
+    uot_1d,
+    unbalanced_sliced_ot,
+    sliced_unbalanced_ot,
+)
 from .da import sinkhorn_lpl1_mm
 from .sliced import (
     sliced_wasserstein_distance,
@@ -96,6 +104,8 @@ __all__ = [
     "toq",
     "gromov",
     "emd2_1d",
+    "emd_1d_dual",
+    "emd_1d_dual_backprop",
     "wasserstein_1d",
     "backend",
     "gaussian",
@@ -110,6 +120,9 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "uot_1d",
+    "unbalanced_sliced_ot",
+    "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",
