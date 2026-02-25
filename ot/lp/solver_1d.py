@@ -102,9 +102,10 @@ def wasserstein_1d(
     -------
     cost: float/array-like, shape (...)
         the batched EMD
-    plan: list of coo_matrix, optional
+    plan: list of dictionaries, optional
         if return_plan is True, returns the list of the optimal transport plans
-        between the two (batched) measures as a coo_matrix, default is False
+        as a list of dictionaries containing the rows, cols and data of the non-zero elements of the transportation matrix.
+        Default is False
 
     References
     ----------
@@ -167,15 +168,24 @@ def wasserstein_1d(
         u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
         v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
         plan = [
-            nx.coo_matrix(
-                delta[:, k],
-                u_quantiles_idx[:, k],
-                v_quantiles_idx[:, k],
-                shape=(n, m),
-                type_as=u_values,
-            )
+            {
+                "rows": u_quantiles_idx[:, k],
+                "cols": v_quantiles_idx[:, k],
+                "data": delta[:, k],
+            }
             for k in range(delta.shape[1])
         ]
+        # plan = [
+        #    nx.coo_matrix(
+        #        delta[:, k],
+        #        u_quantiles_idx[:, k],
+        #        v_quantiles_idx[:, k],
+        #        shape=(n, m),
+        #        type_as=u_values,
+        #    )
+        #    for k in range(delta.shape[1])
+        # ]
+
     if p == 1:
         w_1d = nx.sum(delta * diff_quantiles, axis=0)
     else:

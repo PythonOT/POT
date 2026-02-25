@@ -20,7 +20,15 @@ GitHub, clone, and develop on a branch. Steps:
    $ cd POT
    ```
 
-3. Install pre-commit hooks to ensure that your code is properly formatted:
+3. Install a recent version of Python. Using an isolated environment such as venv or conda allows you to install a specific version of POT.
+   For instance, for creating a conda environment with python 3.12 and for activating it:
+
+   ```bash
+   $ conda create -n dev-pot-env python=3.12
+   $ conda activate dev-pot-env
+   ```
+
+4. Install pre-commit hooks to ensure that your code is properly formatted:
 
    ```bash
    $ pip install pre-commit
@@ -29,26 +37,13 @@ GitHub, clone, and develop on a branch. Steps:
 
    This will install the pre-commit hooks that will run on every commit. If the hooks fail, the commit will be aborted.
 
-4. Create a `feature` branch to hold your development changes:
+5. Create a `feature` branch to hold your development changes:
 
    ```bash
    $ git checkout -b my-feature
    ```
 
    Always use a `feature` branch. It's good practice to never work on the `master` branch!
-
-5. Install a recent version of Python (e.g. 3.10), using conda for instance. You can create a conda environment and activate it:
-
-   ```bash
-   $ conda create -n dev-pot-env python=3.10
-   $ conda activate dev-pot-env
-   ```
-
-6. Install all the necessary packages in your environment:
-
-```bash
-$ pip install -r requirements_all.txt
-```
 
 6. Install a compiler with OpenMP support for your platform (see details on the [scikit-learn contributing guide](https://scikit-learn.org/stable/developers/advanced_installation.html#platform-specific-instructions)).
    For instance, with macOS, Apple clang does not support OpenMP. One can install the LLVM OpenMP library from homebrew:
@@ -69,6 +64,12 @@ $ pip install -r requirements_all.txt
    ```bash
    pip install -e .
    ```
+
+   If you want to install all dependencies, you can use
+
+```bash
+ pip install -e .[all]
+```
 
 8. Develop the feature on your feature branch. Add changed files using `git add` and then `git commit` files:
 

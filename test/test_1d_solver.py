@@ -321,7 +321,10 @@ def test_index_quantile_function(nx):
     np.testing.assert_allclose(nx.to_numpy(idx), np.arange(n))
 
 
-def test_wasserstein_1d_plan():
+@pytest.skip_backend("torch")
+@pytest.skip_backend("tf")
+@pytest.skip_backend("cupy")
+def test_wasserstein_1d_plan(nx):
     rng = np.random.RandomState(0)
 
     n = 10
@@ -337,6 +340,14 @@ def test_wasserstein_1d_plan():
     b /= b.sum()
 
     _, plan_1d = wasserstein_1d(x, y, a, b, p=2, return_plan=True)
-    plan_1d = plan_1d[0].toarray()
+    plan_1d = nx.todense(
+        nx.coo_matrix(
+            plan_1d[0]["data"],
+            plan_1d[0]["rows"],
+            plan_1d[0]["cols"],
+            shape=(x.shape[0], y.shape[0]),
+            type_as=x,
+        )
+    )
     plan_emd = ot.emd(a, b, ot.dist(x, y))
     np.testing.assert_allclose(plan_1d, plan_emd, atol=1e-05)

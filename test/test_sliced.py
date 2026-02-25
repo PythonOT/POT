@@ -915,7 +915,7 @@ def test_expected_sliced():
     # with a small temperature (i.e. large beta), the cost should be close
     # to min_pivot
     _, expected_cost = ot.sliced.expected_sliced(
-        x, y, a, b, thetas=thetas, dense=True, beta=100.0
+        x, y, a, b, thetas=thetas, dense=True, beta=1000.0
     )
     _, min_cost = ot.sliced.min_pivot_sliced(x, y, a, b, thetas=thetas, dense=True)
     np.testing.assert_almost_equal(expected_cost, min_cost, decimal=3)
@@ -961,21 +961,12 @@ def test_sliced_plans_backends(nx):
     ).T
     thetas = nx.to_numpy(thetas_b)
 
-    context = (
-        nullcontext()
-        if str(nx) not in ["tf", "jax"]
-        else pytest.raises(NotImplementedError)
+    _, expected_cost_b = ot.sliced.expected_sliced(
+        x_b, y_b, a_b, b_b, dense=True, thetas=thetas_b
     )
-
-    with context:
-        _, expected_cost_b = ot.sliced.expected_sliced(
-            x_b, y_b, a_b, b_b, dense=True, thetas=thetas_b
-        )
-        # result should be the same than numpy version
-        _, expected_cost = ot.sliced.expected_sliced(
-            x, y, a, b, dense=True, thetas=thetas
-        )
-        np.testing.assert_almost_equal(expected_cost_b, expected_cost)
+    # result should be the same than numpy version
+    _, expected_cost = ot.sliced.expected_sliced(x, y, a, b, dense=True, thetas=thetas)
+    np.testing.assert_almost_equal(expected_cost_b, expected_cost)
 
     # for min_pivot
     _, min_cost_b = ot.sliced.min_pivot_sliced(

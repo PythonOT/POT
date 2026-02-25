@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 from .backend import get_backend, NumpyBackend
-from .utils import list_to_array, get_coordinate_circle, dist
+from .utils import list_to_array, get_coordinate_circle, dist, sparse_ot_dist
 from .lp import (
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
@@ -746,6 +746,10 @@ def sliced_plans(
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
 
+    if str(nx) in ["tf", "jax"] and not dense:
+        dense = True
+        warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
+
     if metric == "euclidean":
         p = 2
     elif metric == "cityblock":
@@ -770,12 +774,6 @@ def sliced_plans(
     else:
         n_proj = thetas.shape[0]
 
-    def dist(i, j):
-        if metric == "sqeuclidean":
-            return nx.sum((X[i] - Y[j]) ** 2, axis=1)
-        else:
-            return nx.sum(nx.abs(X[i] - Y[j]) ** p, axis=1) ** (1 / p)
-
     # project on each theta: (n or m, d) -> (n or m, n_proj)
     X_theta = X @ thetas.T  # shape (n, n_proj)
     Y_theta = Y @ thetas.T  # shape (m, n_proj)
@@ -784,66 +782,30 @@ def sliced_plans(
         # sigma[:, i_proj] is a permutation sorting X_theta[:, i_proj]
         sigma = nx.argsort(X_theta, axis=0)  # (n, n_proj)
         tau = nx.argsort(Y_theta, axis=0)  # (m, n_proj)
-
-        costs = [nx.sum(dist(sigma[:, k], tau[:, k]) / n) for k in range(n_proj)]
-
-        a = nx.ones(n) / n
-        plan = [
-            nx.coo_matrix(a, sigma[:, k], tau[:, k], shape=(n, m), type_as=a)
+        costs = [
+            sparse_ot_dist(X, Y, sigma[:, k], tau[:, k], metric=metric, p=p)
             for k in range(n_proj)
         ]
-
+        a = nx.ones(n) / n
+        plan = [
+            {"rows": sigma[:, k], "cols": tau[:, k], "data": a} for k in range(n_proj)
+        ]
     else:  # we compute plans
         _, plan = wasserstein_1d(
             X_theta, Y_theta, a, b, p, require_sort=True, return_plan=True
         )
-
-        if str(nx) in ["tf", "jax"]:
-            if not dense:
-                if str(nx) == "jax":
-                    warnings.warn(
-                        "JAX does not support sparse matrices, converting to dense"
-                    )
-                else:
-                    warnings.warn(
-                        "TensorFlow multiple indexing is forbidden, converting to dense"
-                    )
-            plan_dense = [nx.todense(plan[k]) for k in range(n_proj)]
-            idx_non_zeros = [nx.where(plan_dense[k] != 0) for k in range(n_proj)]
-            costs = [
-                nx.sum(
-                    dist(idx_non_zeros[k][0], idx_non_zeros[k][1])
-                    * plan_dense[k][idx_non_zeros[k][0], idx_non_zeros[k][1]]
-                )
-                for k in range(n_proj)
-            ]
-        else:
-            if str(nx) == "torch":
-                plan = [plan[k].coalesce() for k in range(n_proj)]
-                costs = [
-                    nx.sum(
-                        dist(plan[k].indices()[0], plan[k].indices()[1])
-                        * plan[k].values()
-                    )
-                    for k in range(n_proj)
-                ]
-            else:
-                costs = [
-                    nx.sum(dist(plan[k].row, plan[k].col) * plan[k].data)
-                    for k in range(n_proj)
-                ]
-
-    if dense and str(nx) not in ["tf", "jax"]:
-        plan = [nx.todense(plan[k]) for k in range(n_proj)]
-    elif str(nx) in ["tf", "jax"]:
-        if not is_perm:
-            warnings.warn(
-                "JAX and tensorflow do not support well sparse "
-                "matrices, converting to dense"
+        costs = [
+            sparse_ot_dist(
+                X,
+                Y,
+                plan[k]["rows"],
+                plan[k]["cols"],
+                plan[k]["data"],
+                metric=metric,
+                p=p,
             )
-            plan = [nx.todense(plan[k]) for k in range(n_proj)]
-        else:
-            plan = plan_dense.copy()
+            for k in range(n_proj)
+        ]
 
     if log:
         log_dict = {"X_theta": X_theta, "Y_theta": Y_theta, "thetas": thetas}
@@ -867,7 +829,7 @@ def min_pivot_sliced(
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
-    Discrepancy (introduced as SWGG in [82] and studied further in [83]). Given
+    Discrepancy (introduced as SWGG in [83] and studied further in [84]). Given
     the supports `X` and `Y` of two discrete uniform measures with `n` and `m`
     atoms in dimension `d`, the min-Pivot Sliced Discrepancy goes through
     `n_proj` different projections of the measures on random directions, and
@@ -930,12 +892,12 @@ def min_pivot_sliced(
 
     References
     ----------
-    .. [82] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023).
+    .. [83] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023).
             Fast Optimal Transport through Sliced Generalized Wasserstein
             Geodesics. Advances in Neural Information Processing Systems, 36,
             35350–35385.
 
-    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+    .. [84] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
             Plans. arXiv preprint 2506.03661.
 
     Examples
@@ -969,6 +931,10 @@ def min_pivot_sliced(
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
 
+    if str(nx) in ["tf", "jax"] and not dense:
+        dense = True
+        warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
+
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
         X,
@@ -996,10 +962,16 @@ def min_pivot_sliced(
             "Y_min_theta": log_dict_plans["Y_theta"][:, pos_min],
         }
 
+    # get the plan from the indices of the non-zero entries of the sparse plan
+    plan = nx.coo_matrix(
+        plan["data"],
+        plan["rows"],
+        plan["cols"],
+        shape=(X.shape[0], Y.shape[0]),
+        type_as=X,
+    )
+
     if dense:
-        plan = nx.todense(plan)
-    elif str(nx) in ["tf", "jax"]:
-        warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
         plan = nx.todense(plan)
 
     if log:
@@ -1026,8 +998,8 @@ def expected_sliced(
     `Y` of shapes `(n, d)` and `(m, d)`. Given a set of `n_proj` projection
     directions, the expected sliced plan is obtained by averaging the `n_proj`
     1d optimal transport plans between the projections of `X` and `Y` on each
-    direction. Expected Sliced was introduced in [84] and further studied in
-    [83].
+    direction. Expected Sliced was introduced in [85] and further studied in
+    [84].
 
     .. note::
         The computation ignores potential ambiguities in the projections: if
@@ -1082,9 +1054,9 @@ def expected_sliced(
 
     References
     ----------
-    .. [83] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+    .. [84] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
             Plans. arXiv preprint 2506.03661.
-    .. [84] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
+    .. [85] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
             A., Kolouri, S. (2024). Expected Sliced Transport Plans.
             International Conference on Learning Representations.
 
@@ -1118,11 +1090,9 @@ def expected_sliced(
         X.shape[1] == Y.shape[1]
     ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
 
-    if str(nx) in ["tf", "jax"]:
-        raise NotImplementedError(
-            f"expected_sliced is not implemented for the {str(nx)} backend due"
-            "to array assignment."
-        )
+    if str(nx) in ["tf", "jax"] and not dense:
+        dense = True
+        warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
 
     n = X.shape[0]
     m = Y.shape[0]
@@ -1131,40 +1101,34 @@ def expected_sliced(
     G, costs, log_dict_plans = sliced_plans(
         X, Y, a, b, metric, p, thetas, n_proj=n_proj, log=True, dense=False
     )
-    if log:
-        log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}
 
     if beta != 0.0:  # computing the temperature weighting
         log_factors = -beta * list_to_array(costs)
         weights = nx.exp(log_factors - nx.logsumexp(log_factors))
         cost = nx.sum(list_to_array(costs) * weights)
-
     else:  # uniform weights
         if n_proj is None:
             n_proj = thetas.shape[0]
         weights = nx.ones(n_proj) / n_proj
 
-    log_dict["weights"] = weights
-    if str(nx) == "torch":
-        weights = nx.concatenate([G[i].values() * weights[i] for i in range(len(G))])
-        X_idx = nx.concatenate([G[i].indices()[0] for i in range(len(G))])
-        Y_idx = nx.concatenate([G[i].indices()[1] for i in range(len(G))])
-    else:
-        weights = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
-        X_idx = nx.concatenate([G[i].row for i in range(len(G))])
-        Y_idx = nx.concatenate([G[i].col for i in range(len(G))])
-    plan = nx.coo_matrix(weights, X_idx, Y_idx, shape=(n, m), type_as=weights)
+    weights_e = nx.concatenate([G[i]["data"] * weights[i] for i in range(len(G))])
+    X_idx = nx.concatenate([G[i]["rows"] for i in range(len(G))])
+    Y_idx = nx.concatenate([G[i]["cols"] for i in range(len(G))])
 
-    if beta == 0.0:  # otherwise already computed above
-        cost = plan.multiply(dist(X, Y, metric=metric, p=p)).sum()
+    plan = nx.coo_matrix(weights_e, X_idx, Y_idx, shape=(n, m), type_as=weights)
 
     if dense:
         plan = nx.todense(plan)
-    elif str(nx) == "jax":
-        warnings.warn("JAX does not support sparse matrices, converting to dense")
-        plan = nx.todense(plan)
+
+    if beta == 0.0:
+        if dense:
+            cost = nx.sum(plan * dist(X, Y, metric=metric, p=p))
+        else:
+            cost = plan.multiply(dist(X, Y, metric=metric, p=p)).sum()
 
     if log:
+        log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}
+        log_dict["weights"] = weights
         return plan, cost, log_dict
     else:
         return plan, cost
