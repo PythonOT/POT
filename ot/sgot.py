@@ -25,9 +25,7 @@ from ot.backend import get_backend
 #####################################################################################################################################
 
 
-def eigenvalue_cost_matrix(
-    Ds, Dt, q=1, real_scale: float = 1.0, imag_scale: float = 1.0, nx=None
-):
+def eigenvalue_cost_matrix(Ds, Dt, q=1, eigen_scaling=None, nx=None):
     """Compute pairwise eigenvalue distances for source and target domains.
 
     Parameters
@@ -36,10 +34,10 @@ def eigenvalue_cost_matrix(
         Source eigenvalues.
     Dt: array-like, shape (n_t,)
         Target eigenvalues.
-    real_scale: float, optional
-        Scale factor for real parts, default 1.0.
-    imag_scale: float, optional
-        Scale factor for imaginary parts, default 1.0.
+    eigen_scaling: None or array-like of length 2, optional
+        Scaling (real_scale, imag_scale) applied to eigenvalues before computing
+        distances. If None, defaults to (1.0, 1.0). Accepts tuple/list or
+        array/tensor with two entries.
 
     Returns
     ----------
@@ -49,47 +47,19 @@ def eigenvalue_cost_matrix(
     if nx is None:
         nx = get_backend(Ds, Dt)
 
+    if eigen_scaling is None:
+        real_scale, imag_scale = 1.0, 1.0
+    else:
+        if isinstance(eigen_scaling, (tuple, list)):
+            real_scale, imag_scale = eigen_scaling
+        else:
+            real_scale, imag_scale = eigen_scaling[0], eigen_scaling[1]
+
     Dsn = nx.real(Ds) * real_scale + 1j * nx.imag(Ds) * imag_scale
     Dtn = nx.real(Dt) * real_scale + 1j * nx.imag(Dt) * imag_scale
     prod = Dsn[:, None] - Dtn[None, :]
     prod = nx.real(prod * nx.conj(prod))
     return prod ** (q / 2)
-
-
-def ot_plan(C, Ws=None, Wt=None, nx=None):
-    """Compute the optimal transport plan for a given cost matrix and marginals.
-
-    Parameters
-    ----------
-    C: array-like, shape (n, m)
-        Cost matrix.
-    Ws: array-like, shape (n,), optional
-        Source distribution. If None, uses a uniform distribution.
-    Wt: array-like, shape (m,), optional
-        Target distribution. If None, uses a uniform distribution.
-
-    Returns
-    ----------
-    P: np.ndarray, shape (n, m)
-        Optimal transport plan.
-    """
-    if nx is None:
-        nx = get_backend(C)
-
-    n, m = C.shape
-
-    if Ws is None:
-        Ws = nx.ones((n,), type_as=C) / float(n)
-
-    if Wt is None:
-        Wt = nx.ones((m,), type_as=C) / float(m)
-
-    Ws = Ws / nx.sum(Ws)
-    Wt = Wt / nx.sum(Wt)
-
-    C_real = nx.real(C)
-
-    return ot.emd(Ws, Wt, C_real)
 
 
 def _normalize_columns(A, nx, eps=1e-12):
@@ -185,7 +155,11 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
     if grassman_metric == "procrustes":
         return 2.0 * (1.0 - delta)
     if grassman_metric == "martin":
-        return -nx.log(nx.clip(delta**2, eps, 1e300))
+        # Martin-type Grassmann metric: -log(delta^2) with lower clamp at eps.
+        # We deliberately avoid any upper threshold to stay close to the
+        # information-geometric interpretation in Germain et al. (2025).
+        delta2 = nx.maximum(delta**2, eps)
+        return -nx.log(delta2)
     raise ValueError(f"Unknown grassman_metric: {grassman_metric}")
 
 
@@ -194,7 +168,7 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
 ### SPECTRAL-GRASSMANNIAN WASSERSTEIN METRIC ###
 #####################################################################################################################################
 #####################################################################################################################################
-def cost(
+def sgot_cost_matrix(
     Ds,
     Rs,
     Ls,
@@ -205,11 +179,50 @@ def cost(
     p=2,
     q=1,
     grassman_metric="chordal",
-    real_scale=1.0,
-    imag_scale=1.0,
+    eigen_scaling=None,
     nx=None,
 ):
-    """Compute the SGOT cost matrix between two spectral decompositions.
+    r"""Compute the SGOT cost matrix between two spectral decompositions.
+
+    This returns the discrete ground cost matrix used in the SGOT optimal transport
+    objective. Each spectral atom is :math:`z_i=(\lambda_i, V_i)` where
+    :math:`\lambda_i \in \mathbb{C}` is an eigenvalue and :math:`V_i` is the
+    associated (bi-orthogonal) eigenspace point.
+
+    .. math::
+        C_2(i,j) \;=\; \eta\,C_\lambda(i,j) \;+\; (1-\eta)\,C_G(i,j),
+
+    with spectral term
+
+    .. math::
+        C_\lambda(i,j) \;=\; \big|\lambda_i - \lambda'_j\big|^{q},
+
+    and Grassmann term computed from a similarity score :math:`\delta_{ij}\in[0,1]`
+    built from left/right eigenvectors
+
+    .. math::
+        \delta_{ij} \;=\; \left|\langle r_i, r'_j\rangle\,\langle \ell_i, \ell'_j\rangle\right|.
+
+    Depending on ``grassman_metric``, the Grassmann contribution is:
+
+    - ``"chordal"``:
+    .. math::
+        C_G(i,j) \;=\; 1 - \delta_{ij}^2
+    - ``"geodesic"``:
+    .. math::
+        C_G(i,j) \;=\; \arccos(\delta_{ij})^2
+    - ``"procrustes"``:
+    .. math::
+        C_G(i,j) \;=\; 2(1-\delta_{ij})
+    - ``"martin"``:
+    .. math::
+        C_G(i,j) \;=\; -\log\!\left(\max(\delta_{ij}^2,\varepsilon)\right)
+
+    Finally, we return a matrix suited for a :math:`p`-Wasserstein objective by
+    treating :math:`C_2 \approx d^2` and outputting
+
+    .. math::
+        C(i,j) \;=\; \big(\operatorname{Re}(C_2(i,j))\big)^{p/2}.
 
     Parameters
     ----------
@@ -228,69 +241,75 @@ def cost(
     eta: float, optional
         Weighting between spectral and Grassmann terms, default 0.5.
     p: int, optional
-        Power for the OT cost, default 2.
+        Exponent defining the OT ground cost. The returned cost is :math:`d^p` with
+        :math:`d^2 \approx C_2`. Default is 2.
+    q: int, optional
+        Exponent applied to the eigenvalue distance in the spectral term.
+        Default is 1.
     grassman_metric: str, optional
         Metric type: "geodesic", "chordal", "procrustes", or "martin".
-    real_scale: float, optional
-        Scale factor for real parts, default 1.0.
-    imag_scale: float, optional
-        Scale factor for imaginary parts, default 1.0.
+    eigen_scaling: None or array-like of length 2, optional
+        Scaling ``(real_scale, imag_scale)`` applied to eigenvalues before computing
+        :math:`C_\lambda`. If provided, eigenvalues are transformed as
+        :math:`\lambda \mapsto \alpha\operatorname{Re}(\lambda) + i\,\beta\operatorname{Im}(\lambda)`.
+        If None, defaults to ``(1.0, 1.0)``. Accepts tuple/list or array/tensor with
+        two entries.
+    nx: module, optional
+        Backend (NumPy-compatible). If None, inferred from inputs.
 
     Returns
     ----------
     C: array-like, shape (n_s, n_t)
-        SGOT cost matrix.
+        SGOT cost matrix :math:`C = d^p`.
+
+    References
+    ----------
+    Germain et al., *Spectral-Grassmann Optimal Transport* (SGOT).
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
 
-    if Ds.ndim != 1:
-        raise ValueError(f"cost() expects Ds to be 1D (n,), got shape {Ds.shape}")
-    lam1 = Ds
-
-    if Dt.ndim != 1:
-        raise ValueError(f"cost() expects Dt to be 1D (n,), got shape {Dt.shape}")
-    lam2 = Dt
-
-    lam1 = nx.astype(lam1, "complex128")
-    lam2 = nx.astype(lam2, "complex128")
-
-    if Rs.shape != Ls.shape:
+    if Ds.ndim != 1 or Dt.ndim != 1:
         raise ValueError(
-            f"Rs and Ls must have the same shape, got {Rs.shape} and {Ls.shape}"
+            f"sgot_cost_matrix() expects Ds, Dt 1D; got Ds {getattr(Ds,'shape',None)}, Dt {getattr(Dt,'shape',None)}"
         )
 
-    if Rt.shape != Lt.shape:
+    if Rs.shape != Ls.shape or Rt.shape != Lt.shape:
         raise ValueError(
-            f"Rt and Lt must have the same shape, got {Rt.shape} and {Lt.shape}"
+            f"Right/left eigenvector shapes must match; got (Rs,Ls)=({Rs.shape},{Ls.shape}), (Rt,Lt)=({Rt.shape},{Lt.shape})"
         )
 
-    if Rs.shape[1] != lam1.shape[0]:
+    if Rs.shape[1] != Ds.shape[0] or Rt.shape[1] != Dt.shape[0]:
         raise ValueError(
-            f"Number of source eigenvectors ({Rs.shape[1]}) must match "
-            f"number of source eigenvalues ({lam1.shape[0]})"
+            f"Eigenvectors columns must match eigenvalues: Rs {Rs.shape[1]} vs Ds {Ds.shape[0]}, "
+            f"Rt {Rt.shape[1]} vs Dt {Dt.shape[0]}"
         )
 
-    if Rt.shape[1] != lam2.shape[0]:
-        raise ValueError(
-            f"Number of target eigenvectors ({Rt.shape[1]}) must match "
-            f"number of target eigenvalues ({lam2.shape[0]})"
-        )
-
-    C_lambda = eigenvalue_cost_matrix(
-        lam1, lam2, q=q, real_scale=real_scale, imag_scale=imag_scale, nx=nx
-    )
+    C_lambda = eigenvalue_cost_matrix(Ds, Dt, q=q, eigen_scaling=eigen_scaling, nx=nx)
 
     delta = _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=nx)
     C_grass = _grassmann_distance_squared(delta, grassman_metric=grassman_metric, nx=nx)
 
     C2 = eta * C_lambda + (1.0 - eta) * C_grass
-    C = C2 ** (p / 2.0)
+    C = nx.real(C2) ** (p / 2.0)
 
     return C
 
 
-def metric(
+def _validate_sgot_metric_inputs(Ds, Dt):
+    """Validate that eigenvalue inputs for SGOT metric are 1D."""
+    Ds_shape = getattr(Ds, "shape", None)
+    Dt_shape = getattr(Dt, "shape", None)
+    Ds_ndim = getattr(Ds, "ndim", None)
+    Dt_ndim = getattr(Dt, "ndim", None)
+    if Ds_ndim != 1 or Dt_ndim != 1:
+        raise ValueError(
+            "sgot_metric() expects Ds and Dt to be 1D (n,), "
+            f"got Ds shape {Ds_shape} and Dt shape {Dt_shape}"
+        )
+
+
+def sgot_metric(
     Ds,
     Rs,
     Ls,
@@ -302,13 +321,30 @@ def metric(
     q=1,
     r=2,
     grassman_metric="chordal",
-    real_scale=1.0,
-    imag_scale=1.0,
+    eigen_scaling=None,
     Ws=None,
     Wt=None,
     nx=None,
 ):
-    """Compute the SGOT metric between two spectral decompositions.
+    r"""Compute the SGOT metric between two spectral decompositions.
+
+    This function computes a discrete optimal transport problem between two measures
+    over spectral atoms :math:`z_i=(\lambda_i, V_i)` and :math:`z'_j=(\lambda'_j, V'_j)`.
+    Using the ground cost matrix :math:`C=d^p` returned by :func:`sgot_cost_matrix`,
+    we solve:
+
+    .. math::
+        P^\star \in \arg\min_{P\in\Pi(W_s, W_t)} \langle C, P\rangle,
+
+    and compute the associated :math:`p`-Wasserstein objective:
+
+    .. math::
+        \mathrm{obj} \;=\; \left(\sum_{i,j} C(i,j)\,P^\star_{ij}\right)^{1/p}.
+
+    This implementation returns an additional outer root:
+
+    .. math::
+        \mathrm{SGOT} \;=\; \mathrm{obj}^{1/r}.
 
     Parameters
     ----------
@@ -327,38 +363,41 @@ def metric(
     eta: float, optional
         Weighting between spectral and Grassmann terms, default 0.5.
     p: int, optional
-        Exponent defining the OT ground cost and Wasserstein order. The cost matrix is raised to the power p/2 and the OT objective
-        is raised to the power 1/p. Default is 2.
+        Exponent defining the OT ground cost and Wasserstein order. The cost matrix
+        is :math:`d^p` and the OT objective is raised to the power :math:`1/p`.
+        Default is 2.
     q: int, optional
-        Exponent applied to the eigenvalue distance in the spectral term. Controls the geometry of the eigenvalue cost matrix.
+        Exponent applied to the eigenvalue distance in the spectral term.
         Default is 1.
     r: int, optional
         Outer root applied to the Wasserstein objective. Default is 2.
     grassman_metric: str, optional
         Metric type: "geodesic", "chordal", "procrustes", or "martin".
-    real_scale: float, optional
-        Scale factor for real parts, default 1.0.
-    imag_scale: float, optional
-        Scale factor for imaginary parts, default 1.0.
+    eigen_scaling: None or array-like of length 2, optional
+        Scaling ``(real_scale, imag_scale)`` applied to eigenvalues before computing
+        the spectral part of the cost. If None, defaults to ``(1.0, 1.0)``.
     Ws: array-like, shape (n_s,), optional
         Source distribution. If None, uses a uniform distribution.
     Wt: array-like, shape (n_t,), optional
         Target distribution. If None, uses a uniform distribution.
+    nx: module, optional
+        Backend (NumPy-compatible). If None, inferred from inputs.
 
     Returns
     ----------
     dist: float
         SGOT metric value.
+
+    References
+    ----------
+    Germain et al., *Spectral-Grassmann Optimal Transport* (SGOT).
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
 
-    if Ds.ndim != 1:
-        raise ValueError(f"metric() expects Ds to be 1D (n,), got shape {Ds.shape}")
-    if Dt.ndim != 1:
-        raise ValueError(f"metric() expects Dt to be 1D (n,), got shape {Dt.shape}")
+    _validate_sgot_metric_inputs(Ds, Dt)
 
-    C = cost(
+    C = sgot_cost_matrix(
         Ds,
         Rs,
         Ls,
@@ -369,11 +408,18 @@ def metric(
         p=p,
         q=q,
         grassman_metric=grassman_metric,
-        real_scale=real_scale,
-        imag_scale=imag_scale,
+        eigen_scaling=eigen_scaling,
         nx=nx,
     )
 
-    P = ot_plan(C, Ws=Ws, Wt=Wt, nx=nx)
+    if Ws is None:
+        Ws = nx.ones((C.shape[0],), type_as=C) / float(C.shape[0])
+    if Wt is None:
+        Wt = nx.ones((C.shape[1],), type_as=C) / float(C.shape[1])
+
+    Ws = Ws / nx.sum(Ws)
+    Wt = Wt / nx.sum(Wt)
+
+    P = ot.emd2(Ws, Wt, nx.real(C))
     obj = float(nx.sum(C * P) ** (1.0 / p))
-    return float(obj) ** (1.0 / float(r))
+    return obj ** (1.0 / float(r))

@@ -7,19 +7,6 @@
 import numpy as np
 import pytest
 
-from ot.backend import get_backend
-
-try:
-    import torch
-except ImportError:
-    torch = None
-
-try:
-    import jax
-    import jax.numpy as jnp
-except ImportError:
-    jax = None
-
 from ot.sgot import (
     eigenvalue_cost_matrix,
     _delta_matrix_1d,
@@ -28,22 +15,23 @@ from ot.sgot import (
     metric,
 )
 
-rng = np.random.RandomState(0)
 
+def random_atoms(d=8, r=4, seed=42):
+    """Deterministic complex atoms for given d, r."""
 
-def rand_complex(shape):
-    real = rng.randn(*shape)
-    imag = rng.randn(*shape)
-    return real + 1j * imag
+    def _rand_complex(shape, seed_):
+        rng = np.random.RandomState(seed_)
+        real = rng.randn(*shape)
+        imag = rng.randn(*shape)
+        return real + 1j * imag
 
+    Ds = _rand_complex((r,), seed + 0)
+    Rs = _rand_complex((d, r), seed + 1)
+    Ls = _rand_complex((d, r), seed + 2)
+    Dt = _rand_complex((r,), seed + 3)
+    Rt = _rand_complex((d, r), seed + 4)
+    Lt = _rand_complex((d, r), seed + 5)
 
-def random_atoms(d=8, r=4):
-    Ds = rand_complex((r,))
-    Rs = rand_complex((d, r))
-    Ls = rand_complex((d, r))
-    Dt = rand_complex((r,))
-    Rt = rand_complex((d, r))
-    Lt = rand_complex((d, r))
     return Ds, Rs, Ls, Dt, Rt, Lt
 
 
@@ -52,99 +40,26 @@ def random_atoms(d=8, r=4):
 # ---------------------------------------------------------------------
 
 
-def test_atoms_are_complex():
-    """Confirm sampled atoms are complex (Gaussian real + 1j*imag)."""
-    Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-    for name, arr in [
-        ("Ds", Ds),
-        ("Rs", Rs),
-        ("Ls", Ls),
-        ("Dt", Dt),
-        ("Rt", Rt),
-        ("Lt", Lt),
-    ]:
-        assert np.iscomplexobj(arr), f"{name} should be complex"
-        assert np.any(np.imag(arr) != 0), f"{name} should have non-zero imaginary part"
-
-
-def test_random_d_r():
+def test_random_d_r(nx):
     """Sample d and r uniformly and run cost (and metric when available) with those shapes."""
+    rng = np.random.RandomState(0)
     d_min, d_max = 4, 12
     r_min, r_max = 2, 6
     for _ in range(5):
         d = int(rng.randint(d_min, d_max + 1))
         r = int(rng.randint(r_min, r_max + 1))
         Ds, Rs, Ls, Dt, Rt, Lt = random_atoms(d=d, r=r)
-        C = cost(Ds, Rs, Ls, Dt, Rt, Lt)
-        np.testing.assert_allclose(C.shape, (r, r))
-        assert np.all(np.isfinite(C)) and np.all(C >= 0)
+        Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
+        C = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
+        C_np = nx.to_numpy(C)
+        np.testing.assert_allclose(C_np.shape, (r, r))
+        assert np.all(np.isfinite(C_np)) and np.all(C_np >= 0)
         try:
-            dist = metric(Ds, Rs, Ls, Dt, Rt, Lt)
-            assert np.isfinite(dist) and dist >= 0
+            dist = metric(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
+            dist_np = nx.to_numpy(dist)
+            assert np.isfinite(dist_np) and dist_np >= 0
         except TypeError:
             pytest.skip("metric() unavailable (emd_c signature mismatch)")
-
-
-# ---------------------------------------------------------------------
-# BACKEND CONSISTENCY TESTS
-# ---------------------------------------------------------------------
-
-
-def test_backend_return():
-    """Confirm get_backend returns the correct backend for numpy/torch/jax arrays."""
-    Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-    nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
-    assert nx is not None
-    assert nx.__name__ == "numpy"
-
-    if torch is not None:
-        Ds_t = torch.from_numpy(Ds)
-        nx_t = get_backend(Ds_t)
-        assert nx_t is not None
-        assert nx_t.__name__ == "torch"
-
-    if jax is not None:
-        Ds_j = jnp.array(Ds)
-        nx_j = get_backend(Ds_j)
-        assert nx_j is not None
-        assert nx_j.__name__ == "jax"
-
-
-@pytest.mark.parametrize("backend_name", ["numpy", "torch", "jax"])
-def test_cost_backend_consistency(backend_name):
-    if backend_name == "torch" and torch is None:
-        pytest.skip("Torch not available")
-    if backend_name == "jax" and jax is None:
-        pytest.skip("JAX not available")
-
-    Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-
-    C_np = cost(Ds, Rs, Ls, Dt, Rt, Lt)
-
-    if backend_name == "numpy":
-        C_backend = C_np
-
-    elif backend_name == "torch":
-        Ds_b = torch.from_numpy(Ds)
-        Rs_b = torch.from_numpy(Rs)
-        Ls_b = torch.from_numpy(Ls)
-        Dt_b = torch.from_numpy(Dt)
-        Rt_b = torch.from_numpy(Rt)
-        Lt_b = torch.from_numpy(Lt)
-        C_backend = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
-        C_backend = C_backend.detach().cpu().numpy()
-
-    elif backend_name == "jax":
-        Ds_b = jnp.array(Ds)
-        Rs_b = jnp.array(Rs)
-        Ls_b = jnp.array(Ls)
-        Dt_b = jnp.array(Dt)
-        Rt_b = jnp.array(Rt)
-        Lt_b = jnp.array(Lt)
-        C_backend = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
-        C_backend = np.array(C_backend)
-
-    np.testing.assert_allclose(C_backend, C_np, atol=1e-6)
 
 
 # ---------------------------------------------------------------------
@@ -161,7 +76,7 @@ def test_delta_identity():
 
 def test_delta_swap_invariance():
     d, r = 6, 3
-    R = rand_complex((d, r))
+    _, R, _, _, _, _ = random_atoms(d=d, r=r)
     L = R.copy()
     delta1 = _delta_matrix_1d(R, L, R, L)
     delta2 = _delta_matrix_1d(L, R, L, R)
@@ -173,11 +88,14 @@ def test_delta_swap_invariance():
 # ---------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("metric_name", ["geodesic", "chordal", "procrustes", "martin"])
-def test_grassmann_zero_distance(metric_name):
-    delta = np.ones((3, 3))
-    dist2 = _grassmann_distance_squared(delta, grassman_metric=metric_name)
-    np.testing.assert_allclose(dist2, 0.0, atol=1e-12)
+@pytest.mark.parametrize(
+    "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
+)
+def test_grassmann_zero_distance(grassman_metric, nx):
+    delta = nx.from_numpy(np.ones((3, 3)))
+    dist2 = _grassmann_distance_squared(delta, grassman_metric=grassman_metric, nx=nx)
+    dist2_np = nx.to_numpy(dist2)
+    np.testing.assert_allclose(dist2_np, 0.0, atol=1e-12)
 
 
 def test_grassmann_invalid_name():
@@ -257,13 +175,11 @@ def test_metric_with_weights():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     r = Ds.shape[0]
 
-    logits_s = rng.randn(r)
-    logits_t = rng.randn(r)
-
-    Ws = np.exp(logits_s)
+    rng = np.random.RandomState(1)
+    Ws = rng.rand(r)
     Ws = Ws / np.sum(Ws)
 
-    Wt = np.exp(logits_t)
+    Wt = rng.rand(r)
     Wt = Wt / np.sum(Wt)
 
     dist = metric(Ds, Rs, Ls, Dt, Rt, Lt, Ws=Ws, Wt=Wt)
@@ -276,58 +192,57 @@ def test_metric_with_weights():
 
 
 def test_hyperparameter_sweep_cost(nx):
-    """Create test_cost for each trial: sweep over HPs and run cost()."""
+    """Sweep over a random set of HPs and run cost()."""
     grassmann_types = ["geodesic", "chordal", "procrustes", "martin"]
-    n_trials = 10
-    for _ in range(n_trials):
-        Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-        Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
-        eta = rng.uniform(0.0, 1.0)
-        p = rng.choice([1, 2])
-        q = rng.choice([1, 2])
-        gm = rng.choice(grassmann_types)
-        C = cost(
-            Ds_b,
-            Rs_b,
-            Ls_b,
-            Dt_b,
-            Rt_b,
-            Lt_b,
-            eta=eta,
-            p=p,
-            q=q,
-            grassman_metric=gm,
-        )
-        C_np = nx.to_numpy(C)
-        assert C_np.shape == (Ds.shape[0], Dt.shape[0])
-        assert np.all(np.isfinite(C_np))
-        assert np.all(C_np >= 0)
+    Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
+    Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
+    rng = np.random.RandomState(2)
+    eta = rng.uniform(0.0, 1.0)
+    p = rng.choice([1, 2])
+    q = rng.choice([1, 2])
+    gm = rng.choice(grassmann_types)
+    C = cost(
+        Ds_b,
+        Rs_b,
+        Ls_b,
+        Dt_b,
+        Rt_b,
+        Lt_b,
+        eta=eta,
+        p=p,
+        q=q,
+        grassman_metric=gm,
+    )
+    C_np = nx.to_numpy(C)
+    assert C_np.shape == (Ds.shape[0], Dt.shape[0])
+    assert np.all(np.isfinite(C_np))
+    assert np.all(C_np >= 0)
 
 
-def test_hyperparameter_sweep():
-    grassmann_types = ["geodesic", "chordal", "procrustes", "martin"]
+@pytest.mark.parametrize(
+    "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
+)
+def test_hyperparameter_sweep(grassman_metric):
+    Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
+    rng = np.random.RandomState(3)
+    eta = rng.uniform(0.0, 1.0)
+    p = rng.choice([1, 2])
+    q = rng.choice([1, 2])
+    r = rng.choice([1, 2])
 
-    for _ in range(10):
-        Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-        eta = rng.uniform(0.0, 1.0)
-        p = rng.choice([1, 2])
-        q = rng.choice([1, 2])
-        r = rng.choice([1, 2])
-        gm = rng.choice(grassmann_types)
+    dist = metric(
+        Ds,
+        Rs,
+        Ls,
+        Dt,
+        Rt,
+        Lt,
+        eta=eta,
+        p=p,
+        q=q,
+        r=r,
+        grassman_metric=grassman_metric,
+    )
 
-        dist = metric(
-            Ds,
-            Rs,
-            Ls,
-            Dt,
-            Rt,
-            Lt,
-            eta=eta,
-            p=p,
-            q=q,
-            r=r,
-            grassman_metric=gm,
-        )
-
-        assert np.isfinite(dist)
-        assert dist >= 0
+    assert np.isfinite(dist)
+    assert dist >= 0

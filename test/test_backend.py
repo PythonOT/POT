@@ -730,22 +730,19 @@ def test_func_backends(nx):
         A = nx.real(M_complex_b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("real")
+
         A = nx.imag(M_complex_b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("imag")
+
         A = nx.conj(M_complex_b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("conj")
+
         v_acos_b = nx.from_numpy(v_acos)
         A = nx.arccos(v_acos_b)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("arccos")
-        A = nx.astype(Mb, "float64")
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append("astype float64")
-        A = nx.astype(vb, "complex128")
-        lst_b.append(nx.to_numpy(A))
-        lst_name.append("astype complex128")
 
         A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
