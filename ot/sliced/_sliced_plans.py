@@ -450,7 +450,7 @@ def expected_sliced(
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
-        X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=log
+        X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=True
     )
 
     if beta != 0.0:  # computing the temperature weighting
