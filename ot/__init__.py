@@ -5,7 +5,7 @@
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
-    , :py:mod:`ot.unbalanced`, :py:mod:`ot.mapping` .
+    , :py:mod:`ot.unbalanced`, :py:mod:`ot.sliced`, :py:mod:`ot.mapping` .
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.plot` : depends on :code:`matplotlib`
@@ -27,6 +27,7 @@ from . import gromov
 from . import smooth
 from . import stochastic
 from . import unbalanced
+from . import sliced
 from . import partial
 from . import backend
 from . import regpath
@@ -101,6 +102,7 @@ __all__ = [
     "datasets",
     "bregman",
     "lp",
+    "sliced",
     "tic",
     "toc",
     "toq",
@@ -154,6 +156,7 @@ __all__ = [
     "semidiscrete_wasserstein2_unif_circle",
     "linear_circular_ot",
     "sliced_wasserstein_sphere_unif",
+    "sliced_wasserstein_sphere",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",
     "solve_batch",

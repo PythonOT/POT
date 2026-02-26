@@ -784,7 +784,7 @@ def test_sliced_plans():
     thetas = ot.sliced.get_random_projections(d, n_proj, seed=0).T
 
     # test with a and b not uniform
-    ot.sliced.sliced_plans(x, y, a, b, thetas=thetas, dense=True)
+    ot.sliced.sliced_plans(x, y, a, b, thetas=thetas)
 
     # test with the minkowski metric
     ot.sliced.sliced_plans(x, y, thetas=thetas, metric="minkowski")
