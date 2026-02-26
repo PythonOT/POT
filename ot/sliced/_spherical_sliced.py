@@ -71,6 +71,7 @@ def sliced_wasserstein_sphere(
     Examples
     --------
     >>> import ot
+    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
@@ -157,6 +158,7 @@ def sliced_wasserstein_sphere_unif(
     Examples
     ---------
     >>> import ot
+    >>> import numpy as np
     >>> np.random.seed(42)
     >>> x0 = np.random.randn(500,3)
     >>> x0 = x0 / np.sqrt(np.sum(x0**2, -1, keepdims=True))
@@ -243,6 +245,7 @@ def linear_sliced_wasserstein_sphere(
     Examples
     ---------
     >>> import ot
+    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))

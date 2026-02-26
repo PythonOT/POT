@@ -250,6 +250,7 @@ def min_pivot_sliced(
     Examples
     --------
     >>> import ot
+    >>> import numpy as np
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
@@ -411,6 +412,7 @@ def expected_sliced(
     Examples
     --------
     >>> import ot
+    >>> import numpy as np
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
@@ -448,7 +450,7 @@ def expected_sliced(
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
-        X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=True
+        X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=log
     )
 
     if beta != 0.0:  # computing the temperature weighting
