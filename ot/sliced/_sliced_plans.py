@@ -15,6 +15,7 @@ from ..backend import get_backend
 from ..utils import list_to_array, sparse_ot_dist, dist
 from ._utils import get_random_projections
 from ..lp import wasserstein_1d
+from collections import namedtuple
 
 
 def sliced_plans(
@@ -134,20 +135,26 @@ def sliced_plans(
             for k in range(n_proj)
         ]
         a = nx.ones(n) / n
+        PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
         plan = [
-            {"rows": sigma[:, k], "cols": tau[:, k], "data": a} for k in range(n_proj)
+            PlanTuple(
+                data=a,
+                rows=sigma[:, k],
+                cols=tau[:, k],
+            )
+            for k in range(n_proj)
         ]
     else:  # we compute plans
         _, plan = wasserstein_1d(
-            Xs_theta, Xt_theta, a, b, p, require_sort=True, return_plan=True
+            Xs_theta, Xt_theta, a, b, p, require_sort=True, return_plan="coo_tuple"
         )
         costs = [
             sparse_ot_dist(
                 X_s,
                 X_t,
-                plan[k]["rows"],
-                plan[k]["cols"],
-                plan[k]["data"],
+                plan[k].rows,
+                plan[k].cols,
+                plan[k].data,
                 metric=metric,
                 p=p,
             )
@@ -315,9 +322,9 @@ def min_pivot_sliced(
 
     # get the plan from the indices of the non-zero entries of the sparse plan
     plan = nx.coo_matrix(
-        plan["data"],
-        plan["rows"],
-        plan["cols"],
+        plan.data,
+        plan.rows,
+        plan.cols,
         shape=(X_s.shape[0], X_t.shape[0]),
         type_as=X_s,
     )
@@ -463,9 +470,9 @@ def expected_sliced(
             n_proj = thetas.shape[0]
         weights = nx.ones(n_proj) / n_proj
 
-    weights_e = nx.concatenate([G[i]["data"] * weights[i] for i in range(len(G))])
-    Xs_idx = nx.concatenate([G[i]["rows"] for i in range(len(G))])
-    Xt_idx = nx.concatenate([G[i]["cols"] for i in range(len(G))])
+    weights_e = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
+    Xs_idx = nx.concatenate([G[i].rows for i in range(len(G))])
+    Xt_idx = nx.concatenate([G[i].cols for i in range(len(G))])
 
     plan = nx.coo_matrix(weights_e, Xs_idx, Xt_idx, shape=(n, m), type_as=weights)
 

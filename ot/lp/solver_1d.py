@@ -17,6 +17,7 @@ from .emd_wrap import emd_1d_sorted
 from ..backend import get_backend
 from ..utils import list_to_array
 from ._network_simplex import center_ot_dual
+from collections import namedtuple
 
 
 def quantile_function(qs, cws, xs, return_index=False):
@@ -95,17 +96,23 @@ def wasserstein_1d(
     require_sort: bool, optional
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
-    return_plan: bool, optional
+    return_plan: True, False or "coo_tuple", optional
         if True, returns also the optimal transport plan between the two
-        (batched) measures as a coo_matrix, default is False
+        (batched) measures as a coo_matrix, default is False.
+        if "coo_tuple", returns the optimal transport plan as a tuple of
+        (data, rows, cols) of the non-zero elements of the transportation matrix.
+        This is useful for backends that do not support well sparse matrices (e.g. JAX,
+        Tensorflow).
+
     Returns
     -------
     cost: float/array-like, shape (...)
         the batched EMD
-    plan: list of dictionaries, optional
-        if return_plan is True, returns the list of the optimal transport plans
-        as a list of dictionaries containing the rows, cols and data of the non-zero elements of the transportation matrix.
-        Default is False
+    plan: coo_matrix or namedTuple, optional
+        if return_plan is True, returns a (list of) coo_matrix containing the plan.
+        if return_plan is "coo_tuple", returns the plan as a (list of) namedTuple
+        containing the data, rows and cols of the non-zero elements of the
+        transportation matrix.
 
     References
     ----------
@@ -164,27 +171,30 @@ def wasserstein_1d(
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
-    if return_plan:
+    if return_plan is not False:
         u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
         v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
-        plan = [
-            {
-                "rows": u_quantiles_idx[:, k],
-                "cols": v_quantiles_idx[:, k],
-                "data": delta[:, k],
-            }
-            for k in range(delta.shape[1])
-        ]
-        # plan = [
-        #    nx.coo_matrix(
-        #        delta[:, k],
-        #        u_quantiles_idx[:, k],
-        #        v_quantiles_idx[:, k],
-        #        shape=(n, m),
-        #        type_as=u_values,
-        #    )
-        #    for k in range(delta.shape[1])
-        # ]
+        if return_plan == "coo_tuple":
+            PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
+            plan = [
+                PlanTuple(
+                    data=delta[:, k],
+                    rows=u_quantiles_idx[:, k],
+                    cols=v_quantiles_idx[:, k],
+                )
+                for k in range(delta.shape[1])
+            ]
+        else:
+            plan = [
+                nx.coo_matrix(
+                    delta[:, k],
+                    u_quantiles_idx[:, k],
+                    v_quantiles_idx[:, k],
+                    shape=(n, m),
+                    type_as=u_values,
+                )
+                for k in range(delta.shape[1])
+            ]
 
     if p == 1:
         w_1d = nx.sum(delta * diff_quantiles, axis=0)
@@ -194,16 +204,6 @@ def wasserstein_1d(
         return w_1d, plan
     else:
         return w_1d
-
-    # u_quantiles = quantile_function(qs, u_cumweights, u_values)
-    # v_quantiles = quantile_function(qs, v_cumweights, v_values)
-    # qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
-    # delta = qs[1:, ...] - qs[:-1, ...]
-    # diff_quantiles = nx.abs(u_quantiles - v_quantiles)
-
-    # if p == 1:
-    #    return nx.sum(delta * diff_quantiles, axis=0)
-    # return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
 
 
 def emd_1d(
