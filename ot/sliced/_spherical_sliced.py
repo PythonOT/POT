@@ -70,10 +70,11 @@ def sliced_wasserstein_sphere(
 
     Examples
     --------
+    >>> import ot
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
-    >>> sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    >>> ot.sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
 
     References
@@ -155,11 +156,12 @@ def sliced_wasserstein_sphere_unif(
 
     Examples
     ---------
+    >>> import ot
     >>> np.random.seed(42)
     >>> x0 = np.random.randn(500,3)
     >>> x0 = x0 / np.sqrt(np.sum(x0**2, -1, keepdims=True))
-    >>> ssw = sliced_wasserstein_sphere_unif(x0, seed=42)
-    >>> np.allclose(sliced_wasserstein_sphere_unif(x0, seed=42), 0.01734, atol=1e-3)
+    >>> ssw = ot.sliced_wasserstein_sphere_unif(x0, seed=42)
+    >>> np.allclose(ot.sliced_wasserstein_sphere_unif(x0, seed=42), 0.01734, atol=1e-3)
     True
 
     References:
@@ -240,10 +242,11 @@ def linear_sliced_wasserstein_sphere(
 
     Examples
     ---------
+    >>> import ot
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
-    >>> linear_sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    >>> ot.linear_sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
 
 

@@ -5,8 +5,8 @@ Sliced OT Plans
 ===============
 
 Compares different Sliced OT plans between two 2D point clouds. The min-Pivot
-Sliced plan was introduced in [82], and the Expected Sliced plan in [84], both
-were further studied theoretically in [83].
+Sliced plan was introduced in [83], and the Expected Sliced plan in [85], both
+were further studied theoretically in [84].
 
 .. [83] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
 

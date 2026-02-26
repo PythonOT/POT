@@ -249,10 +249,11 @@ def min_pivot_sliced(
 
     Examples
     --------
+    >>> import ot
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = min_pivot_sliced(x, y, thetas=thetas)
+    >>> plan, cost = ot.min_pivot_sliced(x, y, thetas=thetas)
     >>> plan
     array([[0. , 0.5],
            [0.5, 0. ]])
@@ -409,10 +410,11 @@ def expected_sliced(
 
     Examples
     --------
+    >>> import ot
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> thetas=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = expected_sliced(x, y, thetas=thetas)
+    >>> plan, cost = ot.expected_sliced(x, y, thetas=thetas)
     >>> plan
     array([[0.25, 0.25],
            [0.25, 0.25]])
