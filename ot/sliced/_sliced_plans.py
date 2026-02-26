@@ -30,10 +30,10 @@ def sliced_plans(
     log=False,
 ):
     r"""
-    Computes all the permutations that sort the projections of two `(n, d)`
-    datasets `X` and `Y` on the directions `thetas`.
-    Each permutation `perm[:, k]` is such that each `X[i, :]` is matched
-    to `Y[perm[i, k], :]` when projected on `thetas[k, :]`.
+    Computes all the permutations that sort the projections of two `(ns, nt)`
+    datasets `X_s` and `X_t` on the directions `thetas`.
+    Each permutation `perm[:, k]` is such that each :math:`X_s[i, :]` is matched
+    to `X_t[perm[i, k], :]` when projected on `thetas[k, :]`.
 
     Parameters
     ----------
@@ -162,8 +162,8 @@ def sliced_plans(
 
 
 def min_pivot_sliced(
-    X,
-    Y,
+    X_s,
+    X_t,
     a=None,
     b=None,
     thetas=None,
@@ -177,19 +177,19 @@ def min_pivot_sliced(
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
     Discrepancy (introduced as SWGG in [83] and studied further in [84]). Given
-    the supports `X` and `Y` of two discrete uniform measures with `n` and `m`
+    the supports `X_s` and `X_t` of two discrete uniform measures with `ns` and `nt`
     atoms in dimension `d`, the min-Pivot Sliced Discrepancy goes through
     `n_proj` different projections of the measures on random directions, and
-    retains the couplings that yields the lowest cost between `X` and `Y`
-    (compared in :math:`\mathbb{R}^d`). When $n=m$, it gives
+    retains the couplings that yields the lowest cost between `X_s` and `X_t`
+    (compared in :math:`\mathbb{R}^d`). When `ns=nt`, it gives
 
     .. math::
-        \mathrm{min\text{-}PS}_p^p(X, Y) \approx
+        \mathrm{min\text{-}PS}_p^p(X_s, X_t) \approx
         \min_{k \in [1, n_{\mathrm{proj}}]} \left(
-        \frac{1}{n} \sum_{i=1}^n \|X_i - Y_{\sigma_k(i)}\|_2^p \right),
+        \frac{1}{n_s} \sum_{i=1}^{n_s} \|X_{s,i} - X_{t,\sigma_k(i)}\|_2^p \right),
 
     where :math:`\sigma_k` is a permutation such that ordering the projections
-    on the axis `thetas[k, :]` matches `X[i, :]` to `Y[\sigma_k(i), :]`.
+    on the axis `thetas[k, :]` matches :math:`X_s[i, :]` to :math:`X_t[\sigma_k(i), :]`.
 
     .. note::
         The computation ignores potential ambiguities in the projections: if
@@ -198,15 +198,18 @@ def min_pivot_sliced(
         explosion, only one permutation is retained: this strays from theory in
         pathological cases.
 
+    .. warning::
+        Tensorflow and jax only returns dense plans, as they do not support well sparse matrices.
+
     Parameters
     ----------
-    X : array-like, shape (n, d)
+    X_s : array-like, shape (ns, d)
         The first set of vectors.
-    Y : array-like, shape (m, d)
+    X_t : array-like, shape (nt, d)
         The second set of vectors.
-    a : ndarray of float64, shape (n,), optional
+    a : ndarray of float64, shape (ns,), optional
         Source histogram (default is uniform weight)
-    b : ndarray of float64, shape (m,), optional
+    b : ndarray of float64, shape (nt,), optional
         Target histogram (default is uniform weight)
     thetas : array-like, shape (n_proj, d), optional
         The projection directions. If None, random directions will be generated
@@ -262,23 +265,22 @@ def min_pivot_sliced(
     2.125
     """
 
-    X, Y = list_to_array(X, Y)
+    X_s, X_t = list_to_array(X_s, X_t)
 
     if a is not None and b is not None and thetas is None:
-        nx = get_backend(X, Y, a, b)
+        nx = get_backend(X_s, X_t, a, b)
     elif a is not None and b is not None and thetas is not None:
-        nx = get_backend(X, Y, a, b, thetas)
+        nx = get_backend(X_s, X_t, a, b, thetas)
     elif a is None and b is None and thetas is not None:
-        nx = get_backend(X, Y, thetas)
+        nx = get_backend(X_s, X_t, thetas)
     else:
-        nx = get_backend(X, Y)
-
-    assert X.ndim == 2, f"X must be a 2d array, got {X.ndim}d array instead"
-    assert Y.ndim == 2, f"Y must be a 2d array, got {Y.ndim}d array instead"
+        nx = get_backend(X_s, X_t)
+    assert X_s.ndim == 2, f"X_s must be a 2d array, got {X_s.ndim}d array instead"
+    assert X_t.ndim == 2, f"X_t must be a 2d array, got {X_t.ndim}d array instead"
 
     assert (
-        X.shape[1] == Y.shape[1]
-    ), f"X ({X.shape}) and Y ({Y.shape}) must have the same number of columns"
+        X_s.shape[1] == X_t.shape[1]
+    ), f"X_s ({X_s.shape}) and X_t ({X_t.shape}) must have the same number of columns"
 
     if str(nx) in ["tf", "jax"] and not dense:
         dense = True
@@ -286,8 +288,8 @@ def min_pivot_sliced(
 
     log_dict = {}
     G, costs, log_dict_plans = sliced_plans(
-        X,
-        Y,
+        X_s,
+        X_t,
         a,
         b,
         metric,
@@ -316,8 +318,8 @@ def min_pivot_sliced(
         plan["data"],
         plan["rows"],
         plan["cols"],
-        shape=(X.shape[0], Y.shape[0]),
-        type_as=X,
+        shape=(X_s.shape[0], X_t.shape[0]),
+        type_as=X_s,
     )
 
     if dense:
@@ -343,10 +345,10 @@ def expected_sliced(
     beta=0.0,
 ):
     r"""
-    Computes the Expected Sliced cost and plan between two  datasets `X` and
-    `Y` of shapes `(n, d)` and `(m, d)`. Given a set of `n_proj` projection
+    Computes the Expected Sliced cost and plan between two  datasets `X_s` and
+    `X_t` of shapes `(ns, d)` and `(nt, d)`. Given a set of `n_proj` projection
     directions, the expected sliced plan is obtained by averaging the `n_proj`
-    1d optimal transport plans between the projections of `X` and `Y` on each
+    1d optimal transport plans between the projections of `X_s` and `X_t` on each
     direction. Expected Sliced was introduced in [85] and further studied in
     [84].
 
@@ -358,8 +360,7 @@ def expected_sliced(
         pathological cases.
 
     .. warning::
-        The function runs on backend but tensorflow and jax are not supported
-        due to array assignment.
+        Tensorflow and jax only returns dense plans, as they do not support well sparse matrices.
 
     Parameters
     ----------
