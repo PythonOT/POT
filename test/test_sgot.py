@@ -167,11 +167,13 @@ def test_sgot_cost_input_validation():
 # ---------------------------------------------------------------------
 
 
-def test_sgot_metric_self_zero():
+def test_sgot_metric_self_zero(nx):
     Ds, Rs, Ls, _, _, _ = random_atoms()
-    dist = sgot_metric(Ds, Rs, Ls, Ds, Rs, Ls)
-    assert np.isfinite(dist)
-    assert abs(dist) < 5e-4
+    Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2 = nx.from_numpy(Ds, Rs, Ls, Ds, Rs, Ls)
+    dist = sgot_metric(Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2, nx=nx)
+    dist_np = nx.to_numpy(dist)
+    assert np.isfinite(dist_np)
+    assert abs(float(dist_np)) < 5e-4
 
 
 def test_sgot_metric_symmetry():

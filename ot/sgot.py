@@ -271,17 +271,20 @@ def sgot_cost_matrix(
 
     if Ds.ndim != 1 or Dt.ndim != 1:
         raise ValueError(
-            f"sgot_cost_matrix() expects Ds, Dt 1D; got Ds {getattr(Ds,'shape',None)}, Dt {getattr(Dt,'shape',None)}"
+            f"sgot_cost_matrix() expects Ds, Dt 1D; "
+            f"got Ds {getattr(Ds, 'shape', None)}, Dt {getattr(Dt, 'shape', None)}"
         )
 
     if Rs.shape != Ls.shape or Rt.shape != Lt.shape:
         raise ValueError(
-            f"Right/left eigenvector shapes must match; got (Rs,Ls)=({Rs.shape},{Ls.shape}), (Rt,Lt)=({Rt.shape},{Lt.shape})"
+            "Right/left eigenvector shapes must match; got "
+            f"(Rs,Ls)=({Rs.shape},{Ls.shape}), (Rt,Lt)=({Rt.shape},{Lt.shape})"
         )
 
     if Rs.shape[1] != Ds.shape[0] or Rt.shape[1] != Dt.shape[0]:
         raise ValueError(
-            f"Eigenvectors columns must match eigenvalues: Rs {Rs.shape[1]} vs Ds {Ds.shape[0]}, "
+            "Eigenvector columns must match eigenvalues: "
+            f"Rs {Rs.shape[1]} vs Ds {Ds.shape[0]}, "
             f"Rt {Rt.shape[1]} vs Dt {Dt.shape[0]}"
         )
 
@@ -420,6 +423,6 @@ def sgot_metric(
     Ws = Ws / nx.sum(Ws)
     Wt = Wt / nx.sum(Wt)
 
-    P = ot.emd2(Ws, Wt, nx.real(C))
-    obj = float(nx.sum(C * P) ** (1.0 / p))
+    obj = ot.emd2(Ws, Wt, nx.real(C))
+    obj = obj ** (1.0 / p)
     return obj ** (1.0 / float(r))
