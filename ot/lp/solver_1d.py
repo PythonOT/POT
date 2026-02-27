@@ -65,7 +65,7 @@ def wasserstein_1d(
     v_weights=None,
     p=1,
     require_sort=True,
-    return_plan=False,
+    return_plans=False,
 ):
     r"""
     Computes the 1 dimensional OT loss [15] between two (batched) empirical
@@ -96,10 +96,10 @@ def wasserstein_1d(
     require_sort: bool, optional
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
-    return_plan: True, False or "coo_tuple", optional
-        if True, returns also the optimal transport plan between the two
+    return_plans: True, False or "coo_tuple", optional
+        if True, also returns the optimal transport plan between the two
         (batched) measures as a coo_matrix, default is False.
-        if "coo_tuple", returns the optimal transport plan as a tuple of
+        if "coo_tuple", returns the optimal transport plans as a tuple of
         (data, rows, cols) of the non-zero elements of the transportation matrix.
         This is useful for backends that do not support well sparse matrices (e.g. JAX,
         Tensorflow).
@@ -108,9 +108,9 @@ def wasserstein_1d(
     -------
     cost: float/array-like, shape (...)
         the batched EMD
-    plan: coo_matrix or namedTuple, optional
-        if return_plan is True, returns a (list of) coo_matrix containing the plan.
-        if return_plan is "coo_tuple", returns the plan as a (list of) namedTuple
+    plans: list of coo_matrix or namedTuple, optional
+        if return_plans is True, returns a list of coo_matrix containing the plans.
+        if return_plans is "coo_tuple", returns the plans as a list of namedTuple
         containing the data, rows and cols of the non-zero elements of the
         transportation matrix.
 
@@ -156,7 +156,7 @@ def wasserstein_1d(
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-    if return_plan:
+    if return_plans:
         u_quantiles, idx_u = quantile_function(
             qs, u_cumweights, u_values, return_index=True
         )
@@ -171,12 +171,12 @@ def wasserstein_1d(
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
-    if return_plan is not False:
+    if return_plans is not False:
         u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
         v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
-        if return_plan == "coo_tuple":
+        if return_plans == "coo_tuple":
             PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
-            plan = [
+            plans = [
                 PlanTuple(
                     data=delta[:, k],
                     rows=u_quantiles_idx[:, k],
@@ -185,7 +185,7 @@ def wasserstein_1d(
                 for k in range(delta.shape[1])
             ]
         else:
-            plan = [
+            plans = [
                 nx.coo_matrix(
                     delta[:, k],
                     u_quantiles_idx[:, k],
@@ -200,8 +200,8 @@ def wasserstein_1d(
         w_1d = nx.sum(delta * diff_quantiles, axis=0)
     else:
         w_1d = nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
-    if return_plan:
-        return w_1d, plan
+    if return_plans:
+        return w_1d, plans
     else:
         return w_1d
 

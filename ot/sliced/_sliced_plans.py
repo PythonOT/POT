@@ -108,13 +108,17 @@ def sliced_plans(
     n = X_s.shape[0]
     m = X_t.shape[0]
 
+    if a is None:
+        a = nx.ones(n) / n
+    if b is None:
+        b = nx.ones(m) / m
+
     is_perm = False
     if n == m:
-        if a is None or b is None or (a == b).all():
+        if (a == a.sum() / n).all() and (b == a.sum() / n).all():
             is_perm = True
 
-    do_draw_thetas = thetas is None
-    if do_draw_thetas:  # create thetas (n_proj, d)
+    if thetas is None:  # create thetas (n_proj, d)
         assert n_proj is not None, "n_proj must be specified if thetas is None"
         thetas = get_random_projections(d, n_proj, backend=nx, type_as=X_s).T
         if warm_theta is not None:
@@ -134,9 +138,9 @@ def sliced_plans(
             sparse_ot_dist(X_s, X_t, sigma[:, k], tau[:, k], metric=metric, p=p)
             for k in range(n_proj)
         ]
-        a = nx.ones(n) / n
+
         PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
-        plan = [
+        plans = [
             PlanTuple(
                 data=a,
                 rows=sigma[:, k],
@@ -145,16 +149,16 @@ def sliced_plans(
             for k in range(n_proj)
         ]
     else:  # we compute plans
-        _, plan = wasserstein_1d(
-            Xs_theta, Xt_theta, a, b, p, require_sort=True, return_plan="coo_tuple"
+        _, plans = wasserstein_1d(
+            Xs_theta, Xt_theta, a, b, p, require_sort=True, return_plans="coo_tuple"
         )
         costs = [
             sparse_ot_dist(
                 X_s,
                 X_t,
-                plan[k].rows,
-                plan[k].cols,
-                plan[k].data,
+                plans[k].rows,
+                plans[k].cols,
+                plans[k].data,
                 metric=metric,
                 p=p,
             )
@@ -163,9 +167,9 @@ def sliced_plans(
 
     if log:
         log_dict = {"X_theta": Xs_theta, "Y_theta": Xt_theta, "thetas": thetas}
-        return plan, nx.stack(costs), log_dict
+        return plans, nx.stack(costs), log_dict
     else:
-        return plan, nx.stack(costs)
+        return plans, nx.stack(costs)
 
 
 def min_pivot_sliced(
@@ -294,7 +298,7 @@ def min_pivot_sliced(
         warnings.warn("JAX and TF do not support sparse matrices, converting to dense")
 
     log_dict = {}
-    G, costs, log_dict_plans = sliced_plans(
+    plans, costs, log_dict_plans = sliced_plans(
         X_s,
         X_t,
         a,
@@ -309,7 +313,7 @@ def min_pivot_sliced(
 
     pos_min = nx.argmin(costs)
     cost = costs[pos_min]
-    plan = G[pos_min]
+    plan = plans[pos_min]
 
     if log:
         log_dict = {
@@ -457,7 +461,7 @@ def expected_sliced(
     m = X_t.shape[0]
 
     log_dict = {}
-    G, costs, log_dict_plans = sliced_plans(
+    plans, costs, log_dict_plans = sliced_plans(
         X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=True
     )
 
@@ -470,9 +474,9 @@ def expected_sliced(
             n_proj = thetas.shape[0]
         weights = nx.ones(n_proj) / n_proj
 
-    weights_e = nx.concatenate([G[i].data * weights[i] for i in range(len(G))])
-    Xs_idx = nx.concatenate([G[i].rows for i in range(len(G))])
-    Xt_idx = nx.concatenate([G[i].cols for i in range(len(G))])
+    weights_e = nx.concatenate([plans[i].data * weights[i] for i in range(len(plans))])
+    Xs_idx = nx.concatenate([plans[i].rows for i in range(len(plans))])
+    Xt_idx = nx.concatenate([plans[i].cols for i in range(len(plans))])
 
     plan = nx.coo_matrix(weights_e, Xs_idx, Xt_idx, shape=(n, m), type_as=weights)
 
@@ -485,8 +489,12 @@ def expected_sliced(
         else:
             cost = plan.multiply(dist(X_s, X_t, metric=metric, p=p)).sum()
     if log:
-        log_dict = {"thetas": log_dict_plans["thetas"], "costs": costs, "G": G}
-        log_dict["weights"] = weights
+        log_dict = {
+            "thetas": log_dict_plans["thetas"],
+            "costs": costs,
+            "G": plans,
+            "weights": weights,
+        }
         return plan, cost, log_dict
     else:
         return plan, cost

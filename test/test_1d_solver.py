@@ -13,8 +13,8 @@ import pytest
 import ot
 from ot.backend import tf
 from ot.lp import wasserstein_1d
-
 from scipy.stats import wasserstein_distance
+from scipy.sparse import coo_array
 
 
 def test_emd_1d_emd2_1d_with_weights():
@@ -321,11 +321,7 @@ def test_index_quantile_function(nx):
     np.testing.assert_allclose(nx.to_numpy(idx), np.arange(n))
 
 
-@pytest.skip_backend("torch")
-@pytest.skip_backend("tf")
-@pytest.skip_backend("cupy")
-@pytest.skip_backend("jax")
-def test_wasserstein_1d_plan(nx):
+def test_wasserstein_1d_plan():
     rng = np.random.RandomState(0)
 
     n = 10
@@ -340,19 +336,14 @@ def test_wasserstein_1d_plan(nx):
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    _, plan_1d = wasserstein_1d(x, y, a, b, p=2, return_plan=True)
-    plan_1d = nx.todense(plan_1d[0])
+    _, plan_1d = wasserstein_1d(x, y, a, b, p=2, return_plans=True)
+    plan_1d = plan_1d[0].toarray()
     plan_emd = ot.emd(a, b, ot.dist(x, y))
     np.testing.assert_allclose(plan_1d, plan_emd, atol=1e-05)
 
-    _, plan_1d_tuple = wasserstein_1d(x, y, a, b, p=2, return_plan="coo_tuple")
-    plan_1d_tuple = nx.todense(
-        nx.coo_matrix(
-            plan_1d_tuple[0].data,
-            plan_1d_tuple[0].rows,
-            plan_1d_tuple[0].cols,
-            shape=(x.shape[0], y.shape[0]),
-            type_as=x,
-        )
-    )
+    _, plan_1d_tuple = wasserstein_1d(x, y, a, b, p=2, return_plans="coo_tuple")
+    plan_1d_tuple = coo_array(
+        (plan_1d_tuple[0].data, (plan_1d_tuple[0].rows, plan_1d_tuple[0].cols)),
+        shape=(x.shape[0], y.shape[0]),
+    ).toarray()
     np.testing.assert_allclose(plan_1d_tuple, plan_emd, atol=1e-05)
