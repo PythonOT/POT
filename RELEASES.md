@@ -1,6 +1,7 @@
 # Releases
 
-## 0.9.7.dev0
+## 0.9.7dev
+
 
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
 
@@ -14,6 +15,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Added Sliced OT plans (PR #767)
 
 #### Closed issues
 

@@ -6,6 +6,7 @@ Exact solvers for the 1D Wasserstein distance using cvxopt
 # Author: Remi Flamary <remi.flamary@unice.fr>
 # Author: Nicolas Courty <ncourty@irisa.fr>
 # Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
+# Author: Laetitia Chapel <laetitia.chapel@irisa.fr>
 #
 # License: MIT License
 
@@ -16,6 +17,7 @@ from .emd_wrap import emd_1d_sorted
 from ..backend import get_backend
 from ..utils import list_to_array
 from ._network_simplex import center_ot_dual
+from collections import namedtuple
 
 
 def quantile_function(qs, cws, xs, return_index=False):
@@ -29,7 +31,8 @@ def quantile_function(qs, cws, xs, return_index=False):
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
     xs: array-like, shape (n, ...)
         locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
-    return_index: bool
+    return_index: bool, optional
+        if True, returns also the associated indices. If False, do not return them
 
     Returns
     -------
@@ -56,7 +59,13 @@ def quantile_function(qs, cws, xs, return_index=False):
 
 
 def wasserstein_1d(
-    u_values, v_values, u_weights=None, v_weights=None, p=1, require_sort=True
+    u_values,
+    v_values,
+    u_weights=None,
+    v_weights=None,
+    p=1,
+    require_sort=True,
+    return_plans=False,
 ):
     r"""
     Computes the 1 dimensional OT loss [15] between two (batched) empirical
@@ -75,23 +84,35 @@ def wasserstein_1d(
     Parameters
     ----------
     u_values: array-like, shape (n, ...)
-        locations of the first empirical distribution
+        locations of the first empirical distributions
     v_values: array-like, shape (m, ...)
-        locations of the second empirical distribution
+        locations of the second empirical distributions
     u_weights: array-like, shape (n, ...), optional
-        weights of the first empirical distribution, if None then uniform weights are used
+        weights of the first empirical distributions, if None then uniform weights are used
     v_weights: array-like, shape (m, ...), optional
-        weights of the second empirical distribution, if None then uniform weights are used
+        weights of the second empirical distributions, if None then uniform weights are used
     p: int, optional
         order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
     require_sort: bool, optional
         sort the distributions atoms locations, if False we will consider they have been sorted prior to being passed to
         the function, default is True
+    return_plans: True, False or "coo_tuple", optional
+        if True, also returns the optimal transport plan between the two
+        (batched) measures as a coo_matrix, default is False.
+        if "coo_tuple", returns the optimal transport plans as a tuple of
+        (data, rows, cols) of the non-zero elements of the transportation matrix.
+        This is useful for backends that do not support well sparse matrices (e.g. JAX,
+        Tensorflow).
 
     Returns
     -------
     cost: float/array-like, shape (...)
         the batched EMD
+    plans: list of coo_matrix or namedTuple, optional
+        if return_plans is True, returns a list of coo_matrix containing the plans.
+        if return_plans is "coo_tuple", returns the plans as a list of namedTuple
+        containing the data, rows and cols of the non-zero elements of the
+        transportation matrix.
 
     References
     ----------
@@ -127,20 +148,62 @@ def wasserstein_1d(
 
         u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
         v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
+    else:
+        u_sorter = nx.arange(n)
+        v_sorter = nx.arange(m)
 
     u_cumweights = nx.cumsum(u_weights, 0)
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-    u_quantiles = quantile_function(qs, u_cumweights, u_values)
-    v_quantiles = quantile_function(qs, v_cumweights, v_values)
+    if return_plans:
+        u_quantiles, idx_u = quantile_function(
+            qs, u_cumweights, u_values, return_index=True
+        )
+        v_quantiles, idx_v = quantile_function(
+            qs, v_cumweights, v_values, return_index=True
+        )
+    else:
+        u_quantiles = quantile_function(qs, u_cumweights, u_values)
+        v_quantiles = quantile_function(qs, v_cumweights, v_values)
+
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
+    if return_plans is not False:
+        u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
+        v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
+        if return_plans == "coo_tuple":
+            PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
+            plans = [
+                PlanTuple(
+                    data=delta[:, k],
+                    rows=u_quantiles_idx[:, k],
+                    cols=v_quantiles_idx[:, k],
+                )
+                for k in range(delta.shape[1])
+            ]
+        else:
+            plans = [
+                nx.coo_matrix(
+                    delta[:, k],
+                    u_quantiles_idx[:, k],
+                    v_quantiles_idx[:, k],
+                    shape=(n, m),
+                    type_as=u_values,
+                )
+                for k in range(delta.shape[1])
+            ]
+
     if p == 1:
-        return nx.sum(delta * diff_quantiles, axis=0)
-    return nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+        w_1d = nx.sum(delta * diff_quantiles, axis=0)
+    else:
+        w_1d = nx.sum(delta * nx.power(diff_quantiles, p), axis=0)
+    if return_plans:
+        return w_1d, plans
+    else:
+        return w_1d
 
 
 def emd_1d(
@@ -209,7 +272,8 @@ def emd_1d(
     gamma: ndarray, shape (ns, nt)
         Optimal transportation matrix for the given parameters
     log: dict
-        If input log is True, a dictionary containing the cost
+        If input log is True, a dictionary containing the cost and the indices
+        of the non-zero elements of the transportation matrix
 
 
     Examples
@@ -305,6 +369,8 @@ def emd_1d(
         warnings.warn("JAX does not support sparse matrices, converting to dense")
     if log:
         log = {"cost": nx.from_numpy(cost, type_as=x_a)}
+        log["perms_x_a"] = perm_a[indices[:, 0]]
+        log["perms_x_b"] = perm_b[indices[:, 1]]
         return G, log
     return G
 
