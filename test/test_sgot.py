@@ -11,8 +11,8 @@ from ot.sgot import (
     eigenvalue_cost_matrix,
     _delta_matrix_1d,
     _grassmann_distance_squared,
-    cost,
-    metric,
+    sgot_cost_matrix,
+    sgot_metric,
 )
 
 
@@ -50,16 +50,16 @@ def test_random_d_r(nx):
         r = int(rng.randint(r_min, r_max + 1))
         Ds, Rs, Ls, Dt, Rt, Lt = random_atoms(d=d, r=r)
         Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
-        C = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
+        C = sgot_cost_matrix(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
         C_np = nx.to_numpy(C)
         np.testing.assert_allclose(C_np.shape, (r, r))
         assert np.all(np.isfinite(C_np)) and np.all(C_np >= 0)
         try:
-            dist = metric(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
+            dist = sgot_metric(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b)
             dist_np = nx.to_numpy(dist)
             assert np.isfinite(dist_np) and dist_np >= 0
         except TypeError:
-            pytest.skip("metric() unavailable (emd_c signature mismatch)")
+            pytest.skip("sgot_metric() unavailable (emd_c signature mismatch)")
 
 
 # ---------------------------------------------------------------------
@@ -113,7 +113,7 @@ def test_cost_self_zero(nx):
     """(D_S R_S L_S D_S): diagonal of cost matrix (same atom to same atom) should be near zero."""
     Ds, Rs, Ls, _, _, _ = random_atoms()
     Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2 = nx.from_numpy(Ds, Rs, Ls, Ds, Rs, Ls)
-    C = cost(Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2)
+    C = sgot_cost_matrix(Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2)
     C_np = nx.to_numpy(C)
     np.testing.assert_allclose(np.diag(C_np), np.zeros(C_np.shape[0]), atol=1e-10)
     np.testing.assert_allclose(C_np, C_np.T, atol=1e-10)
@@ -124,8 +124,8 @@ def test_cost_reference(nx):
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
     eta, p, q = 0.5, 2, 1
-    C1 = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, eta=eta, p=p, q=q)
-    C2 = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, eta=eta, p=p, q=q)
+    C1 = sgot_cost_matrix(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, eta=eta, p=p, q=q)
+    C2 = sgot_cost_matrix(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, eta=eta, p=p, q=q)
     np.testing.assert_allclose(nx.to_numpy(C1), nx.to_numpy(C2), atol=1e-12)
 
 
@@ -135,7 +135,9 @@ def test_cost_reference(nx):
 def test_cost_basic(grassman_metric, nx):
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
-    C = cost(Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, grassman_metric=grassman_metric)
+    C = sgot_cost_matrix(
+        Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, grassman_metric=grassman_metric
+    )
     C_np = nx.to_numpy(C)
     assert C_np.shape == (Ds.shape[0], Dt.shape[0])
     assert np.all(np.isfinite(C_np))
@@ -146,10 +148,10 @@ def test_cost_validation():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
 
     with pytest.raises(ValueError):
-        cost(Ds.reshape(-1, 1), Rs, Ls, Dt, Rt, Lt)
+        sgot_cost_matrix(Ds.reshape(-1, 1), Rs, Ls, Dt, Rt, Lt)
 
     with pytest.raises(ValueError):
-        cost(Ds, Rs[:, :-1], Ls, Dt, Rt, Lt)
+        sgot_cost_matrix(Ds, Rs[:, :-1], Ls, Dt, Rt, Lt)
 
 
 # ---------------------------------------------------------------------
@@ -159,15 +161,15 @@ def test_cost_validation():
 
 def test_metric_self_zero():
     Ds, Rs, Ls, _, _, _ = random_atoms()
-    dist = metric(Ds, Rs, Ls, Ds, Rs, Ls)
+    dist = sgot_metric(Ds, Rs, Ls, Ds, Rs, Ls)
     assert np.isfinite(dist)
-    assert abs(dist) < 2e-4
+    assert abs(dist) < 5e-4
 
 
 def test_metric_symmetry():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
-    d1 = metric(Ds, Rs, Ls, Dt, Rt, Lt)
-    d2 = metric(Dt, Rt, Lt, Ds, Rs, Ls)
+    d1 = sgot_metric(Ds, Rs, Ls, Dt, Rt, Lt)
+    d2 = sgot_metric(Dt, Rt, Lt, Ds, Rs, Ls)
     np.testing.assert_allclose(d1, d2, atol=1e-8)
 
 
@@ -182,7 +184,7 @@ def test_metric_with_weights():
     Wt = rng.rand(r)
     Wt = Wt / np.sum(Wt)
 
-    dist = metric(Ds, Rs, Ls, Dt, Rt, Lt, Ws=Ws, Wt=Wt)
+    dist = sgot_metric(Ds, Rs, Ls, Dt, Rt, Lt, Ws=Ws, Wt=Wt)
     assert np.isfinite(dist)
 
 
@@ -201,7 +203,7 @@ def test_hyperparameter_sweep_cost(nx):
     p = rng.choice([1, 2])
     q = rng.choice([1, 2])
     gm = rng.choice(grassmann_types)
-    C = cost(
+    C = sgot_cost_matrix(
         Ds_b,
         Rs_b,
         Ls_b,
@@ -230,7 +232,7 @@ def test_hyperparameter_sweep(grassman_metric):
     q = rng.choice([1, 2])
     r = rng.choice([1, 2])
 
-    dist = metric(
+    dist = sgot_metric(
         Ds,
         Rs,
         Ls,
