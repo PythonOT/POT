@@ -622,6 +622,46 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def real(self, a):
+        """
+        Return the real part of the tensor element-wise.
+
+        This function follows the api from :any:`numpy.real`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.real.html
+        """
+        raise NotImplementedError()
+
+    def imag(self, a):
+        """
+        Return the imaginary part of the tensor element-wise.
+
+        This function follows the api from :any:`numpy.imag`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.imag.html
+        """
+        raise NotImplementedError()
+
+    def conj(self, a):
+        """
+        Return the complex conjugate, element-wise.
+
+        This function follows the api from :any:`numpy.conj`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.conj.html
+        """
+        raise NotImplementedError()
+
+    def arccos(self, a):
+        """
+        Trigonometric inverse cosine, element-wise.
+
+        This function follows the api from :any:`numpy.arccos`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.arccos.html
+        """
+        raise NotImplementedError()
+
     def repeat(self, a, repeats, axis=None):
         r"""
         Repeats elements of a tensor.
@@ -1193,7 +1233,7 @@ class NumpyBackend(Backend):
         elif isinstance(a, float):
             return a
         else:
-            return a.astype(type_as.dtype)
+            return np.asarray(a, dtype=type_as.dtype)
 
     def set_gradients(self, val, inputs, grads):
         # No gradients for numpy
@@ -1312,6 +1352,18 @@ class NumpyBackend(Backend):
 
     def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
+
+    def real(self, a):
+        return np.real(a)
+
+    def imag(self, a):
+        return np.imag(a)
+
+    def conj(self, a):
+        return np.conj(a)
+
+    def arccos(self, a):
+        return np.arccos(a)
 
     def repeat(self, a, repeats, axis=None):
         return np.repeat(a, repeats, axis)
@@ -1604,7 +1656,7 @@ class JaxBackend(Backend):
         if type_as is None:
             return jnp.array(a)
         else:
-            return self._change_device(jnp.array(a).astype(type_as.dtype), type_as)
+            return self._change_device(jnp.asarray(a, dtype=type_as.dtype), type_as)
 
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
@@ -1730,6 +1782,18 @@ class JaxBackend(Backend):
     def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
+    def real(self, a):
+        return jnp.real(a)
+
+    def imag(self, a):
+        return jnp.imag(a)
+
+    def conj(self, a):
+        return jnp.conj(a)
+
+    def arccos(self, a):
+        return jnp.arccos(a)
+
     def repeat(self, a, repeats, axis=None):
         return jnp.repeat(a, repeats, axis)
 
@@ -1803,7 +1867,9 @@ class JaxBackend(Backend):
         if not isinstance(size, int):
             raise ValueError("size must be an integer")
         if type_as is not None:
-            return jax.random.permutation(subkey, size).astype(type_as.dtype)
+            return jnp.asarray(
+                jax.random.permutation(subkey, size), dtype=type_as.dtype
+            )
         else:
             return jax.random.permutation(subkey, size)
 
@@ -2226,6 +2292,18 @@ class TorchBackend(Backend):
 
     def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
+
+    def real(self, a):
+        return torch.real(a)
+
+    def imag(self, a):
+        return torch.imag(a)
+
+    def conj(self, a):
+        return torch.conj(a)
+
+    def arccos(self, a):
+        return torch.acos(a)
 
     def repeat(self, a, repeats, axis=None):
         return torch.repeat_interleave(a, repeats, dim=axis)
@@ -2728,6 +2806,18 @@ class CupyBackend(Backend):  # pragma: no cover
     def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
+    def real(self, a):
+        return cp.real(a)
+
+    def imag(self, a):
+        return cp.imag(a)
+
+    def conj(self, a):
+        return cp.conj(a)
+
+    def arccos(self, a):
+        return cp.arccos(a)
+
     def repeat(self, a, repeats, axis=None):
         return cp.repeat(a, repeats, axis)
 
@@ -2819,7 +2909,7 @@ class CupyBackend(Backend):  # pragma: no cover
             return self.rng_.permutation(size)
         else:
             with cp.cuda.Device(type_as.device):
-                return self.rng_.permutation(size).astype(type_as.dtype)
+                return cp.asarray(self.rng_.permutation(size), dtype=type_as.dtype)
 
     def coo_matrix(self, data, rows, cols, shape=None, type_as=None):
         data = self.from_numpy(data)
@@ -3161,6 +3251,18 @@ class TensorflowBackend(Backend):
 
     def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
+
+    def real(self, a):
+        return tnp.real(a)
+
+    def imag(self, a):
+        return tnp.imag(a)
+
+    def conj(self, a):
+        return tnp.conj(a)
+
+    def arccos(self, a):
+        return tnp.arccos(a)
 
     def repeat(self, a, repeats, axis=None):
         return tnp.repeat(a, repeats, axis)
