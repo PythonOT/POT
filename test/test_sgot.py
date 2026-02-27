@@ -41,7 +41,7 @@ def random_atoms(d=8, r=4, seed=42):
 
 
 def test_random_d_r(nx):
-    """Sample d and r uniformly and run cost (and metric when available) with those shapes."""
+    """Sample d and r uniformly and run sgot_cost_matrix (and sgot_metric when available) with those shapes."""
     rng = np.random.RandomState(0)
     d_min, d_max = 4, 12
     r_min, r_max = 2, 6
@@ -67,14 +67,22 @@ def test_random_d_r(nx):
 # ---------------------------------------------------------------------
 
 
-def test_delta_identity():
+def test_eigenvalue_cost_matrix_simple():
+    Ds = np.array([0.0, 1.0])
+    Dt = np.array([0.0, 2.0])
+    C = eigenvalue_cost_matrix(Ds, Dt, q=2)
+    expected = np.array([[0.0, 4.0], [1.0, 1.0]])
+    np.testing.assert_allclose(C, expected)
+
+
+def test_delta_matrix_1d_identity():
     r = 4
     I = np.eye(r, dtype=complex)
     delta = _delta_matrix_1d(I, I, I, I)
     np.testing.assert_allclose(delta, np.eye(r), atol=1e-12)
 
 
-def test_delta_swap_invariance():
+def test_delta_matrix_1d_swap_invariance():
     d, r = 6, 3
     _, R, _, _, _, _ = random_atoms(d=d, r=r)
     L = R.copy()
@@ -98,7 +106,7 @@ def test_grassmann_zero_distance(grassman_metric, nx):
     np.testing.assert_allclose(dist2_np, 0.0, atol=1e-12)
 
 
-def test_grassmann_invalid_name():
+def test_grassmann_distance_invalid_name():
     delta = np.ones((2, 2))
     with pytest.raises(ValueError):
         _grassmann_distance_squared(delta, grassman_metric="cordal")
@@ -110,7 +118,7 @@ def test_grassmann_invalid_name():
 
 
 def test_cost_self_zero(nx):
-    """(D_S R_S L_S D_S): diagonal of cost matrix (same atom to same atom) should be near zero."""
+    """(D_S R_S L_S D_S): diagonal of sgot_cost_matrix matrix (same atom to same atom) should be near zero."""
     Ds, Rs, Ls, _, _, _ = random_atoms()
     Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2 = nx.from_numpy(Ds, Rs, Ls, Ds, Rs, Ls)
     C = sgot_cost_matrix(Ds_b, Rs_b, Ls_b, Ds_b2, Rs_b2, Ls_b2)
@@ -119,7 +127,7 @@ def test_cost_self_zero(nx):
     np.testing.assert_allclose(C_np, C_np.T, atol=1e-10)
 
 
-def test_cost_reference(nx):
+def test_grassmann_cost_reference(nx):
     """Cost with same inputs and HPs should be deterministic (np.testing.assert_allclose)."""
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
@@ -132,7 +140,7 @@ def test_cost_reference(nx):
 @pytest.mark.parametrize(
     "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
 )
-def test_cost_basic(grassman_metric, nx):
+def test_grassmann_cost_basic_properties(grassman_metric, nx):
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
     C = sgot_cost_matrix(
@@ -144,7 +152,7 @@ def test_cost_basic(grassman_metric, nx):
     assert np.all(C_np >= 0)
 
 
-def test_cost_validation():
+def test_sgot_cost_input_validation():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
 
     with pytest.raises(ValueError):
@@ -159,21 +167,21 @@ def test_cost_validation():
 # ---------------------------------------------------------------------
 
 
-def test_metric_self_zero():
+def test_sgot_metric_self_zero():
     Ds, Rs, Ls, _, _, _ = random_atoms()
     dist = sgot_metric(Ds, Rs, Ls, Ds, Rs, Ls)
     assert np.isfinite(dist)
     assert abs(dist) < 5e-4
 
 
-def test_metric_symmetry():
+def test_sgot_metric_symmetry():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     d1 = sgot_metric(Ds, Rs, Ls, Dt, Rt, Lt)
     d2 = sgot_metric(Dt, Rt, Lt, Ds, Rs, Ls)
     np.testing.assert_allclose(d1, d2, atol=1e-8)
 
 
-def test_metric_with_weights():
+def test_sgot_metric_with_weights():
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     r = Ds.shape[0]
 
@@ -193,16 +201,20 @@ def test_metric_with_weights():
 # ---------------------------------------------------------------------
 
 
-def test_hyperparameter_sweep_cost(nx):
-    """Sweep over a random set of HPs and run cost()."""
-    grassmann_types = ["geodesic", "chordal", "procrustes", "martin"]
+@pytest.mark.parametrize(
+    "eta, p, q, grassman_metric",
+    [
+        (0.5, 1, 1, "geodesic"),
+        (0.5, 2, 1, "chordal"),
+        (0.3, 2, 2, "procrustes"),
+        (0.7, 1, 2, "martin"),
+    ],
+)
+def test_hyperparameter_sweep_cost(nx, eta, p, q, grassman_metric):
+    """Sweep over a set of fixed HPs and run cost()."""
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
-    rng = np.random.RandomState(2)
-    eta = rng.uniform(0.0, 1.0)
-    p = rng.choice([1, 2])
-    q = rng.choice([1, 2])
-    gm = rng.choice(grassmann_types)
+
     C = sgot_cost_matrix(
         Ds_b,
         Rs_b,
@@ -213,7 +225,7 @@ def test_hyperparameter_sweep_cost(nx):
         eta=eta,
         p=p,
         q=q,
-        grassman_metric=gm,
+        grassman_metric=grassman_metric,
     )
     C_np = nx.to_numpy(C)
     assert C_np.shape == (Ds.shape[0], Dt.shape[0])
