@@ -28,6 +28,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Fix code coverage (PR #791)
 - Fix test of the version of jax in `ot.backend` (PR #794)
 - Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
+- Align documentation build dependencies and doc extras (PR #801)
 
 
 ## 0.9.6.post1
