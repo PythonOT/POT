@@ -119,7 +119,7 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         import jax
         import jax.numpy as jnp
         import jax.scipy.special as jspecial
-        from jax.lib import xla_bridge
+        from jax.extend.backend import get_backend as _jax_get_backend
 
         jax_type = jax.numpy.ndarray
         jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
@@ -1509,7 +1509,7 @@ class JaxBackend(Backend):
         self.__type_list__ = []
         # available_devices = jax.devices("cpu")
         available_devices = []
-        if xla_bridge.get_backend().platform == "gpu":
+        if _jax_get_backend().platform == "gpu":
             available_devices += jax.devices("gpu")
         for d in available_devices:
             self.__type_list__ += [
