@@ -56,6 +56,18 @@ lst_method_lazy = [
 ]
 
 
+lst_bary_method_lazy = [
+    "lowrank",
+    "nystroem",
+    "factored",
+    "geomloss",
+    "geomloss_auto",
+    "geomloss_tensorized",
+    "geomloss_online",
+    "geomloss_multiscale",
+]
+
+
 def solve(
     M,
     a=None,
@@ -1443,7 +1455,7 @@ def solve_sample(
     plan_init : array-like, shape (dim_a, dim_b), optional
         Initialization of the OT plan for iterative methods, by default None
     rank : int, optional
-        Rank of the OT matrix for lazy solers (method='factored') or (method='nystroem'), by default 100
+        Rank of the OT matrix for lazy solvers (method='factored') or (method='nystroem'), by default 100
     scaling : float, optional
         Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
     potentials_init : (array-like(dim_a,),array-like(dim_b,)), optional
@@ -2048,20 +2060,19 @@ def _bary_sample_bcd(
 
     X_b = X_b_init
     b = b_init
-    inv_b = 1.0 / b
+    inv_b = nx.nan_to_num(1.0 / b, nan=1.0, posinf=1.0, neginf=1.0)
 
     prev_criterion = np.inf
     n_samples = len(X_a_list)
 
+    log_ = None
     if log:
         log_ = {"stopping_criterion": []}
-    else:
-        log_ = None
 
     # Compute the barycenter using BCD
     for it in range(max_iter_bary):
         # Solve the inner OT problem for each source distribution
-        if it == 0:
+        if it == 0:  # no pre-defined warmstart used at iteration 0.
             list_res = [
                 inner_solver(X_a_list[k], X_b, a_list[k], b, None, None)
                 for k in range(n_samples)
@@ -2083,11 +2094,11 @@ def _bary_sample_bcd(
                 inner_solver(X_a_list[k], X_b, a_list[k], b, None, None)
                 for k in range(n_samples)
             ]
-        print("inv_b:", inv_b)
+
         # Update the estimated barycenter weights in unbalanced cases
         if update_masses:
             b = sum([w[k] * list_res[k].plan.sum(axis=0) for k in range(n_samples)])
-            inv_b = 1.0 / b
+            inv_b = nx.nan_to_num(1.0 / b, nan=1.0, posinf=1.0, neginf=1.0)
 
         # Update the barycenter samples
         if metric in ["sqeuclidean", "euclidean"]:
@@ -2102,7 +2113,7 @@ def _bary_sample_bcd(
         if stopping_criterion == "loss":
             new_criterion = sum([w[k] * list_res[k].value for k in range(n_samples)])
         else:  # stopping_criterion = "bary"
-            new_criterion = nx.norm(X_b_new - X_b, ord=2)
+            new_criterion = nx.sum((X_b_new - X_b) ** 2)
 
         if verbose:
             if it % 1 == 0:
@@ -2483,8 +2494,10 @@ def solve_bary_sample(
 
     """
 
-    if method is not None and method.lower() in lst_method_lazy:
-        raise NotImplementedError("Barycenter with Lazy tensors not implemented yet")
+    if method is not None and method.lower() in lst_bary_method_lazy:
+        raise NotImplementedError(
+            f"method {method} operating on lazy tensors is not implemented yet"
+        )
 
     if stopping_criterion not in ["loss", "bary"]:
         raise ValueError(

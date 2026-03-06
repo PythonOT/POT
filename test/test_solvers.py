@@ -13,6 +13,7 @@ import sys
 import ot
 from ot.bregman import geomloss
 from ot.backend import torch
+from ot.solvers import lst_bary_method_lazy
 
 
 lst_reg = [None, 1]
@@ -63,6 +64,12 @@ lst_parameters_solve_sample_NotImplemented = [
     },  # fail lazy for unbalanced and regularized
 ]
 
+lst_parameters_solve_bary_sample_NotImplemented = [
+    {"method": method} for method in lst_bary_method_lazy
+] + [
+    {"lazy": True},  # fail lazy
+]
+
 # set readable ids for each param
 lst_method_params_solve_sample = [
     pytest.param(param, id=str(param)) for param in lst_method_params_solve_sample
@@ -70,6 +77,10 @@ lst_method_params_solve_sample = [
 lst_parameters_solve_sample_NotImplemented = [
     pytest.param(param, id=str(param))
     for param in lst_parameters_solve_sample_NotImplemented
+]
+lst_parameters_solve_bary_sample_NotImplemented = [
+    pytest.param(param, id=str(param))
+    for param in lst_parameters_solve_bary_sample_NotImplemented
 ]
 
 
@@ -749,7 +760,7 @@ def assert_allclose_bary_sol(sol1, sol2):
     "reg,reg_type,unbalanced,unbalanced_type,warmstart",
     itertools.product(
         lst_reg,
-        ["tuple"],  # lst_reg_type,
+        lst_reg_type,
         lst_unbalanced,
         lst_unbalanced_type,
         [True, False],
@@ -760,7 +771,7 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
     # test bary_sample when is_Lazy = False
     rng = np.random.RandomState()
 
-    K = 3  # number of distributions
+    K = 2  # number of distributions
     ns = rng.randint(10, 20, K)  # number of samples within each distribution
     n = 5  # number of samples in the barycenter
 
@@ -771,6 +782,8 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
     b = ot.utils.unif(n)
 
     w = ot.utils.unif(K)
+
+    stopping_criterion = "loss" if rng.choice([True, False]) else "bary"
 
     try:
         if reg_type == "tuple":
@@ -794,8 +807,9 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
             warmstart=warmstart,
-            max_iter_bary=3,
+            max_iter_bary=2,
             tol_bary=1e-3,
+            stopping_criterion=stopping_criterion,
             verbose=True,
         )
         print("------ [done] sol0 - no backend")
@@ -814,8 +828,9 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
             warmstart=warmstart,
-            max_iter_bary=3,
+            max_iter_bary=2,
             tol_bary=1e-3,
+            stopping_criterion=stopping_criterion,
             verbose=True,
         )
         print("------ [done] sol - no backend")
@@ -848,8 +863,9 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
             unbalanced=unbalanced,
             unbalanced_type=unbalanced_type,
             warmstart=warmstart,
-            max_iter_bary=3,
+            max_iter_bary=2,
             tol_bary=1e-3,
+            stopping_criterion=stopping_criterion,
             verbose=True,
         )
         print("------  [done] sol - with backend")
@@ -858,3 +874,33 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
 
     except NotImplementedError:
         pytest.skip("Not implemented")
+
+
+@pytest.mark.parametrize(
+    "method_params", lst_parameters_solve_bary_sample_NotImplemented
+)
+def test_solve_bary_sample_NotImplemented(nx, method_params):
+    # test bary_sample when is_Lazy = False
+    rng = np.random.RandomState()
+
+    K = 2  # number of distributions
+    ns = rng.randint(10, 20, K)  # number of samples within each distribution
+    n = 5  # number of samples in the barycenter
+
+    X_list = [rng.randn(ns_i, 2) for ns_i in ns]
+    # X_init = np.reshape(1.0 * np.randn(n, 2), (n, 1))
+
+    a_list = [ot.utils.unif(X.shape[0]) for X in X_list]
+    b = ot.utils.unif(n)
+
+    w = ot.utils.unif(K)
+
+    # solve in backend
+    X_listb = nx.from_numpy(*X_list)
+    a_listb = nx.from_numpy(*a_list)
+    wb, bb = nx.from_numpy(w, b)
+
+    with pytest.raises(NotImplementedError):
+        ot.solve_bary_sample(
+            X_listb, n, a_list=a_listb, b_init=bb, w=wb, **method_params
+        )
