@@ -10,4 +10,5 @@ include ot/lp/full_bipartitegraph.h
 include ot/lp/full_bipartitegraph_omp.h
 include ot/lp/network_simplex_simple.h
 include ot/lp/network_simplex_simple_omp.h
+include ot/lp/sparse_bipartitegraph.h
 include ot/partial/partial_cython.pyx

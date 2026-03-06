@@ -33,7 +33,15 @@ def get_openmp_flag(compiler):
         # Default flag for GCC and clang:
         omp_flag = ["-fopenmp"]
         if sys.platform.startswith("darwin"):
-            omp_flag += ["-Xpreprocessor", "-lomp"]
+            omp_flag = ["-Xpreprocessor", "-fopenmp"]
+            #  Assuming `brew install libomp` on recent macOS
+            if os.path.isfile("/opt/homebrew/opt/libomp/lib/libomp.dylib"):
+                omp_flag += ["-I/opt/homebrew/opt/libomp/include"]
+            else:
+                # Assuming `brew install libomp` on old macOS
+                if os.path.isfile("/usr/local/opt/libomp/lib/libomp.dylib"):
+                    omp_flag += ["-I/usr/local/opt/libomp/include"]
+
     return omp_flag
 
 

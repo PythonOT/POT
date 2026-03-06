@@ -1,9 +1,34 @@
 # Releases
 
-### New features
-- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
+## 0.9.7.dev0
 
-### Closed issues
+This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
+
+#### New features 
+- Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
+- Add Warmstart feature to the EMD solver for existing potentials (PR #793)
+- Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)
+- Faster init and result retrieval for EMD solver (PR #796)
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
+- Geomloss function now handles both scalar and slice indices for i and j (PR #785)
+- Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
+- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+
+#### Closed issues
+
+- Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
+- Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
+- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
+- Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
+- Fix openmp flags on macOS (PR #789)
+- Clean documentation (PR #787)
+- Fix code coverage (PR #791)
+- Fix test of the version of jax in `ot.backend` (PR #794)
+- Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
+- Align documentation build dependencies and doc extras (PR #801)
 
 
 ## 0.9.6.post1
@@ -12,7 +37,6 @@
 
 #### Closed issues
 - Fix missing cython file in MANIFEST.in (PR #763)
-- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 
 ## 0.9.6
 

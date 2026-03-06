@@ -432,7 +432,7 @@ def BAPG_gromov_wasserstein(
              \mathbf{T} &\geq 0
 
     Else, the function solves an equivalent problem [63], where constant terms only
-    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    depending on the marginals :math:`\mathbf{p}` and :math:`\mathbf{q}` are
     discarded while assuming that L decomposes as in Proposition 1 in [12]:
 
     .. math::
@@ -450,7 +450,7 @@ def BAPG_gromov_wasserstein(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
-        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+      satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
         returned by this function does not necessarily satisfy the marginal
@@ -650,7 +650,7 @@ def BAPG_gromov_wasserstein2(
              \mathbf{T} &\geq 0
 
     Else, the function solves an equivalent problem [63, 64], where constant terms only
-    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    depending on the marginals :math:`\mathbf{p}` and :math:`\mathbf{q}` are
     discarded while assuming that L decomposes as in Proposition 1 in [12]:
 
     .. math::
@@ -668,7 +668,7 @@ def BAPG_gromov_wasserstein2(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity matrices
-        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+      satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
         returned by this function does not necessarily satisfy the marginal
@@ -1439,12 +1439,13 @@ def BAPG_fused_gromov_wasserstein(
              \mathbf{T} &\geq 0
 
     Else, the function solves an equivalent problem [63, 64], where constant terms only
-    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    depending on the marginals :math:`\mathbf{p}` and :math:`\mathbf{q}` are
     discarded while assuming that L decomposes as in Proposition 1 in [12]:
 
     .. math::
         \mathbf{T}^* \in\mathop{\arg\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
         \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
              \mathbf{T}^T \mathbf{1} &= \mathbf{q}
@@ -1459,7 +1460,7 @@ def BAPG_fused_gromov_wasserstein(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
-        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+      satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
     - :math:`\alpha`: trade-off parameter
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
@@ -1672,12 +1673,13 @@ def BAPG_fused_gromov_wasserstein2(
              \mathbf{T} &\geq 0
 
     Else, the function solves an equivalent problem [63, 64], where constant terms only
-    depending on the marginals :math:`\mathbf{p}`: and :math:`\mathbf{q}`: are
+    depending on the marginals :math:`\mathbf{p}` and :math:`\mathbf{q}` are
     discarded while assuming that L decomposes as in Proposition 1 in [12]:
 
     .. math::
         \mathop{\min}_\mathbf{T} \quad (1 - \alpha) \langle \mathbf{T}, \mathbf{M} \rangle_F -
         \alpha \langle h_1(\mathbf{C}_1) \mathbf{T} h_2(\mathbf{C_2})^\top , \mathbf{T} \rangle_F
+
         s.t. \ \mathbf{T} \mathbf{1} &= \mathbf{p}
 
              \mathbf{T}^T \mathbf{1} &= \mathbf{q}
@@ -1691,7 +1693,7 @@ def BAPG_fused_gromov_wasserstein2(
     - :math:`\mathbf{p}`: distribution in the source space
     - :math:`\mathbf{q}`: distribution in the target space
     - `L`: loss function to account for the misfit between the similarity and feature matrices
-        satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
+      satisfying :math:`L(a, b) = f_1(a) + f_2(b) - h_1(a) h_2(b)`
     - :math:`\alpha`: trade-off parameter
 
     .. note:: By algorithmic design the optimal coupling :math:`\mathbf{T}`
