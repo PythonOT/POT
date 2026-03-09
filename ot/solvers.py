@@ -10,7 +10,6 @@ General OT solvers with unified API
 
 from .utils import OTResult, BaryResult, dist
 from .lp import emd2, emd2_lazy, wasserstein_1d
-from .utils import OTResult, dist
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import (
@@ -46,18 +45,6 @@ import numpy as np
 lst_method_lazy = [
     "1d",
     "gaussian",
-    "lowrank",
-    "nystroem",
-    "factored",
-    "geomloss",
-    "geomloss_auto",
-    "geomloss_tensorized",
-    "geomloss_online",
-    "geomloss_multiscale",
-]
-
-
-lst_bary_method_lazy = [
     "lowrank",
     "nystroem",
     "factored",
@@ -2202,33 +2189,27 @@ def solve_bary_sample(
     unbalanced=None,
     unbalanced_type="KL",
     lazy=False,
-    batch_size=None,
     method=None,
-    n_threads=1,
     warmstart=False,
     stopping_criterion="loss",
     max_iter_bary=1000,
-    max_iter=None,
-    rank=100,
-    scaling=0.95,
     tol_bary=1e-5,
-    tol=None,
     random_state=0,
     verbose=False,
+    **kwargs,
 ):
     r"""Solve the discrete OT barycenter problem over source distributions optimizing the barycenter support using Block-Coordinate Descent.
 
     The function solves the following general OT barycenter problem
 
     .. math::
-        \min_{\mathbf{X} \in \mathbb{R}^{n \times d}, \mathbf{b} \in \Sigma_n} \min_{\{ \mathbf{T}^{(k)} \}_k \in \R_+^{n_i \times n}} \quad \sum_k w_k \sum_{i,j} T^{(k)}_{i,j}M^{(k)}_{i,j} + \lambda_r R(\mathbf{T}^{(k)}) +
+        \min_{\mathbf{X} \in \mathbb{R}^{n \times d}} \min_{\{ \mathbf{T}^{(k)} \}_k \in \R_+^{n_i \times n}} \quad \sum_k w_k \sum_{i,j} T^{(k)}_{i,j}M^{(k)}_{i,j} + \lambda_r R(\mathbf{T}^{(k)}) +
         \lambda_u U(\mathbf{T^{(k)}}\mathbf{1},\mathbf{a}^{(k)}) +
         \lambda_u U(\mathbf{T}^{(k)T}\mathbf{1},\mathbf{b})
 
-    where the cost matrices :math:`\mathbf{M}^{(k)}` for each input distribution :math:`(\mathbf{X}^{(k)}, \mathbf{b}^{(k)})`
-    is computed from the samples in the source and barycenter domains such that
-    :math:`M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)` where
-    :math:`d` is a metric (by default the squared Euclidean distance).
+    where the cost matrices :math:`\mathbf{M}^{(k)}` from each input distribution :math:`(\mathbf{X}^{(k)}, \mathbf{b}^{(k)})`
+    to the barycenter domain are computed as :math:`M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)` where
+    :math:`d` is a metric (by default the squared Euclidean distance). The barycenter probability weights are fixed to :math:`\mathbf{b}`.
 
     The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
@@ -2239,19 +2220,17 @@ def solve_bary_sample(
     Parameters
     ----------
     X_a_list : list of array-like, shape (n_samples_k, dim)
-        List of samples in each source distribution
+        List of N samples in each source distribution
     n : int
         number of samples in the barycenter domain
     a_list : list of array-like, shape (dim_k,), optional
         List of samples weights in each source distribution (default is uniform)
     w : list of array-like, shape (N,), optional
         Samples barycentric weights (default is uniform)
-    X_b_init : array-like, shape (n_samples_b, dim), optional
-        Initialization of the barycenter samples (default is gaussian random sampling).
-        Shape must match with required n.
+    X_b_init : array-like, shape (n, dim), optional
+        Initialization of the barycenter samples (default is gaussian random sampling)
     b_init : array-like, shape (n_samples_b,), optional
-        Initialization of the barycenter weights (default is uniform).
-        Shape must match with required n.
+        Initialization of the barycenter weights (default is uniform)
     metric : str, optional
         Metric to use for the cost matrix, by default "sqeuclidean"
     reg : float, optional
@@ -2278,70 +2257,56 @@ def solve_bary_sample(
     lazy : bool, optional
         Return :any:`OTResultlazy` object to reduce memory cost when True, by
         default False
-    batch_size : int, optional
-        Batch size for lazy solver, by default None (default values in each
-        solvers)
     method : str, optional
         Method for solving the problem, this can be used to select the solver
         for unbalanced problems (see :any:`ot.solve`), or to select a specific
         large scale solver.
-    n_threads : int, optional
-        Number of OMP threads for exact OT solver, by default 1
     warmstart : bool, optional
         Use the previous OT or potentials as initialization for the next inner solver iteration, by default False.
     stopping_criterion : str, optional
         Stopping criterion for the outer loop of the BCD solver, by default 'loss'.
         Either 'loss' to use the optimize objective or 'bary' for variations of the barycenter w.r.t the Frobenius norm.
     max_iter_bary : int, optional
-        Maximum number of iteration for the BCD solver, by default 1000.
-    max_iter : int, optional
-        Maximum number of iteration, by default None (default values in each solvers)
-    rank : int, optional
-        Rank of the OT matrix for lazy solers (method='factored'), by default 100
-    scaling : float, optional
-        Scaling factor for the epsilon scaling lazy solvers (method='geomloss'), by default 0.95
+        Maximum number of iteration for the outer loop of the BCD solver, by default 1000.
     tol_bary : float, optional
-        Tolerance for solution precision of barycenter problem, by default None (default value 1e-5)
-    tol : float, optional
-        Tolerance for solution precision of inner OT solver, by default None (default values in each solvers)
+        Tolerance for solution precision of the barycenter problem, by default 1e-5.
     random_state : int, optional
         Random seed for the initialization of the barycenter samples, by default 0.
         Only used if `X_init` is None.
     verbose : bool, optional
         Print information in the solver, by default False
-
+    kwargs : optional
+        Additional parameters for the inner solver (see :any:`ot.solve`)
     Returns
     -------
 
     res : BaryResult()
         Result of the optimization problem. The information can be obtained as follows:
 
-    OTResult()
-        Result of the optimization problem. The information can be obtained as follows:
-
-        - res.plan : OT plan :math:`\mathbf{T}`
-        - res.potentials : OT dual potentials
+        - res.X : Barycenter samples
+        - res.b : Barycenter weights
         - res.value : Optimal value of the optimization problem
         - res.value_linear : Linear OT loss with the optimal OT plan
-        - res.lazy_plan : Lazy OT plan (when ``lazy=True`` or lazy method)
+        - res.list_res: List of OTResult for each inner OT problem (one per source distribution)
+        - res.log: log of the optimization process (if log=True)
 
-        See :any:`OTResult` for more information.
+        See :any:`BaryResult` for more information.
 
     Notes
     -----
 
-    The following methods are available for solving the OT problems:
+    The following methods are available for solving barycenter problems with respect to these inner OT problems:
 
     - **Classical exact OT problem [1]** (default parameters) :
 
     .. math::
-        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F
+        \forall k, \quad \min_{\mathbf{T}^{(k)}} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F
 
-        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+        s.t. \ \mathbf{T}^{(k)} \mathbf{1} = \mathbf{a}^{(k)}
 
-             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+             \mathbf{T}^{(k)^T} \mathbf{1} = \mathbf{b}
 
-             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+             \mathbf{T}^{(k)} \geq 0,  M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)
 
 
 
@@ -2349,189 +2314,98 @@ def solve_bary_sample(
 
     .. code-block:: python
 
-        res = ot.solve_sample(xa, xb, a, b)
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w)
 
-        # for uniform weights
-        res = ot.solve_sample(xa, xb)
+        # for uniform sample weights and barycentric weights,
+        res = ot.solve_bary_sample([x1, x2], n)
 
     - **Entropic regularized OT [2]** (when ``reg!=None``):
 
     .. math::
-        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+        \min_{\mathbf{T}^{(k)} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda R(\mathbf{T}^{(k)})
 
-        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+        s.t. \ \mathbf{T}^{(k)} \mathbf{1} = \mathbf{a}^{(k)}
 
-             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+             \mathbf{T}^{(k)^T} \mathbf{1} = \mathbf{b}
 
-             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+             \mathbf{T}^{(k)} \geq 0,  M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)
+
+
 
     can be solved with the following code:
 
     .. code-block:: python
 
         # default is ``"KL"`` regularization (``reg_type="KL"``)
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0)
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0)
+
         # or for original Sinkhorn paper formulation [2]
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='entropy')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0, reg_type='entropy')
 
-        # lazy solver of memory complexity O(n)
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, lazy=True, batch_size=100)
-        # lazy OT plan
-        lazy_plan = res.lazy_plan
-
-        # Use envelope theorem differentiation for memory saving
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, grad='envelope')
-        res.value.backward() # only the value is differentiable
-
-    Note that by default the Sinkhorn solver uses automatic differentiation to
-    compute the gradients of the values and plan. This can be changed with the
-    `grad` parameter. The `envelope` mode computes the gradients only
-    for the value and the other outputs are detached. This is useful for
-    memory saving when only the gradient of value is needed.
-
-    We also have a very efficient solver with compiled CPU/CUDA code using
-    geomloss/PyKeOps that can be used with the following code:
-
-    .. code-block:: python
-
-        # automatic solver
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss')
-
-        # force O(n) memory efficient solver
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_online')
-
-        # force pre-computed cost matrix
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_tensorized')
-
-        # use multiscale solver
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss_multiscale')
-
-        # One can play with speed (small scaling factor) and precision (scaling close to 1)
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, method='geomloss', scaling=0.5)
 
     - **Quadratic regularized OT [17]** (when ``reg!=None`` and ``reg_type="L2"``):
 
     .. math::
-        \min_\mathbf{T} \quad \langle \mathbf{T}, \mathbf{M} \rangle_F + \lambda R(\mathbf{T})
+        \min_{\mathbf{T}^{(k)}} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda R(\mathbf{T}^{(k))})
 
-        s.t. \ \mathbf{T} \mathbf{1} = \mathbf{a}
+        s.t. \ \mathbf{T}^{(k)} \mathbf{1} = \mathbf{a}^{(k)}
 
-             \mathbf{T}^T \mathbf{1} = \mathbf{b}
+             \mathbf{T}^{(k)^T} \mathbf{1} = \mathbf{b}
 
-             \mathbf{T} \geq 0,  M_{i,j} = d(x_i,y_j)
+             \mathbf{T}^{(k)} \geq 0,  M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)
 
     can be solved with the following code:
 
     .. code-block:: python
 
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0, reg_type='L2')
 
     - **Unbalanced OT [41]** (when ``unbalanced!=None``):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
-
-        \text{with} \ M_{i,j} = d(x_i,y_j)
+        \min_{\mathbf{T}^{(k)}\geq 0} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda_u U(\mathbf{T}^{(k)}\mathbf{1},\mathbf{a}^{(k)}) + \lambda_u U(\mathbf{T}^{(k)^T}\mathbf{1},\mathbf{b})
 
     can be solved with the following code:
 
     .. code-block:: python
 
         # default is ``"KL"``
-        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0)
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, unbalanced=1.0)
+
         # quadratic unbalanced OT
-        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='L2')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, unbalanced=1.0, unbalanced_type='L2')
         # TV = partial OT
-        res = ot.solve_sample(xa, xb, a, b, unbalanced=1.0,unbalanced_type='TV')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, unbalanced=1.0, unbalanced_type='TV')
 
 
     - **Regularized unbalanced regularized OT [34]** (when ``unbalanced!=None`` and ``reg!=None``):
 
     .. math::
-        \min_{\mathbf{T}\geq 0} \quad \sum_{i,j} T_{i,j}M_{i,j} + \lambda_r R(\mathbf{T}) + \lambda_u U(\mathbf{T}\mathbf{1},\mathbf{a}) + \lambda_u U(\mathbf{T}^T\mathbf{1},\mathbf{b})
+        \min_{\mathbf{T}^{(k)} \geq 0} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda_r R(\mathbf{T}^{(k)}) + \lambda_u U(\mathbf{T}^{(k)}\mathbf{1},\mathbf{a}^{(k)}) + \lambda_u U(\mathbf{T}^{(k)^T}\mathbf{1},\mathbf{b})
 
-        \text{with} \ M_{i,j} = d(x_i,y_j)
 
     can be solved with the following code:
 
     .. code-block:: python
 
         # default is ``"KL"`` for both
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0)
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0, unbalanced=1.0)
         # quadratic unbalanced OT with KL regularization
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, unbalanced=1.0,unbalanced_type='L2')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0, unbalanced=1.0, unbalanced_type='L2')
         # both quadratic
-        res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2',
-        unbalanced=1.0, unbalanced_type='L2')
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, reg=1.0, reg_type='L2', unbalanced=1.0, unbalanced_type='L2')
 
-
-    - **Factored OT [2]** (when ``method='factored'``):
-
-    This method solve the following OT problem [40]_
-
-    .. math::
-        \mathop{\arg \min}_\mu \quad  W_2^2(\mu_a,\mu)+ W_2^2(\mu,\mu_b)
-
-    where $\mu$ is a uniform weighted empirical distribution of  :math:`\mu_a` and :math:`\mu_b` are the empirical measures associated
-    to the samples in the source and target domains, and :math:`W_2` is the
-    Wasserstein distance. This problem is solved using exact OT solvers for
-    `reg=None` and the Sinkhorn solver for `reg!=None`. The solution provides
-    two transport plans that can be used to recover a low rank OT plan between
-    the two distributions.
-
-    .. code-block:: python
-
-        res = ot.solve_sample(xa, xb, method='factored', rank=10)
-
-        # recover the lazy low rank plan
-        factored_solution_lazy = res.lazy_plan
-
-        # recover the full low rank plan
-        factored_solution = factored_solution_lazy[:]
-
-    - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
-
-    This method computes the Gaussian Bures-Wasserstein distance between two
-    Gaussian distributions estimated from the empirical distributions
-
-    .. math::
-        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \mathcal{B}(\Sigma_s, \Sigma_t)^{2}
-
-    where :
-
-    .. math::
-        \mathbf{B}(\Sigma_s, \Sigma_t)^{2} = \text{Tr}\left(\Sigma_s + \Sigma_t - 2 \sqrt{\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2}} \right)
-
-    The covariances and means are estimated from the data.
-
-    .. code-block:: python
-
-        res = ot.solve_sample(xa, xb, method='gaussian')
-
-        # recover the squared Gaussian Bures-Wasserstein distance
-        BW_dist = res.value
-
-    - **Wasserstein 1d [1]** (when ``method='1D'``):
-
-    This method computes the Wasserstein distance between two 1d distributions
-    estimated from the empirical distributions. For multivariate data the
-    distances are computed independently for each dimension.
-
-    .. code-block:: python
-
-        res = ot.solve_sample(xa, xb, method='1D')
-
-        # recover the squared Wasserstein distances
-        W_dists = res.value
-
-
-    .. _references-bary-sample:
+    .. _references-solve_bary_sample:
     References
     ----------
 
+    .. [20] Cuturi, Marco, and Arnaud Doucet. "Fast computation of Wasserstein barycenters." International Conference on Machine Learning. 2014.
+
+    .. [43] Álvarez-Esteban, Pedro C., et al. "A fixed-point approach to barycenters in Wasserstein space." Journal of Mathematical Analysis and Applications 441.2 (2016): 744-762.
+
     """
 
-    if method is not None and method.lower() in lst_bary_method_lazy:
+    if method is not None and method.lower() in lst_method_lazy:
         raise NotImplementedError(
             f"method {method} operating on lazy tensors is not implemented yet"
         )
@@ -2624,12 +2498,10 @@ def solve_bary_sample(
                 unbalanced=unbalanced,
                 unbalanced_type=unbalanced_type,
                 method=method,
-                n_threads=n_threads,
-                max_iter=max_iter,
-                tol=tol,
                 plan_init=plan_init,
                 potentials_init=potentials_init,
                 verbose=False,
+                **kwargs,
             )
 
         # compute the barycenter using BCD

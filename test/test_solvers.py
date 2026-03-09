@@ -13,7 +13,7 @@ import sys
 import ot
 from ot.bregman import geomloss
 from ot.backend import torch
-from ot.solvers import lst_bary_method_lazy
+from ot.solvers import lst_method_lazy
 
 
 lst_reg = [None, 1]
@@ -64,7 +64,7 @@ lst_parameters_solve_sample_NotImplemented = [
 ]
 
 lst_parameters_solve_bary_sample_NotImplemented = [
-    {"method": method} for method in lst_bary_method_lazy
+    {"method": method} for method in lst_method_lazy
 ] + [
     {"lazy": True},  # fail lazy
 ]
