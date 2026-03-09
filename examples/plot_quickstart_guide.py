@@ -667,8 +667,6 @@ loss = sol.value
 
 print(f"Barycenter OT loss = {loss:1.3f}")
 
-# sphinx_gallery_start_ignore
-from ot.plot import plot2D_samples_mat
 
 pl.figure(1, (8, 4))
 plot2D_samples_mat(x1, X, list_P[0])
