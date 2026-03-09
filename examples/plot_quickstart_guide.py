@@ -638,6 +638,45 @@ pl.subplot(4, 3, 12)
 plot_plan(P_fgw, "Fused GW plan", axis=False)
 pl.show()
 
+
+#
+# Solving free support barycenter problems
+# -------------------------------
+# Solve Optimal transport barycenter problem with free support between several input distributions.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# The :func:`ot.solve_bary_sample` function can be used to solve the Optimal Transport barycenter problem
+# between multiple sets of samples while optimizing the support of the barycenter and letting fixed their probability weights.
+# The function takes as its first argument the list of samples in each input distribution,
+# and as second argument the number of samples to learn in the barycenter. By default, the probability weights in each distribution and the barycentric weights are uniform but they can be customized by the user.
+# The function returns an :class:`ot.utils.OTBaryResult` object that contains in part the barycenter samples and the OT plans between the barycenter and each input distribution.
+# In the following, we illustrate the use of this function with the same 2D data as above considered as input distributions and compute their barycenter while using exact OT.
+# Notice that most of the arguments of the :func:`ot.solve_bary_sample` function are similar to those of the :func:`ot.solve_sample` function and that the same regularization and unbalanced parameters can be used to solve regularized and unbalanced barycenter problems.
+
+# Solve the OT barycenter problem (exact OT with regularization)
+sol = ot.solve_bary_sample([x1, x2], n=35)
+
+# get the barycenter support
+X = sol.X
+
+# get the OT plans between the barycenter and each input distribution
+list_P = [sol.list_res[i].plan for i in range(2)]
+
+# get the barycenterOT loss
+loss = sol.value
+
+print(f"Barycenter OT loss = {loss:1.3f}")
+
+# sphinx_gallery_start_ignore
+from ot.plot import plot2D_samples_mat
+
+pl.figure(1, (8, 4))
+plot2D_samples_mat(x1, X, list_P[0])
+plot2D_samples_mat(x2, X, list_P[1])
+pl.axis("off")
+pl.title("Barycenter samples and OT plans, loss={:.3f}".format(loss))
+pl.show()
+
 # sphinx_gallery_end_ignore
 # %%
 #
