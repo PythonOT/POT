@@ -31,7 +31,7 @@ from ot.datasets import make_1D_gauss as gauss
 n = 50  # nb bins
 
 # bin positions
-x = np.arange(n, dtype=np.float64)
+x = np.arange(n, dtype=np.float64)[:, None]
 
 # Gaussian distributions
 a = 0.6 * gauss(n, m=15, s=5) + 0.4 * gauss(n, m=35, s=5)  # m= mean, s= std
@@ -45,8 +45,8 @@ b = gauss(n, m=25, s=5)
 # %% plot the distributions
 
 pl.figure(1, figsize=(6.4, 3))
-pl.plot(x, a, "b", label="Source distribution 1")
-pl.plot(x, b, "r", label="Source distribution 2")
+pl.plot(x[:, 0], a, "b", label="Source distribution 1")
+pl.plot(x[:, 0], b, "r", label="Source distribution 2")
 pl.legend()
 
 
@@ -93,13 +93,13 @@ for i, bname in enumerate(lst_unbalanced):
 
         bary_bins = np.histogram(lst_res[i * len(lst_regs) + j], bins=x)[0]
         if i == 0 and j == 0:  # add labels
-            pl.plot(x, a, "b", label="Source distribution 1")
-            pl.plot(x, b, "r", label="Source distribution 2")
-            pl.plot(x, bary_bins, "g", label="Barycenter")
+            pl.plot(x[:, 0], a, "b", label="Source distribution 1")
+            pl.plot(x[:, 0], b, "r", label="Source distribution 2")
+            pl.plot(x[:, 0], bary_bins, "g", label="Barycenter")
         else:
-            pl.plot(x, a, "b")
-            pl.plot(x, b, "r")
-            pl.plot(x, bary_bins, "g")
+            pl.plot(x[:, 0], a, "b")
+            pl.plot(x[:, 0], b, "r")
+            pl.plot(x[:, 0], bary_bins, "g")
 
         for i, local_res in enumerate(lst_res[i * len(lst_regs) + j].list_res):
             plan = local_res.plan
@@ -110,7 +110,7 @@ for i, bname in enumerate(lst_unbalanced):
             else:
                 m1, m2 = m1 / b.max(), m2 * n
             pl.imshow(plan, cmap="Greys")
-            pl.plot(x, m2 * 10, "g")
+            pl.plot(x[:, 0], m2 * 10, "g")
             pl.plot(m1 * 10, x, "b" if i == 0 else "r")
 
         pl.tick_params(
