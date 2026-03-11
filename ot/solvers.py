@@ -2203,11 +2203,11 @@ def solve_bary_sample(
     The function solves the following general OT barycenter problem
 
     .. math::
-        \min_{\mathbf{X} \in \mathbb{R}^{n \times d}} \min_{\{ \mathbf{T}^{(k)} \}_k \in \R_+^{n_i \times n}} \quad \sum_k w_k \sum_{i,j} T^{(k)}_{i,j}M^{(k)}_{i,j} + \lambda_r R(\mathbf{T}^{(k)}) +
+        \min_{\mathbf{X} \in \mathbb{R}^{n \times d}} \min_{\{ \mathbf{T}^{(k)} \}_k \in \mathbb{R}_+^{n_i \times n}} \quad \sum_k w_k \{ \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda_r R(\mathbf{T}^{(k)}) +
         \lambda_u U(\mathbf{T^{(k)}}\mathbf{1},\mathbf{a}^{(k)}) +
-        \lambda_u U(\mathbf{T}^{(k)T}\mathbf{1},\mathbf{b})
+        \lambda_u U(\mathbf{T}^{(k)T}\mathbf{1},\mathbf{b}) \}
 
-    where the cost matrices :math:`\mathbf{M}^{(k)}` from each input distribution :math:`(\mathbf{X}^{(k)}, \mathbf{b}^{(k)})`
+    where the cost matrices :math:`\mathbf{M}^{(k)}` from each input distribution :math:`(\mathbf{X}^{(k)}, \mathbf{a}^{(k)})`
     to the barycenter domain are computed as :math:`M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)` where
     :math:`d` is a metric (by default the squared Euclidean distance). The barycenter probability weights are fixed to :math:`\mathbf{b}`.
 
@@ -2223,13 +2223,13 @@ def solve_bary_sample(
         List of N samples in each source distribution
     n : int
         number of samples in the barycenter domain
-    a_list : list of array-like, shape (dim_k,), optional
+    a_list : list of array-like, shape (n_samples_k,), optional
         List of samples weights in each source distribution (default is uniform)
     w : list of array-like, shape (N,), optional
         Samples barycentric weights (default is uniform)
     X_b_init : array-like, shape (n, dim), optional
         Initialization of the barycenter samples (default is gaussian random sampling)
-    b_init : array-like, shape (n_samples_b,), optional
+    b_init : array-like, shape (n,), optional
         Initialization of the barycenter weights (default is uniform)
     metric : str, optional
         Metric to use for the cost matrix, by default "sqeuclidean"
@@ -2238,8 +2238,8 @@ def solve_bary_sample(
         OT)
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
-        If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If None, then use :math:`\mathbf{c} = \mathbf{a}^{(k)} \mathbf{b}^T`.
+        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{|a^{(k)}|} 1_{|b|}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
     unbalanced : float or indexable object of length 1 or 2
@@ -2322,7 +2322,7 @@ def solve_bary_sample(
     - **Entropic regularized OT [2]** (when ``reg!=None``):
 
     .. math::
-        \min_{\mathbf{T}^{(k)} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda R(\mathbf{T}^{(k)})
+        \min_{\mathbf{T}^{(k)}} \quad \langle \mathbf{T}^{(k)}, \mathbf{M}^{(k)} \rangle_F + \lambda R(\mathbf{T}^{(k)})
 
         s.t. \ \mathbf{T}^{(k)} \mathbf{1} = \mathbf{a}^{(k)}
 

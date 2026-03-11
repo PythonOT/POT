@@ -11,43 +11,45 @@ regularized and unbalanced OT barycenter problems with free support using our wr
 # Author: Cédric Vincent-Cuaz <cedvincentcuaz@gmail.com>
 #
 # License: MIT License
-# sphinx_gallery_thumbnail_number = 3
+# sphinx_gallery_thumbnail_number = 2
 
 # %%
 
 import numpy as np
 import matplotlib.pylab as pl
 import ot
-import ot.plot
-from ot.datasets import make_1D_gauss as gauss
+from ot.plot import plot2D_samples_mat
 
-##############################################################################
-# Generate data
-# -------------
+# %%
+# 2D data example
+# ---------------
+#
+# We first generate two sets of samples in 2D that 25 and 50
+# samples respectively located on circles. The weights of the samples are
+# uniform.
 
+# Problem size
+n1 = 25
+n2 = 50
 
-# %% parameters
+# Generate random data
+np.random.seed(0)
 
-n = 50  # nb bins
+x1 = np.random.randn(n1, 2)
+x1 /= np.sqrt(np.sum(x1**2, 1, keepdims=True)) / 2
 
-# bin positions
-x = np.arange(n, dtype=np.float64)[:, None]
+x2 = np.random.randn(n2, 2)
+x2 /= np.sqrt(np.sum(x2**2, 1, keepdims=True)) / 4
 
-# Gaussian distributions
-a = 0.6 * gauss(n, m=15, s=5) + 0.4 * gauss(n, m=35, s=5)  # m= mean, s= std
-b = gauss(n, m=25, s=5)
+style = {"markeredgecolor": "k"}
 
+pl.figure(1, (4, 4))
+pl.plot(x1[:, 0], x1[:, 1], "ob", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", **style)
+pl.title("Source distributions")
+pl.show()
 
-##############################################################################
-# Plot distributions and loss matrix
-# ----------------------------------
-
-# %% plot the distributions
-
-pl.figure(1, figsize=(6.4, 3))
-pl.plot(x[:, 0], a, "b", label="Source distribution 1")
-pl.plot(x[:, 0], b, "r", label="Source distribution 2")
-pl.legend()
+# sphinx_gallery_end_ignore
 
 
 # %%
@@ -66,56 +68,62 @@ lst_unbalanced = [
 lst_solvers = [  # name, param for ot.solve function
     # balanced OT
     ("Exact OT", dict()),
-    ("Entropic Reg. OT", dict(reg=0.005)),
+    ("Entropic Reg. OT", dict(reg=0.1)),
     # unbalanced OT KL
-    ("Unbalanced KL No Reg.", dict(unbalanced=0.005)),
+    ("Unbalanced KL No Reg.", dict(unbalanced=0.05)),
     (
         "Unbalanced KL with KL Reg.",
-        dict(reg=0.0005, unbalanced=0.005, unbalanced_type="kl", reg_type="kl"),
+        dict(reg=0.1, unbalanced=0.05, unbalanced_type="kl", reg_type="kl"),
     ),
 ]
 
 lst_res = []
 for name, param in lst_solvers:
-    res = ot.solve_bary_sample(X_a_list=[x, x], n=50, a_list=[a, b], **param)
+    print(f"-- name = {name} / param = {param}")
+    res = ot.solve_bary_sample(X_a_list=[x1, x2], n=35, **param)
     lst_res.append(res)
-
+    list_P = [res.list_res[k].plan for k in range(2)]
+    print("X:", res.X)
+    print("loss:", res.value)
+    print("loss:", res.log)
+    print(
+        "marginals OT 1:",
+        res.list_res[0].plan.sum(axis=1),
+        res.list_res[0].plan.sum(axis=0),
+    )
+    print(
+        "marginals OT 2:",
+        res.list_res[1].plan.sum(axis=1),
+        res.list_res[1].plan.sum(axis=0),
+    )
 
 ##############################################################################
 # Plot distributions and plans
 # ----------
 
-pl.figure(3, figsize=(9, 9))
+pl.figure(2, figsize=(16, 16))
 
 for i, bname in enumerate(lst_unbalanced):
     for j, rname in enumerate(lst_regs):
         pl.subplot(len(lst_unbalanced), len(lst_regs), i * len(lst_regs) + j + 1)
 
-        bary_bins = np.histogram(lst_res[i * len(lst_regs) + j], bins=x)[0]
+        X = lst_res[i * len(lst_regs) + j].X
+        list_P = [lst_res[i * len(lst_regs) + j].list_res[k].plan for k in range(2)]
+        loss = lst_res[i * len(lst_regs) + j].value
+
+        plot2D_samples_mat(x1, X, list_P[0])
+        plot2D_samples_mat(x2, X, list_P[1])
+
         if i == 0 and j == 0:  # add labels
-            pl.plot(x[:, 0], a, "b", label="Source distribution 1")
-            pl.plot(x[:, 0], b, "r", label="Source distribution 2")
-            pl.plot(x[:, 0], bary_bins, "g", label="Barycenter")
+            pl.plot(x1[:, 0], x1[:, 1], "ob", label="Source distribution 1", **style)
+            pl.plot(x2[:, 0], x2[:, 1], "or", label="Source distribution 2", **style)
+            pl.plot(X[:, 0], X[:, 1], "og", label="Barycenter distribution", **style)
+            pl.legend(loc="best")
         else:
-            pl.plot(x[:, 0], a, "b")
-            pl.plot(x[:, 0], b, "r")
-            pl.plot(x[:, 0], bary_bins, "g")
+            pl.plot(x1[:, 0], x1[:, 1], "ob", **style)
+            pl.plot(x2[:, 0], x2[:, 1], "or", **style)
+            pl.plot(X[:, 0], X[:, 1], "og", **style)
 
-        for i, local_res in enumerate(lst_res[i * len(lst_regs) + j].list_res):
-            plan = local_res.plan
-            m2 = plan.sum(0)
-            m1 = plan.sum(1)
-            if i == 0:
-                m1, m2 = m1 / a.max(), m2 * n
-            else:
-                m1, m2 = m1 / b.max(), m2 * n
-            pl.imshow(plan, cmap="Greys")
-            pl.plot(x[:, 0], m2 * 10, "g")
-            pl.plot(m1 * 10, x, "b" if i == 0 else "r")
-
-        pl.tick_params(
-            left=False, right=False, labelleft=False, labelbottom=False, bottom=False
-        )
         if i == 0:
             pl.title(rname)
         if j == 0:
