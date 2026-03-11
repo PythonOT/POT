@@ -1,8 +1,95 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61",
     "oldest-supported-numpy; python_version < '3.9'",
     "numpy>=2.0.0; python_version >= '3.9'",
     "cython>=0.23"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "POT"
+dynamic = ["version"]
+description = "Python Optimal Transport Library"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT License"}
+authors = [
+    {name = "Remi Flamary", email = "remi.flamary@gmail.com"},
+    {name = "Nicolas Courty", email = "ncourty@gmail.com"},
+    {name = "Cédric Vincent-Cuaz", email = "cedvincentcuaz@gmail.com"},
+    {name = "POT Contributors"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: C++",
+    "Programming Language :: C",
+    "Programming Language :: Cython",
+    "Topic :: Utilities",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "numpy>=1.16",
+    "scipy>=1.6",
+]
+
+[project.optional-dependencies]
+backend-numpy = []
+backend-jax = ["jax", "jaxlib"]
+backend-cupy = []
+backend-tf = ["tensorflow"]
+backend-torch = ["torch"]
+cvxopt = ["cvxopt"]
+dr = ["scikit-learn", "pymanopt", "autograd"]
+gnn = ["torch", "torch_geometric"]
+plot = ["matplotlib"]
+doc = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-gallery",
+    "sphinxcontrib-jquery",
+    "numpydoc",
+    "myst-parser",
+    "pillow",
+    "networkx",
+    "memory_profiler",
+]
+all = [
+    "jax",
+    "jaxlib",
+    "tensorflow",
+    "torch",
+    "cvxopt",
+    "scikit-learn",
+    "pymanopt",
+    "autograd",
+    "torch_geometric",
+    "matplotlib",
+]
+
+[project.urls]
+Homepage = "https://github.com/PythonOT/POT"
+"Release notes" = "https://github.com/PythonOT/POT/releases"
+
+[tool.setuptools.packages.find]
+exclude = ["benchmarks"]
