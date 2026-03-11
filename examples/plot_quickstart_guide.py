@@ -638,6 +638,8 @@ pl.subplot(4, 3, 12)
 plot_plan(P_fgw, "Fused GW plan", axis=False)
 pl.show()
 
+# sphinx_gallery_end_ignore
+
 # %%
 #
 # Solving barycenter problems
@@ -669,7 +671,7 @@ loss = sol.value
 
 print(f"Barycenter OT loss = {loss:1.3f}")
 
-
+# sphinx_gallery_start_ignore
 pl.figure(1, (8, 8))
 plot2D_samples_mat(x1, X, list_P[0])
 plot2D_samples_mat(x2, X, list_P[1])
