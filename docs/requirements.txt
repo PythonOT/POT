@@ -1,7 +1,9 @@
-sphinx_gallery
-sphinx_rtd_theme
+sphinx
+sphinx-rtd-theme
+sphinx-gallery
+sphinxcontrib-jquery
 numpydoc
-memory_profiler
+myst-parser
 pillow
 networkx
-myst-parser
+memory_profiler
