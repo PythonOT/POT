@@ -2079,7 +2079,19 @@ def _bary_sample_bcd(
         Backend to use for the computation. Must match<<
     Returns
     -------
-    TBD
+
+    res : BaryResult()
+        Result of the optimization problem. The information can be obtained as follows:
+
+        - res.X : Barycenter samples
+        - res.b : Barycenter weights
+        - res.value : Optimal value of the optimization problem
+        - res.value_linear : Linear OT loss with the optimal OT plan
+        - res.list_res: List of OTResult for each inner OT problem (one per source distribution)
+        - res.log: log of the optimization process (if log=True)
+
+        See :any:`BaryResult` for more information.
+
     """
 
     X_b = X_b_init

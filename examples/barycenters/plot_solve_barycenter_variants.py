@@ -49,8 +49,6 @@ pl.plot(x2[:, 0], x2[:, 1], "or", **style)
 pl.title("Source distributions")
 pl.show()
 
-# sphinx_gallery_end_ignore
-
 
 # %%
 # Set up parameters for barycenter solvers and solve
