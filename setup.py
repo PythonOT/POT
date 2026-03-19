@@ -49,7 +49,8 @@ if openmp_supported:
     compile_args += flags
     link_args += flags
 
-compile_args += ["/std:c++17" if sys.platform == "win32" else ""]  # Needed for ot/bsp
+if sys.platform == "win32":
+    compile_args.append("/std:c++17")  # Needed for ot/bsp
 
 if sys.platform.startswith("darwin"):
     compile_args.append("-std=c++17")  # Needed for ot/bsp
@@ -97,7 +98,7 @@ setup(
                 include_dirs=[
                     numpy.get_include(),
                     os.path.join(ROOT, "deps/eigen"),
-                    os.path.join(ROOT, "ot/bsp"),
+                    os.path.join(ROOT, "ot/bsp")
                 ],
                 extra_compile_args=compile_args,
                 extra_link_args=link_args,
