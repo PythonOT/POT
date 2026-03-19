@@ -4,18 +4,18 @@
 #define BSP_OT_HEADER_ONLY
 #endif
 
-
 #pragma once
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
 #include <Eigen/Sparse>
-
-// #include <filesystem>
 #include <ranges>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace BSPOT {
-// namespace fs = std::filesystem;
 
 // using scalar = double;
 using scalar = float;

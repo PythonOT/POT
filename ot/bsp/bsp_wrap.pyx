@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Cython linker with C solver
+Cython linker for C++ BSP-OT
 """
 
-# Author: Remi Flamary <remi.flamary@unice.fr>
+# Author: Baptiste Genest <baptistegenest@gmail.com>
 #
 # License: MIT License
 
@@ -37,9 +37,16 @@ def bsp_solve(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2,
     Returns the transport cost of the final bijection, the final bijection, and the intermediary ones
 
     """
+
+    if not X.flags['C_CONTIGUOUS']:
+        X = np.ascontiguousarray(X, dtype=np.float64)
+        print("not contiugous")
+    if not Y.flags['C_CONTIGUOUS']:
+        Y = np.ascontiguousarray(Y, dtype=np.float64)
+        print("not contiugous")
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n, n_plans), dtype=np.int32) 
+    cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n_plans,n), dtype=np.int32) 
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost

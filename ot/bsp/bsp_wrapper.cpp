@@ -1,10 +1,16 @@
 #include "bsp_wrapper.h"
 #include "BSP-OT_header_only.h"
 
+
 template<int dim> 
 BSPOT::Points<dim> UnLinearize(double* data,int n,int d) {
     return Eigen::Map<Eigen::Matrix<double,dim,-1,Eigen::ColMajor>>(data, d, n).template cast<BSPOT::scalar>();
 }
+
+// template<int dim> 
+// Eigen::Map<BSPOT::Points<dim>> UnLinearize(double* data,int n,int d) {
+    // return Eigen::Map<BSPOT::Points<dim>>(data, d, n);
+// }
 
 template<int dim> 
 std::function<BSPOT::scalar(int,int)> makeCost(const BSPOT::Points<dim>& A,const BSPOT::Points<dim>& B,std::string cost){
