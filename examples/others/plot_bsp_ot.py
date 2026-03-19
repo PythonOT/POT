@@ -18,7 +18,7 @@ ACM Transactions on Graphics, Siggraph Asia (2025).
 
 import ot.bsp
 import numpy as np
-import time 
+import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -29,6 +29,7 @@ from matplotlib.animation import FuncAnimation
 FRAMES = 100
 INTERVAL = 20
 
+
 def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
     theta = 2 * np.pi * np.random.rand(n)
     r = radius * np.sqrt(np.random.rand(n))
@@ -36,7 +37,8 @@ def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
     x = r * np.cos(theta) + center[0]
     y = r * np.sin(theta) + center[1]
 
-    return np.stack((x, y), axis=1) 
+    return np.stack((x, y), axis=1)
+
 
 def sample_two_balls(n, radius=1.0, centers=((-1, 0), (1, 0))):
     assert n % 2 == 0, "n must be even"
@@ -45,14 +47,15 @@ def sample_two_balls(n, radius=1.0, centers=((-1, 0), (1, 0))):
     X1 = sample_ball(n_half, radius, centers[0])
     X2 = sample_ball(n_half, radius, centers[1])
 
-    return np.vstack((X1, X2)) 
+    return np.vstack((X1, X2))
+
 
 # ----------------------------
 # Load point clouds
 # ----------------------------
 N = 100000
-A = sample_ball(N) 
-B = sample_two_balls(N,0.5)
+A = sample_ball(N)
+B = sample_two_balls(N, 0.5)
 
 N = A.shape[0]
 
@@ -60,8 +63,12 @@ N = A.shape[0]
 # Bijection
 # ----------------------------
 start = time.time()
-cost,perm,_ = ot.bsp.bsp_wrap.bsp_solve(A,B,64) 
-print("Bijection computed between {} points, with cost {} in {}s".format(N,cost,time.time() - start))
+cost, perm, _ = ot.bsp.bsp_wrap.bsp_solve(A, B, 64)
+print(
+    "Bijection computed between {} points, with cost {} in {}s".format(
+        N, cost, time.time() - start
+    )
+)
 
 # Reorder B according to bijection
 B_perm = B[perm]
@@ -80,6 +87,7 @@ pad = 0.5
 ax.set_xlim(all_pts[:, 0].min() - pad, all_pts[:, 0].max() + pad)
 ax.set_ylim(all_pts[:, 1].min() - pad, all_pts[:, 1].max() + pad)
 
+
 # ----------------------------
 # Animation update
 # ----------------------------
@@ -88,17 +96,12 @@ def update(frame):
     t = t * t * (3 - 2 * t)
     P = (1 - t) * A + t * B_perm
     scat.set_offsets(P)
-    return scat,
+    return (scat,)
+
 
 # ----------------------------
 # Run animation
 # ----------------------------
-ani = FuncAnimation(
-    fig,
-    update,
-    frames=FRAMES,
-    interval=INTERVAL,
-    blit=True
-)
+ani = FuncAnimation(fig, update, frames=FRAMES, interval=INTERVAL, blit=True)
 
 plt.show()
