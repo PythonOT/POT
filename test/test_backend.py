@@ -139,6 +139,7 @@ def test_empty_backend():
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
+    inds = rnd.randint(10)
 
     nx = ot.backend.Backend()
 
@@ -848,6 +849,15 @@ def test_gradients_backends():
         np.testing.assert_almost_equal(fun(v, c, e), c * np.sum(v**4) + e, decimal=4)
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
+
+        with jax.checking_leaks():
+
+            def f(x):
+                return nx.sum(nx.abs(x))
+
+            grad_val = jax.grad(f)(nx.zeros((3,)))
+
+        np.testing.assert_allclose(grad_val, nx.zeros((3,)))
 
     if tf:
         nx = ot.backend.TensorflowBackend()
