@@ -868,7 +868,6 @@ protected:
 
 BijectiveMatching Merge(const BijectiveMatching &T, const BijectiveMatching &TP, const cost_function &cost,bool verbose = false);
 
-BijectiveMatching MergePlans(const std::vector<BijectiveMatching> &plans,const cost_function &cost,BijectiveMatching T = BijectiveMatching(),bool cycle = true);
 BijectiveMatching MergePlansNoPar(const std::vector<BijectiveMatching> &plans,const cost_function &cost,BijectiveMatching T = BijectiveMatching(),bool cycle = true);
 
 bool swapIfUpgradeK(ints &T, ints &TI, const ints &TP, int a,int k, const cost_function &cost);
@@ -1079,126 +1078,6 @@ Vec evalMappings(const BijectiveMatching& T,const cost_function& cost) {
         costs[i] = cost(i,T[i]);
     }
     return costs;
-}
-
-BijectiveMatching MergePlans(const std::vector<BijectiveMatching> &plans, const cost_function &cost, BijectiveMatching T,bool cycle) {
-    int s = 0;
-    auto I = true ? rankPlans(plans,cost) : rangeVec(plans.size());
-    if (T.size() == 0) {
-        T = plans[I[0]];
-        s = 1;
-    }
-    int N = plans[0].size();
-
-    auto C = evalMappings(T,cost);
-
-    ints rslt = T;
-    ints rsltI = T.inverseMatching();
-
-    ints sig(N);
-
-    scalar avg_cc_size = 0;
-
-    for (auto k : range(s,plans.size())) {
-        ints Tp = plans[I[k]];
-        ints Tpi = plans[I[k]].inverseMatching();
-        auto Cp = evalMappings(Tp,cost);
-
-        for (auto i : range(N))
-            sig[i] = Tpi[rslt[i]];
-
-        // profiler.start();
-
-        std::vector<ints> CCs;
-
-        if (cycle) {
-            ints visited(N,-1);
-            int c = 0;
-            for (auto i : range(N)) {
-                if (visited[i] != -1)
-                    continue;
-                int j = i;
-                int i0 = i;
-                if (sig[j] == i)
-                    continue;
-
-                ints CC;
-                scalar costT = 0;
-                scalar costTP = 0;
-
-                while (visited[j] == -1) {
-                    CC.push_back(j);
-                    costT  += C[j];
-                    costTP += Cp[j];
-                    visited[j] = c;
-                    j = sig[j];
-                }
-
-                if (costTP < costT) {
-                    j = i0;
-                    do {
-                        std::swap(Tp[j],rslt[j]);
-                        std::swap(C[j],Cp[j]);
-                        j = sig[j];
-                    } while (j != i0);
-                    j = i0;
-                    do {
-                        rsltI[rslt[j]] = j;
-                        j = sig[j];
-                    } while (j != i0);
-                }
-
-                c++;
-                CCs.push_back(CC);
-                avg_cc_size += CC.size();
-            }
-        } else {
-            CCs.push_back(rangeVec(N));
-        }
-        // profiler.tick("cycle");
-        // for (auto a : range(N))
-//        spdlog::info("nb cycles {} avg size {}",CCs.size(),avg_cc_size / CCs.size() );
-// #pragma omp parallel for
-#pragma omp parallel
-        {
-#pragma omp single
-            {
-                for (int i = 0; i < CCs.size(); ++i) {
-#pragma omp task firstprivate(i)
-                    {
-                        for (auto a : CCs[i]){
-                            // swapIfUpgradeK(rslt,rsltI,Tp,a,3,cost);
-                            int b = rslt[a];
-                            int bp = Tp[a];
-                            int ap  = rsltI[bp];
-                            if (a == ap || b == bp)
-                                continue;
-                            scalar old_cost = C[a] + C[ap];
-                            scalar cabp = Cp[a];
-                            if (cabp > old_cost)
-                                continue;
-                            scalar capb = cost(ap,b);
-                            if (cabp + capb < old_cost) {
-                                rslt[a] = bp;
-                                rslt[ap] = b;
-                                rsltI[bp] = a;
-                                rsltI[b] = ap;
-                                C[a] = cabp;
-                                C[ap] = capb;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // for (const auto& cc : CCs)
-        // {
-        //     std::cout << "cc size " << cc.size() << std::endl;
-        // }
-        // profiler.tick("greedy");
-    }
-    // profiler.profile(false);
-    return rslt;
 }
 
 BijectiveMatching MergePlansNoPar(const std::vector<BijectiveMatching> &plans, const cost_function &cost, BijectiveMatching T,bool cycle) {
@@ -2745,7 +2624,7 @@ BijectiveMatching computeGaussianBSPOT(const Points<dim>& A,const Points<dim>& B
 #pragma omp parallel for
     for (int i = 0;i<nb_plans;i++)
         plans[i] = BSP.computeGaussianMatching();
-    return MergePlans(plans,cost,T,(A.cols() < 500000));
+    return MergePlansNoPar(plans,cost,T,(A.cols() < 500000));
 }
 
 template<int dim>
@@ -2757,7 +2636,7 @@ BijectiveMatching computeBijectiveBSPOT(const Points<dim>& A,const Points<dim>& 
     for (int i = 0;i<nb_plans;i++){
         plans[i] = BSP.computeMatching();
     }
-    return MergePlans(plans,cost,T);
+    return MergePlansNoPar(plans,cost,T);
 }
 
 template<int dim>
@@ -2771,7 +2650,7 @@ BijectiveMatching computeBijectiveOrthogonalBSPOT(const Points<dim>& A,const Poi
         Q = Q.fullPivHouseholderQr().matrixQ();
         plans[i] = BSP.computeOrthogonalMatching(Q);
     }
-    return MergePlans(plans,cost,T);
+    return MergePlansNoPar(plans,cost,T);
 }
 
 template<int dim>
