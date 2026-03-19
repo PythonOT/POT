@@ -95,7 +95,7 @@ jobs:
       run: |
         python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
     - name: Upload coverage reports to Codecov with GitHub Action
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
   linux-minimal-deps:
 
@@ -121,8 +121,6 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
-    - name: Upload coverage reports to Codecov with GitHub Action
-      uses: codecov/codecov-action@v3
 
   macos:
      runs-on: ${{ matrix.os }}

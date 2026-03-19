@@ -122,7 +122,12 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
         from jax.extend.backend import get_backend as _jax_get_backend
 
         jax_type = jax.numpy.ndarray
-        jax_new_version = float(".".join(jax.__version__.split(".")[1:])) > 4.24
+        jax_new_version = tuple([float(s) for s in jax.__version__.split(".")]) > (
+            0,
+            4,
+            24,
+            0,
+        )
     except ImportError:
         jax = False
         jax_type = float

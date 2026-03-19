@@ -29,7 +29,7 @@ enum ProblemType {
     MAX_ITER_REACHED
 };
 
-int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter);
+int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init);
 int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads);
 
 int EMD_wrap_sparse(
@@ -48,7 +48,9 @@ int EMD_wrap_sparse(
     double *alpha,               // Output: dual variables for sources (n1)
     double *beta,                // Output: dual variables for targets (n2)
     double *cost,                // Output: total transportation cost
-    uint64_t maxIter             // Maximum iterations for solver
+    uint64_t maxIter,            // Maximum iterations for solver
+    double *alpha_init,          // Initial dual variables for sources (warmstart)
+    double *beta_init            // Initial dual variables for targets (warmstart)
 );
 
 int EMD_wrap_lazy(
@@ -64,7 +66,9 @@ int EMD_wrap_lazy(
     double *alpha,               // Output: dual variables for sources (n1)
     double *beta,                // Output: dual variables for targets (n2)
     double *cost,                // Output: total transportation cost
-    uint64_t maxIter             // Maximum iterations for solver
+    uint64_t maxIter,            // Maximum iterations for solver
+    double *alpha_init,          // Initial dual variables for sources (warmstart)
+    double *beta_init            // Initial dual variables for targets (warmstart)
 );
 
 

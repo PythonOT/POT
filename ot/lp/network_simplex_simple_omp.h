@@ -371,6 +371,10 @@ namespace lemon_omp {
 
 		CostVector _pi;
 
+		// Warmstart data
+		CostVector _warmstart_pi;  // Stores warmstart potentials
+		bool _warmstart_provided;  // Flag indicating warmstart is available
+
 		// Data for storing the spanning tree structure
 		IntVector _parent;
 		ArcVector _pred;
@@ -785,6 +789,30 @@ namespace lemon_omp {
 			return *this;
 		}
 
+		/// \brief Set initial dual potentials for warmstart.
+		///
+		/// This function sets warmstart dual potentials that will be used
+		/// to guide the initial pivots in the network simplex algorithm.
+		/// The potentials should come from a previous solution (e.g., Sinkhorn or EMD).
+		///
+		/// \param alpha Source node potentials (size n)
+		/// \param beta Target node potentials (size m)
+		/// \param n Number of source nodes
+		/// \param m Number of target nodes
+		///
+		/// Note: The sign convention matches EMD potential extraction:
+		/// alpha = -pi[source], beta = +pi[target]
+		void setWarmstartPotentials(const Cost* alpha, const Cost* beta, int n, int m) {
+			// Store warmstart potentials with correct sign conversion
+			for (int i = 0; i < n; ++i) {
+				_warmstart_pi[i] = -alpha[i];  // Negate alpha to convert back to internal pi
+			}
+			for (int j = 0; j < m; ++j) {
+				_warmstart_pi[n + j] = beta[j];  // Beta is already correct sign
+			}
+			_warmstart_provided = true;
+		}
+
 		/// @}
 
 		/// \name Execution Control
@@ -830,6 +858,14 @@ namespace lemon_omp {
             		std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED << "\n" ;
 #endif
 			if (!init()) return INFEASIBLE;
+			
+			// Apply warmstart potentials after init() if provided
+			if (_warmstart_provided) {
+				for (int i = 0; i < _node_num; ++i) {
+					_pi[i] = _warmstart_pi[i];
+				}
+			}
+			
 #if DEBUG_LVL>0
 			std::cout << "Init done, starting iterations\n";
 #endif
@@ -877,14 +913,13 @@ namespace lemon_omp {
 			for (int i = 0; i != _node_num; ++i) {
 				_supply[i] = 0;
 			}
-			for (ArcsType i = 0; i != _arc_num; ++i) {
-				_cost[i] = 1;
-			}
-			_stype = GEQ;
-			return *this;
-		}
-
-
+            for (ArcsType i = 0; i != _arc_num; ++i) {
+                _cost[i] = 1;
+            }
+            _stype = GEQ;
+            _warmstart_provided = false;  // Reset warmstart flag
+            return *this;
+        }
 		/// \brief Reset the internal data structures and all the parameters
 		/// that have been given before.
 		///
@@ -919,6 +954,7 @@ namespace lemon_omp {
 			_supply.resize(all_node_num);
 			_flow.resize(max_arc_num);
 			_pi.resize(all_node_num);
+			_warmstart_pi.resize(all_node_num);  // Initialize warmstart storage
 
 			_parent.resize(all_node_num);
 			_pred.resize(all_node_num);
