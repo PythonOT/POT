@@ -122,6 +122,17 @@ setup(
         "dr": ["scikit-learn", "pymanopt", "autograd"],
         "gnn": ["torch", "torch_geometric"],
         "plot": ["matplotlib"],
+        "doc": [
+            "sphinx",
+            "sphinx-rtd-theme",
+            "sphinx-gallery",
+            "sphinxcontrib-jquery",
+            "numpydoc",
+            "myst-parser",
+            "pillow",
+            "networkx",
+            "memory_profiler",
+        ],
         "all": [
             "jax",
             "jaxlib",

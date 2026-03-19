@@ -89,6 +89,7 @@ Performance
 import os
 import time
 import warnings
+import functools
 
 import numpy as np
 import scipy
@@ -128,6 +129,24 @@ if not os.environ.get(DISABLE_JAX_KEY, False):
             24,
             0,
         )
+
+        @jax.custom_jvp
+        def norm_1d_jax(z):
+            return jnp.abs(z)
+
+        @norm_1d_jax.defjvp
+        def norm_1d_jax_jvp(primals, tangents):
+            """
+            Enforce the gradient in 0 of jnp.abs to be 0
+            """
+            (z,) = primals
+            z_is_zero = jnp.all(jnp.logical_not(z))
+            clean_z = jnp.where(z_is_zero, jnp.ones_like(z), z)
+            primals, tangents = jax.jvp(
+                functools.partial(jnp.abs), (clean_z,), tangents
+            )
+            return jnp.abs(z), jnp.where(z_is_zero, 0.0, tangents)
+
     except ImportError:
         jax = False
         jax_type = float
@@ -593,7 +612,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         """
         Limits the values in a tensor.
 
@@ -1020,7 +1039,7 @@ class Backend:
         """
         raise NotImplementedError()
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
         r"""
         Computes the (Generalized) Kullback-Leibler divergence.
 
@@ -1291,7 +1310,7 @@ class NumpyBackend(Backend):
     def outer(self, a, b):
         return np.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return np.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1468,10 +1487,10 @@ class NumpyBackend(Backend):
     def eigh(self, a):
         return np.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = np.sum(p * np.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = np.sum(p * np.log(p / q + eps), axis=axis)
         if mass:
-            value = value + np.sum(q - p)
+            value = value + np.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -1658,7 +1677,7 @@ class JaxBackend(Backend):
         return jnp.dot(a, b)
 
     def abs(self, a):
-        return jnp.abs(a)
+        return norm_1d_jax(a)
 
     def exp(self, a):
         return jnp.exp(a)
@@ -1708,7 +1727,7 @@ class JaxBackend(Backend):
     def outer(self, a, b):
         return jnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return jnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -1903,10 +1922,10 @@ class JaxBackend(Backend):
     def eigh(self, a):
         return jnp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = jnp.sum(p * jnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = jnp.sum(p * jnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + jnp.sum(q - p)
+            value = value + jnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2205,7 +2224,7 @@ class TorchBackend(Backend):
     def outer(self, a, b):
         return torch.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return torch.clamp(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2494,10 +2513,10 @@ class TorchBackend(Backend):
     def eigh(self, a):
         return torch.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = torch.sum(p * torch.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = torch.sum(p * torch.log(p / q + eps), axis=axis)
         if mass:
-            value = value + torch.sum(q - p)
+            value = value + torch.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -2706,7 +2725,7 @@ class CupyBackend(Backend):  # pragma: no cover
     def outer(self, a, b):
         return cp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return cp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -2920,10 +2939,10 @@ class CupyBackend(Backend):  # pragma: no cover
     def eigh(self, a):
         return cp.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = cp.sum(p * cp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = cp.sum(p * cp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + cp.sum(q - p)
+            value = value + cp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):
@@ -3140,7 +3159,7 @@ class TensorflowBackend(Backend):
     def outer(self, a, b):
         return tnp.outer(a, b)
 
-    def clip(self, a, a_min, a_max):
+    def clip(self, a, a_min=None, a_max=None):
         return tnp.clip(a, a_min, a_max)
 
     def repeat(self, a, repeats, axis=None):
@@ -3377,10 +3396,10 @@ class TensorflowBackend(Backend):
     def eigh(self, a):
         return tf.linalg.eigh(a)
 
-    def kl_div(self, p, q, mass=False, eps=1e-16):
-        value = tnp.sum(p * tnp.log(p / q + eps))
+    def kl_div(self, p, q, mass=False, eps=1e-16, axis=None):
+        value = tnp.sum(p * tnp.log(p / q + eps), axis=axis)
         if mass:
-            value = value + tnp.sum(q - p)
+            value = value + tnp.sum(q - p, axis=axis)
         return value
 
     def isfinite(self, a):

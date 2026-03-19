@@ -44,31 +44,43 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
 
     Parameters
     ----------
-    alpha0 : (ns,) numpy.ndarray, float64
+    alpha0 : (ns, ...) numpy.ndarray, float64
         Source dual potential
-    beta0 : (nt,) numpy.ndarray, float64
+    beta0 : (nt, ...) numpy.ndarray, float64
         Target dual potential
-    a : (ns,) numpy.ndarray, float64
+    a : (ns, ...) numpy.ndarray, float64
         Source histogram (uniform weight if empty list)
-    b : (nt,) numpy.ndarray, float64
+    b : (nt, ...) numpy.ndarray, float64
         Target histogram (uniform weight if empty list)
 
     Returns
     -------
-    alpha : (ns,) numpy.ndarray, float64
+    alpha : (ns, ...) numpy.ndarray, float64
         Source centered dual potential
-    beta : (nt,) numpy.ndarray, float64
+    beta : (nt, ...) numpy.ndarray, float64
         Target centered dual potential
 
     """
+    nx = get_backend(alpha0, beta0, a, b)
+
+    n = alpha0.shape[0]
+    m = beta0.shape[0]
+
     # if no weights are provided, use uniform
     if a is None:
-        a = np.ones(alpha0.shape[0]) / alpha0.shape[0]
+        a = nx.full(alpha0.shape, 1.0 / n, type_as=alpha0)
+    elif a.ndim != alpha0.ndim:
+        a = nx.repeat(a[..., None], alpha0.shape[-1], -1)
+
     if b is None:
-        b = np.ones(beta0.shape[0]) / beta0.shape[0]
+        b = nx.full(beta0.shape, 1.0 / m, type_as=beta0)
+    elif b.ndim != beta0.ndim:
+        b = nx.repeat(b[..., None], beta0.shape[-1], -1)
 
     # compute constant that balances the weighted sums of the duals
-    c = (b.dot(beta0) - a.dot(alpha0)) / (a.sum() + b.sum())
+    ips = nx.sum(b * beta0, axis=0) - nx.sum(a * alpha0, axis=0)
+    denom = nx.sum(a, axis=0) + nx.sum(b, axis=0)
+    c = ips / denom
 
     # update duals
     alpha = alpha0 + c
@@ -161,6 +173,49 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     beta = beta0 + beta_up
 
     return center_ot_dual(alpha, beta, a, b)
+
+
+def _compute_active_subset(a, b, M, row_mask, col_mask):
+    """Return filtered inputs restricted to the rows/columns with mass."""
+    need_filter = np.any(~row_mask) or np.any(~col_mask)
+    if not need_filter:
+        return need_filter, None, None, a, b, M
+
+    row_idx = np.flatnonzero(row_mask)
+    col_idx = np.flatnonzero(col_mask)
+    M_solver = np.asarray(M[np.ix_(row_idx, col_idx)], dtype=np.float64, order="C")
+    return need_filter, row_idx, col_idx, a[row_idx], b[col_idx], M_solver
+
+
+def _inflate_from_active_subset(
+    G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n_rows, n_cols
+):
+    """Embed the filtered dense solution back into the full support."""
+    if not need_filter:
+        return G, u, v
+
+    G_full = np.zeros((n_rows, n_cols), dtype=G.dtype)
+    G_full[np.ix_(row_idx, col_idx)] = G
+
+    u_full = np.zeros((n_rows,), dtype=u.dtype)
+    v_full = np.zeros((n_cols,), dtype=v.dtype)
+    u_full[row_mask] = u
+    v_full[col_mask] = v
+    return G_full, u_full, v_full
+
+
+def _prepare_warmstart(potentials_init, need_filter, row_mask, col_mask):
+    """Return warm-start potentials filtered to the active support."""
+    if potentials_init is None:
+        return None, None
+
+    alpha_init, beta_init = potentials_init
+    alpha_init = np.asarray(alpha_init, dtype=np.float64)
+    beta_init = np.asarray(beta_init, dtype=np.float64)
+    if need_filter:
+        alpha_init = alpha_init[row_mask]
+        beta_init = beta_init[col_mask]
+    return alpha_init, beta_init
 
 
 def emd(
@@ -379,17 +434,28 @@ def emd(
             a, b, edge_sources, edge_targets, edge_costs, numItermax
         )
     else:
-        # Prepare warmstart if provided
-        alpha_init = None
-        beta_init = None
-        if potentials_init is not None:
-            alpha_init, beta_init = potentials_init
-            alpha_init = np.asarray(alpha_init, dtype=np.float64)
-            beta_init = np.asarray(beta_init, dtype=np.float64)
+        row_mask = asel
+        col_mask = bsel
+        (
+            need_filter,
+            row_idx,
+            col_idx,
+            a_solver,
+            b_solver,
+            M_solver,
+        ) = _compute_active_subset(a, b, M, row_mask, col_mask)
+
+        alpha_init, beta_init = _prepare_warmstart(
+            potentials_init, need_filter, row_mask, col_mask
+        )
 
         # Dense solver
         G, cost, u, v, result_code = emd_c(
-            a, b, M, numItermax, numThreads, alpha_init, beta_init
+            a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
+        )
+
+        G, u, v = _inflate_from_active_subset(
+            G, u, v, need_filter, row_idx, col_idx, row_mask, col_mask, n1, n2
         )
 
     # ============================================================================
@@ -678,17 +744,32 @@ def emd2(
                 emd_c_sparse(a, b, edge_sources, edge_targets, edge_costs, numItermax)
             )
         else:
-            # Prepare warmstart if provided
-            alpha_init = None
-            beta_init = None
-            if potentials_init is not None:
-                alpha_init, beta_init = potentials_init
-                alpha_init = np.asarray(alpha_init, dtype=np.float64)
-                beta_init = np.asarray(beta_init, dtype=np.float64)
+            (
+                need_filter,
+                row_idx,
+                col_idx,
+                a_solver,
+                b_solver,
+                M_solver,
+            ) = _compute_active_subset(a, b, M, asel, bsel)
+
+            alpha_init, beta_init = _prepare_warmstart(
+                potentials_init, need_filter, asel, bsel
+            )
 
             # Solve dense EMD
             G, cost, u, v, result_code = emd_c(
-                a, b, M, numItermax, numThreads, alpha_init, beta_init
+                a_solver,
+                b_solver,
+                M_solver,
+                numItermax,
+                numThreads,
+                alpha_init,
+                beta_init,
+            )
+
+            G, u, v = _inflate_from_active_subset(
+                G, u, v, need_filter, row_idx, col_idx, asel, bsel, n1, n2
             )
 
         # Center dual potentials
