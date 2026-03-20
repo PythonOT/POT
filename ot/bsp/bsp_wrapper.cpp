@@ -39,12 +39,14 @@ std::vector<BSPOT::BijectiveMatching> computeBSPMatchings_dim(const BSPOT::Point
     
     std::vector<BSPOT::BijectiveMatching> plans(nb_plans);
     BijectiveBSPMatching<dim> BSP(A,B);
-#pragma omp parallel for
-    for (auto& plan : plans) {
-        if (gaussian)
-            plan = BSP.computeGaussianMatching();
-        else
-            plan = BSP.computeMatching(true);
+    #pragma omp parallel for
+    for (int i = 0; i < nb_plans; i++) {
+        if (gaussian){
+            plans[i] = BSP.computeGaussianMatching();
+        }
+        else {
+            plans[i] = BSP.computeMatching(true);
+        }
     }
     return plans;
 }
