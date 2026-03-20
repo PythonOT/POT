@@ -5,7 +5,7 @@ jobs:
     build_docs:
       docker:
         - image: cimg/python:3.12
-      resource_class: medium
+      resource_class: large
       steps:
         - checkout
         - run:
