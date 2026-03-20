@@ -27,6 +27,7 @@ jobs:
                 git remote add upstream https://github.com/PythonOT/POT.git;
                 git pull --ff-only upstream "refs/pull/$(cat merge.txt)/merge";
                 git fetch upstream master;
+                git submodule update --init --recursive
               fi
 
         # Load our data
