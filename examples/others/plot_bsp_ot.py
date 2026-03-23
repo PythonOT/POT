@@ -22,13 +22,11 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# ----------------------------
-# Parameters
-# ----------------------------
 
-FRAMES = 100
-INTERVAL = 20
 
+##############################################################################
+# Data ganeration
+# ----------------------------------
 
 def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
     theta = 2 * np.pi * np.random.rand(n)
@@ -40,7 +38,7 @@ def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
     return np.stack((x, y), axis=1)
 
 
-def sample_two_balls(n, radius=1.0, centers=((-1, 0), (1, 0))):
+def sample_two_balls(n, radius=1.0, centers=((-1, 0), (1, 1))):
     assert n % 2 == 0, "n must be even"
 
     n_half = n // 2
@@ -59,23 +57,38 @@ B = sample_two_balls(N, 0.5)
 
 N = A.shape[0]
 
-# ----------------------------
-# Bijection
-# ----------------------------
+
+##############################################################################
+# Bijection computation
+# ----------------------------------
+
 start = time.time()
-cost, perm, _ = ot.bsp.bsp_wrap.bsp_solve(A, B, 64)
+
+# %% call BSP-OT solver
+# The solver returns the transport cost, the final bijection and the
+# intermediary ones used to compute the final one (here we set k = 64).
+# Here we only use the final bijection.
+cost, perm, _ = ot.bsp.bsp_solve(A, B, 64,2)
 print(
     "Bijection computed between {} points, with cost {} in {}s".format(
         N, cost, time.time() - start
     )
 )
 
-# Reorder B according to bijection
+# %% Reorder B according to bijection
+# such that the points are in correspondence along the morphing animation
+# using simply A*(1-t) + B*t
 B_perm = B[perm]
 
+##############################################################################
+# Setup animation
 # ----------------------------
-# Setup figure
-# ----------------------------
+
+# Animation parameters
+FRAMES = 100
+INTERVAL = 20
+
+# Plot setup
 fig, ax = plt.subplots(figsize=(6, 6))
 ax.set_aspect("equal")
 ax.set_title("Bijective Point Cloud Morphing")
