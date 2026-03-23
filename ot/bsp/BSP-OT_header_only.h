@@ -2106,7 +2106,7 @@ protected:
         int pivot = random_pivot ? randint(beg+1,end-1) : beg + (end-beg)/2;
         Vector<D> d = getSlice(idA,idB,beg,end);
         d -= d.dot(prev_slice)*prev_slice/prev_slice.squaredNorm();
-        d.normalized();
+        d.normalize();
         BSP(idA,idB,beg,end,pivot,d);
         partialOrthogonalBSPOT(idA,idB,beg,pivot,d);
         partialOrthogonalBSPOT(idA,idB,pivot,end,d);

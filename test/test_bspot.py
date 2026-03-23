@@ -38,7 +38,7 @@ def test_bsp_ot_identity_null_cost():
 
 
 def test_bsp_ot_bijective():
-    # test that bsp-ot is exact for similarity transform
+    # test that the output of bsp-ot is indeed a bijection
     n = 50
     rng = np.random.RandomState(0)
 
