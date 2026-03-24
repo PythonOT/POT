@@ -4,6 +4,10 @@ Solvers for the Binary Space Partitioning (BSP) tree based OT problem.
 
 """
 
-from .bsp_ot import bsp_solve, merge_bijections
+# Author : Baptiste Genest <baptistegenest@gmail.com>
+#
+# License: MIT License
 
-__all__ = ["bsp_solve", "merge_bijections"]
+from .bsp_ot import compute_bspot_bijection, merge_bijections
+
+__all__ = ["compute_bspot_bijection", "merge_bijections"]

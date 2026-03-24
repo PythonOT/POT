@@ -18,7 +18,7 @@ def test_bsp_ot_exact_identity():
     # create B as a similarity transform of A, scale by 2 and translate x coord by 1
     B = 2 * A + np.array([1, 0])
 
-    _, perm, _ = ot.bsp.bsp_solve(A, B, 1)
+    _, perm, _ = ot.bsp.compute_bspot_bijection(A, B, 1)
 
     # check that the permutation is the identity
     np.testing.assert_allclose(perm, np.arange(n))
@@ -31,7 +31,7 @@ def test_bsp_ot_identity_null_cost():
 
     A = rng.randn(n, 2)
 
-    cost, _, _ = ot.bsp.bsp_solve(A, A, 1)
+    cost, _, _ = ot.bsp.compute_bspot_bijection(A, A, 1)
 
     # check that the cost is zero
     np.testing.assert_allclose(cost, 0)
@@ -46,7 +46,7 @@ def test_bsp_ot_bijective():
     # create B as a similarity transform of A, scale by 2 and translate x coord by 1
     B = 2 * A + np.array([1, 0])
 
-    _, perm, _ = ot.bsp.bsp_solve(A, B, 1)
+    _, perm, _ = ot.bsp.compute_bspot_bijection(A, B, 1)
 
     # check that the permutation is a bijection
     assert len(set(perm)) == n, "Permutation is not a bijection"
@@ -63,7 +63,7 @@ def test_bsp_ot_plan_merge_decrease():
     A = rng.randn(n, 2)
     B = rng.randn(n, 2)
 
-    cost, plan, plans = ot.bsp.bsp_solve(A, B, 2)
+    cost, plan, plans = ot.bsp.compute_bspot_bijection(A, B, 2)
 
     # evaluate mean squared cost lambda
     def cost_lambda(A, B, T):
@@ -89,7 +89,7 @@ def test_bsp_ot_relative_error():
     A = rng.randn(n, 2)
     B = rng.randn(n, 2)
 
-    cost, perm, _ = ot.bsp.bsp_solve(A, B, 1000)
+    cost, perm, _ = ot.bsp.compute_bspot_bijection(A, B, 1000)
 
     w = ot.utils.unif(n)
 
@@ -121,7 +121,7 @@ def test_bsp_ot_torch_backend():
     A_torch.requires_grad_()
     B_torch.requires_grad_()
 
-    cost, perm, _ = ot.bsp.bsp_solve(A_torch, B_torch, 1)
+    cost, perm, _ = ot.bsp.compute_bspot_bijection(A_torch, B_torch, 1)
 
     # compute gradients w.r.t. A and B
     cost.backward()
@@ -130,7 +130,7 @@ def test_bsp_ot_torch_backend():
     A_new = A - A_torch.grad.detach().numpy() * n / 2
 
     # compute new cost with advected points
-    cost_new, _, _ = ot.bsp.bsp_solve(A_new, B, 1)
+    cost_new, _, _ = ot.bsp.compute_bspot_bijection(A_new, B, 1)
 
     # cost should be zero
     np.testing.assert_allclose(cost_new, 0, atol=1e-5)

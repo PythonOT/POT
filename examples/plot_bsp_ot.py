@@ -1,6 +1,6 @@
 """
 ===================
-Fast and accurate bijections using BSP-OT example
+Fast and accurate bijections using BSP-OT
 ===================
 
 This example shows how to use the BSP-OT solver to compute a bijection
@@ -21,12 +21,15 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import torch
 
 
 ##############################################################################
 # Data generation
 # ----------------------------------
+
+# %% Two large 2D point clouds
+# For this example, let's create two large 2D point clouds,
+# one sampled from a single ball, and the other from two smaller balls.
 
 
 def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
@@ -69,14 +72,17 @@ start = time.time()
 # The solver returns the transport cost, the final bijection and the
 # intermediary ones used to compute the final one (here we set k = 64).
 # Here we only use the final bijection.
-cost, perm, _ = ot.bsp.bsp_solve(A, B, 64, 2)
+cost, perm, _ = ot.bsp.compute_bspot_bijection(A, B, 64, 2)
 print(
     "Bijection computed between {} points, with cost {} in {}s".format(
         N, cost, time.time() - start
     )
 )
 
-# %% Reorder B according to bijection
+# %% Reordering
+# As the plan is a bijection, it is simply stored as permutation (e.g. a list of numbers)
+# such that A[i] is assigned to B[perm[i]].
+# For the sake of the animation, we reorder B according to the obtained bijection
 # such that the points are in correspondence along the morphing animation
 # using simply A*(1-t) + B*t
 B_perm = B[perm]

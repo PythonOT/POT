@@ -6,21 +6,45 @@ from ..backend import get_backend
 from .bsp_wrap import bsp_solve_c, merge_bijections_c
 
 
-def bsp_solve(X, Y, n_plans=64, lp_power=2, initial_plan=None):
-    """
+def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
+    r"""
 
-    Builds nb_plans BSP Matchings and merges them in a single bijection.
+    This solver provides a good and fast approximation of the combinatorial problem of finding
+    a bijection between two point clouds that minimizes the transport cost:
 
-        cost,plan,plans = bsp_solve(X,Y,n_plans)
+    .. math::
+        \min_{\sigma \in S_n}  \sum_{i=1}^n \|X_i - Y_{\sigma(i)}\|_p^p
 
-    where :
+    To do so, it generates :math:`n_{plans}` random bijective BSP matchings, merges them together to obtain a bijection of low transport cost.
+    Log-linear complexity in the number of points.
 
-    - X and Y are the input point clouds
-    - n_plans is the number of BSP Matchings used to compute the final bijection
-    - lp_power is the power of the ground metric (default 2 for squared euclidean)
-    - initial_plan bijection to use for initializing merging (optional)
+    .. note:: There is no guarantee on the quality of the returned bijection, but the method is highly scalable on the CPU.
+        Worst cases are obtained between point clouds that are very similar (e.g. two samples from the same distribution),
+        where the solver can get stuck in local minima, but works well when the point clouds are very different.
+        The method also works best for the standard squared euclidean cost (lp_power=2), as this cost enables
+        efficient BSP construction strategy (with a cubic dependence on the dimension, this feature is disabled
+        for dimensions larger than 64).
 
-    Returns the transport cost of the final bijection, the final bijection, and the intermediary ones
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, dimension)
+    Y : array-like, shape (n_samples, dimension)
+    n_plans : int
+        The number of BSP Matchings used to compute the final bijection.
+    lp_power : int, optional
+        The power of the ground metric (default 2 for squared euclidean, -1 for infinity norm).
+    initial_plan : array-like, shape (n_samples,), optional
+        Bijection to use for initializing merging (optional).
+
+    Returns
+    -------
+    cost : float
+        The transport cost of the final bijection.
+    plan : array-like, shape (n_samples,)
+        The final bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
+    plans : list of array
+        The intermediary bijections used to compute the final one.
+
 
     """
 
@@ -69,16 +93,25 @@ def bsp_solve(X, Y, n_plans=64, lp_power=2, initial_plan=None):
 
 
 def merge_bijections(X, Y, plans, lp_power=2):
-    """
-        Merges transport bijections
+    r"""
+    Merge several bijections between two point clouds to obtain a new one with low transport cost.
 
-    where :
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, dimension)
+    Y : array-like, shape (n_samples, dimension)
+    plans : list of array-like, shape (n_samples,)
+        The bijections to merge, stored as permutations (e.g. a list of numbers)
+    lp_power : int, optional
+        The power of the ground metric (default 2 for squared euclidean).
+        If lp_power is -1, the infinity norm is used.
 
-    - X and Y are the input point clouds
-    - plans input bijections
-    - lp_power is the power of the ground metric (default 2 for squared euclidean)
-
-    Returns the merged bijection and its transport cost.
+    Returns
+    -------
+    cost : float
+        The transport cost of the merged bijection.
+    plan : array-like, shape (n_samples,)
+        The merged bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
     """
 
     nx = get_backend(X)
