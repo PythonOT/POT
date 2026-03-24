@@ -39,6 +39,7 @@ API and modules
    unbalanced
    utils
    weak
+   bsp
    
 
 Main :py:mod:`ot` functions
