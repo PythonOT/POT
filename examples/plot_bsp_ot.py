@@ -3,8 +3,9 @@
 Fast and accurate bijections using BSP-OT
 ===================
 
-This example shows how to use the BSP-OT solver to compute a bijection
-between two large point clouds, and animate the morphing between them.
+This example shows two use cases for the bijections provided by BSP-OT,
+between two large point clouds: shape morphing (and animated morphing)
+and full color transfer (pixel permutation).
 
 [?] Genest, B., Bonneel, N., Nivoliers, V., Coeurjolly, D.
 BSP-OT: Sparse transport plans between discrete measures in log-linear time
@@ -22,6 +23,9 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+##############################################################################
+# Shape interpolation and morphing
+# ----------------------------------
 
 ##############################################################################
 # Data generation
@@ -127,13 +131,79 @@ ani = FuncAnimation(fig, update, frames=FRAMES, interval=INTERVAL, blit=True)
 plt.show()
 
 
-# Other example: Color transfer (pixel permutation) using BSP-OT
+##############################################################################
+# Other example: full color transfer (pixel permutation) using BSP-OT
+# ----------------------------
+
+import os
+from pathlib import Path
+import numpy as np
+from PIL import Image
+
+
+def im2mat(img):
+    """Converts an image to matrix (one pixel per line)"""
+    return img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
+
+
+def mat2im(X, shape):
+    """Converts back a matrix to an image"""
+    return X.reshape(shape)
+
+
+def minmax(img):
+    return np.clip(img, 0, 1)
 
 this_file = os.path.realpath("__file__")
-data_path = os.path.join(Path(this_file).parent.parent.parent, "data")
+data_path = os.path.join(Path(this_file).parent.parent, "data")
 
-I1 = plt.imread(os.path.join(data_path, "ocean_day.jpg")).astype(np.float64) / 256
-I2 = plt.imread(os.path.join(data_path, "ocean_sunset.jpg")).astype(np.float64) / 256
+
+I1_pil = Image.open(os.path.join(data_path, "ocean_day.jpg")).convert("RGB")
+I2_pil = Image.open(os.path.join(data_path, "ocean_sunset.jpg")).convert("RGB")
+
+# force same size to obtain bijection between all pixels
+I1_pil = I1_pil.resize(I2_pil.size, Image.BILINEAR)
+
+
+I1 = np.asarray(I1_pil).astype(np.float64) / 255.0
+I2 = np.asarray(I2_pil).astype(np.float64) / 255.0
 
 X1 = im2mat(I1)
 X2 = im2mat(I2)
+
+
+start = time.time()
+
+_, perm, _ = ot.bsp.compute_bspot_bijection(X1, X2, 16)
+
+print(
+    "Bijection computed between {} pixels in {}s".format(
+        X1.shape[0], time.time() - start
+    )
+)
+
+# reorder the second image according to the obtained bijection
+X2_perm = X2[perm]
+
+# reshape back to image
+I2_perm = mat2im(X2_perm, I1.shape)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 3, 1)
+plt.imshow(I2)
+plt.title("Color image")
+plt.axis("off")
+
+plt.subplot(1, 3, 2)
+plt.imshow(I1)
+plt.title("Target image")
+plt.axis("off")
+
+plt.subplot(1, 3, 3)
+plt.imshow(I2_perm)
+plt.title("Permuted image")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()

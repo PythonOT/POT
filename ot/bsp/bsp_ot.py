@@ -95,6 +95,8 @@ def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
 def merge_bijections(X, Y, plans, lp_power=2):
     r"""
     Merge several bijections between two point clouds to obtain a new one with low transport cost.
+    The new bijection is guaranteed to have a transport cost no greater than the cost of any of the input bijections.
+    Based on simple local/global swapping strategy, with a linear complexity in the number of points.
 
     Parameters
     ----------
