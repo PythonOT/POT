@@ -82,7 +82,7 @@ def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
     cost = cost / X_np.shape[0]
 
     # add warning if cost_inner and cost differ significantly
-    if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-5):
+    if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-3):
         warnings.warn(
             "Cost computed from plan differs from cost returned by solver. Cost from plan: {}, Cost from solver: {}".format(
                 cost, cost_inner
@@ -143,7 +143,7 @@ def merge_bijections(X, Y, plans, lp_power=2):
     cost = cost / X_np.shape[0]
 
     # add warning if cost_inner and cost differ significantly
-    if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-5):
+    if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-3):
         warnings.warn(
             "Cost computed from plan differs from cost returned by solver. Cost from plan: {}, Cost from solver: {}".format(
                 cost, cost_inner

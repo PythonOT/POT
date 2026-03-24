@@ -125,3 +125,15 @@ def update(frame):
 ani = FuncAnimation(fig, update, frames=FRAMES, interval=INTERVAL, blit=True)
 
 plt.show()
+
+
+# Other example: Color transfer (pixel permutation) using BSP-OT
+
+this_file = os.path.realpath("__file__")
+data_path = os.path.join(Path(this_file).parent.parent.parent, "data")
+
+I1 = plt.imread(os.path.join(data_path, "ocean_day.jpg")).astype(np.float64) / 256
+I2 = plt.imread(os.path.join(data_path, "ocean_sunset.jpg")).astype(np.float64) / 256
+
+X1 = im2mat(I1)
+X2 = im2mat(I2)

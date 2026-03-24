@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Solvers for the Binary Space Partitioning (BSP) tree based OT problem.
+Efficient combinatorial optimization for low transport cost bijections based on Binary Space Partitioning trees (BSP-OT).
 
 """
 
