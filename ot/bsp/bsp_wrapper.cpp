@@ -18,15 +18,14 @@ std::function<BSPOT::scalar(int,int)> makeCost(const BSPOT::Points<dim>& A,const
         return [&](int i,int j) -> BSPOT::scalar {
             return (A.col(i) - B.col(j)).squaredNorm();
         };
-
     if (lp_power == -1){
         //infinity norm
         return [&](int i,int j) -> BSPOT::scalar {
-            return (A.col(i) - B.col(j)).array().abs().maxCoeff();
+            return BSPOT::scalar((A.col(i) - B.col(j)).array().abs().maxCoeff());
         };
     }
     return [&](int i,int j) -> BSPOT::scalar {
-        return (A.col(i) - B.col(j)).array().abs().pow(lp_power).sum();
+        return BSPOT::scalar((A.col(i) - B.col(j)).array().abs().pow(lp_power).sum());
     };
 }
 

@@ -106,8 +106,39 @@ def test_bsp_ot_relative_error():
     )
 
 
+def test_bsp_ot_torch_backend():
+    import torch
+
+    # test that bsp-ot works with torch tensors
+    n = 50
+    rng = np.random.RandomState(0)
+
+    A = rng.randn(n, 2)
+    B = rng.randn(n, 2)
+
+    A_torch = torch.from_numpy(A)
+    B_torch = torch.from_numpy(B)
+    A_torch.requires_grad_()
+    B_torch.requires_grad_()
+
+    cost, perm, _ = ot.bsp.bsp_solve(A_torch, B_torch, 1)
+
+    # compute gradients w.r.t. A and B
+    cost.backward()
+
+    # advected points (should match B)
+    A_new = A - A_torch.grad.detach().numpy() * n / 2
+
+    # compute new cost with advected points
+    cost_new, _, _ = ot.bsp.bsp_solve(A_new, B, 1)
+
+    # cost should be zero
+    np.testing.assert_allclose(cost_new, 0, atol=1e-5)
+
+
 test_bsp_ot_exact_identity()
 test_bsp_ot_bijective()
 test_bsp_ot_identity_null_cost()
 test_bsp_ot_plan_merge_decrease()
 test_bsp_ot_relative_error()
+test_bsp_ot_torch_backend()

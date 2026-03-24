@@ -21,12 +21,13 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-
+import torch
 
 
 ##############################################################################
-# Data ganeration
+# Data generation
 # ----------------------------------
+
 
 def sample_ball(n, radius=1.0, center=(0.0, 0.0)):
     theta = 2 * np.pi * np.random.rand(n)
@@ -68,7 +69,7 @@ start = time.time()
 # The solver returns the transport cost, the final bijection and the
 # intermediary ones used to compute the final one (here we set k = 64).
 # Here we only use the final bijection.
-cost, perm, _ = ot.bsp.bsp_solve(A, B, 64,2)
+cost, perm, _ = ot.bsp.bsp_solve(A, B, 64, 2)
 print(
     "Bijection computed between {} points, with cost {} in {}s".format(
         N, cost, time.time() - start
