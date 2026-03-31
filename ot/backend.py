@@ -2122,7 +2122,7 @@ class TorchBackend(Backend):
     def _to_numpy(self, a):
         if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
             return np.array(a)
-        return a.cpu().detach().numpy()
+        return a.cpu().detach().resolve_conj().numpy()
 
     def _from_numpy(self, a, type_as=None):
         if (

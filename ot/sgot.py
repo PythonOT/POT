@@ -57,8 +57,11 @@ def eigenvalue_cost_matrix(Ds, Dt, q=1, eigen_scaling=None, nx=None):
 
     Dsn = nx.real(Ds) * real_scale + 1j * nx.imag(Ds) * imag_scale
     Dtn = nx.real(Dt) * real_scale + 1j * nx.imag(Dt) * imag_scale
-    prod = Dsn[:, None] - Dtn[None, :]
-    prod = nx.real(prod * nx.conj(prod))
+    C_real = nx.real(Dsn[:, None] - nx.real(Dtn)[None, :])
+    C_real = C_real**2
+    C_imag = nx.imag(Dsn)[:, None] - nx.imag(Dtn)[None, :]
+    C_imag = C_imag**2
+    prod = C_real + C_imag
     return prod ** (q / 2)
 
 
@@ -79,7 +82,7 @@ def _normalize_columns(A, nx, eps=1e-12):
     A_norm: array-like, shape (d, n)
         Column-normalized array.
     """
-    nrm = nx.sqrt(nx.sum(A * nx.conj(A), axis=0, keepdims=True))
+    nrm = nx.norm(A, axis=0, keepdims=True)
     nrm = nx.real(nrm)  # norm is real; avoid complex dtype for maximum (e.g. torch)
     nrm = nx.maximum(nrm, eps)
     return A / nrm
@@ -124,8 +127,10 @@ def _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=None, eps=1e-12):
     return delta
 
 
-def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1e-300):
-    """Compute squared Grassmannian distances from delta similarities.
+def _grassmann_distance_squared(
+    delta, grassman_metric="chordal", q=1, nx=None, eps=1e-12
+):
+    """Compute Grassmannian distances from delta similarities.
 
     Parameters
     ----------
@@ -133,34 +138,43 @@ def _grassmann_distance_squared(delta, grassman_metric="chordal", nx=None, eps=1
         Similarity values in [0, 1].
     grassman_metric: str, optional
         Metric type: "geodesic", "chordal", "procrustes", or "martin".
+    q: int or float, optional
+        Exponent applied to the Grassmann distance, in the same spirit as the
+        eigenvalue cost exponent. Default is 1.
     nx: module, optional
         Backend (NumPy-compatible). If None, inferred from inputs.
     eps: float, optional
-        Minimum value used for numerical stability, default 1e-300.
+        Minimum value used for numerical stability in the Martin metric.
 
     Returns
-    ----------
-    dist2: array-like
-        Squared Grassmannian distance(s).
+    -------
+    dist_q: array-like
+        Grassmannian distances raised to the power q.
     """
     if nx is None:
         nx = get_backend(delta)
 
+    if nx.any(delta < 0) or nx.any(delta > 1.0):
+        raise ValueError(
+            "delta must be in [0, 1]; found values outside this range "
+            f"(min={nx.min(delta)}, max={nx.max(delta)})"
+        )
+
     delta = nx.clip(delta, 0.0, 1.0)
 
     if grassman_metric == "geodesic":
-        return nx.arccos(delta) ** 2
-    if grassman_metric == "chordal":
-        return 1.0 - delta**2
-    if grassman_metric == "procrustes":
-        return 2.0 * (1.0 - delta)
-    if grassman_metric == "martin":
-        # Martin-type Grassmann metric: -log(delta^2) with lower clamp at eps.
-        # We deliberately avoid any upper threshold to stay close to the
-        # information-geometric interpretation in Germain et al. (2025).
+        dist2 = nx.arccos(delta) ** 2
+    elif grassman_metric == "chordal":
+        dist2 = 1.0 - delta**2
+    elif grassman_metric == "procrustes":
+        dist2 = 2.0 * (1.0 - delta)
+    elif grassman_metric == "martin":
         delta2 = nx.maximum(delta**2, eps)
-        return -nx.log(delta2)
-    raise ValueError(f"Unknown grassman_metric: {grassman_metric}")
+        dist2 = -nx.log(delta2)
+    else:
+        raise ValueError(f"Unknown grassman_metric: {grassman_metric}")
+
+    return nx.real(dist2) ** (q / 2.0)
 
 
 #####################################################################################################################################
@@ -181,6 +195,7 @@ def sgot_cost_matrix(
     grassman_metric="chordal",
     eigen_scaling=None,
     nx=None,
+    eps=1e-12,
 ):
     r"""Compute the SGOT cost matrix between two spectral decompositions.
 
@@ -256,6 +271,9 @@ def sgot_cost_matrix(
         two entries.
     nx: module, optional
         Backend (NumPy-compatible). If None, inferred from inputs.
+    eps: float, optional
+        Minimum value used for numerical stability in Grassmann distances and
+        Martin metric. Default is 1e-12.
 
     Returns
     ----------
@@ -269,10 +287,35 @@ def sgot_cost_matrix(
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
 
-    if Ds.ndim != 1 or Dt.ndim != 1:
+    _validate_sgot_inputs(Ds, Rs, Ls, Dt, Rt, Lt)
+
+    C_lambda = eigenvalue_cost_matrix(Ds, Dt, q=q, eigen_scaling=eigen_scaling, nx=nx)
+    delta = _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=nx)
+    C_grass = _grassmann_distance_squared(
+        delta,
+        grassman_metric=grassman_metric,
+        q=q,
+        nx=nx,
+        eps=eps,
+    )
+
+    C2 = eta * C_lambda + (1.0 - eta) * C_grass
+    C = C2 ** (p / 2.0)
+
+    return C
+
+
+def _validate_sgot_inputs(Ds, Rs, Ls, Dt, Rt, Lt):
+    """Validate shapes of spectral atoms for SGOT cost/metric."""
+    Ds_shape = getattr(Ds, "shape", None)
+    Dt_shape = getattr(Dt, "shape", None)
+    Ds_ndim = getattr(Ds, "ndim", None)
+    Dt_ndim = getattr(Dt, "ndim", None)
+
+    if Ds_ndim != 1 or Dt_ndim != 1:
         raise ValueError(
-            f"sgot_cost_matrix() expects Ds, Dt 1D; "
-            f"got Ds {getattr(Ds, 'shape', None)}, Dt {getattr(Dt, 'shape', None)}"
+            "SGOT expects Ds and Dt to be 1D (n,), "
+            f"got Ds shape {Ds_shape} and Dt shape {Dt_shape}"
         )
 
     if Rs.shape != Ls.shape or Rt.shape != Lt.shape:
@@ -286,29 +329,6 @@ def sgot_cost_matrix(
             "Eigenvector columns must match eigenvalues: "
             f"Rs {Rs.shape[1]} vs Ds {Ds.shape[0]}, "
             f"Rt {Rt.shape[1]} vs Dt {Dt.shape[0]}"
-        )
-
-    C_lambda = eigenvalue_cost_matrix(Ds, Dt, q=q, eigen_scaling=eigen_scaling, nx=nx)
-
-    delta = _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=nx)
-    C_grass = _grassmann_distance_squared(delta, grassman_metric=grassman_metric, nx=nx)
-
-    C2 = eta * C_lambda + (1.0 - eta) * C_grass
-    C = nx.real(C2) ** (p / 2.0)
-
-    return C
-
-
-def _validate_sgot_metric_inputs(Ds, Dt):
-    """Validate that eigenvalue inputs for SGOT metric are 1D."""
-    Ds_shape = getattr(Ds, "shape", None)
-    Dt_shape = getattr(Dt, "shape", None)
-    Ds_ndim = getattr(Ds, "ndim", None)
-    Dt_ndim = getattr(Dt, "ndim", None)
-    if Ds_ndim != 1 or Dt_ndim != 1:
-        raise ValueError(
-            "sgot_metric() expects Ds and Dt to be 1D (n,), "
-            f"got Ds shape {Ds_shape} and Dt shape {Dt_shape}"
         )
 
 
@@ -328,77 +348,56 @@ def sgot_metric(
     Ws=None,
     Wt=None,
     nx=None,
+    eps=1e-12,
 ):
     r"""Compute the SGOT metric between two spectral decompositions.
 
     This function computes a discrete optimal transport problem between two measures
     over spectral atoms :math:`z_i=(\lambda_i, V_i)` and :math:`z'_j=(\lambda'_j, V'_j)`.
-    Using the ground cost matrix :math:`C=d^p` returned by :func:`sgot_cost_matrix`,
+    Using the ground cost matrix :math:`C = d^p` returned by :func:`sgot_cost_matrix`,
     we solve:
 
     .. math::
         P^\star \in \arg\min_{P\in\Pi(W_s, W_t)} \langle C, P\rangle,
 
-    and compute the associated :math:`p`-Wasserstein objective:
+    where :math:`C(i,j) = d(i,j)^p` and :math:`d(i,j)` is the SGOT ground distance
+    combining spectral and Grassmann terms with exponent :math:`q`:
 
     .. math::
-        \mathrm{obj} \;=\; \left(\sum_{i,j} C(i,j)\,P^\star_{ij}\right)^{1/p}.
+        d(i,j)^2
+        \;=\; \eta\,\big|\lambda_i - \lambda'_j\big|^{q}
+              \;+\; (1-\eta)\,d_G(i,j)^{q},
 
-    This implementation returns an additional outer root:
+    and :math:`d_G(i,j)` is the Grassmann distance associated with the chosen
+    ``grassman_metric``.
+
+    From the optimal plan :math:`P^\star`, we first form the :math:`p`-Wasserstein
+    objective:
 
     .. math::
-        \mathrm{SGOT} \;=\; \mathrm{obj}^{1/r}.
+        \mathrm{obj}
+        \;=\;
+        \left(\sum_{i,j} C(i,j)\,P^\star_{ij}\right)^{1/p},
 
-    Parameters
-    ----------
-    Ds: array-like, shape (n_s,)
-        Eigenvalues of operator T1.
-    Rs: array-like, shape (L, n_s)
-        Right eigenvectors of operator T1.
-    Ls: array-like, shape (L, n_s)
-        Left eigenvectors of operator T1.
-    Dt: array-like, shape (n_t,)
-        Eigenvalues of operator T2.
-    Rt: array-like, shape (L, n_t)
-        Right eigenvectors of operator T2.
-    Lt: array-like, shape (L, n_t)
-        Left eigenvectors of operator T2.
-    eta: float, optional
-        Weighting between spectral and Grassmann terms, default 0.5.
-    p: int, optional
-        Exponent defining the OT ground cost and Wasserstein order. The cost matrix
-        is :math:`d^p` and the OT objective is raised to the power :math:`1/p`.
-        Default is 2.
-    q: int, optional
-        Exponent applied to the eigenvalue distance in the spectral term.
-        Default is 1.
-    r: int, optional
-        Outer root applied to the Wasserstein objective. Default is 2.
-    grassman_metric: str, optional
-        Metric type: "geodesic", "chordal", "procrustes", or "martin".
-    eigen_scaling: None or array-like of length 2, optional
-        Scaling ``(real_scale, imag_scale)`` applied to eigenvalues before computing
-        the spectral part of the cost. If None, defaults to ``(1.0, 1.0)``.
-    Ws: array-like, shape (n_s,), optional
-        Source distribution. If None, uses a uniform distribution.
-    Wt: array-like, shape (n_t,), optional
-        Target distribution. If None, uses a uniform distribution.
-    nx: module, optional
-        Backend (NumPy-compatible). If None, inferred from inputs.
+    and then apply an outer root :math:`r`:
 
-    Returns
-    ----------
-    dist: float
-        SGOT metric value.
+    .. math::
+        \mathrm{SGOT}
+        \;=\;
+        \mathrm{obj}^{1/r}.
 
-    References
-    ----------
-    Germain et al., *Spectral-Grassmann Optimal Transport* (SGOT).
+    In summary:
+
+    - :math:`q` controls how strongly spectral and Grassmann distances are curved
+      (via :math:`|\lambda_i - \lambda'_j|^{q}` and :math:`d_G(i,j)^{q}`),
+    - :math:`p` is the exponent used in the OT ground cost and the inner
+      Wasserstein root,
+    - :math:`r` is an additional outer root applied to the Wasserstein objective.
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
 
-    _validate_sgot_metric_inputs(Ds, Dt)
+    _validate_sgot_inputs(Ds, Rs, Ls, Dt, Rt, Lt)
 
     C = sgot_cost_matrix(
         Ds,
@@ -413,6 +412,7 @@ def sgot_metric(
         grassman_metric=grassman_metric,
         eigen_scaling=eigen_scaling,
         nx=nx,
+        eps=eps,
     )
 
     if Ws is None:
