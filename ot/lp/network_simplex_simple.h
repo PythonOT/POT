@@ -234,8 +234,8 @@ namespace lemon {
         MAX(std::numeric_limits<Value>::max()),
         INF(std::numeric_limits<Value>::has_infinity ?
             std::numeric_limits<Value>::infinity() : MAX),
-        _lazy_cost(false), _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0),
-        _dense_cost(false), _D_ptr(nullptr), _D_n2(0),
+        _n1(0), _n2(0),
+        _cost_accessor(*this),
         _warmstart_provided(false), _warmstart_tree_built(false),
         _max_cost(0), _has_max_cost(false)
         {
@@ -292,6 +292,142 @@ namespace lemon {
 
     private:
 
+        class CostAccessor {
+        public:
+            enum class Mode {
+                ExplicitArray,
+                DenseMatrix,
+                LazyGeometry
+            };
+
+            explicit CostAccessor(NetworkSimplexSimple& ns)
+                : _ns(ns),
+                  _mode(Mode::ExplicitArray),
+                  _coords_a(nullptr),
+                  _coords_b(nullptr),
+                  _dim(0),
+                  _metric(0),
+                  _dense_ptr(nullptr),
+                  _dense_n2(0) {}
+
+            void setLazyGeometry(const double* coords_a, const double* coords_b,
+                                 int dim, int metric) {
+                _mode = Mode::LazyGeometry;
+                _coords_a = coords_a;
+                _coords_b = coords_b;
+                _dim = dim;
+                _metric = metric;
+                _dense_ptr = nullptr;
+                _dense_n2 = 0;
+            }
+
+            void setDenseMatrix(const double* dense_ptr, int dense_n2) {
+                _mode = Mode::DenseMatrix;
+                _dense_ptr = dense_ptr;
+                _dense_n2 = dense_n2;
+                _coords_a = nullptr;
+                _coords_b = nullptr;
+                _dim = 0;
+                _metric = 0;
+            }
+
+            bool usesStoredArcCosts() const {
+                return _mode == Mode::ExplicitArray;
+            }
+
+            bool isDenseMatrix() const {
+                return _mode == Mode::DenseMatrix;
+            }
+
+            bool isLazyGeometry() const {
+                return _mode == Mode::LazyGeometry;
+            }
+
+            inline Cost pointCost(int i, int j_adjusted) const {
+                const double* xa = _coords_a + i * _dim;
+                const double* xb = _coords_b + j_adjusted * _dim;
+                Cost cost = 0;
+
+                if (_metric == 0) {
+                    for (int d = 0; d < _dim; ++d) {
+                        Cost diff = xa[d] - xb[d];
+                        cost += diff * diff;
+                    }
+                    return cost;
+                }
+
+                if (_metric == 1) {
+                    for (int d = 0; d < _dim; ++d) {
+                        Cost diff = xa[d] - xb[d];
+                        cost += diff * diff;
+                    }
+                    return std::sqrt(cost);
+                }
+
+                for (int d = 0; d < _dim; ++d) {
+                    cost += std::abs(xa[d] - xb[d]);
+                }
+                return cost;
+            }
+
+            inline Cost arcCost(ArcsType arc_id) const {
+                if (_mode == Mode::ExplicitArray) {
+                    return _ns._cost[arc_id];
+                }
+
+                if (arc_id >= _ns._arc_num) {
+                    return _ns._cost[arc_id];
+                }
+
+                if (_mode == Mode::DenseMatrix) {
+                    return _dense_ptr[_ns._arc_num - arc_id - 1];
+                }
+
+                const int i = _ns._node_num - _ns._source[arc_id] - 1;
+                const int j = _ns._node_num - _ns._target[arc_id] - 1 - _ns._n1;
+                return pointCost(i, j);
+            }
+
+            Cost maxRealArcCost() const {
+                if (_ns._arc_num == 0) {
+                    return 0;
+                }
+
+                if (_mode == Mode::ExplicitArray) {
+                    Cost max_cost = _ns._cost[0];
+                    for (ArcsType i = 1; i != _ns._arc_num; ++i) {
+                        if (_ns._cost[i] > max_cost) max_cost = _ns._cost[i];
+                    }
+                    return max_cost;
+                }
+
+                if (_mode == Mode::DenseMatrix) {
+                    Cost max_cost = _dense_ptr[0];
+                    for (ArcsType i = 1; i != _ns._arc_num; ++i) {
+                        if (_dense_ptr[i] > max_cost) max_cost = _dense_ptr[i];
+                    }
+                    return max_cost;
+                }
+
+                Cost max_cost = arcCost(0);
+                for (ArcsType i = 1; i != _ns._arc_num; ++i) {
+                    Cost c = arcCost(i);
+                    if (c > max_cost) max_cost = c;
+                }
+                return max_cost;
+            }
+
+        private:
+            NetworkSimplexSimple& _ns;
+            Mode _mode;
+            const double* _coords_a;
+            const double* _coords_b;
+            int _dim;
+            int _metric;
+            const double* _dense_ptr;
+            int _dense_n2;
+        };
+
         uint64_t max_iter;
         TEMPLATE_DIGRAPH_TYPEDEFS(GR);
 
@@ -344,18 +480,7 @@ namespace lemon {
         ValueVector _flow;
         //SparseValueVector<Value> _flow;
         CostVector _pi;
-
-        // Lazy cost computation support
-        bool _lazy_cost;
-        const double* _coords_a;
-        const double* _coords_b;
-        int _dim;
-        int _metric; // 0: sqeuclidean, 1: euclidean, 2: cityblock
-
-        // Dense cost matrix pointer (lazy access, no copy)
-        bool _dense_cost;
-        const double* _D_ptr;  // pointer to row-major cost matrix
-        int _D_n2;             // number of columns in D (original n2)
+        CostAccessor _cost_accessor;
 
     private:
         // Warmstart data
@@ -461,7 +586,6 @@ namespace lemon {
             // References to the NetworkSimplexSimple class
             const IntVector  &_source;
             const IntVector  &_target;
-            const CostVector &_cost;
             const StateVector &_state;
             const CostVector &_pi;
             ArcsType &_in_arc;
@@ -477,7 +601,7 @@ namespace lemon {
             // Constructor
             BlockSearchPivotRule(NetworkSimplexSimple &ns) :
             _source(ns._source), _target(ns._target),
-            _cost(ns._cost), _state(ns._state), _pi(ns._pi),
+            _state(ns._state), _pi(ns._pi),
             _in_arc(ns.in_arc), _search_arc_num(ns._search_arc_num),
             _next_arc(0),_ns(ns)
             {
@@ -490,40 +614,7 @@ namespace lemon {
 
             // Get cost for an arc (either from pre-computed array or compute lazily)
             inline Cost getCost(ArcsType e) const {
-                if (_ns._dense_cost) {
-                    // Dense matrix mode: read directly from D pointer
-                    return _ns._D_ptr[_ns._arc_num - e - 1];
-                } else if (!_ns._lazy_cost) {
-                    return _cost[e];
-                } else {
-                    // For lazy mode, compute cost from coordinates inline
-                    // _source and _target use reversed node numbering
-                    int i = _ns._node_num - _source[e] - 1;
-                    int j = _ns._node_num - _target[e] - 1 - _ns._n1;
-                    
-                    const double* xa = _ns._coords_a + i * _ns._dim;
-                    const double* xb = _ns._coords_b + j * _ns._dim;
-                    Cost cost = 0;
-                    
-                    if (_ns._metric == 0) {  // sqeuclidean
-                        for (int d = 0; d < _ns._dim; ++d) {
-                            Cost diff = xa[d] - xb[d];
-                            cost += diff * diff;
-                        }
-                        return cost;
-                    } else if (_ns._metric == 1) {  // euclidean
-                        for (int d = 0; d < _ns._dim; ++d) {
-                            Cost diff = xa[d] - xb[d];
-                            cost += diff * diff;
-                        }
-                        return std::sqrt(cost);
-                    } else {  // cityblock
-                        for (int d = 0; d < _ns._dim; ++d) {
-                            cost += std::abs(xa[d] - xb[d]);
-                        }
-                        return cost;
-                    }
-                }
+                return _ns.getCostForArc(e);
             }
 
             // Find next entering arc
@@ -649,13 +740,10 @@ namespace lemon {
         /// \return <tt>(*this)</tt>
         NetworkSimplexSimple& setLazyCost(const double* coords_a, const double* coords_b, 
                                            int dim, int metric, int n1, int n2) {
-            _lazy_cost = true;
-            _coords_a = coords_a;
-            _coords_b = coords_b;
-            _dim = dim;
-            _metric = metric;
+            _cost_accessor.setLazyGeometry(coords_a, coords_b, dim, metric);
             _n1 = n1;
             _n2 = n2;
+            _has_max_cost = false;
             return *this;
         }
 
@@ -670,15 +758,9 @@ namespace lemon {
         ///
         /// \return <tt>(*this)</tt>
         NetworkSimplexSimple& setDenseCostMatrix(const double* D, int n2) {
-            _dense_cost = true;
-            _D_ptr = D;
-            _D_n2 = n2;
-            // Precompute max cost once for reuse in init()
+            _cost_accessor.setDenseMatrix(D, n2);
             _has_max_cost = true;
-            _max_cost = D[0];
-            for (ArcsType i = 1; i != _arc_num; ++i) {
-                if (D[i] > _max_cost) _max_cost = D[i];
-            }
+            _max_cost = _cost_accessor.maxRealArcCost();
             return *this;
         }
 
@@ -692,28 +774,7 @@ namespace lemon {
         ///
         /// \return Cost (distance) between the two points
         inline Cost computeLazyCost(int i, int j_adjusted) const {
-            const double* xa = _coords_a + i * _dim;
-            const double* xb = _coords_b + j_adjusted * _dim;
-            Cost cost = 0;
-            
-            if (_metric == 0) {  // sqeuclidean
-                for (int d = 0; d < _dim; ++d) {
-                    Cost diff = xa[d] - xb[d];
-                    cost += diff * diff;
-                }
-                return cost;
-            } else if (_metric == 1) {  // euclidean
-                for (int d = 0; d < _dim; ++d) {
-                    Cost diff = xa[d] - xb[d];
-                    cost += diff * diff;
-                }
-                return std::sqrt(cost);
-            } else {  // cityblock (L1)
-                for (int d = 0; d < _dim; ++d) {
-                    cost += std::abs(xa[d] - xb[d]);
-                }
-                return cost;
-            }
+            return _cost_accessor.pointCost(i, j_adjusted);
         }
 
 
@@ -726,30 +787,7 @@ namespace lemon {
         /// \param arc_id The arc ID
         /// \return Cost of the arc
         inline Cost getCostForArc(ArcsType arc_id) const {
-            if (_dense_cost) {
-                // Dense matrix mode: read directly from D pointer
-                // For artificial arcs (>= _arc_num), read from _cost array
-                if (arc_id >= _arc_num) {
-                    return _cost[arc_id];
-                }
-                // Without arc mixing: internal arc_id maps to graph arc = _arc_num - arc_id - 1
-                // graph arc g encodes source i = g / m, target j = g % m
-                // cost = D[i * _D_n2 + j] = D[g] (since m == _D_n2)
-                return _D_ptr[_arc_num - arc_id - 1];
-            } else if (!_lazy_cost) {
-                return _cost[arc_id];
-            } else {
-                // For artificial arcs (>= _arc_num), return stored cost
-                // (0 for positive supply, ART_COST for negative supply)
-                if (arc_id >= _arc_num) {
-                    return _cost[arc_id];
-                }
-                // Compute lazily from coordinates
-                // Convert internal node IDs back to graph node IDs, then to coordinate indices
-                int i = _node_num - _source[arc_id] - 1;  // graph source in [0, _n1-1]
-                int j = _node_num - _target[arc_id] - 1 - _n1;  // graph target in [_n1, _node_num-1] -> [0, _n2-1]
-                return computeLazyCost(i, j);
-            }
+            return _cost_accessor.arcCost(arc_id);
         }
 
         /// \brief Set the supply values of the nodes.
@@ -952,9 +990,9 @@ namespace lemon {
         NetworkSimplexSimple& resetParams() {
             // Fast fills over contiguous storage
             std::fill_n(_supply.begin(), _node_num, Value(0));
-            // In dense/lazy modes, real-arc costs are not read from _cost.
+            // In external-cost modes, real-arc costs are not read from _cost.
             // Keep the default fill for the regular explicit-cost mode only.
-            if (!_dense_cost && !_lazy_cost) {
+            if (_cost_accessor.usesStoredArcCosts()) {
                 std::fill_n(_cost.begin(), _arc_num, Cost(1));
             }
             _stype = GEQ;
@@ -1096,24 +1134,9 @@ namespace lemon {
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            if (_dense_cost) {
-                // Dense matrix mode: compute cost from D pointer
-                for (ArcsType i=0; i<_flow.size(); i++) {
-                    if (_flow[i] != 0) {
-                        c += _flow[i] * Number(getCostForArc(i));
-                    }
-                }
-            } else if (!_lazy_cost) {
-                for (ArcsType i=0; i<_flow.size(); i++)
-                    c += _flow[i] * Number(_cost[i]);
-            } else {
-                // Compute costs lazily
-                for (ArcsType i=0; i<_flow.size(); i++) {
-                    if (_flow[i] != 0) {
-                        int src = _node_num - _source[i] - 1;
-                        int tgt = _node_num - _target[i] - 1 - _n1;
-                        c += _flow[i] * Number(computeLazyCost(src, tgt));
-                    }
+            for (ArcsType i = 0; i < static_cast<ArcsType>(_flow.size()); ++i) {
+                if (_flow[i] != 0) {
+                    c += _flow[i] * Number(getCostForArc(i));
                 }
             }
             return c;
@@ -1206,13 +1229,7 @@ namespace lemon {
 
                 for (ArcsType e = 0; e < _arc_num; ++e) {
                     _state[e] = STATE_LOWER;
-                    Cost c;
-                    if (_lazy_cost) {
-                        // Compute cost on-the-fly for lazy mode
-                        c = getCostForArc(e);
-                    } else {
-                        c = _cost[e];
-                    }
+                    Cost c = getCostForArc(e);
                     if (c > ART_COST) ART_COST = c;
                     Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
                     if ((ArcsType)maxheap.size() < K) {
@@ -1548,22 +1565,8 @@ namespace lemon {
                 Cost max_cost = 0;
                 if (_has_max_cost) {
                     max_cost = _max_cost;
-                } else if (_dense_cost) {
-                    max_cost = *_D_ptr;
-                    for (ArcsType i = 1; i != _arc_num; ++i) {
-                        if (_D_ptr[i] > max_cost) max_cost = _D_ptr[i];
-                    }
-                } else if (!_lazy_cost) {
-                    max_cost = _cost[0];
-                    for (ArcsType i = 1; i != _arc_num; ++i) {
-                        if (_cost[i] > max_cost) max_cost = _cost[i];
-                    }
                 } else {
-                    // Lazy cost: fall back to on-the-fly computation
-                    for (ArcsType i = 0; i != _arc_num; ++i) {
-                        Cost c = getCostForArc(i);
-                        if (c > max_cost) max_cost = c;
-                    }
+                    max_cost = _cost_accessor.maxRealArcCost();
                 }
                 ART_COST = (max_cost + 1) * _node_num;
                 _max_cost = max_cost;
