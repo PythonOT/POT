@@ -214,7 +214,7 @@ def test_emd_emd2():
 
 
 def test_omp_emd2():
-    # test emd2 and emd2 with openmp for simple identity
+    # numThreads is kept for compatibility but no longer enables threading
     n = 100
     rng = np.random.RandomState(0)
 
@@ -224,7 +224,8 @@ def test_omp_emd2():
     M = ot.dist(x, x)
 
     w = ot.emd2(u, u, M)
-    w2 = ot.emd2(u, u, M, numThreads=2)
+    with pytest.warns(UserWarning, match="numThreads is no longer supported"):
+        w2 = ot.emd2(u, u, M, numThreads=2)
 
     np.testing.assert_allclose(w, w2)
 
