@@ -6,7 +6,7 @@
 SGOT example for a rotated linear system
 =========================================
 
-This notebook presents a synthetic example of Spectral Grassmannian-Wasserstein
+This example presents a synthetic example of Spectral Grassmannian-Wasserstein
 Optimal Transport (SGOT) on linear dynamical systems.
 
 We consider a signal formed by the sum of two damped oscillatory modes evolving
@@ -46,7 +46,7 @@ dt = 1 / fs
 #
 # .. math::
 #
-#     x(t)=e^{-\tau_1 t}\cos(2\pi\omega_1 t)\,\vec e(\theta)
+#     x_{\text{ref}}(t)=e^{-\tau_1 t}\cos(2\pi\omega_1 t)\,\vec e(\theta)
 #     \;+\;
 #     e^{-\tau_2 t}\cos(2\pi\omega_2 t)\,\vec e(\theta),
 #
@@ -107,6 +107,8 @@ plt.show()
 #     x_2^{(3)}(t)
 #     \end{pmatrix}
 #     \in\mathbb{R}^8.
+#
+# where :math:`x^{(n)}(t)` denotes the n-th derivative of :math:`x(t)`.
 #
 # This allows us to rewrite the dynamics as a first-order linear system:
 #
@@ -360,54 +362,6 @@ print(f"Second mode: frequency: {recovered_freqs[1]:.2f} Hz -- decay: {decay[1]:
 
 
 # %%
-# Applying a rotation in the notebook
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# The rotation is introduced through the parameter `theta`. In the
-# data-generation step, the trajectory is rotated in the observation plane by
-# the 2D rotation matrix
-#
-# .. math::
-#
-#     R(\theta)=
-#     \begin{pmatrix}
-#     \cos\theta & -\sin\theta \\
-#     \sin\theta & \cos\theta
-#     \end{pmatrix},
-#
-# via `traj_0 = traj_0 @ R(theta).T`.
-#
-# At the operator level, the same transformation is represented by conjugation
-# of the reference operator,
-#
-# .. math::
-#
-#     A_{\mathrm{rot}} = P(\theta)\,A_{\mathrm{ref}}\,P(\theta)^\top,
-#
-# where :math:`P(\theta)` is the block rotation acting on both state
-# coordinates and their derivatives.
-
-# [X_1,X_2,X_1_,X_2_]
-A_ref = np.array([[0, 0, 1, 0], [0, 0, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 0]])
-
-b = 0.1
-c = 1
-A_shift = np.array([[0, 0, 1, 0], [0, 0, 0, 0], [-c, 0, -b, 0], [0, 0, 0, 0]])
-
-
-def rotation_matrix(theta):
-    c, s = np.cos(theta), np.sin(theta)
-    return np.array([[c, -s, 0, 0], [s, c, 0, 0], [0, 0, c, -s], [0, 0, s, c]])
-
-
-P = rotation_matrix(np.pi / 4)
-A_rot = P @ A_ref @ P.T
-
-A_ref_decomp = np.linalg.eig(A_ref)
-A_rot_decomp = np.linalg.eig(A_rot)
-
-
-# %%
 # Introduction to SGOT for linear operators
 # -----------------------------------------
 #
@@ -459,6 +413,20 @@ A_rot_decomp = np.linalg.eig(A_rot)
 # %%
 # SGOT distance versus rotation angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We compare the reference signal with a rotated version obtained by changing
+# only the observation direction. The shifted signal is
+#
+# .. math::
+#
+#     x_{\mathrm{shift}}^{\mathrm{rot}}(t;\theta)
+#     =
+#     \sum_{i=1}^{2}
+#     e^{-\tau_i t}\cos(2\pi\omega_i t)\,\vec e(\theta),
+#
+# while the reference signal is recovered at :math:`\theta=\theta_0`. Thus,
+# this experiment isolates the effect of rotating the underlying one-dimensional
+# subspace in the observation plane.
 
 thetas = np.linspace(0, np.pi, 10)
 lst = []
@@ -480,7 +448,7 @@ plt.title("SGOT distance vs rotation angle")
 plt.show()
 
 # %%
-# Comparison across Grassmann metrics
+# Comparison across Grassmann metrics for SGOT distance versus rotation angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 thetas = np.linspace(0, np.pi / 2, 10)
@@ -511,6 +479,22 @@ plt.show()
 # %%
 # SGOT distance versus eta
 # ~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# In this experiment, we keep the reference direction fixed and perturb one of
+# the oscillatory modes. The shifted signal is
+#
+# .. math::
+#
+#     x_{\mathrm{shift}}^{\eta}(t)
+#     =
+#     e^{-\tau_1 t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
+#     \;+\;
+#     e^{-\tau_2 t}\cos(2\pi\omega_2' t)\,\vec e(\theta_0),
+#
+# where only the second frequency is modified. The parameter :math:`\eta`
+# itself does not change the signal; rather, it changes the SGOT ground cost by
+# balancing the contribution of eigenvalue variations and eigenspace
+# variations.
 etas = np.linspace(0.0, 1.0, 21)
 methods = ["chordal", "martin", "geodesic", "procrustes"]
 scores_eta = []
@@ -546,6 +530,21 @@ plt.show()
 # %%
 # SGOT distance versus decay
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# We now study the effect of changing the decay rate while keeping the
+# observation direction fixed. The shifted signal is
+#
+# .. math::
+#
+#     x_{\mathrm{shift}}^{\mathrm{decay}}(t;\tau)
+#     =
+#     e^{-\tau t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
+#     \;+\;
+#     e^{-\tau t}\cos(2\pi\omega_2' t)\,\vec e(\theta_0).
+#
+# In this way, both modes share the same modified decay parameter
+# :math:`\tau`, allowing us to isolate the influence of dissipation on the SGOT
+# distance.
 decays = np.linspace(0.1, 3.0, 20)  # adjust range as needed
 methods = ["chordal", "martin", "geodesic", "procrustes"]
 scores_decay = []
