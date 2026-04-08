@@ -422,7 +422,7 @@ print(f"Second mode: frequency: {recovered_freqs[1]:.2f} Hz -- decay: {decay[1]:
 #     x_{\mathrm{shift}}^{\mathrm{rot}}(t;\theta)
 #     =
 #     \sum_{i=1}^{2}
-#     e^{-\tau_i t}\cos(2\pi\omega_i t)\,\vec e(\theta),
+#     e^{-\tau_i t}\cos(2\pi\omega_i t)\,\vec e({\color{red}\theta}),
 #
 # while the reference signal is recovered at :math:`\theta=\theta_0`. Thus,
 # this experiment isolates the effect of rotating the underlying one-dimensional
@@ -489,7 +489,7 @@ plt.show()
 #     =
 #     e^{-\tau_1 t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
 #     \;+\;
-#     e^{-\tau_2 t}\cos(2\pi\omega_2' t)\,\vec e(\theta_0),
+#     e^{-\tau_2 t}\cos(2\pi{\color{red}\omega_2'} t)\,\vec e(\theta_0),
 #
 # where only the second frequency is modified. The parameter :math:`\eta`
 # itself does not change the signal; rather, it changes the SGOT ground cost by
@@ -538,9 +538,9 @@ plt.show()
 #
 #     x_{\mathrm{shift}}^{\mathrm{decay}}(t;\tau)
 #     =
-#     e^{-\tau t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
+#     e^{-{\color{red}\tau} t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
 #     \;+\;
-#     e^{-\tau t}\cos(2\pi\omega_2' t)\,\vec e(\theta_0).
+#     e^{-{\color{red}\tau} t}\cos(2\pi\omega_2' t)\,\vec e(\theta_0).
 #
 # In this way, both modes share the same modified decay parameter
 # :math:`\tau`, allowing us to isolate the influence of dissipation on the SGOT
