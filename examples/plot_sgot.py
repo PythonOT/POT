@@ -477,31 +477,31 @@ plt.legend()
 plt.show()
 
 # %%
-# SGOT distance versus eta
-# ~~~~~~~~~~~~~~~~~~~~~~~~
+# SGOT distance versus frequency
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # In this experiment, we keep the reference direction fixed and perturb one of
 # the oscillatory modes. The shifted signal is
 #
 # .. math::
 #
-#     x_{\mathrm{shift}}^{\eta}(t)
+#     x_{\mathrm{shift}}^{\omega}(t)
 #     =
 #     e^{-\tau_1 t}\cos(2\pi\omega_1 t)\,\vec e(\theta_0)
 #     \;+\;
 #     e^{-\tau_2 t}\cos(2\pi{\color{red}\omega_2'} t)\,\vec e(\theta_0),
 #
-# where only the second frequency is modified. The parameter :math:`\eta`
-# itself does not change the signal; rather, it changes the SGOT ground cost by
-# balancing the contribution of eigenvalue variations and eigenspace
-# variations.
-etas = np.linspace(0.0, 1.0, 21)
+# where only the second frequency is modified. We then study how the SGOT
+# distance changes as a function of the perturbed frequency :math:`\omega_2'`.
+
+omegas = np.linspace(0.5, 3.0, 21)
 methods = ["chordal", "martin", "geodesic", "procrustes"]
-scores_eta = []
+scores_omega = []
 theta = theta_0
 
-for eta in etas:
-    freq_1 = np.array([freq_0[0], recovered_freqs[1]])
+eta_fixed = 0.9
+for omega in omegas:
+    freq_1 = np.array([freq_0[0], omega])
     traj = generate_data(time, tau_0, freq_1, theta)
     Z = augment(traj, 4)
     X = Z[:-1]
@@ -513,17 +513,19 @@ for eta in etas:
 
     row = []
     for name in methods:
-        row.append(sgot_metric(D_0, R_0, L_0, D, R, L, eta=eta, grassman_metric=name))
-    scores_eta.append(row)
+        row.append(
+            sgot_metric(D_0, R_0, L_0, D, R, L, eta=eta_fixed, grassman_metric=name)
+        )
+    scores_omega.append(row)
 
-scores_eta = np.array(scores_eta)
+scores_omega = np.array(scores_omega)
 plt.figure(figsize=(8, 5))
 for i, name in enumerate(methods):
-    plt.plot(etas, scores_eta[:, i], label=name)
+    plt.plot(omegas, scores_omega[:, i], label=name)
 
-plt.xlabel("eta")
+plt.xlabel("omega")
 plt.ylabel("SGOT distance")
-plt.title("SGOT distance vs eta")
+plt.title("SGOT distance vs omega")
 plt.legend()
 plt.show()
 
