@@ -199,7 +199,7 @@ def augment(traj, window_length=2):
 
 
 # create the embedded state matrix Z
-Z = augment(traj_0[:, [0]], 4)
+Z = augment(traj_0, 4)
 Z.shape
 
 # inspect one embedded state vector
@@ -464,7 +464,7 @@ thetas = np.linspace(0, np.pi, 10)
 lst = []
 for i, theta in enumerate(thetas):
     traj = generate_data(time, tau_0, freq_0, theta)
-    Z = augment(traj[:, [0]], 4)
+    Z = augment(traj, 4)
     X = Z[:-1]
     Y = Z[1:]
     B, B_spec = estimator(X, Y, rank=4)
@@ -487,7 +487,7 @@ thetas = np.linspace(0, np.pi / 2, 10)
 lst = []
 for i, theta in enumerate(thetas):
     traj = generate_data(time, tau_0, freq_0, theta)
-    Z = augment(traj[:, [0]], 4)
+    Z = augment(traj, 4)
     X = Z[:-1]
     Y = Z[1:]
     B, B_spec = estimator(X, Y, rank=4)
@@ -519,7 +519,7 @@ theta = theta_0
 for eta in etas:
     freq_1 = np.array([freq_0[0], recovered_freqs[1]])
     traj = generate_data(time, tau_0, freq_1, theta)
-    Z = augment(traj[:, [0]], 4)
+    Z = augment(traj, 4)
     X = Z[:-1]
     Y = Z[1:]
 
@@ -556,7 +556,7 @@ for tau in decays:
     tau_1 = np.array([tau, tau])  # or whatever structure your generator expects
 
     traj = generate_data(time, tau_1, freq_1, theta)
-    Z = augment(traj[:, [0]], 4)
+    Z = augment(traj, 4)
     X = Z[:-1]
     Y = Z[1:]
 
