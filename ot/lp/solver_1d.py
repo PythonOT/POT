@@ -156,16 +156,12 @@ def wasserstein_1d(
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-    if return_plans:
-        u_quantiles, idx_u = quantile_function(
-            qs, u_cumweights, u_values, return_index=True
-        )
-        v_quantiles, idx_v = quantile_function(
-            qs, v_cumweights, v_values, return_index=True
-        )
-    else:
-        u_quantiles = quantile_function(qs, u_cumweights, u_values)
-        v_quantiles = quantile_function(qs, v_cumweights, v_values)
+u_quantiles, idx_u = quantile_function(
+    qs, u_cumweights, u_values, return_index=True
+)
+v_quantiles, idx_v = quantile_function(
+    qs, v_cumweights, v_values, return_index=True
+)
 
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
