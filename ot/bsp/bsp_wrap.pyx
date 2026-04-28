@@ -13,16 +13,17 @@ cimport numpy as np
 cimport cython
 cimport libc.math as math
 from libc.stdint cimport uint64_t
+from libcpp cimport bool
 
 
 cdef extern from "bsp_wrapper.h":
-    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,int lp_power,int* initial_plan)
+    double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,int lp_power,int* initial_plan,bool gaussian)
     double MergeBijections(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans, int *plan,int lp_power)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def bsp_solve_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64,int lp_power = 2,np.ndarray[int,ndim=1,mode="c"] initial_plan = None):
+def bsp_solve_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=2, mode="c"] Y,  int n_plans=64,int lp_power = 2,np.ndarray[int,ndim=1,mode="c"] initial_plan = None, bint gaussian = False):
     """
     
     Builds nb_plans BSP Matchings and merges them in a single bijection.
@@ -51,14 +52,14 @@ def bsp_solve_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=
     cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n_plans,n), dtype=np.int32) 
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
+    cdef bool gauss = gaussian
+
     cdef double cost
     
     if initial_plan is None:
-        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,lp_power, NULL)
+        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,lp_power, NULL,gauss)
     else:
-        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,lp_power, <int*>initial_plan.data)
-
-    # add 
+        cost = BSPOT_wrap(n, d, <double*>X.data, <double*>Y.data, n_plans, <int*> plans.data, <int*> plan.data,lp_power, <int*>initial_plan.data,gauss)
 
     return cost,plan, plans
     

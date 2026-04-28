@@ -34,11 +34,9 @@ template<int dim>
 std::vector<BSPOT::BijectiveMatching> computeBSPMatchings_dim(const BSPOT::Points<dim>& A,const BSPOT::Points<dim>& B,int nb_plans, bool gaussian = true){
     using namespace BSPOT;
 
-    if (A.rows() > 64) 
-        gaussian = false;
-    
     std::vector<BSPOT::BijectiveMatching> plans(nb_plans);
     BijectiveBSPMatching<dim> BSP(A,B);
+
     #pragma omp parallel for
     for (int i = 0; i < nb_plans; i++) {
         if (gaussian){
@@ -59,17 +57,17 @@ BSPOT::BijectiveMatching MergeBijections(const std::vector<BSPOT::BijectiveMatch
 
 
 template<int dim>
-double BSPOT_wrap_dim(int n, int d, double *X, double *Y, uint64_t nb_plans,std::vector<BSPOT::BijectiveMatching>& plans, BSPOT::BijectiveMatching& plan,int lp_power,const BSPOT::BijectiveMatching& T0) {
+double BSPOT_wrap_dim(int n, int d, double *X, double *Y, uint64_t nb_plans,std::vector<BSPOT::BijectiveMatching>& plans, BSPOT::BijectiveMatching& plan,int lp_power,const BSPOT::BijectiveMatching& T0,bool gaussian) {
     auto A = UnLinearize<dim>(X,n,d);
     auto B = UnLinearize<dim>(Y,n,d);
-    plans = computeBSPMatchings_dim<dim>(A,B,nb_plans);
+    plans = computeBSPMatchings_dim<dim>(A,B,nb_plans,gaussian);
     auto cost_func = makeCost<dim>(A,B,lp_power);
     plan = MergeBijections(plans,cost_func,T0);
 
     return plan.evalMatching(cost_func);
 }
 
-double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,int lp_power,int* initial_plan) {
+double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,int lp_power,int* initial_plan,bool gaussian) {
     using namespace BSPOT;
 
     BijectiveMatching T0;
@@ -87,16 +85,16 @@ double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *pl
 
     switch (d)
     {
-        case 2: {cost = BSPOT_wrap_dim<2>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 3: {cost = BSPOT_wrap_dim<3>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 4: {cost = BSPOT_wrap_dim<4>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 5: {cost = BSPOT_wrap_dim<5>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 6: {cost = BSPOT_wrap_dim<6>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 7: {cost = BSPOT_wrap_dim<7>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 8: {cost = BSPOT_wrap_dim<8>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 9: {cost = BSPOT_wrap_dim<9>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        case 10: {cost = BSPOT_wrap_dim<10>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
-        default: {cost = BSPOT_wrap_dim<-1>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0);break;}
+        case 2: {cost = BSPOT_wrap_dim<2>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 3: {cost = BSPOT_wrap_dim<3>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 4: {cost = BSPOT_wrap_dim<4>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 5: {cost = BSPOT_wrap_dim<5>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 6: {cost = BSPOT_wrap_dim<6>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 7: {cost = BSPOT_wrap_dim<7>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 8: {cost = BSPOT_wrap_dim<8>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 9: {cost = BSPOT_wrap_dim<9>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        case 10: {cost = BSPOT_wrap_dim<10>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
+        default: {cost = BSPOT_wrap_dim<-1>(n,d,X,Y,nb_plans,plans,plan,lp_power,T0, gaussian);break;}
     }
 
     std::copy(plan.getPlan().begin(), plan.getPlan().end(), final_plan_ptr);

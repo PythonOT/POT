@@ -6,7 +6,9 @@ from ..backend import get_backend
 from .bsp_wrap import bsp_solve_c, merge_bijections_c
 
 
-def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
+def compute_bspot_bijection(
+    X, Y, n_plans=64, lp_power=2, initial_plan=None, gaussian=True
+):
     r"""
 
     This solver provides a good and fast approximation of the combinatorial problem of finding
@@ -35,6 +37,9 @@ def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
         The power of the ground metric (default 2 for squared euclidean, -1 for infinity norm).
     initial_plan : array-like, shape (n_samples,), optional
         Bijection to use for initializing merging (optional).
+    gaussian : bool, optional
+        If true then uses the Gaussian slicing heuristic to improve matching quality.
+        Comes with a cubic complexity with dimension, set at true by default.
 
     Returns
     -------
@@ -69,7 +74,9 @@ def compute_bspot_bijection(X, Y, n_plans=64, lp_power=2, initial_plan=None):
                 "initial_plan must have shape (n,) where n is the number of points"
             )
 
-    cost_inner, plan, plans = bsp_solve_c(X_np, Y_np, n_plans, lp_power, initial_plan)
+    cost_inner, plan, plans = bsp_solve_c(
+        X_np, Y_np, n_plans, lp_power, initial_plan, gaussian
+    )
 
     plan = nx.from_numpy(plan)
 
