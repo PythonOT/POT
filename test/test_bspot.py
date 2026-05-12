@@ -7,6 +7,7 @@
 import ot
 import ot.bsp
 import numpy as np
+import pytest
 
 
 def test_bsp_ot_exact_identity():
@@ -106,13 +107,11 @@ def test_bsp_ot_relative_error():
     )
 
 
-has_torch = importlib.util.find_spec("torch") is not None
+from ot.backend import torch
 
 
-@pytest.mark.skipif(not has_torch, reason="PyTorch not installed")
+@pytest.mark.skipif(not torch, reason="PyTorch not installed")
 def test_bsp_ot_torch_backend():
-    import torch
-
     # test that bsp-ot works with torch tensors
     n = 50
     rng = np.random.RandomState(0)
