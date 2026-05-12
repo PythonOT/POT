@@ -7,6 +7,7 @@
 import ot
 import ot.bsp
 import numpy as np
+import importlib.metadata
 
 
 def test_bsp_ot_exact_identity():
@@ -141,4 +142,6 @@ test_bsp_ot_bijective()
 test_bsp_ot_identity_null_cost()
 test_bsp_ot_plan_merge_decrease()
 test_bsp_ot_relative_error()
-test_bsp_ot_torch_backend()
+
+if importlib.util.find_spec("torch") is not None:
+    test_bsp_ot_torch_backend()
