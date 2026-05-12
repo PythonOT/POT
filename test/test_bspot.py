@@ -7,7 +7,6 @@
 import ot
 import ot.bsp
 import numpy as np
-import importlib.metadata
 
 
 def test_bsp_ot_exact_identity():
@@ -107,6 +106,10 @@ def test_bsp_ot_relative_error():
     )
 
 
+has_torch = importlib.util.find_spec("torch") is not None
+
+
+@pytest.mark.skipif(not has_torch, reason="PyTorch not installed")
 def test_bsp_ot_torch_backend():
     import torch
 
@@ -135,13 +138,3 @@ def test_bsp_ot_torch_backend():
 
     # cost should be zero
     np.testing.assert_allclose(cost_new, 0, atol=1e-5)
-
-
-test_bsp_ot_exact_identity()
-test_bsp_ot_bijective()
-test_bsp_ot_identity_null_cost()
-test_bsp_ot_plan_merge_decrease()
-test_bsp_ot_relative_error()
-
-if importlib.util.find_spec("torch") is not None:
-    test_bsp_ot_torch_backend()
