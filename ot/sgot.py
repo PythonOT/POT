@@ -20,7 +20,7 @@ from ot.backend import get_backend
 
 #####################################################################################################################################
 #####################################################################################################################################
-### NORMALISATION AND OPERATOR ATOMS  ###
+### NORMALIZATION AND OPERATOR ATOMS  ###
 #####################################################################################################################################
 #####################################################################################################################################
 
@@ -128,7 +128,7 @@ def _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=None, eps=1e-12):
 
 
 def _grassmann_distance_squared(
-    delta, grassman_metric="chordal", q=1, nx=None, eps=1e-12
+    delta, grassmann_metric="chordal", q=1, nx=None, eps=1e-12
 ):
     """Compute Grassmannian distances from delta similarities.
 
@@ -136,7 +136,7 @@ def _grassmann_distance_squared(
     ----------
     delta: array-like
         Similarity values in [0, 1].
-    grassman_metric: str, optional
+    grassmann_metric: str, optional
         Metric type: "geodesic", "chordal", "procrustes", or "martin".
     q: int or float, optional
         Exponent applied to the Grassmann distance, in the same spirit as the
@@ -162,17 +162,17 @@ def _grassmann_distance_squared(
 
     delta = nx.clip(delta, 0.0, 1.0)
 
-    if grassman_metric == "geodesic":
+    if grassmann_metric == "geodesic":
         dist2 = nx.arccos(delta) ** 2
-    elif grassman_metric == "chordal":
+    elif grassmann_metric == "chordal":
         dist2 = 1.0 - delta**2
-    elif grassman_metric == "procrustes":
+    elif grassmann_metric == "procrustes":
         dist2 = 2.0 * (1.0 - delta)
-    elif grassman_metric == "martin":
+    elif grassmann_metric == "martin":
         delta2 = nx.maximum(delta**2, eps)
         dist2 = -nx.log(delta2)
     else:
-        raise ValueError(f"Unknown grassman_metric: {grassman_metric}")
+        raise ValueError(f"Unknown grassmann_metric: {grassmann_metric}")
 
     return nx.real(dist2) ** (q / 2.0)
 
@@ -192,7 +192,7 @@ def sgot_cost_matrix(
     eta=0.5,
     p=2,
     q=1,
-    grassman_metric="chordal",
+    grassmann_metric="chordal",
     eigen_scaling=None,
     nx=None,
     eps=1e-12,
@@ -218,7 +218,7 @@ def sgot_cost_matrix(
     .. math::
         \delta_{ij} \;=\; \left|\langle r_i, r'_j\rangle\,\langle \ell_i, \ell'_j\rangle\right|.
 
-    Depending on ``grassman_metric``, the Grassmann contribution is:
+    Depending on ``grassmann_metric``, the Grassmann contribution is:
 
     - ``"chordal"``:
     .. math::
@@ -261,7 +261,7 @@ def sgot_cost_matrix(
     q: int, optional
         Exponent applied to the eigenvalue distance in the spectral term.
         Default is 1.
-    grassman_metric: str, optional
+    grassmann_metric: str, optional
         Metric type: "geodesic", "chordal", "procrustes", or "martin".
     eigen_scaling: None or array-like of length 2, optional
         Scaling ``(real_scale, imag_scale)`` applied to eigenvalues before computing
@@ -293,7 +293,7 @@ def sgot_cost_matrix(
     delta = _delta_matrix_1d(Rs, Ls, Rt, Lt, nx=nx)
     C_grass = _grassmann_distance_squared(
         delta,
-        grassman_metric=grassman_metric,
+        grassmann_metric=grassmann_metric,
         q=q,
         nx=nx,
         eps=eps,
@@ -343,7 +343,7 @@ def sgot_metric(
     p=2,
     q=1,
     r=2,
-    grassman_metric="chordal",
+    grassmann_metric="chordal",
     eigen_scaling=None,
     Ws=None,
     Wt=None,
@@ -369,7 +369,7 @@ def sgot_metric(
               \;+\; (1-\eta)\,d_G(i,j)^{q},
 
     and :math:`d_G(i,j)` is the Grassmann distance associated with the chosen
-    ``grassman_metric``.
+    ``grassmann_metric``.
 
     From the optimal plan :math:`P^\star`, we first form the :math:`p`-Wasserstein
     objective:
@@ -409,7 +409,7 @@ def sgot_metric(
         eta=eta,
         p=p,
         q=q,
-        grassman_metric=grassman_metric,
+        grassmann_metric=grassmann_metric,
         eigen_scaling=eigen_scaling,
         nx=nx,
         eps=eps,

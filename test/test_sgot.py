@@ -97,11 +97,11 @@ def test_delta_matrix_1d_swap_invariance():
 
 
 @pytest.mark.parametrize(
-    "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
+    "grassmann_metric", ["geodesic", "chordal", "procrustes", "martin"]
 )
-def test_grassmann_zero_distance(grassman_metric, nx):
+def test_grassmann_zero_distance(grassmann_metric, nx):
     delta = nx.from_numpy(np.ones((3, 3)))
-    dist2 = _grassmann_distance_squared(delta, grassman_metric=grassman_metric, nx=nx)
+    dist2 = _grassmann_distance_squared(delta, grassmann_metric=grassmann_metric, nx=nx)
     dist2_np = nx.to_numpy(dist2)
     np.testing.assert_allclose(dist2_np, 0.0, atol=1e-6)
 
@@ -109,7 +109,7 @@ def test_grassmann_zero_distance(grassman_metric, nx):
 def test_grassmann_distance_invalid_name():
     delta = np.ones((2, 2))
     with pytest.raises(ValueError):
-        _grassmann_distance_squared(delta, grassman_metric="cordal")
+        _grassmann_distance_squared(delta, grassmann_metric="cordal")
 
 
 # ---------------------------------------------------------------------
@@ -138,13 +138,13 @@ def test_grassmann_cost_reference(nx):
 
 
 @pytest.mark.parametrize(
-    "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
+    "grassmann_metric", ["geodesic", "chordal", "procrustes", "martin"]
 )
-def test_grassmann_cost_basic_properties(grassman_metric, nx):
+def test_grassmann_cost_basic_properties(grassmann_metric, nx):
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
     C = sgot_cost_matrix(
-        Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, grassman_metric=grassman_metric
+        Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b, grassmann_metric=grassmann_metric
     )
     C_np = nx.to_numpy(C)
     assert C_np.shape == (Ds.shape[0], Dt.shape[0])
@@ -204,7 +204,7 @@ def test_sgot_metric_with_weights():
 
 
 @pytest.mark.parametrize(
-    "eta, p, q, grassman_metric",
+    "eta, p, q, grassmann_metric",
     [
         (0.5, 1, 1, "geodesic"),
         (0.5, 2, 1, "chordal"),
@@ -212,7 +212,7 @@ def test_sgot_metric_with_weights():
         (0.7, 1, 2, "martin"),
     ],
 )
-def test_hyperparameter_sweep_cost(nx, eta, p, q, grassman_metric):
+def test_hyperparameter_sweep_cost(nx, eta, p, q, grassmann_metric):
     """Sweep over a set of fixed HPs and run cost()."""
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     Ds_b, Rs_b, Ls_b, Dt_b, Rt_b, Lt_b = nx.from_numpy(Ds, Rs, Ls, Dt, Rt, Lt)
@@ -227,7 +227,7 @@ def test_hyperparameter_sweep_cost(nx, eta, p, q, grassman_metric):
         eta=eta,
         p=p,
         q=q,
-        grassman_metric=grassman_metric,
+        grassmann_metric=grassmann_metric,
     )
     C_np = nx.to_numpy(C)
     assert C_np.shape == (Ds.shape[0], Dt.shape[0])
@@ -236,9 +236,9 @@ def test_hyperparameter_sweep_cost(nx, eta, p, q, grassman_metric):
 
 
 @pytest.mark.parametrize(
-    "grassman_metric", ["geodesic", "chordal", "procrustes", "martin"]
+    "grassmann_metric", ["geodesic", "chordal", "procrustes", "martin"]
 )
-def test_hyperparameter_sweep(grassman_metric):
+def test_hyperparameter_sweep(grassmann_metric):
     Ds, Rs, Ls, Dt, Rt, Lt = random_atoms()
     rng = np.random.RandomState(3)
     eta = rng.uniform(0.0, 1.0)
@@ -257,7 +257,7 @@ def test_hyperparameter_sweep(grassman_metric):
         p=p,
         q=q,
         r=r,
-        grassman_metric=grassman_metric,
+        grassmann_metric=grassmann_metric,
     )
 
     assert np.isfinite(dist)

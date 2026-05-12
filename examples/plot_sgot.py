@@ -395,7 +395,7 @@ print(f"Second mode: frequency: {recovered_freqs[1]:.2f} Hz -- decay: {decay[1]:
 #     \triangleq
 #     \eta\,|\lambda-\lambda'| + (1-\eta)\, d_{\mathcal G}(\mathcal V,\mathcal V'),
 #
-# where :math:`d_{\mathcal G}` denotes the Grassmann distance between
+# where :math:`d_{\mathcal G}` denotes the grassmann distance between
 # eigenspaces and :math:`\eta\in(0,1)` balances the contribution of eigenvalues
 # and eigenspaces.
 #
@@ -448,7 +448,7 @@ plt.title("SGOT distance vs rotation angle")
 plt.show()
 
 # %%
-# Comparison across Grassmann metrics for SGOT distance versus rotation angle
+# Comparison across Grassmannian metrics for SGOT distance versus rotation angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 thetas = np.linspace(0, np.pi / 2, 10)
@@ -463,7 +463,7 @@ for i, theta in enumerate(thetas):
     D = np.log(D) * fs
     lst1 = []
     for name in ["chordal", "martin", "geodesic", "procrustes"]:
-        lst1.append(sgot_metric(D_0, R_0, L_0, D, R, L, eta=0.9, grassman_metric=name))
+        lst1.append(sgot_metric(D_0, R_0, L_0, D, R, L, eta=0.9, grassmann_metric=name))
     lst.append(lst1)
 lst2 = np.array(lst)
 plt.figure(figsize=(8, 5))
@@ -514,7 +514,7 @@ for omega in omegas:
     row = []
     for name in methods:
         row.append(
-            sgot_metric(D_0, R_0, L_0, D, R, L, eta=eta_fixed, grassman_metric=name)
+            sgot_metric(D_0, R_0, L_0, D, R, L, eta=eta_fixed, grassmann_metric=name)
         )
     scores_omega.append(row)
 
@@ -576,7 +576,7 @@ for tau in decays:
                 R,
                 L,
                 eta=0.9,  # keep eta fixed here
-                grassman_metric=name,
+                grassmann_metric=name,
             )
         )
     scores_decay.append(row)
