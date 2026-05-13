@@ -93,6 +93,119 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
         return A, b
 
 
+def bures_wasserstein_mapping_hd(
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+):
+    r"""Return OT linear operator between HD Gaussian distritutions.
+
+    The function estimates the optimal linear operator that aligns the two
+    HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[3] <references-OT-mapping-linear>`, Th. 2.9
+    .
+
+    The linear operator from source to target :math:`M`
+
+    .. math::
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+
+    where :
+
+    .. math::
+        \mathbf{A}      &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2} 
+        \Sigma_s^{-1/2}                            \\
+            
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
+            
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
+            
+        \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
+            
+        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
+            
+        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
+            
+        \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
+
+    Parameters
+    ----------
+    ms : array-like (p,)
+        mean of the source distribution
+    mt : array-like (p,)
+        mean of the target distribution
+    Us : array-like (p,ds)
+        orthogonal matrix spanning the principal subspace of the source distribution
+    Ut : array-like (p,dt)
+        orthogonal matrix spanning the principal subspace of the target distribution
+    ls : array-like (ds,) 
+        the variances associated with the principal sub-axes for the source distribution
+    lt : array-like (dt,) 
+        the variances associated with the principal sub-axes for the target distribution
+    sigma_s^2 : array-like (1,) 
+                the residual variance of the source distribution
+    sigma_t^2 : array-like (1,)
+                the residual variance of the target distribution     
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like (1,)
+        the intrinsic dimension of the target distribution            
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (d, d) array-like
+        Linear operator
+    b : (1, d) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-OT-mapping-linear:
+    References
+    ----------
+    .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
+        distributions", Journal of Optimization Theory and Applications
+        Vol 43, 1984
+
+    .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+        
+    .. [3] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+    """
+
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    )
+    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt)
+
+    p = Us.shape[0]
+
+    # source
+    Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
+    Ds = nx.diag((nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s)) / nx.sqrt(ls + sigma2_s))
+    Ss_sqinv = (1 / nx.sqrt(sigma2_s)) * (nx.eye(p) - dots(Us, Ds, Us.T))
+
+    # destination
+    St = dots(Ut, nx.diag(lt + sigma2_t), Ut.T) + sigma2_t * nx.eye(p)
+
+    M0 = nx.sqrtm(dots(Ss_sq, St, Ss_sq))
+
+    A = dots(Ss_sqinv, M0, Ss_sqinv)
+    b = mt - nx.dot(ms, A)
+
+    if log:
+        log = {}
+        log["Ss_sq"] = Ss_sq
+        log["Ss_sqinv"] = Ss_sqinv
+        return A, b, log
+    else:
+        return A, b
+
+
 def empirical_bures_wasserstein_mapping(
     xs, xt, reg=1e-6, ws=None, wt=None, bias=True, log=False
 ):
