@@ -67,8 +67,10 @@ double BSPOT_wrap_dim(int n, int d, double *X, double *Y, uint64_t nb_plans,std:
     return plan.evalMatching(cost_func);
 }
 
-double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,int lp_power,int* initial_plan,bool gaussian) {
+double BSPOT_wrap(int n, int d, double *X, double *Y, uint64_t nb_plans, int *plans_ptr, int *final_plan_ptr,int lp_power,int* initial_plan,bool gaussian,int seed) {
     using namespace BSPOT;
+
+    global_seed = seed;
 
     BijectiveMatching T0;
 

@@ -7,7 +7,7 @@ from .bsp_wrap import bsp_solve_c, merge_bijections_c
 
 
 def compute_bspot_bijection(
-    X, Y, n_plans=64, lp_power=2, initial_plan=None, gaussian=True
+    X, Y, n_plans=64, p=2, initial_perm=None, gaussian_slicing="auto", seed=0
 ):
     r"""
 
@@ -18,13 +18,13 @@ def compute_bspot_bijection(
         \min_{\sigma \in S_n}  \sum_{i=1}^n \|X_i - Y_{\sigma(i)}\|_p^p
 
     To do so, it generates :math:`n_{plans}` random bijective BSP matchings, merges them together to obtain a bijection of low transport cost.
-    Log-linear complexity in the number of points.
+    Log-linear complexity in the number of points. Algorithm 2 & 3 from [83].
 
     .. note:: There is no guarantee on the quality of the returned bijection, but the method is highly scalable on the CPU.
         Worst cases are obtained between point clouds that are very similar (e.g. two samples from the same distribution),
         where the solver can get stuck in local minima, but works well when the point clouds are very different.
-        The method also works best for the standard squared euclidean cost (lp_power=2), as this cost enables
-        efficient BSP construction strategy (with a cubic dependence on the dimension, this feature is disabled
+        The method also works best for the standard squared euclidean cost (p=2), as this cost enables
+        efficient BSP construction heuristic (with a cubic dependence on the dimension, this feature is disabled
         for dimensions larger than 64).
 
     Parameters
@@ -33,21 +33,24 @@ def compute_bspot_bijection(
     Y : array-like, shape (n_samples, dimension)
     n_plans : int
         The number of BSP Matchings used to compute the final bijection.
-    lp_power : int, optional
+    p : int, optional
         The power of the ground metric (default 2 for squared euclidean, -1 for infinity norm).
-    initial_plan : array-like, shape (n_samples,), optional
+    initial_perm : array-like, shape (n_samples,), optional
         Bijection to use for initializing merging (optional).
-    gaussian : bool, optional
+    gaussian_slicing : "auto" or bool, optional
         If true then uses the Gaussian slicing heuristic to improve matching quality.
-        Comes with a cubic complexity with dimension, set at true by default.
+        Comes with a cubic complexity with dimension.
+        If 'auto', then the heuristic is used for dimensions smaller than 64, and disabled for larger dimensions.
+    seed : int, optional
+        Random seed for reproducibility (default 0).
 
     Returns
     -------
     cost : float
         The transport cost of the final bijection.
-    plan : array-like, shape (n_samples,)
+    perm : array-like, shape (n_samples,)
         The final bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
-    plans : list of array
+    perms : list of array
         The intermediary bijections used to compute the final one.
 
 
@@ -67,60 +70,70 @@ def compute_bspot_bijection(
     if X_np.ndim != 2:
         raise ValueError("X and Y must be 2D arrays")
 
-    if initial_plan is not None:
-        initial_plan = list_to_array(initial_plan)
-        if initial_plan.shape != (X.shape[0],):
+    if initial_perm is not None:
+        initial_perm = list_to_array(initial_perm)
+        if initial_perm.shape != (X.shape[0],):
             raise ValueError(
-                "initial_plan must have shape (n,) where n is the number of points"
+                "initial_perm must have shape (n,) where n is the number of points"
             )
 
-    cost_inner, plan, plans = bsp_solve_c(
-        X_np, Y_np, n_plans, lp_power, initial_plan, gaussian
+    if gaussian_slicing == "auto":
+        gaussian_slicing = X_np.shape[1] <= 64
+        if not gaussian_slicing:
+            print(
+                "Gaussian slicing heuristic disabled for dimension {}. Set gaussian_slicing to True to enable it.".format(
+                    X_np.shape[1]
+                )
+            )
+
+    cost_inner, perm, perms = bsp_solve_c(
+        X_np, Y_np, n_plans, p, initial_perm, gaussian_slicing, seed
     )
 
-    plan = nx.from_numpy(plan)
+    perm = nx.from_numpy(perm)
 
-    if lp_power == -1:
+    if p == -1:
         # infinity norm per pair of points, then mean over all pairs
-        cost = nx.sum(nx.max(nx.abs(X - Y[plan]), axis=1))
+        cost = nx.sum(nx.max(nx.abs(X - Y[perm]), axis=1))
     else:
-        cost = nx.sum(nx.abs(X - Y[plan]) ** lp_power)
+        cost = nx.sum(nx.abs(X - Y[perm]) ** p)
 
     cost = cost / X_np.shape[0]
 
     # add warning if cost_inner and cost differ significantly
     if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-3):
         warnings.warn(
-            "Cost computed from plan differs from cost returned by solver. Cost from plan: {}, Cost from solver: {}".format(
+            "Cost computed from perm differs from cost returned by solver. Cost from perm: {}, Cost from solver: {}".format(
                 cost, cost_inner
             )
         )
 
-    return cost, plan, plans
+    return cost, perm, perms
 
 
-def merge_bijections(X, Y, plans, lp_power=2):
+def merge_bijections(X, Y, perms, p=2):
     r"""
     Merge several bijections between two point clouds to obtain a new one with low transport cost.
     The new bijection is guaranteed to have a transport cost no greater than the cost of any of the input bijections.
     Based on simple local/global swapping strategy, with a linear complexity in the number of points.
+    Algorithm 3 from [83].
 
     Parameters
     ----------
     X : array-like, shape (n_samples, dimension)
     Y : array-like, shape (n_samples, dimension)
-    plans : list of array-like, shape (n_samples,)
+    perms : list of array-like, shape (n_samples,)
         The bijections to merge, stored as permutations (e.g. a list of numbers)
-    lp_power : int, optional
+    p : int, optional
         The power of the ground metric (default 2 for squared euclidean).
-        If lp_power is -1, the infinity norm is used.
+        If p is -1, the infinity norm is used.
 
     Returns
     -------
     cost : float
         The transport cost of the merged bijection.
-    plan : array-like, shape (n_samples,)
-        The merged bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
+    perm : array-like, shape (n_samples,)
+        The merged bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[perm[i]].
     """
 
     nx = get_backend(X)
@@ -137,26 +150,26 @@ def merge_bijections(X, Y, plans, lp_power=2):
     if X_np.ndim != 2:
         raise ValueError("X and Y must be 2D arrays")
 
-    plans = np.asarray(plans, dtype=np.int32)
+    perms = np.asarray(perms, dtype=np.int32)
 
-    cost_inner, plan = merge_bijections_c(X_np, Y_np, plans, lp_power)
+    cost_inner, perm = merge_bijections_c(X_np, Y_np, perms, p)
 
-    plan = nx.from_numpy(plan)
+    perm = nx.from_numpy(perm)
 
-    if lp_power == -1:
+    if p == -1:
         # infinity norm per pair of points, then mean over all pairs
-        cost = nx.sum(nx.max(nx.abs(X - Y[plan]), axis=1))
+        cost = nx.sum(nx.max(nx.abs(X - Y[perm]), axis=1))
     else:
-        cost = nx.sum(nx.abs(X - Y[plan]) ** lp_power)
+        cost = nx.sum(nx.abs(X - Y[perm]) ** p)
 
     cost = cost / X_np.shape[0]
 
     # add warning if cost_inner and cost differ significantly
     if not np.isclose(nx.to_numpy(cost), cost_inner, rtol=1e-3):
         warnings.warn(
-            "Cost computed from plan differs from cost returned by solver. Cost from plan: {}, Cost from solver: {}".format(
+            "Cost computed from perm differs from cost returned by solver. Cost from perm: {}, Cost from solver: {}".format(
                 cost, cost_inner
             )
         )
 
-    return cost, plan
+    return cost, perm
