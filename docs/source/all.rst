@@ -17,6 +17,7 @@ API and modules
    backend
    batch
    bregman
+   bsp
    coot
    da
    datasets
@@ -39,7 +40,6 @@ API and modules
    unbalanced
    utils
    weak
-   bsp
    
 
 Main :py:mod:`ot` functions
