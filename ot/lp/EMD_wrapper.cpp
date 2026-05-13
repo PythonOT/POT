@@ -105,7 +105,7 @@ inline void extract_dense_full_support(
     // Only write non-zero entries. G is already zero-initialized in Python.
     const int64_t arc_total = net.arcNum();
     for (int64_t a = 0; a < arc_total; ++a) {
-        const double flow = net._flow[a];
+        const double flow = net.flowByArcId(a);
         if (flow == 0.0) continue;
         const int64_t d_idx = arc_total - a - 1;  // row-major index in D/G
         *cost += flow * D[d_idx];

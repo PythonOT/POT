@@ -235,7 +235,7 @@ namespace lemon {
         INF(std::numeric_limits<Value>::has_infinity ?
             std::numeric_limits<Value>::infinity() : MAX),
         _n1(0), _n2(0),
-        _cost_accessor(*this),
+        _arc_accessor(*this),
         _warmstart_provided(false), _warmstart_tree_built(false),
         _max_cost(0), _has_max_cost(false)
         {
@@ -292,7 +292,7 @@ namespace lemon {
 
     private:
 
-        class CostAccessor {
+        class ArcAccessor {
         public:
             enum class Mode {
                 ExplicitArray,
@@ -300,7 +300,7 @@ namespace lemon {
                 LazyGeometry
             };
 
-            explicit CostAccessor(NetworkSimplexSimple& ns)
+            explicit ArcAccessor(NetworkSimplexSimple& ns)
                 : _ns(ns),
                   _mode(Mode::ExplicitArray),
                   _coords_a(nullptr),
@@ -370,21 +370,66 @@ namespace lemon {
                 return cost;
             }
 
-            inline Cost arcCost(ArcsType arc_id) const {
+            inline int source(ArcsType arc_id) const {
+                return _ns._source[arc_id];
+            }
+
+            inline int target(ArcsType arc_id) const {
+                return _ns._target[arc_id];
+            }
+
+            inline void setSourceTarget(ArcsType arc_id, int source, int target) {
+                _ns._source[arc_id] = source;
+                _ns._target[arc_id] = target;
+            }
+
+            inline Cost storedCost(ArcsType arc_id) const {
+                return _ns._cost[arc_id];
+            }
+
+            inline void setStoredCost(ArcsType arc_id, Cost cost) {
+                _ns._cost[arc_id] = cost;
+            }
+
+            inline Value flow(ArcsType arc_id) const {
+                return _ns._flow[arc_id];
+            }
+
+            inline void setFlow(ArcsType arc_id, Value flow) {
+                _ns._flow[arc_id] = flow;
+            }
+
+            inline void addFlow(ArcsType arc_id, Value flow) {
+                _ns._flow[arc_id] += flow;
+            }
+
+            inline signed char state(ArcsType arc_id) const {
+                return _ns._state[arc_id];
+            }
+
+            inline void setState(ArcsType arc_id, signed char state) {
+                _ns._state[arc_id] = state;
+            }
+
+            inline void fillRealStates(signed char state) {
+                memset(&_ns._state[0], state, _ns._arc_num);
+            }
+
+            inline Cost cost(ArcsType arc_id) const {
                 if (_mode == Mode::ExplicitArray) {
-                    return _ns._cost[arc_id];
+                    return storedCost(arc_id);
                 }
 
                 if (arc_id >= _ns._arc_num) {
-                    return _ns._cost[arc_id];
+                    return storedCost(arc_id);
                 }
 
                 if (_mode == Mode::DenseMatrix) {
                     return _dense_ptr[_ns._arc_num - arc_id - 1];
                 }
 
-                const int i = _ns._node_num - _ns._source[arc_id] - 1;
-                const int j = _ns._node_num - _ns._target[arc_id] - 1 - _ns._n1;
+                const int i = _ns._node_num - source(arc_id) - 1;
+                const int j = _ns._node_num - target(arc_id) - 1 - _ns._n1;
                 return pointCost(i, j);
             }
 
@@ -394,9 +439,11 @@ namespace lemon {
                 }
 
                 if (_mode == Mode::ExplicitArray) {
-                    Cost max_cost = _ns._cost[0];
+                    Cost max_cost = storedCost(0);
                     for (ArcsType i = 1; i != _ns._arc_num; ++i) {
-                        if (_ns._cost[i] > max_cost) max_cost = _ns._cost[i];
+                        if (storedCost(i) > max_cost) {
+                            max_cost = storedCost(i);
+                        }
                     }
                     return max_cost;
                 }
@@ -409,9 +456,9 @@ namespace lemon {
                     return max_cost;
                 }
 
-                Cost max_cost = arcCost(0);
+                Cost max_cost = cost(0);
                 for (ArcsType i = 1; i != _ns._arc_num; ++i) {
-                    Cost c = arcCost(i);
+                    Cost c = cost(i);
                     if (c > max_cost) max_cost = c;
                 }
                 return max_cost;
@@ -480,7 +527,7 @@ namespace lemon {
         ValueVector _flow;
         //SparseValueVector<Value> _flow;
         CostVector _pi;
-        CostAccessor _cost_accessor;
+        ArcAccessor _arc_accessor;
 
     private:
         // Warmstart data
@@ -548,45 +595,12 @@ namespace lemon {
                 return n;
         }
 
-        // finally unused because too slow
-        inline ArcsType getSource(const ArcsType arc) const
-        {
-            //ArcsType a = _source[arc];
-            //return a;
-
-            ArcsType n = _arc_num-arc-1;
-            if (_arc_mixing)
-                n = mixingCoeff*(n%mixingCoeff) + n/mixingCoeff;
-
-            ArcsType b;
-            if (n>=0)
-                b = _node_id(_graph.source(GR::arcFromId( n ) ));
-            else
-            {
-                n = arc+1-_arc_num;
-                if ( n<=_node_num)
-                    b = _node_num;
-                else
-                    if ( n>=_graph._n1)
-                        b = _graph._n1;
-                    else
-                        b = _graph._n1-n;
-            }
-
-            return b;
-        }
-
-
-
         // Implementation of the Block Search pivot rule
         class BlockSearchPivotRule
         {
         private:
 
             // References to the NetworkSimplexSimple class
-            const IntVector  &_source;
-            const IntVector  &_target;
-            const StateVector &_state;
             const CostVector &_pi;
             ArcsType &_in_arc;
             ArcsType _search_arc_num;
@@ -600,8 +614,7 @@ namespace lemon {
 
             // Constructor
             BlockSearchPivotRule(NetworkSimplexSimple &ns) :
-            _source(ns._source), _target(ns._target),
-            _state(ns._state), _pi(ns._pi),
+            _pi(ns._pi),
             _in_arc(ns.in_arc), _search_arc_num(ns._search_arc_num),
             _next_arc(0),_ns(ns)
             {
@@ -614,7 +627,7 @@ namespace lemon {
 
             // Get cost for an arc (either from pre-computed array or compute lazily)
             inline Cost getCost(ArcsType e) const {
-                return _ns.getCostForArc(e);
+                return _ns._arc_accessor.cost(e);
             }
 
             // Find next entering arc
@@ -624,32 +637,32 @@ namespace lemon {
                 ArcsType cnt = _block_size;
                 double a;
                     for (e = _next_arc; e != _search_arc_num; ++e) {
-                        c = _state[e] * (getCost(e) + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _ns._arc_accessor.state(e) * (getCost(e) + _pi[_ns._arc_accessor.source(e)] - _pi[_ns._arc_accessor.target(e)]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
-                            a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
+                            a=fabs(_pi[_ns._arc_accessor.source(_in_arc)])>fabs(_pi[_ns._arc_accessor.target(_in_arc)]) ? fabs(_pi[_ns._arc_accessor.source(_in_arc)]):fabs(_pi[_ns._arc_accessor.target(_in_arc)]);
                             a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
                     for (e = 0; e != _next_arc; ++e) {
-                        c = _state[e] * (getCost(e) + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _ns._arc_accessor.state(e) * (getCost(e) + _pi[_ns._arc_accessor.source(e)] - _pi[_ns._arc_accessor.target(e)]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
-                            a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
+                            a=fabs(_pi[_ns._arc_accessor.source(_in_arc)])>fabs(_pi[_ns._arc_accessor.target(_in_arc)]) ? fabs(_pi[_ns._arc_accessor.source(_in_arc)]):fabs(_pi[_ns._arc_accessor.target(_in_arc)]);
                             a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
-                    a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
+                    a=fabs(_pi[_ns._arc_accessor.source(_in_arc)])>fabs(_pi[_ns._arc_accessor.target(_in_arc)]) ? fabs(_pi[_ns._arc_accessor.source(_in_arc)]):fabs(_pi[_ns._arc_accessor.target(_in_arc)]);
                     a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                     if (min >=  -EPSILON*a) return false;
 
@@ -697,7 +710,7 @@ namespace lemon {
             Arc a; _graph.first(a);
             for (; a != INVALID; _graph.next(a)) {
                 Cost c = map[a];
-                _cost[getArcID(a)] = c;
+                _arc_accessor.setStoredCost(getArcID(a), c);
                 if (!_has_max_cost || c > _max_cost) {
                     _max_cost = c;
                     _has_max_cost = true;
@@ -718,7 +731,7 @@ namespace lemon {
         /// \return <tt>(*this)</tt>
         template<typename Value>
         NetworkSimplexSimple& setCost(const Arc& arc, const Value cost) {
-            _cost[getArcID(arc)] = cost;
+            _arc_accessor.setStoredCost(getArcID(arc), cost);
             if (!_has_max_cost || cost > _max_cost) {
                 _max_cost = cost;
                 _has_max_cost = true;
@@ -740,7 +753,7 @@ namespace lemon {
         /// \return <tt>(*this)</tt>
         NetworkSimplexSimple& setLazyCost(const double* coords_a, const double* coords_b, 
                                            int dim, int metric, int n1, int n2) {
-            _cost_accessor.setLazyGeometry(coords_a, coords_b, dim, metric);
+            _arc_accessor.setLazyGeometry(coords_a, coords_b, dim, metric);
             _n1 = n1;
             _n2 = n2;
             _has_max_cost = false;
@@ -758,9 +771,9 @@ namespace lemon {
         ///
         /// \return <tt>(*this)</tt>
         NetworkSimplexSimple& setDenseCostMatrix(const double* D, int n2) {
-            _cost_accessor.setDenseMatrix(D, n2);
+            _arc_accessor.setDenseMatrix(D, n2);
             _has_max_cost = true;
-            _max_cost = _cost_accessor.maxRealArcCost();
+            _max_cost = _arc_accessor.maxRealArcCost();
             return *this;
         }
 
@@ -774,20 +787,7 @@ namespace lemon {
         ///
         /// \return Cost (distance) between the two points
         inline Cost computeLazyCost(int i, int j_adjusted) const {
-            return _cost_accessor.pointCost(i, j_adjusted);
-        }
-
-
-        /// \brief Get cost for an arc (either from array or compute lazily).
-        ///
-        /// This is the main cost accessor that works from anywhere in the class.
-        /// In lazy mode, computes cost on-the-fly from coordinates.
-        /// In normal mode, returns pre-computed cost from array.
-        ///
-        /// \param arc_id The arc ID
-        /// \return Cost of the arc
-        inline Cost getCostForArc(ArcsType arc_id) const {
-            return _cost_accessor.arcCost(arc_id);
+            return _arc_accessor.pointCost(i, j_adjusted);
         }
 
         /// \brief Set the supply values of the nodes.
@@ -992,7 +992,7 @@ namespace lemon {
             std::fill_n(_supply.begin(), _node_num, Value(0));
             // In external-cost modes, real-arc costs are not read from _cost.
             // Keep the default fill for the regular explicit-cost mode only.
-            if (_cost_accessor.usesStoredArcCosts()) {
+            if (_arc_accessor.usesStoredArcCosts()) {
                 std::fill_n(_cost.begin(), _arc_num, Cost(1));
             }
             _stype = GEQ;
@@ -1066,8 +1066,11 @@ namespace lemon {
                 ArcsType i = 0, j = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a)) {
-                    _source[i] = _node_id(_graph.source(a));
-                    _target[i] = _node_id(_graph.target(a));
+                    _arc_accessor.setSourceTarget(
+                        i,
+                        _node_id(_graph.source(a)),
+                        _node_id(_graph.target(a))
+                    );
                     //_arc_id[a] = i;
                     if ((i += k) >= _arc_num) i = ++j;
                 }
@@ -1076,8 +1079,11 @@ namespace lemon {
                 ArcsType i = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a), ++i) {
-                    _source[i] = _node_id(_graph.source(a));
-                    _target[i] = _node_id(_graph.target(a));
+                    _arc_accessor.setSourceTarget(
+                        i,
+                        _node_id(_graph.source(a)),
+                        _node_id(_graph.target(a))
+                    );
                     //_arc_id[a] = i;
                 }
             }
@@ -1111,32 +1117,13 @@ namespace lemon {
         /// function.
         ///
         /// \pre \ref run() must be called before using this function.
-        /*template <typename Number>
-         Number totalCost() const {
-         Number c = 0;
-         for (ArcIt a(_graph); a != INVALID; ++a) {
-         int64_t i = getArcID(a);
-         c += Number(_flow[i]) * Number(_cost[i]);
-         }
-         return c;
-         }*/
-
         template <typename Number>
         Number totalCost() const {
             Number c = 0;
 
-            /*#ifdef HASHMAP
-             typename stdext::hash_map<int64_t, Value>::const_iterator it;
-             #else
-             typename std::map<int64_t, Value>::const_iterator it;
-             #endif
-             for (it = _flow.data.begin(); it!=_flow.data.end(); ++it)
-             c += Number(it->second) * Number(_cost[it->first]);
-             return c;*/
-
             for (ArcsType i = 0; i < static_cast<ArcsType>(_flow.size()); ++i) {
-                if (_flow[i] != 0) {
-                    c += _flow[i] * Number(getCostForArc(i));
+                if (_arc_accessor.flow(i) != 0) {
+                    c += _arc_accessor.flow(i) * Number(_arc_accessor.cost(i));
                 }
             }
             return c;
@@ -1149,13 +1136,17 @@ namespace lemon {
         }
 #endif
 
+        Value flowByArcId(ArcsType arc) const {
+            return _arc_accessor.flow(arc);
+        }
+
         /// \brief Return the flow on the given arc.
         ///
         /// This function returns the flow on the given arc.
         ///
         /// \pre \ref run() must be called before using this function.
         Value flow(const Arc& a) const {
-            return _flow[getArcID(a)];
+            return _arc_accessor.flow(getArcID(a));
         }
 
         /// \brief Return the flow map (the primal solution).
@@ -1169,7 +1160,7 @@ namespace lemon {
         void flowMap(FlowMap &map) const {
             Arc a; _graph.first(a);
             for (; a != INVALID; _graph.next(a)) {
-                map.set(a, _flow[getArcID(a)]);
+                map.set(a, _arc_accessor.flow(getArcID(a)));
             }
         }
 
@@ -1228,10 +1219,10 @@ namespace lemon {
                 std::priority_queue<HeapEntry> maxheap;
 
                 for (ArcsType e = 0; e < _arc_num; ++e) {
-                    _state[e] = STATE_LOWER;
-                    Cost c = getCostForArc(e);
+                    _arc_accessor.setState(e, STATE_LOWER);
+                    Cost c = _arc_accessor.cost(e);
                     if (c > ART_COST) ART_COST = c;
-                    Cost rc = fabs(c + _pi[_source[e]] - _pi[_target[e]]);
+                    Cost rc = fabs(c + _pi[_arc_accessor.source(e)] - _pi[_arc_accessor.target(e)]);
                     if ((ArcsType)maxheap.size() < K) {
                         maxheap.push({rc, e});
                     } else if (rc < maxheap.top().first) {
@@ -1264,8 +1255,8 @@ namespace lemon {
 
                 for (ArcsType idx = 0; idx < (ArcsType)candidates.size() && tree_edges < _node_num - 1; ++idx) {
                     ArcsType e = candidates[idx].second;
-                    int s = _source[e];
-                    int t = _target[e];
+                    int s = _arc_accessor.source(e);
+                    int t = _arc_accessor.target(e);
                     int rs = s, rt = t;
                     while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
                     while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
@@ -1284,8 +1275,8 @@ namespace lemon {
 
                     for (ArcsType e = 0; e < _arc_num && tree_edges < _node_num - 1; ++e) {
                         if (considered[e]) continue;
-                        int s = _source[e];
-                        int t = _target[e];
+                        int s = _arc_accessor.source(e);
+                        int t = _arc_accessor.target(e);
                         int rs = s, rt = t;
                         while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
                         while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
@@ -1302,8 +1293,8 @@ namespace lemon {
             std::vector<int> tree_adj_deg(_node_num, 0);
             for (int k = 0; k < tree_edges; ++k) {
                 ArcsType e = tree_arcs[k];
-                tree_adj_deg[_source[e]]++;
-                tree_adj_deg[_target[e]]++;
+                tree_adj_deg[_arc_accessor.source(e)]++;
+                tree_adj_deg[_arc_accessor.target(e)]++;
             }
             std::vector<int> tree_adj_start(_node_num + 1, 0);
             for (int i = 0; i < _node_num; ++i) {
@@ -1315,7 +1306,7 @@ namespace lemon {
             std::vector<int> tree_adj_pos(_node_num, 0);
             for (int k = 0; k < tree_edges; ++k) {
                 ArcsType e = tree_arcs[k];
-                int s = _source[e], t = _target[e];
+                int s = _arc_accessor.source(e), t = _arc_accessor.target(e);
                 int ps = tree_adj_start[s] + tree_adj_pos[s]++;
                 tree_adj_node[ps] = t;
                 tree_adj_arc[ps] = e;
@@ -1330,17 +1321,15 @@ namespace lemon {
             _root = _node_num;
 
             for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
-                _state[e] = STATE_TREE;
+                _arc_accessor.setState(e, STATE_TREE);
                 if (_supply[u] >= 0) {
-                    _source[e] = u;
-                    _target[e] = _root;
-                    _cost[e] = 0;
-                    _flow[e] = _supply[u];
+                    _arc_accessor.setSourceTarget(e, u, _root);
+                    _arc_accessor.setStoredCost(e, 0);
+                    _arc_accessor.setFlow(e, _supply[u]);
                 } else {
-                    _source[e] = _root;
-                    _target[e] = u;
-                    _cost[e] = ART_COST;
-                    _flow[e] = -_supply[u];
+                    _arc_accessor.setSourceTarget(e, _root, u);
+                    _arc_accessor.setStoredCost(e, ART_COST);
+                    _arc_accessor.setFlow(e, -_supply[u]);
                 }
             }
 
@@ -1361,7 +1350,7 @@ namespace lemon {
                 _parent[u] = _root;
                 _pred[u] = _arc_num + u;
                 _forward[u] = (_supply[u] >= 0);  // same as init()
-                _state[_arc_num + u] = STATE_TREE;
+                _arc_accessor.setState(_arc_num + u, STATE_TREE);
                 visited[u] = true;
 
                 std::queue<int> bfs_queue;
@@ -1377,11 +1366,11 @@ namespace lemon {
                         
                         _parent[w] = v;
                         _pred[w] = arc_e;
-                        _state[arc_e] = STATE_TREE;
-                        _forward[w] = (_source[arc_e] == w);
+                        _arc_accessor.setState(arc_e, STATE_TREE);
+                        _forward[w] = (_arc_accessor.source(arc_e) == w);
                         
-                        _state[_arc_num + w] = STATE_LOWER;
-                        _flow[_arc_num + w] = 0;
+                        _arc_accessor.setState(_arc_num + w, STATE_LOWER);
+                        _arc_accessor.setFlow(_arc_num + w, 0);
                         
                         bfs_queue.push(w);
                     }
@@ -1458,25 +1447,25 @@ namespace lemon {
                     Value f = _forward[u] ? net[u] : -net[u];
                     
                     if (f >= 0) {
-                        _flow[e] = f;
+                        _arc_accessor.setFlow(e, f);
                         net[_parent[u]] += net[u];
                     } else {
                         if (e < _arc_num) {
-                            _state[e] = STATE_LOWER;
-                            _flow[e] = 0;
+                            _arc_accessor.setState(e, STATE_LOWER);
+                            _arc_accessor.setFlow(e, 0);
                         }
                         // Reconnect u to root via artificial arc
                         ArcsType art_e = _arc_num + u;
                         _parent[u] = _root;
                         _pred[u] = art_e;
-                        _forward[u] = (_source[art_e] == u);
-                        _state[art_e] = STATE_TREE;
+                        _forward[u] = (_arc_accessor.source(art_e) == u);
+                        _arc_accessor.setState(art_e, STATE_TREE);
                         
                         Value art_f = _forward[u] ? net[u] : -net[u];
-                        _flow[art_e] = art_f >= 0 ? art_f : -art_f;
+                        _arc_accessor.setFlow(art_e, art_f >= 0 ? art_f : -art_f);
                         if (art_f < 0) {
                             _forward[u] = !_forward[u];
-                            _flow[art_e] = -art_f;
+                            _arc_accessor.setFlow(art_e, -art_f);
                         }
                         
                         net[_root] += net[u];
@@ -1527,7 +1516,7 @@ namespace lemon {
                 while (u != _root) {
                     ArcsType e = _pred[u];
                     int v = _parent[u];
-                    Cost c = getCostForArc(e);
+                    Cost c = _arc_accessor.cost(e);
                     if (_forward[u]) {
                         _pi[u] = _pi[v] - c;
                     } else {
@@ -1566,14 +1555,14 @@ namespace lemon {
                 if (_has_max_cost) {
                     max_cost = _max_cost;
                 } else {
-                    max_cost = _cost_accessor.maxRealArcCost();
+                    max_cost = _arc_accessor.maxRealArcCost();
                 }
                 ART_COST = (max_cost + 1) * _node_num;
                 _max_cost = max_cost;
                 _has_max_cost = true;
             }
 
-            memset(&_state[0], STATE_LOWER, _arc_num);
+            _arc_accessor.fillRealStates(STATE_LOWER);
 
             // Set data for the artificial root node
             _root = _node_num;
@@ -1598,21 +1587,19 @@ namespace lemon {
                     _rev_thread[u + 1] = u;
                     _succ_num[u] = 1;
                     _last_succ[u] = u;
-                    _state[e] = STATE_TREE;
+                    _arc_accessor.setState(e, STATE_TREE);
                     if (_supply[u] >= 0) {
                         _forward[u] = true;
                         _pi[u] = 0;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        _flow[e] = _supply[u];
-                        _cost[e] = 0;
+                        _arc_accessor.setSourceTarget(e, u, _root);
+                        _arc_accessor.setFlow(e, _supply[u]);
+                        _arc_accessor.setStoredCost(e, 0);
                     } else {
                         _forward[u] = false;
                         _pi[u] = ART_COST;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        _flow[e] = -_supply[u];
-                        _cost[e] = ART_COST;
+                        _arc_accessor.setSourceTarget(e, _root, u);
+                        _arc_accessor.setFlow(e, -_supply[u]);
+                        _arc_accessor.setStoredCost(e, ART_COST);
                     }
                 }
             }
@@ -1630,25 +1617,21 @@ namespace lemon {
                         _forward[u] = true;
                         _pi[u] = 0;
                         _pred[u] = e;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        _flow[e] = _supply[u];
-                        _cost[e] = 0;
-                        _state[e] = STATE_TREE;
+                        _arc_accessor.setSourceTarget(e, u, _root);
+                        _arc_accessor.setFlow(e, _supply[u]);
+                        _arc_accessor.setStoredCost(e, 0);
+                        _arc_accessor.setState(e, STATE_TREE);
                     } else {
                         _forward[u] = false;
                         _pi[u] = ART_COST;
                         _pred[u] = f;
-                        _source[f] = _root;
-                        _target[f] = u;
-                        _flow[f] = -_supply[u];
-                        _cost[f] = ART_COST;
-                        _state[f] = STATE_TREE;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        //_flow[e] = 0;  //by default, the sparse matrix is empty
-                        _cost[e] = 0;
-                        _state[e] = STATE_LOWER;
+                        _arc_accessor.setSourceTarget(f, _root, u);
+                        _arc_accessor.setFlow(f, -_supply[u]);
+                        _arc_accessor.setStoredCost(f, ART_COST);
+                        _arc_accessor.setState(f, STATE_TREE);
+                        _arc_accessor.setSourceTarget(e, u, _root);
+                        _arc_accessor.setStoredCost(e, 0);
+                        _arc_accessor.setState(e, STATE_LOWER);
                         ++f;
                     }
                 }
@@ -1668,25 +1651,21 @@ namespace lemon {
                         _forward[u] = false;
                         _pi[u] = 0;
                         _pred[u] = e;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        _flow[e] = -_supply[u];
-                        _cost[e] = 0;
-                        _state[e] = STATE_TREE;
+                        _arc_accessor.setSourceTarget(e, _root, u);
+                        _arc_accessor.setFlow(e, -_supply[u]);
+                        _arc_accessor.setStoredCost(e, 0);
+                        _arc_accessor.setState(e, STATE_TREE);
                     } else {
                         _forward[u] = true;
                         _pi[u] = -ART_COST;
                         _pred[u] = f;
-                        _source[f] = u;
-                        _target[f] = _root;
-                        _flow[f] = _supply[u];
-                        _state[f] = STATE_TREE;
-                        _cost[f] = ART_COST;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        //_flow[e] = 0;
-                        _cost[e] = 0;
-                        _state[e] = STATE_LOWER;
+                        _arc_accessor.setSourceTarget(f, u, _root);
+                        _arc_accessor.setFlow(f, _supply[u]);
+                        _arc_accessor.setState(f, STATE_TREE);
+                        _arc_accessor.setStoredCost(f, ART_COST);
+                        _arc_accessor.setSourceTarget(e, _root, u);
+                        _arc_accessor.setStoredCost(e, 0);
+                        _arc_accessor.setState(e, STATE_LOWER);
                         ++f;
                     }
                 }
@@ -1698,8 +1677,8 @@ namespace lemon {
 
         // Find the join node
         void findJoinNode() {
-            int u = _source[in_arc];
-            int v = _target[in_arc];
+            int u = _arc_accessor.source(in_arc);
+            int v = _arc_accessor.target(in_arc);
             while (u != v) {
                 if (_succ_num[u] < _succ_num[v]) {
                     u = _parent[u];
@@ -1715,12 +1694,12 @@ namespace lemon {
         bool findLeavingArc() {
             // Initialize first and second nodes according to the direction
             // of the cycle
-            if (_state[in_arc] == STATE_LOWER) {
-                first  = _source[in_arc];
-                second = _target[in_arc];
+            if (_arc_accessor.state(in_arc) == STATE_LOWER) {
+                first  = _arc_accessor.source(in_arc);
+                second = _arc_accessor.target(in_arc);
             } else {
-                first  = _target[in_arc];
-                second = _source[in_arc];
+                first  = _arc_accessor.target(in_arc);
+                second = _arc_accessor.source(in_arc);
             }
             delta = INF;
             char result = 0;
@@ -1730,7 +1709,7 @@ namespace lemon {
             // Search the cycle along the path form the first node to the root
             for (int u = first; u != join; u = _parent[u]) {
                 e = _pred[u];
-                d = _forward[u] ? _flow[e] : INF ;
+                d = _forward[u] ? _arc_accessor.flow(e) : INF ;
                 if (d < delta) {
                     delta = d;
                     u_out = u;
@@ -1740,7 +1719,7 @@ namespace lemon {
             // Search the cycle along the path form the second node to the root
             for (int u = second; u != join; u = _parent[u]) {
                 e = _pred[u];
-                d = _forward[u] ? INF  : _flow[e];
+                d = _forward[u] ? INF  : _arc_accessor.flow(e);
                 if (d <= delta) {
                     delta = d;
                     u_out = u;
@@ -1762,22 +1741,24 @@ namespace lemon {
         void changeFlow(bool change) {
             // Augment along the cycle
             if (delta > 0) {
-                Value val = _state[in_arc] * delta;
-                _flow[in_arc] += val;
-                for (int u = _source[in_arc]; u != join; u = _parent[u]) {
-                    _flow[_pred[u]] += _forward[u] ? -val : val;
+                Value val = _arc_accessor.state(in_arc) * delta;
+                _arc_accessor.addFlow(in_arc, val);
+                for (int u = _arc_accessor.source(in_arc); u != join; u = _parent[u]) {
+                    _arc_accessor.addFlow(_pred[u], _forward[u] ? -val : val);
                 }
-                for (int u = _target[in_arc]; u != join; u = _parent[u]) {
-                    _flow[_pred[u]] += _forward[u] ? val : -val;
+                for (int u = _arc_accessor.target(in_arc); u != join; u = _parent[u]) {
+                    _arc_accessor.addFlow(_pred[u], _forward[u] ? val : -val);
                 }
             }
             // Update the state of the entering and leaving arcs
             if (change) {
-                _state[in_arc] = STATE_TREE;
-                _state[_pred[u_out]] =
-                (_flow[_pred[u_out]] == 0) ? STATE_LOWER : STATE_UPPER;
+                _arc_accessor.setState(in_arc, STATE_TREE);
+                _arc_accessor.setState(
+                    _pred[u_out],
+                    (_arc_accessor.flow(_pred[u_out]) == 0) ? STATE_LOWER : STATE_UPPER
+                );
             } else {
-                _state[in_arc] = -_state[in_arc];
+                _arc_accessor.setState(in_arc, -_arc_accessor.state(in_arc));
             }
         }
 
@@ -1860,7 +1841,7 @@ namespace lemon {
                 u = w;
             }
             _pred[u_in] = in_arc;
-            _forward[u_in] = (u_in == _source[in_arc]);
+            _forward[u_in] = (u_in == _arc_accessor.source(in_arc));
             _succ_num[u_in] = old_succ_num;
 
             // Set limits for updating _last_succ form v_in and v_out
@@ -1904,8 +1885,8 @@ namespace lemon {
         // Update potentials
         void updatePotential() {
             Cost sigma = _forward[u_in] ?
-            _pi[v_in] - _pi[u_in] - getCostForArc(_pred[u_in]) :
-            _pi[v_in] - _pi[u_in] + getCostForArc(_pred[u_in]);
+            _pi[v_in] - _pi[u_in] - _arc_accessor.cost(_pred[u_in]) :
+            _pi[v_in] - _pi[u_in] + _arc_accessor.cost(_pred[u_in]);
             // Update potentials in the subtree, which has been moved
             int end = _thread[_last_succ[u_in]];
             for (int u = u_in; u != end; u = _thread[u]) {
@@ -1963,7 +1944,7 @@ namespace lemon {
                         Arc min_arc = INVALID;
                         Arc a; _graph.firstIn(a, v);
                         for (; a != INVALID; _graph.nextIn(a)) {
-                            c = getCostForArc(getArcID(a));
+                            c = _arc_accessor.cost(getArcID(a));
                             if (c < min_cost) {
                                 min_cost = c;
                                 min_arc = a;
@@ -1982,7 +1963,7 @@ namespace lemon {
                     Arc min_arc = INVALID;
                     Arc a; _graph.firstOut(a, u);
                     for (; a != INVALID; _graph.nextOut(a)) {
-                        c = getCostForArc(getArcID(a));
+                        c = _arc_accessor.cost(getArcID(a));
                         if (c < min_cost) {
                             min_cost = c;
                             min_arc = a;
@@ -1998,8 +1979,8 @@ namespace lemon {
             for (ArcsType i = 0; i != arc_vector.size(); ++i) {
                 in_arc = arc_vector[i];
                 // l'erreur est probablement ici...
-                if (_state[in_arc] * (getCostForArc(in_arc) + _pi[_source[in_arc]] -
-                                      _pi[_target[in_arc]]) >= 0) continue;
+                if (_arc_accessor.state(in_arc) * (_arc_accessor.cost(in_arc) + _pi[_arc_accessor.source(in_arc)] -
+                                      _pi[_arc_accessor.target(in_arc)]) >= 0) continue;
                 findJoinNode();
                 bool change = findLeavingArc();
                 if (delta >= MAX) return false;
@@ -2051,11 +2032,11 @@ namespace lemon {
             // Check feasibility
 			if( retVal == OPTIMAL){
                 for (ArcsType e = _search_arc_num; e != _all_arc_num; ++e) {
-                    if (_flow[e] != 0){
-                        if (fabs(_flow[e]) > _EPSILON) // change of the original code following issue #126
+                    if (_arc_accessor.flow(e) != 0){
+                        if (fabs(_arc_accessor.flow(e)) > _EPSILON) // change of the original code following issue #126
                             return INFEASIBLE;
                         else
-                            _flow[e]=0;
+                            _arc_accessor.setFlow(e, 0);
 
                     }
                 }
