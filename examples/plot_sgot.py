@@ -3,7 +3,7 @@
 
 """
 =========================================
-SGOT example for a rotated linear system
+Spectral-Grassmann OT  on dynamical systems operators
 =========================================
 
 This example presents a synthetic example of Spectral Grassmannian-Wasserstein
