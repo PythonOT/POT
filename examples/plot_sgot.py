@@ -19,6 +19,10 @@ compare the reference and rotated systems.
 
 """
 
+# Authors:  Sienna O'Shea
+#                  Thibaut Germain
+#
+# License: MIT License
 import numpy as np
 import matplotlib.pyplot as plt
 
