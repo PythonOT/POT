@@ -57,7 +57,7 @@ def eigenvalue_cost_matrix(Ds, Dt, q=1, eigen_scaling=None, nx=None):
 
     Dsn = nx.real(Ds) * real_scale + 1j * nx.imag(Ds) * imag_scale
     Dtn = nx.real(Dt) * real_scale + 1j * nx.imag(Dt) * imag_scale
-    C_real = nx.real(Dsn[:, None] - nx.real(Dtn)[None, :])
+    C_real = nx.real(Dsn)[:, None] - nx.real(Dtn)[None, :]
     C_real = C_real**2
     C_imag = nx.imag(Dsn)[:, None] - nx.imag(Dtn)[None, :]
     C_imag = C_imag**2
@@ -159,8 +159,6 @@ def _grassmann_distance_squared(
             "delta must be in [0, 1]; found values outside this range "
             f"(min={nx.min(delta)}, max={nx.max(delta)})"
         )
-
-    delta = nx.clip(delta, 0.0, 1.0)
 
     if grassmann_metric == "geodesic":
         dist2 = nx.arccos(delta) ** 2
@@ -282,7 +280,8 @@ def sgot_cost_matrix(
 
     References
     ----------
-    Germain et al., *Spectral-Grassmann Optimal Transport* (SGOT).
+    [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
+    [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
@@ -393,6 +392,11 @@ def sgot_metric(
     - :math:`p` is the exponent used in the OT ground cost and the inner
       Wasserstein root,
     - :math:`r` is an additional outer root applied to the Wasserstein objective.
+
+    References
+    ----------
+    [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
+    [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)

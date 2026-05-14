@@ -15,7 +15,7 @@ underlying continuous linear dynamical system, and we study how its spectral
 representation varies under rotation. The SGOT cost and metric are used to
 compare the reference and rotated systems.
 
-[1] T. Germain; R. Flamary; V. R. Kostic; K. Lounici, A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems, arXiv preprint arXiv:2509.24920, 2025.
+[83] T. Germain; R. Flamary; V. R. Kostic; K. Lounici, A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems, arXiv preprint arXiv:2509.24920, 2025.
 
 """
 
@@ -23,6 +23,7 @@ compare the reference and rotated systems.
 #                  Thibaut Germain
 #
 # License: MIT License
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -432,7 +433,7 @@ print(f"Second mode: frequency: {recovered_freqs[1]:.2f} Hz -- decay: {decay[1]:
 # this experiment isolates the effect of rotating the underlying one-dimensional
 # subspace in the observation plane.
 
-thetas = np.linspace(0, np.pi, 10)
+thetas = np.linspace(0, np.pi / 2, 50)
 lst = []
 for i, theta in enumerate(thetas):
     traj = generate_data(time, tau_0, freq_0, theta)
@@ -455,7 +456,7 @@ plt.show()
 # Comparison across Grassmannian metrics for SGOT distance versus rotation angle
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-thetas = np.linspace(0, np.pi / 2, 10)
+thetas = np.linspace(0, np.pi / 2, 50)
 lst = []
 for i, theta in enumerate(thetas):
     traj = generate_data(time, tau_0, freq_0, theta)
