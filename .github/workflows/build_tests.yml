@@ -83,6 +83,7 @@ jobs:
         python -m pip install --upgrade pip setuptools
         pip install -r requirements_all.txt
         pip install pytest pytest-cov
+        pip uninstall -y triton pytorch-triton triton-nightly || true
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
