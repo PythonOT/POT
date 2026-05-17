@@ -143,7 +143,7 @@ def solve_semidiscrete(
     decreasing_reg=True,
     decreasing_reg_initial_eps=0.1,
     decreasing_reg_exponent=0.5,
-    proj_bound=None,
+    max_cost=None,
     polyak_average=True,
     log=False,
 ):
@@ -197,8 +197,8 @@ def solve_semidiscrete(
         Initial regularization in the DRAG schedule.
     decreasing_reg_exponent : float, default=0.5
         Decay exponent of the DRAG schedule.
-    proj_bound : float, optional
-        If given, clip each iterate to ``[-proj_bound, proj_bound]``.
+    max_cost : float, optional
+        If given, clip each iterate to ``[-max_cost, max_cost]``.
     polyak_average : bool, default=True
         If True, return the uniform average of the iterates; else the last.
     log : bool, default=False
@@ -224,7 +224,7 @@ def solve_semidiscrete(
     >>> target = np.linspace(0.0, 1.0, 10).reshape(-1, 1)
     >>> g = solve_semidiscrete(
     ...     target, lambda b: rng.random((b, 1)),
-    ...     n_iter=500, batch_size=32, proj_bound=1.0,
+    ...     n_iter=500, batch_size=32, max_cost=1.0,
     ... )
     """
     nx, m, b, log_b, cost_fn = _setup(target_positions, target_weights, cost)
@@ -252,8 +252,8 @@ def solve_semidiscrete(
 
         lr_t = lr0 / (t**lr_exponent)
         g = g - lr_t * grad
-        if proj_bound is not None:
-            g = nx.clip(g, -proj_bound, proj_bound)
+        if max_cost is not None:
+            g = nx.clip(g, -max_cost, max_cost)
         if polyak_average:
             g_avg = g_avg + (g - g_avg) / t
 
@@ -262,7 +262,7 @@ def solve_semidiscrete(
         return result, {
             "n_iter": n_iter,
             "batch_size": batch_size,
-            "proj_bound": proj_bound,
+            "max_cost": max_cost,
             "polyak_average": polyak_average,
             "last_potential": g,
         }
