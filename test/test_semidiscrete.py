@@ -152,7 +152,7 @@ def test_solve_converges(nx, build_problem):
         n_iter=N_ITER,
         batch_size=BATCH_SIZE,
         decreasing_reg=False,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     err = centered_l2_error(nx.to_numpy(g), optimal)
     assert err < TOLERANCE, f"err={err:.4f}"
@@ -172,7 +172,7 @@ def test_drag_converges(nx, build_problem):
         n_iter=N_ITER,
         batch_size=BATCH_SIZE,
         decreasing_reg=True,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     err = centered_l2_error(nx.to_numpy(g), optimal)
     assert err < TOLERANCE, f"err={err:.4f}"
@@ -196,7 +196,7 @@ def test_entropic_solver_runs(nx):
         reg=0.05,
         n_iter=N_ITER,
         batch_size=BATCH_SIZE,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     samples = sampler(64)
     phi = c_transform(target, samples, g, target_weights=weights, reg=0.05)
@@ -226,7 +226,7 @@ def test_custom_quadratic_cost_matches_default(nx):
         cost=cost,
         n_iter=N_ITER,
         batch_size=BATCH_SIZE,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     err = centered_l2_error(nx.to_numpy(g), optimal)
     assert err < TOLERANCE, f"err={err:.4f}"
@@ -298,7 +298,7 @@ def test_warm_start_converges(nx):
         target_weights=weights,
         n_iter=N_ITER // 2,
         batch_size=BATCH_SIZE,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     g = solve_semidiscrete(
         target,
@@ -307,7 +307,7 @@ def test_warm_start_converges(nx):
         n_iter=N_ITER // 2,
         batch_size=BATCH_SIZE,
         init_potential=half,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     err = centered_l2_error(nx.to_numpy(g), optimal)
     assert err < TOLERANCE, f"err={err:.4f}"
@@ -330,13 +330,13 @@ def test_init_potential_is_not_mutated(nx):
         init_potential=init,
         n_iter=10,
         batch_size=4,
-        proj_bound=max_cost,
+        max_cost=max_cost,
     )
     np.testing.assert_array_equal(nx.to_numpy(init), snapshot)
 
 
 def test_projection_clamps_last_iterate(nx):
-    """With ``proj_bound=b``, every coordinate of the last iterate lies in ``[-b, b]``."""
+    """With ``max_cost=b``, every coordinate of the last iterate lies in ``[-b, b]``."""
     target_np, weights_np, _, _, d, kind = regular_grid_problem()
     target, weights = lift(nx, target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
@@ -348,7 +348,7 @@ def test_projection_clamps_last_iterate(nx):
         target_weights=weights,
         n_iter=300,
         batch_size=4,
-        proj_bound=bound,
+        max_cost=bound,
         log=True,
     )
     last = nx.to_numpy(info["last_potential"])
@@ -368,7 +368,7 @@ def test_polyak_average_off_returns_last_iterate(nx):
         n_iter=20,
         batch_size=4,
         polyak_average=False,
-        proj_bound=max_cost,
+        max_cost=max_cost,
         log=True,
     )
     np.testing.assert_array_equal(
@@ -388,10 +388,10 @@ def test_log_returns_metadata(nx):
         target_weights=weights,
         n_iter=50,
         batch_size=4,
-        proj_bound=max_cost,
+        max_cost=max_cost,
         log=True,
     )
     assert nx.to_numpy(g).shape == (target_np.shape[0],)
     assert info["n_iter"] == 50
     assert info["batch_size"] == 4
-    assert info["proj_bound"] == max_cost
+    assert info["max_cost"] == max_cost
