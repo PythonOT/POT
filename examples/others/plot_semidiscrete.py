@@ -12,7 +12,7 @@ a grid.
 We call :func:`ot.semidiscrete.solve_semidiscrete` with its default
 arguments: the underlying algorithm is **Projected Averaged SGD**, and the
 default ``decreasing_reg=True`` adds the **DRAG** entropic-regularization
-schedule of [62]_, which improves convergence.
+schedule of [83]_, which improves convergence.
 
 For the returned potential :math:`g` we report:
 
@@ -25,7 +25,7 @@ For the returned potential :math:`g` we report:
   :func:`ot.semidiscrete.c_transform`. The solver **maximises** this
   objective.
 
-.. [62] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+.. [83] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
    (2025). *Decreasing Entropic Regularization Averaged Gradient for
    Semi-Discrete Optimal Transport.* NeurIPS 2025.
 """
