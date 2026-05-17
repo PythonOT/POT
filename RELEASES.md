@@ -14,7 +14,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
-- Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR TBD)
+- Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
 
 #### Closed issues
 
