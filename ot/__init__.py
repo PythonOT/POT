@@ -36,6 +36,7 @@ from . import solvers
 from . import gaussian
 from . import lowrank
 from . import gmm
+from . import semidiscrete
 
 # OT functions
 from .lp import (
@@ -145,6 +146,7 @@ __all__ = [
     "factored",
     "lowrank",
     "gmm",
+    "semidiscrete",
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
