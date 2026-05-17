@@ -101,14 +101,16 @@ def plot_laguerre_cells(target, g, ax, title, resolution=300):
 # A single call to :func:`solve_semidiscrete` runs DRAG with the default
 # arguments (``decreasing_reg=True``). We show the initial Voronoi cells
 # (:math:`g = 0`) next to the Laguerre cells at the optimum.
-# In this problem, the maximum cost between samples is 1.0, so we pass it in
-# ``decreasing_reg=True``. Knowing this bound speeds up convergence.
+# In this problem, the maximum cost between samples is 1.0, so we pass it as
+# ``max_cost=1.0``. Knowing this bound, the potential values are clipped to
+# [-max_cost, max_cost], where it is known that an optimal potential lies ([83]_, Lemma 1),
+# which speeds up convergence.
 g_drag = solve_semidiscrete(
     target_positions,
     source_sampler,
     n_iter=20_000,
     batch_size=16,
-    proj_bound=1.0,
+    max_cost=1.0,
 )
 
 fig, axes = plt.subplots(1, 2, figsize=(11, 5.5))
