@@ -190,7 +190,7 @@ def bures_wasserstein_mapping_hd(
     Ss_sqinv = (1 / nx.sqrt(sigma2_s)) * (nx.eye(p) - dots(Us, Ds, Us.T))
 
     # destination
-    St = dots(Ut, nx.diag(lt + sigma2_t), Ut.T) + sigma2_t * nx.eye(p)
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
 
     M0 = nx.sqrtm(dots(Ss_sq, St, Ss_sq))
 
