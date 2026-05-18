@@ -15,8 +15,9 @@ underlying continuous linear dynamical system, and we study how its spectral
 representation varies under rotation. The SGOT cost and metric are used to
 compare the reference and rotated systems.
 
-[83] T. Germain; R. Flamary; V. R. Kostic; K. Lounici, A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems, arXiv preprint arXiv:2509.24920, 2025.
-
+.. [83] T. Germain; R. Flamary; V. R. Kostic; K. Lounici, A Spectral-Grassmann
+   Wasserstein Metric for Operator Representations of Dynamical Systems,
+   arXiv preprint arXiv:2509.24920, 2025.
 """
 
 # Authors:  Sienna O'Shea

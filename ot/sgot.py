@@ -34,10 +34,14 @@ def eigenvalue_cost_matrix(Ds, Dt, q=1, eigen_scaling=None, nx=None):
         Source eigenvalues.
     Dt: array-like, shape (n_t,)
         Target eigenvalues.
+    q: int or float, optional
+        Exponent applied to the eigenvalue distance, default 1.
     eigen_scaling: None or array-like of length 2, optional
         Scaling (real_scale, imag_scale) applied to eigenvalues before computing
         distances. If None, defaults to (1.0, 1.0). Accepts tuple/list or
         array/tensor with two entries.
+    nx: module, optional
+        Backend (NumPy-compatible). If None, inferred from inputs.
 
     Returns
     ----------
@@ -218,18 +222,10 @@ def sgot_cost_matrix(
 
     Depending on ``grassmann_metric``, the Grassmann contribution is:
 
-    - ``"chordal"``:
-    .. math::
-        C_G(i,j) \;=\; 1 - \delta_{ij}^2
-    - ``"geodesic"``:
-    .. math::
-        C_G(i,j) \;=\; \arccos(\delta_{ij})^2
-    - ``"procrustes"``:
-    .. math::
-        C_G(i,j) \;=\; 2(1-\delta_{ij})
-    - ``"martin"``:
-    .. math::
-        C_G(i,j) \;=\; -\log\!\left(\max(\delta_{ij}^2,\varepsilon)\right)
+    - ``"chordal"``: :math:`C_G(i,j) = 1 - \delta_{ij}^2`
+    - ``"geodesic"``: :math:`C_G(i,j) = \arccos(\delta_{ij})^2`
+    - ``"procrustes"``: :math:`C_G(i,j) = 2(1-\delta_{ij})`
+    - ``"martin"``: :math:`C_G(i,j) = -\log\!\left(\max(\delta_{ij}^2,\varepsilon)\right)`
 
     Finally, we return a matrix suited for a :math:`p`-Wasserstein objective by
     treating :math:`C_2 \approx d^2` and outputting
@@ -280,8 +276,9 @@ def sgot_cost_matrix(
 
     References
     ----------
-    [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
-    [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
+    .. [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
+       `A Spectral-Grassmann Wasserstein Metric for Operator Representations
+       of Dynamical Systems <https://arxiv.org/abs/2509.24920>`_.
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
@@ -393,10 +390,52 @@ def sgot_metric(
       Wasserstein root,
     - :math:`r` is an additional outer root applied to the Wasserstein objective.
 
+    Parameters
+    ----------
+    Ds: array-like, shape (n_s,)
+        Eigenvalues of operator T1.
+    Rs: array-like, shape (L, n_s)
+        Right eigenvectors of operator T1.
+    Ls: array-like, shape (L, n_s)
+        Left eigenvectors of operator T1.
+    Dt: array-like, shape (n_t,)
+        Eigenvalues of operator T2.
+    Rt: array-like, shape (L, n_t)
+        Right eigenvectors of operator T2.
+    Lt: array-like, shape (L, n_t)
+        Left eigenvectors of operator T2.
+    eta: float, optional
+        Weighting between spectral and Grassmann terms, default 0.5.
+    p: int, optional
+        Exponent defining the OT ground cost, default 2.
+    q: int, optional
+        Exponent applied to the eigenvalue and Grassmann distances, default 1.
+    r: int or float, optional
+        Outer root applied to the Wasserstein objective, default 2.
+    grassmann_metric: str, optional
+        Metric type: "geodesic", "chordal", "procrustes", or "martin".
+    eigen_scaling: None or array-like of length 2, optional
+        Scaling ``(real_scale, imag_scale)`` applied to eigenvalues before
+        computing the spectral cost. If None, defaults to ``(1.0, 1.0)``.
+    Ws: array-like, shape (n_s,), optional
+        Source weights. If None, uniform weights are used.
+    Wt: array-like, shape (n_t,), optional
+        Target weights. If None, uniform weights are used.
+    nx: module, optional
+        Backend (NumPy-compatible). If None, inferred from inputs.
+    eps: float, optional
+        Numerical stability constant, default 1e-12.
+
+    Returns
+    -------
+    dist: float
+        SGOT distance between the two spectral decompositions.
+
     References
     ----------
-    [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
-    [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
+    .. [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025).
+       `A Spectral-Grassmann Wasserstein Metric for Operator Representations
+       of Dynamical Systems <https://arxiv.org/abs/2509.24920>`_.
     """
     if nx is None:
         nx = get_backend(Ds, Rs, Ls, Dt, Rt, Lt)
