@@ -1231,6 +1231,42 @@ def test_emd_lazy_warmstart():
     np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
 
 
+def test_emd2_lazy_returns_sparse_plan():
+    from scipy.sparse import issparse
+    from ot.lp import emd2_lazy
+
+    n_s = 12
+    n_t = 15
+    rng = np.random.RandomState(42)
+
+    X_s = rng.randn(n_s, 2)
+    X_t = rng.randn(n_t, 2)
+    a = ot.utils.unif(n_s)
+    b = ot.utils.unif(n_t)
+    M = ot.dist(X_s, X_t, metric="sqeuclidean")
+
+    cost_dense = ot.emd2(a, b, M)
+    cost_lazy, log_lazy = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        return_matrix=True,
+    )
+    G_lazy = log_lazy["G"]
+
+    assert issparse(G_lazy)
+    assert G_lazy.shape == (n_s, n_t)
+    assert G_lazy.nnz <= n_s + n_t
+    np.testing.assert_allclose(cost_lazy, cost_dense, rtol=1e-10, atol=1e-10)
+
+    G_lazy_dense = G_lazy.toarray()
+    np.testing.assert_allclose(G_lazy_dense.sum(axis=1), a, rtol=1e-6, atol=1e-8)
+    np.testing.assert_allclose(G_lazy_dense.sum(axis=0), b, rtol=1e-6, atol=1e-8)
+
+
 def test_emd_sparse_warmstart():
     n = 100
     rng = np.random.RandomState(42)
