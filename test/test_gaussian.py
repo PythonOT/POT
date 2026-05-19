@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 import ot
-from ot.datasets import make_data_classif
+from ot.datasets import make_data_classif, make_gauss_hd
 from ot.utils import is_all_finite
 
 
@@ -40,6 +40,34 @@ def test_bures_wasserstein_mapping(nx):
 
     np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
+def test_bures_wasserstein_mapping_hd(nx):
+    ns = 100
+    nt = 100
+
+    Xs, Xt, ll = make_gauss_hd(ns, nt, p=50, dim=10, m_diff=5, a=(7, 7), b=(1, 1))
+
+    ms = ll["ms"]
+    mt = ll["mt"]
+    sigma2_s = ll["sigma2_s"]
+    sigma2_t = ll["sigma2_t"]
+    ls = ll["ls"]
+    lt = ll["lt"]
+    Us = ll["Us"]
+    Ut = ll["Ut"]
+    ds = ll["ds"]
+    dt = ll["dt"]
+    Cs = ll["Cs"]
+    Ct = ll["Ct"]
+
+    A_hd, b_hd = ot.gaussian.bures_wasserstein_mapping_hd(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+    )
+    A, b = ot.gaussian.bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False)
+
+    np.testing.assert_allclose(A_hd, A, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(b_hd, b, rtol=1e-2, atol=1e-2)
 
 
 @pytest.mark.parametrize("bias", [True, False])
