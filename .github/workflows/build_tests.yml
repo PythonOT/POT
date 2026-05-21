@@ -77,7 +77,7 @@ jobs:
         cache: 'pip'
     - name: Install POT
       run: |
-        pip install -e .
+        pip install .
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
