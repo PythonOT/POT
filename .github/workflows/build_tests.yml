@@ -93,7 +93,8 @@ jobs:
         python -X faulthandler -c "import geomloss; print('geomloss ok')"
         python -X faulthandler -c "import torch; print('torch ok', torch.__version__); import triton; print('triton ok', triton.__version__)"
         python -X faulthandler -c "import torch_geometric; print('torch_geometric ok', torch_geometric.__version__)"
-        python -X faulthandler -c "import jax; print('jax ok', jax.__version__)"
+        timeout 120s python -X faulthandler -c "import jax; print('jax ok', jax.__version__)"
+        POT_BACKEND_DISABLE_JAX=1 python -X faulthandler -c "import ot; print('ot ok with jax disabled')"
         python -X faulthandler -c "import ot; print('ot ok')"
     - name: Run tests
       run: |
