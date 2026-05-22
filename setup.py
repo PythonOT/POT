@@ -134,6 +134,7 @@ setup(
             "networkx",
             "memory_profiler",
         ],
+        "tests": ["pytest", "pytest-cov"],
         "all": [
             "jax",
             "jaxlib",
