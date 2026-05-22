@@ -791,8 +791,11 @@ Interestingly the problem can be casted into a regular OT problem by adding rese
 in which the surplus mass is sent [29]_. We provide a solver for partial OT
 in :any:`ot.partial`. The exact resolution of the problem is computed in :any:`ot.partial.partial_wasserstein`
 and :any:`ot.partial.partial_wasserstein2` that return respectively the OT matrix and the value of the
-linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein` 
-(see [3]_).
+linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein`
+(see [3]_). A numerically stable log-domain variant
+:any:`ot.partial.entropic_partial_wasserstein_logscale` is also provided for small regularisation
+values where the standard solver returns NaN; it solves exactly the same problem but is slower
+because it computes everything in log-space.
 
 The partial Gromov-Wasserstein formulation of the problem 
 

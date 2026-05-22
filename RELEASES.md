@@ -14,9 +14,11 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Add numerically stable log-domain entropic partial Wasserstein solver `entropic_partial_wasserstein_logscale` (Issue #723)
 
 #### Closed issues
 
+- Mitigate NaN regime of `entropic_partial_wasserstein` at small `reg` via a new log-domain alternative `entropic_partial_wasserstein_logscale` (Issue #723; the standard solver itself is unchanged — callers must opt into the log-domain variant)
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
 - Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
 - Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
