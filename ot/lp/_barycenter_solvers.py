@@ -213,9 +213,10 @@ def free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility argument. Multi-threaded EMD is no longer
+        supported and any value greater than 1 falls back to the
+        single-threaded solver with a warning.
 
     Returns
     -------
@@ -349,9 +350,10 @@ def generalized_free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility argument. Multi-threaded EMD is no longer
+        supported and any value greater than 1 falls back to the
+        single-threaded solver with a warning.
     eps: Stability coefficient for the change of variable matrix inversion
         If the :math:`\mathbf{P}_i^T` matrices don't span :math:`\mathbb{R}^d`, the problem is ill-defined and a matrix
         inversion will fail. In this case one may set eps=1e-8 and get a solution anyway (which may make little sense)

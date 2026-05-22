@@ -15,9 +15,6 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
-sys.path.append(os.path.join("ot", "helpers"))
-from openmp_helpers import check_openmp_support
-
 # dirty but working
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
@@ -40,14 +37,8 @@ if "clean" in sys.argv[1:]:
         if os.path.isfile(cpp_file):
             os.remove(cpp_file)
 
-# add platform dependant optional compilation argument
-openmp_supported, flags = check_openmp_support()
 compile_args = ["/O2" if sys.platform == "win32" else "-O3"]
 link_args = []
-
-if openmp_supported:
-    compile_args += flags
-    link_args += flags
 
 if sys.platform.startswith("darwin"):
     compile_args.append("-stdlib=libc++")
