@@ -75,14 +75,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-    - name: Install POT
+    - name: Install POT and dependencies
       run: |
-        pip install .
-    - name: Install dependencies
+        pip install -e .[all,tests]
+    # - name: Install dependencies
+    #   run: |
+    #     python -m pip install --upgrade pip setuptools
+    #     pip install -r requirements_all.txt
+    #     pip install pytest pytest-cov
+    - name: test POT import
       run: |
-        python -m pip install --upgrade pip setuptools
-        pip install -r requirements_all.txt
-        pip install pytest pytest-cov
+        python -c "import ot; print(ot.__version__)"
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
