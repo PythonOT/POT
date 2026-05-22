@@ -10,7 +10,7 @@ jax
 jaxlib
 tensorflow
 pytest
-# torch_geometric
+torch_geometric
 cvxpy
 geomloss
 pykeops
