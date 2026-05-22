@@ -34,6 +34,7 @@ API and modules
    plot
    regpath
    sliced
+   sgot
    smooth
    stochastic
    unbalanced
