@@ -1,4 +1,4 @@
-"""Tests for module bregman on OT with bregman projections"""
+"""Tests for module batch"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Kilian Fatras <kilian.fatras@irisa.fr>

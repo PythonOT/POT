@@ -10,8 +10,9 @@ Batch operations for quadratic optimal transport.
 
 from ..utils import OTResult
 from ot.backend import get_backend
-from ot.batch._linear import loss_linear_batch
+from ot.batch._linear import loss_linear_batch, loss_linear_samples_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
+from ot.utils import list_to_array
 
 
 def tensor_batch(
@@ -289,7 +290,7 @@ def loss_quadratic_samples_batch(
     C2,
     T,
     loss="sqeuclidean",
-    symmetric=None,
+    symmetric=True,
     nx=None,
     logits=None,
     recompute_const=False,
@@ -351,7 +352,17 @@ def loss_quadratic_samples_batch(
 
 
 def loss_fugw_batch(
-    L, M, T, alpha=0.5, reg_marginals=1, symmetric=True, divergence="kl", nx=None
+    a,
+    b,
+    L,
+    M,
+    T,
+    alpha=0.5,
+    reg_marginals=1,
+    symmetric=True,
+    divergence="kl",
+    recompute_const=True,
+    nx=None,
 ):
     r"""
     Computes the fused unbalanced gromov-wasserstein cost given a cost tensor (Gromov term), a cost matrix between features across domains (linear term) and a transport plan. Batched version.
@@ -364,58 +375,172 @@ def loss_fugw_batch(
         Cost matrix between features across domains.
     T : array-like, shape (B, n, m)
         Transport plan.
-    alpha : float or array-like( B,) optional
+    alpha : float, array-like or list (B,) optional
         Weight the quadratic term (alpha*Gromov) and the linear term
         ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. If alpha
         a scalar it is used for all problems in the batch.
-    reg_marginals : float or array-like( B,) optional
+    reg_marginals : float array-like or list(B,) optional
         Marginal relaxation terms. If rho is
         a scalar it is used for all problems in the batch.
     symmetric : bool, optional
         Whether to use symmetric version. Default is True.
     divergence : string, default = "kl"
         Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is True. This should be set to True if T does not satisfy the marginal constraints.
     nx : module, optional
         Backend to use. Default is None.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from ot.batch import tensor_batch, loss_quadratic_batch
-    >>> # Create batch of cost matrices
-    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
-    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
-    >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
-    >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
-    >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
-    >>> # Use the uniform transport plan for testing
-    >>> T = np.ones((3, 5, 4)) / (5 * 4)
-    >>> loss = loss_quadratic_batch(L, T, recompute_const=True)
-    >>> loss.shape
-    (3,)
-
-    See Also
-    --------
-    ot.batch.tensor_batch : From computing the cost tensor L.
-    ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
     """
     if nx is None:
         nx = get_backend(T)
 
-    Q = loss_quadratic_batch(L, T, recompute_const=True, symmetric=symmetric, nx=nx)
+    B = T.shape[0]
 
-    L = loss_linear_batch(M, T, nx=nx)
+    if isinstance(alpha, list):
+        alpha = list_to_array(alpha, nx=nx)
+
+    if isinstance(reg_marginals, list):
+        reg_marginals = list_to_array(reg_marginals, nx=nx)
+
+    if hasattr(alpha, "ndim") and alpha.ndim > 0:
+        if alpha.ndim != 1 or alpha.shape[0] != B:
+            raise ValueError(
+                f"If alpha is not a scalar, it must have shape ({B},), got {alpha.shape}"
+            )
+
+    if hasattr(reg_marginals, "ndim") and reg_marginals.ndim > 0:
+        if reg_marginals.ndim != 1 or reg_marginals.shape[0] != B:
+            raise ValueError(
+                f"If reg_marginals is not a scalar, it must have shape ({B},), got {reg_marginals.shape}"
+            )
+
+    quadratic = loss_quadratic_batch(
+        L, T, recompute_const=recompute_const, symmetric=symmetric, nx=nx
+    )
+
+    linear = loss_linear_batch(M, T, nx=nx)
 
     unbalanced = div_to_product_batch(
         T,
-        a=nx.sum(T, axis=2),
-        b=nx.sum(T, axis=1),
+        a,
+        b,
         divergence=divergence,
         mass=True,
         nx=nx,
     )
 
-    return (1 - alpha) * L + alpha * Q + reg_marginals * unbalanced
+    return (1 - alpha) * linear + alpha * quadratic + reg_marginals * unbalanced
+
+
+def loss_fugw_samples_batch(
+    a,
+    b,
+    C1,
+    C2,
+    X,
+    Y,
+    T,
+    alpha=0.5,
+    reg_marginals=1,
+    symmetric=True,
+    divergence="kl",
+    recompute_const=True,
+    metric_linear="sqeuclidean",
+    metric_quadratic="sqeuclidean",
+    logits=None,
+    nx=None,
+):
+    r"""
+    Computes the fused unbalanced gromov-wasserstein cost given a cost tensor (quadratic term), a cost matrix between features across domains (linear term) and a transport plan. Batched version.
+
+    Parameters
+    ----------
+    a : array-like, shape (B, n)
+        Source distributions.
+    b : array-like, shape (B, m)
+        Target distributions.
+    C1 : array-like, shape (B, n, n) or (B, n, n, d)
+        Source cost matrices for the quadratic term.
+    C2 : array-like, shape (B, m, m) or (B, n, n, d)
+        Target cost matrices for the quadratic term.
+    X : array-like, shape (B, n, d)
+        Samples from source distribution for the linear term
+    Y : array-like, shape (B, m, d)
+        Samples from target distribution for the linear term
+    T : array-like, shape (B, n, m)
+        Transport plan.
+    alpha : float or array-like or list(B,) optional
+        Weight the quadratic term (alpha*Gromov) and the linear term
+        ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. If alpha
+        a scalar it is used for all problems in the batch.
+    reg_marginals : float or array-like or list(B,) optional
+        Marginal relaxation terms. If rho is
+        a scalar it is used for all problems in the batch.
+    symmetric : bool, optional
+        Whether to use symmetric version. Default is True.
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is True. This should be set to True if T does not satisfy the marginal constraints.
+    metric_linear : str, optional
+        Metric for the linear term, 'sqeuclidean', 'euclidean', 'minkowski' or 'kl'
+    metric_quadratic : str, optional
+        Metric to use for the quadratic term. Supported values: 'sqeuclidean', 'kl'.
+        Default is 'sqeuclidean'.
+    logits : bool, optional
+        For KL divergence, whether inputs are logits (unnormalized log probabilities).
+        If True, inputs are treated as logits. Default is None.
+    nx : module, optional
+        Backend to use. Default is None.
+    """
+    if nx is None:
+        nx = get_backend(T)
+
+    B = T.shape[0]
+
+    if isinstance(alpha, list):
+        alpha = list_to_array(alpha, nx=nx)
+
+    if isinstance(reg_marginals, list):
+        reg_marginals = list_to_array(reg_marginals, nx=nx)
+
+    if hasattr(alpha, "ndim") and alpha.ndim > 0:
+        if alpha.ndim != 1 or alpha.shape[0] != B:
+            raise ValueError(
+                f"If alpha is not a scalar, it must have shape ({B},), got {alpha.shape}"
+            )
+
+    if hasattr(reg_marginals, "ndim") and reg_marginals.ndim > 0:
+        if reg_marginals.ndim != 1 or reg_marginals.shape[0] != B:
+            raise ValueError(
+                f"If reg_marginals is not a scalar, it must have shape ({B},), got {reg_marginals.shape}"
+            )
+
+    quadratic = loss_quadratic_samples_batch(
+        a,
+        b,
+        C1,
+        C2,
+        T,
+        loss=metric_quadratic,
+        symmetric=symmetric,
+        nx=nx,
+        logits=logits,
+        recompute_const=recompute_const,
+    )
+
+    linear = loss_linear_samples_batch(X, Y, T, metric=metric_linear)
+
+    unbalanced = div_to_product_batch(
+        T,
+        a,
+        b,
+        divergence=divergence,
+        mass=True,
+        nx=nx,
+    )
+
+    return (1 - alpha) * linear + alpha * quadratic + reg_marginals * unbalanced
 
 
 def solve_gromov_batch(
