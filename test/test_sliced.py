@@ -697,3 +697,68 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
+
+
+class TestSlicedWassersteinScaler:
+    """Integration tests for the scaler parameter in sliced_wasserstein_distance."""
+
+    def test_scaler_none_matches_no_scaler(self):
+        rng = np.random.RandomState(0)
+        X_s = rng.normal(0, 1, (50, 3))
+        X_t = rng.normal(1, 1, (50, 3))
+        result_default = ot.sliced_wasserstein_distance(X_s, X_t, seed=0)
+        result_none = ot.sliced_wasserstein_distance(X_s, X_t, seed=0, scaler=None)
+        np.testing.assert_allclose(result_default, result_none)
+
+    def test_scaler_with_datascaler_runs(self):
+        rng = np.random.RandomState(0)
+        X_s = rng.normal(0, 1, (50, 3))
+        X_t = rng.normal(1, 1, (50, 3))
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        result = ot.sliced_wasserstein_distance(X_s, X_t, seed=0, scaler=scaler)
+        assert np.isfinite(result)
+        assert result >= 0
+
+    def test_scaler_surfaces_small_scale_signal(self):
+        """Scaled SWD detects a shift in a small-magnitude feature that unscaled SWD misses."""
+        rng = np.random.RandomState(0)
+        n = 500
+        X_s = np.column_stack(
+            [
+                rng.normal(1000, 100, n),
+                rng.normal(0, 1, n),
+            ]
+        )
+        X_t = np.column_stack(
+            [
+                rng.normal(1000, 100, n),
+                rng.normal(5, 1, n),
+            ]
+        )
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        swd_scaled = ot.sliced_wasserstein_distance(
+            X_s, X_t, seed=0, n_projections=200, scaler=scaler
+        )
+        assert swd_scaled > 1.0
+
+    def test_scaler_with_lambda(self):
+        X_s = np.array([[1.0, 2.0], [3.0, 4.0]])
+        X_t = np.array([[5.0, 6.0], [7.0, 8.0]])
+        result = ot.sliced_wasserstein_distance(
+            X_s, X_t, seed=0, scaler=lambda x: x / 10
+        )
+        assert np.isfinite(result)
+
+    def test_invalid_scaler_raises(self):
+        X_s = np.array([[1.0, 2.0]])
+        X_t = np.array([[2.0, 3.0]])
+        with pytest.raises(ValueError, match="scaler must be"):
+            ot.sliced_wasserstein_distance(X_s, X_t, scaler=42)
+
+    def test_max_sliced_scaler_integration(self):
+        rng = np.random.RandomState(0)
+        X_s = rng.normal(0, 1, (50, 3))
+        X_t = rng.normal(1, 1, (50, 3))
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        result = ot.max_sliced_wasserstein_distance(X_s, X_t, seed=0, scaler=scaler)
+        assert np.isfinite(result)
