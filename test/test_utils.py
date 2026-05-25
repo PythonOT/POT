@@ -850,6 +850,15 @@ class TestDataScaler:
         scaler = ot.utils.DataScaler(norm="standard").fit(X)
         assert scaler.mean_ is not None
 
+    def test_fit_transform_list_returns_list(self):
+        X_s = np.array([[1.0, 2.0], [3.0, 4.0]])
+        X_t = np.array([[5.0, 6.0], [7.0, 8.0]])
+        results = ot.utils.DataScaler(norm="standard").fit_transform([X_s, X_t])
+        assert isinstance(results, list)
+        assert len(results) == 2
+        assert results[0].shape == X_s.shape
+        assert results[1].shape == X_t.shape
+
 
 class TestApplyScaler:
     """Tests for the apply_scaler helper."""
