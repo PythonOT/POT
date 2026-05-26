@@ -339,6 +339,9 @@ def test_func_backends(nx):
     sp_col = np.array([0, 3, 1, 2, 2])
     sp_data = np.array([4, 5, 7, 9, 0], dtype=np.float64)
 
+    M_complex = M + 1j * rnd.randn(10, 3)
+    v_acos = np.clip(v, -0.99, 0.99)
+
     lst_tot = []
 
     for nx in [ot.backend.NumpyBackend(), nx]:
@@ -722,6 +725,24 @@ def test_func_backends(nx):
         A = nx.atan2(vb, vb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("atan2")
+
+        M_complex_b = nx.from_numpy(M_complex)
+        A = nx.real(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("real")
+
+        A = nx.imag(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("imag")
+
+        A = nx.conj(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("conj")
+
+        v_acos_b = nx.from_numpy(v_acos)
+        A = nx.arccos(v_acos_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("arccos")
 
         A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
