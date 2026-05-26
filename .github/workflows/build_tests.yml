@@ -83,19 +83,9 @@ jobs:
         python -m pip install --upgrade pip setuptools
         pip install -r requirements_all.txt
         pip install pytest pytest-cov
-    - name: Diagnose native imports
+    - name: test POT import
       run: |
-        python -m pip freeze | grep -E 'tensorflow|keras|torch|triton|geometric|jax|jaxlib|keops|geomloss|numpy|scipy'
-        python -X faulthandler -c "import numpy; print('numpy ok', numpy.__version__)"
-        python -X faulthandler -c "import scipy; print('scipy ok', scipy.__version__)"
-        python -X faulthandler -c "import tensorflow; print('tensorflow ok', tensorflow.__version__)"
-        python -X faulthandler -c "import pykeops; print('pykeops ok')"
-        python -X faulthandler -c "import geomloss; print('geomloss ok')"
-        python -X faulthandler -c "import torch; print('torch ok', torch.__version__); import triton; print('triton ok', triton.__version__)"
-        python -X faulthandler -c "import torch_geometric; print('torch_geometric ok', torch_geometric.__version__)"
-        timeout 120s python -X faulthandler -c "import jax; print('jax ok', jax.__version__)"
-        POT_BACKEND_DISABLE_JAX=1 python -X faulthandler -c "import ot; print('ot ok with jax disabled')"
-        python -X faulthandler -c "import ot; print('ot ok')"
+        python -c "import ot; print(ot.__version__)"
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
