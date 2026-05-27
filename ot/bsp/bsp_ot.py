@@ -50,7 +50,7 @@ def compute_bspot_bijection(
         The transport cost of the final bijection.
     perm : array-like, shape (n_samples,)
         The final bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
-    perms : list of array
+    perms : array-like, shape (n_plans,n_samples)
         The intermediary bijections used to compute the final one.
 
 
@@ -122,7 +122,7 @@ def merge_bijections(X, Y, perms, p=2):
     ----------
     X : array-like, shape (n_samples, dimension)
     Y : array-like, shape (n_samples, dimension)
-    perms : list of array-like, shape (n_samples,)
+    perms : array-like, shape (n_plans,n_samples)
         The bijections to merge, stored as permutations (e.g. a list of numbers)
     p : int, optional
         The power of the ground metric (default 2 for squared euclidean).
