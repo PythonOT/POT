@@ -73,6 +73,7 @@ POT provides the following generic OT solvers:
 * Fused unbalanced Gromov-Wasserstein [70].
 * [Optimal Transport Barycenters for Generic Costs](https://pythonot.github.io/auto_examples/barycenters/plot_free_support_barycenter_generic_cost.html) [77]
 * [Barycenters between Gaussian Mixture Models](https://pythonot.github.io/auto_examples/barycenters/plot_gmm_barycenter.html) [69, 77]
+* [Fast and accurate transport bijections using BSP-OT](https://pythonot.github.io/auto_examples/plot_bsp_ot.html) [84]
 
 POT provides the following Machine Learning related solvers:
 
@@ -139,7 +140,7 @@ pip install POT
 or get the very latest version by running:
 
 ```console
-pip install -U https://github.com/PythonOT/POT/archive/master.zip # with --user for user install (no root)
+pip install -U git+https://github.com/PythonOT/POT.git # with --user for user install (no root)
 ```
 
 Optional dependencies may be installed with

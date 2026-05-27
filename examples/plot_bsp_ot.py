@@ -1,13 +1,13 @@
 """
 ===================
-Fast and accurate bijections using BSP-OT
+Fast and accurate transport bijections using BSP-OT
 ===================
 
 This example shows two use cases for the bijections provided by BSP-OT,
 between two large point clouds: shape morphing (and animated morphing)
 and full color transfer (pixel permutation).
 
-[83] Genest, B., Bonneel, N., Nivoliers, V., Coeurjolly, D.
+[84] Genest, B., Bonneel, N., Nivoliers, V., Coeurjolly, D.
 BSP-OT: Sparse transport plans between discrete measures in log-linear time
 ACM Transactions on Graphics, Siggraph Asia (2025).
 

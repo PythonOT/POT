@@ -18,7 +18,7 @@ def compute_bspot_bijection(
         \min_{\sigma \in S_n}  \sum_{i=1}^n \|X_i - Y_{\sigma(i)}\|_p^p
 
     To do so, it generates :math:`n_{plans}` random bijective BSP matchings, merges them together to obtain a bijection of low transport cost.
-    Log-linear complexity in the number of points. Algorithm 2 & 3 from [83].
+    Log-linear complexity in the number of points. Algorithm 2 & 3 from [84].
 
     .. note:: There is no guarantee on the quality of the returned bijection, but the method is highly scalable on the CPU.
         Worst cases are obtained between point clouds that are very similar (e.g. two samples from the same distribution),
@@ -116,7 +116,7 @@ def merge_bijections(X, Y, perms, p=2):
     Merge several bijections between two point clouds to obtain a new one with low transport cost.
     The new bijection is guaranteed to have a transport cost no greater than the cost of any of the input bijections.
     Based on simple local/global swapping strategy, with a linear complexity in the number of points.
-    Algorithm 3 from [83].
+    Algorithm 3 from [84].
 
     Parameters
     ----------
