@@ -1,7 +1,9 @@
 """Tests for module batch"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
+#         Paul Krzakala <paul.krzakala@gmail.com>
 #         Sonia Mazelet <sonia.mazelet@polytechnique.edu>
+
 
 #
 # License: MIT License
@@ -18,7 +20,13 @@ from ot.batch._linear import dist_batch
 import pytest
 from itertools import product
 from ot.backend import torch
-from ot.batch._quadratic import tensor_batch, loss_fugw_batch, loss_fugw_samples_batch
+from ot.batch._quadratic import (
+    tensor_batch,
+    loss_fugw_batch,
+    loss_fugw_samples_batch,
+    div_to_product_batch,
+)
+from ot.gromov._utils import div_to_product
 
 
 def test_solve_gromov_batch():
@@ -311,3 +319,17 @@ def test_valid_fugw_loss_endpoints():
     )
     loss_gromov = loss_quadratic_batch(L, T, recompute_const=True)
     np.testing.assert_allclose(loss_fugw, loss_gromov, atol=1e-5)
+
+
+def test_div_to_product():
+    batchsize = 2
+    n = 4
+    batchsize = 1
+    rng = np.random.RandomState(0)
+    a = np.ones((batchsize, n))
+    T = rng.rand(batchsize, n, n)
+    res_batch = div_to_product_batch(
+        T, a, a, T1=None, T2=None, divergence="kl", mass=True, nx=None
+    )
+    res = div_to_product(T[0], a[0], a[0], divergence="kl", mass=True)
+    np.testing.assert_allclose(res_batch, res, atol=1e-5)

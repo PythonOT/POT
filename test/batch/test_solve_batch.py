@@ -1,9 +1,8 @@
 """Tests for module batch"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
-#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
-#         Eduardo Fernandes Montesuma <eduardo.fernandes-montesuma@universite-paris-saclay.fr>
+#         Paul Krzakala <paul.krzakala@gmail.com>
+#         Sonia Mazelet <sonia.mazelet@polytechnique.edu>
 #
 # License: MIT License
 
