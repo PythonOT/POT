@@ -167,12 +167,41 @@ def test_fugw_loss():
 
     alpha = rng.rand(batchsize)
     reg_marginals = rng.rand(batchsize)
+    alpha_list = [alpha[i] for i in range(batchsize)]
+    reg_marginals_list = [reg_marginals[i] for i in range(batchsize)]
+
     loss_fugw = loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
     loss_fugw_sample = loss_fugw_samples_batch(
         a, a, C1, C2, X, Y, T, alpha=alpha, reg_marginals=reg_marginals
     )
+    loss_fugw_list = loss_fugw_batch(
+        a, a, L, M, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+    )
+    loss_fugw_sample_list = loss_fugw_samples_batch(
+        a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+    )
+
     assert np.isfinite(loss_fugw).all()
     assert np.isfinite(loss_fugw_sample).all()
+    assert np.isfinite(loss_fugw_list).all()
+    assert np.isfinite(loss_fugw_sample_list).all()
+
+    # check that invalid alpha shape raise an error
+    alpha = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+        loss_fugw_samples_batch(
+            a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+        )
+
+    # check that invalid rho shape raise an error
+    alpha = rng.rand(batchsize)
+    reg_marginals = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+        loss_fugw_samples_batch(
+            a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+        )
 
 
 def test_valid_fugw_loss_endpoints():
