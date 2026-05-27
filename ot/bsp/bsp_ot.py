@@ -49,7 +49,7 @@ def compute_bspot_bijection(
     cost : float
         The transport cost of the final bijection.
     perm : array-like, shape (n_samples,)
-        The final bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[plan[i]].
+        The final bijection, stored as a permutation (e.g. a list of numbers) such that X[i] is assigned to Y[perm[i]].
     perms : array-like, shape (n_plans,n_samples)
         The intermediary bijections used to compute the final one.
 
