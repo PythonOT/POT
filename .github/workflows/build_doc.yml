@@ -14,6 +14,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
     # Standard drop-in approach that should work for most people.
     - name: Free Disk Space (Ubuntu)
       uses: insightsengineering/disk-space-reclaimer@v1
@@ -32,7 +34,7 @@ jobs:
         python -m pip install --user --upgrade --progress-bar off -r requirements_all.txt
         python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
         python -m pip install --user --upgrade --progress-bar off ipython sphinx-gallery memory_profiler
-        python -m pip install --user -e .
+        python -m pip install -v --user -e .
     # Look at what we have and fail early if there is some library conflict
     - name: Check installation
       run: |
