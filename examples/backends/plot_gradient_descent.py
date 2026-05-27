@@ -83,12 +83,8 @@ C1 = get_sbm(n1, nc1, ratio1, P1)
 C2 = get_sbm(n2, nc2, ratio2, P2)
 
 # get 2d position for nodes
-x1 = MDS(
-    metric="precomputed", random_state=0, n_init=1, init="classical_mds"
-).fit_transform(1 - C1)
-x2 = MDS(
-    metric="precomputed", random_state=0, n_init=1, init="classical_mds"
-).fit_transform(1 - C2)
+x1 = MDS(metric="precomputed", random_state=0, n_init=1).fit_transform(1 - C1)
+x2 = MDS(metric="precomputed", random_state=0, n_init=1).fit_transform(1 - C2)
 
 colors1 = get_position_colors(x1)
 colors2 = get_position_colors(x2)
