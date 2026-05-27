@@ -140,7 +140,12 @@ def test_backend(nx):
     solve_gromov_batch(C1=C, C2=C, a=None, b=None, loss="sqeuclidean", logits=False)
 
 
-def test_fugw_loss():
+@pytest.mark.parametrize("divergence", ["kl", "l2"])
+@pytest.mark.parametrize(
+    "metric_linear", ["sqeuclidean", "euclidean", "minkowski", "kl"]
+)
+@pytest.mark.parametrize("metric_quadratic", ["sqeuclidean", "kl"])
+def test_fugw_loss(divergence, metric_linear, metric_quadratic):
     """Check that loss_fugw_batch and loss_fugw_samples_batch run without error."""
     batchsize = 2
     n = 4
@@ -157,41 +162,105 @@ def test_fugw_loss():
     L = tensor_batch(a=a, b=a, C1=C1, C2=C2, loss="sqeuclidean")
     alpha = rng.rand()
     reg_marginals = rng.rand()
+    logits = False if metric_quadratic == "kl" else None
 
-    loss_fugw = loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals, divergence=divergence
+    )
     loss_fugw_sample = loss_fugw_samples_batch(
-        a, a, C1, C2, X, Y, T, alpha=alpha, reg_marginals=reg_marginals
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha,
+        reg_marginals=reg_marginals,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
     )
     assert np.isfinite(loss_fugw).all()
     assert np.isfinite(loss_fugw_sample).all()
 
+    # check that alpha and reg_marginals can be passed as lists or arrays of shape (batchsize,)
     alpha = rng.rand(batchsize)
     reg_marginals = rng.rand(batchsize)
-    alpha_list = [alpha[i] for i in range(batchsize)]
-    reg_marginals_list = [reg_marginals[i] for i in range(batchsize)]
+    alpha_list = alpha.tolist()
+    reg_marginals_list = reg_marginals.tolist()
 
-    loss_fugw = loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals, divergence=divergence
+    )
     loss_fugw_sample = loss_fugw_samples_batch(
-        a, a, C1, C2, X, Y, T, alpha=alpha, reg_marginals=reg_marginals
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha,
+        reg_marginals=reg_marginals,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
     )
     loss_fugw_list = loss_fugw_batch(
-        a, a, L, M, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+        a,
+        a,
+        L,
+        M,
+        T,
+        alpha=alpha_list,
+        reg_marginals=reg_marginals_list,
+        divergence=divergence,
     )
     loss_fugw_sample_list = loss_fugw_samples_batch(
-        a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha_list,
+        reg_marginals=reg_marginals_list,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
     )
 
     assert np.isfinite(loss_fugw).all()
     assert np.isfinite(loss_fugw_sample).all()
     assert np.isfinite(loss_fugw_list).all()
     assert np.isfinite(loss_fugw_sample_list).all()
+    np.testing.assert_allclose(loss_fugw, loss_fugw_list)
+    np.testing.assert_allclose(loss_fugw_sample, loss_fugw_sample_list)
 
     # check that invalid alpha shape raise an error
     alpha = rng.rand(batchsize + 1)
     with pytest.raises(ValueError):
         loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    with pytest.raises(ValueError):
         loss_fugw_samples_batch(
-            a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+            a,
+            a,
+            C1,
+            C2,
+            X,
+            Y,
+            T,
+            alpha=alpha,
+            reg_marginals=reg_marginals,
+            divergence=divergence,
+            metric_linear=metric_linear,
+            metric_quadratic=metric_quadratic,
+            logits=logits,
         )
 
     # check that invalid rho shape raise an error
@@ -199,8 +268,21 @@ def test_fugw_loss():
     reg_marginals = rng.rand(batchsize + 1)
     with pytest.raises(ValueError):
         loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    with pytest.raises(ValueError):
         loss_fugw_samples_batch(
-            a, a, C1, C2, X, Y, T, alpha=alpha_list, reg_marginals=reg_marginals_list
+            a,
+            a,
+            C1,
+            C2,
+            X,
+            Y,
+            T,
+            alpha=alpha,
+            reg_marginals=reg_marginals,
+            divergence=divergence,
+            metric_linear=metric_linear,
+            metric_quadratic=metric_quadratic,
+            logits=logits,
         )
 
 

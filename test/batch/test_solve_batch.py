@@ -143,3 +143,28 @@ def test_backend(nx):
     M = dist_batch(X, X)
     solve_batch(M, reg=0.1, max_iter=10, tol=1e-5)
     solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5)
+
+
+def test_metric_default_parameters():
+    """Check that all functions with default parameters run without error."""
+
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    X = rng.rand(batchsize, n, d)
+    M = dist_batch(X, X)
+    is_positive = M >= 0
+    np.testing.assert_equal(is_positive.all(), True)
+
+    # Solve batch
+    res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5)
+
+    # Solve sample batch
+    res = solve_sample_batch(X, X, reg=0.1)
+
+    # Compute loss
+    loss_linear_batch(M, res.plan)  # recompute loss from plan
+    loss_linear_samples_batch(X, X, res.plan)  # recompute loss from plan and samples
+    assert np.isfinite(loss_linear_batch(M, res.plan)).all()
+    assert np.isfinite(loss_linear_samples_batch(X, X, res.plan)).all()

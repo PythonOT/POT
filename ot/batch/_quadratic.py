@@ -369,6 +369,10 @@ def loss_fugw_batch(
 
     Parameters
     ----------
+    a : array-like, shape (B, n)
+        Source distributions.
+    b : array-like, shape (B, m)
+        Target distributions.
     L : dict
         Cost tensor as returned by `tensor_batch`.
     M : array-like, shape (B, n, m)
