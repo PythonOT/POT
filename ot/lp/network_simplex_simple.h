@@ -237,22 +237,22 @@ namespace lemon {
 
         enum class CostStorageMode {
             Dense,
-            ArtificialOnly
+            ArtificialArcCosts
         };
 
         enum class FlowStorageMode {
             Dense,
-            SparseRealArcs
+            SparseArcFlows
         };
 
         enum class EndpointStorageMode {
             Dense,
-            ComputedRealArcs
+            ArcEndpoints
         };
 
         enum class StateStorageMode {
             Dense,
-            Packed
+            PackedArcStates
         };
 
         struct SimplexOptions {
@@ -541,20 +541,20 @@ namespace lemon {
             return _cost_mode == CostMode::LazyGeometry;
         }
 
-        inline bool usesArtificialCostOnly() const {
-            return _cost_storage_mode == CostStorageMode::ArtificialOnly;
+        inline bool storesArtificialArcCosts() const {
+            return _cost_storage_mode == CostStorageMode::ArtificialArcCosts;
         }
 
-        inline bool usesSparseRealFlow() const {
-            return _flow_storage_mode == FlowStorageMode::SparseRealArcs;
+        inline bool storesSparseArcFlows() const {
+            return _flow_storage_mode == FlowStorageMode::SparseArcFlows;
         }
 
-        inline bool usesComputedRealEndpoints() const {
-            return _endpoint_storage_mode == EndpointStorageMode::ComputedRealArcs;
+        inline bool usesArcEndpoints() const {
+            return _endpoint_storage_mode == EndpointStorageMode::ArcEndpoints;
         }
 
-        inline bool usesPackedState() const {
-            return _state_storage_mode == StateStorageMode::Packed;
+        inline bool usesPackedArcStates() const {
+            return _state_storage_mode == StateStorageMode::PackedArcStates;
         }
 
         Cost computeLazyCostUpperBound() const {
@@ -604,7 +604,7 @@ namespace lemon {
         }
 
         inline int arcSource(ArcsType arc_id) const {
-            if (usesComputedRealEndpoints()) {
+            if (usesArcEndpoints()) {
                 if (arc_id < _arc_num) {
                     const ArcsType graph_arc = _arc_num - arc_id - 1;
                     return _node_id(static_cast<int>(graph_arc / _n2));
@@ -615,7 +615,7 @@ namespace lemon {
         }
 
         inline int arcTarget(ArcsType arc_id) const {
-            if (usesComputedRealEndpoints()) {
+            if (usesArcEndpoints()) {
                 if (arc_id < _arc_num) {
                     const ArcsType graph_arc = _arc_num - arc_id - 1;
                     return _node_id(static_cast<int>(graph_arc % _n2) + _n1);
@@ -626,7 +626,7 @@ namespace lemon {
         }
 
         inline void setArcEndpoints(ArcsType arc_id, int source, int target) {
-            if (usesComputedRealEndpoints()) {
+            if (usesArcEndpoints()) {
                 if (arc_id >= _arc_num) {
                     _artificial_source[arc_id - _arc_num] = source;
                     _artificial_target[arc_id - _arc_num] = target;
@@ -638,28 +638,28 @@ namespace lemon {
         }
 
         inline void setArcCost(ArcsType arc_id, Cost cost) {
-            if (usesArtificialCostOnly()) {
+            if (storesArtificialArcCosts()) {
                 if (arc_id >= _arc_num) {
                     _cost[arc_id - _arc_num] = cost;
                 }
             } else {
                 _cost[arc_id] = cost;
             }
-            if (!_has_max_cost || cost > _max_cost) {
+            if (arc_id < _arc_num && (!_has_max_cost || cost > _max_cost)) {
                 _max_cost = cost;
                 _has_max_cost = true;
             }
         }
 
         inline signed char arcState(ArcsType arc_id) const {
-            if (usesPackedState()) {
+            if (usesPackedArcStates()) {
                 return _packed_state.get(arc_id);
             }
             return _state[arc_id];
         }
 
         inline void setArcState(ArcsType arc_id, signed char state) {
-            if (usesPackedState()) {
+            if (usesPackedArcStates()) {
                 _packed_state.set(arc_id, state);
                 return;
             }
@@ -671,7 +671,7 @@ namespace lemon {
         }
 
         inline void fillArcStates(ArcsType count, signed char state) {
-            if (usesPackedState()) {
+            if (usesPackedArcStates()) {
                 _packed_state.fill(count, state);
             } else {
                 std::fill_n(_state.begin(), count, state);
@@ -679,11 +679,11 @@ namespace lemon {
         }
 
         inline ArcsType flowArcCount() const {
-            return usesSparseRealFlow() ? _all_arc_num : static_cast<ArcsType>(_flow.size());
+            return storesSparseArcFlows() ? _all_arc_num : static_cast<ArcsType>(_flow.size());
         }
 
         inline Value arcFlow(ArcsType arc_id) const {
-            if (usesSparseRealFlow()) {
+            if (storesSparseArcFlows()) {
                 if (arc_id < _arc_num) {
                     typename std::map<ArcsType, Value>::const_iterator it =
                         _real_flow.find(arc_id);
@@ -695,7 +695,7 @@ namespace lemon {
         }
 
         inline void setArcFlow(ArcsType arc_id, Value flow) {
-            if (usesSparseRealFlow()) {
+            if (storesSparseArcFlows()) {
                 if (arc_id < _arc_num) {
                     if (flow == 0) {
                         _real_flow.erase(arc_id);
@@ -711,7 +711,7 @@ namespace lemon {
         }
 
         inline void addArcFlow(ArcsType arc_id, Value delta) {
-            if (usesSparseRealFlow()) {
+            if (storesSparseArcFlows()) {
                 if (arc_id < _arc_num) {
                     setArcFlow(arc_id, arcFlow(arc_id) + delta);
                 } else {
@@ -974,7 +974,9 @@ namespace lemon {
         /// \brief Get cost for an arc (either from array or compute lazily).
         ///
         /// This is the main cost accessor that works from anywhere in the class.
-        /// In lazy mode, computes cost on-the-fly from coordinates.
+        /// In lazy mode, real arc costs are computed on-the-fly from coordinates.
+        /// Artificial root arcs still use stored costs because simplex
+        /// initialization assigns them either 0 or ART_COST.
         /// In normal mode, returns pre-computed cost from array.
         ///
         /// \param arc_id The arc ID
@@ -984,7 +986,7 @@ namespace lemon {
                 // Dense matrix mode: read directly from D pointer
                 // For artificial arcs (>= _arc_num), read from _cost array
                 if (arc_id >= _arc_num) {
-                    return usesArtificialCostOnly() ?
+                    return storesArtificialArcCosts() ?
                         _cost[arc_id - _arc_num] : _cost[arc_id];
                 }
                 // Without arc mixing: internal arc_id maps to graph arc = _arc_num - arc_id - 1
@@ -992,16 +994,16 @@ namespace lemon {
                 // cost = D[i * _D_n2 + j] = D[g] (since m == _D_n2)
                 return _D_ptr[_arc_num - arc_id - 1];
             } else if (usesStoredCost()) {
-                return usesArtificialCostOnly() ?
+                return storesArtificialArcCosts() ?
                     _cost[arc_id - _arc_num] : _cost[arc_id];
             } else {
-                // For artificial arcs (>= _arc_num), return stored cost
-                // (0 for positive supply, ART_COST for negative supply)
+                // Artificial root arcs are not coordinate pairs, so even in
+                // lazy mode their costs are stored explicitly.
                 if (arc_id >= _arc_num) {
-                    return usesArtificialCostOnly() ?
+                    return storesArtificialArcCosts() ?
                         _cost[arc_id - _arc_num] : _cost[arc_id];
                 }
-                // Compute lazily from coordinates
+                // Real arc: compute from coordinates.
                 // Convert internal node IDs back to graph node IDs, then to coordinate indices
                 int i = _node_num - arcSource(arc_id) - 1;  // graph source in [0, _n1-1]
                 int j = _node_num - arcTarget(arc_id) - 1 - _n1;  // graph target in [_n1, _node_num-1] -> [0, _n2-1]
@@ -1211,7 +1213,7 @@ namespace lemon {
             std::fill_n(_supply.begin(), _node_num, Value(0));
             // In dense/lazy modes, real-arc costs are not read from _cost.
             // Keep the default fill for the regular explicit-cost mode only.
-            if (usesStoredCost() && !usesArtificialCostOnly()) {
+            if (usesStoredCost() && !storesArtificialArcCosts()) {
                 std::fill_n(_cost.begin(), _arc_num, Cost(1));
             }
             _stype = GEQ;
@@ -1256,7 +1258,7 @@ namespace lemon {
             ArcsType max_arc_num = _arc_num + 2 * _node_num;
             _all_arc_num = max_arc_num;
 
-            if (usesComputedRealEndpoints()) {
+            if (usesArcEndpoints()) {
                 _source.clear();
                 _target.clear();
                 _artificial_source.resize(2 * _node_num);
@@ -1268,13 +1270,13 @@ namespace lemon {
                 _artificial_target.clear();
             }
 
-            if (usesArtificialCostOnly()) {
+            if (storesArtificialArcCosts()) {
                 _cost.resize(2 * _node_num);
             } else {
                 _cost.resize(max_arc_num);
             }
             _supply.resize(all_node_num);
-            if (usesSparseRealFlow()) {
+            if (storesSparseArcFlows()) {
                 _flow.clear();
                 _artificial_flow.assign(2 * _node_num, Value(0));
                 _real_flow.clear();
@@ -1292,7 +1294,7 @@ namespace lemon {
             _rev_thread.resize(all_node_num);
             _succ_num.resize(all_node_num);
             _last_succ.resize(all_node_num);
-            if (usesPackedState()) {
+            if (usesPackedArcStates()) {
                 _state.clear();
                 _packed_state.resize(max_arc_num);
             } else {
@@ -1301,7 +1303,7 @@ namespace lemon {
             }
 
 
-            if (usesComputedRealEndpoints()) {
+            if (usesArcEndpoints()) {
                 // Real full-bipartite arc endpoints are computed from arc ids.
             } else if (_arc_mixing) {
                 // Store the arcs in a mixed order

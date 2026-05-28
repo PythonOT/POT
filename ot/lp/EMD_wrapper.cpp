@@ -628,10 +628,14 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     
     typedef NetworkSimplexSimple<Digraph, double, double, node_id_type> Simplex;
     Simplex::SimplexOptions simplex_options(false);
-    simplex_options.cost_storage_mode = Simplex::CostStorageMode::ArtificialOnly;
-    simplex_options.flow_storage_mode = Simplex::FlowStorageMode::SparseRealArcs;
-    simplex_options.endpoint_storage_mode = Simplex::EndpointStorageMode::ComputedRealArcs;
-    simplex_options.state_storage_mode = Simplex::StateStorageMode::Packed;
+    // Lazy mode does not store costs or endpoints for the real complete
+    // bipartite arcs. Artificial root arcs are still explicit because the
+    // simplex initialization assigns them costs 0 or ART_COST.
+    simplex_options.cost_storage_mode = Simplex::CostStorageMode::ArtificialArcCosts;
+    simplex_options.flow_storage_mode = Simplex::FlowStorageMode::SparseArcFlows;
+    simplex_options.endpoint_storage_mode =
+        Simplex::EndpointStorageMode::ArcEndpoints;
+    simplex_options.state_storage_mode = Simplex::StateStorageMode::PackedArcStates;
 
     Simplex net(
         di, simplex_options, (int)(n + m), (uint64_t)(n) * (uint64_t)(m), maxIter
