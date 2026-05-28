@@ -17,6 +17,7 @@ API and modules
    backend
    batch
    bregman
+   bsp
    coot
    da
    datasets

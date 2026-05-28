@@ -83,9 +83,12 @@ from .solvers import solve, solve_gromov, solve_sample, solve_bary_sample
 from .lowrank import lowrank_sinkhorn
 
 from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_batch
+from .bsp import compute_bspot_bijection, merge_bijections
+
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
+
 
 __version__ = "0.9.7.dev0"
 
@@ -159,4 +162,6 @@ __all__ = [
     "solve_gromov_batch",
     "solve_sample_batch",
     "dist_batch",
+    "compute_bspot_bijection",
+    "merge_bijections",
 ]
