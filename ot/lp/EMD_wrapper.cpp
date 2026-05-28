@@ -147,35 +147,6 @@ inline void extract_compressed_support(
     }
 }
 
-struct SparseFlowWriter {
-    uint64_t* sources;
-    uint64_t* targets;
-    double* values;
-    uint64_t* count;
-    uint64_t capacity;
-
-    SparseFlowWriter(
-        uint64_t* sources_,
-        uint64_t* targets_,
-        double* values_,
-        uint64_t* count_,
-        uint64_t capacity_
-    ) : sources(sources_),
-        targets(targets_),
-        values(values_),
-        count(count_),
-        capacity(capacity_) {}
-
-    bool push(uint64_t source, uint64_t target, double flow) {
-        if (*count >= capacity) return false;
-        sources[*count] = source;
-        targets[*count] = target;
-        values[*count] = flow;
-        ++(*count);
-        return true;
-    }
-};
-
 template <
     typename NetType,
     typename DigraphType,
@@ -193,7 +164,11 @@ inline bool extract_sparse_solution(
     double* alpha,
     double* beta,
     double* cost,
-    SparseFlowWriter& writer,
+    uint64_t* flow_sources_out,
+    uint64_t* flow_targets_out,
+    double* flow_values_out,
+    uint64_t* n_flows_out,
+    uint64_t max_flows_out,
     CostAccessor cost_accessor,
     double min_output_flow
 ) {
@@ -216,12 +191,13 @@ inline bool extract_sparse_solution(
             *cost += flow * cost_accessor(a, i, j);
         }
         if (flow > min_output_flow) {
-            if (!writer.push(
-                    static_cast<uint64_t>(idx_a[i]),
-                    static_cast<uint64_t>(idx_b[j]),
-                    flow)) {
+            if (*n_flows_out >= max_flows_out) {
                 return false;
             }
+            flow_sources_out[*n_flows_out] = static_cast<uint64_t>(idx_a[i]);
+            flow_targets_out[*n_flows_out] = static_cast<uint64_t>(idx_b[j]);
+            flow_values_out[*n_flows_out] = flow;
+            ++(*n_flows_out);
         }
     }
     return true;
@@ -545,21 +521,14 @@ int EMD_wrap_sparse(
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
         *cost = 0;
         *n_flows_out = 0;
-
-        SparseFlowWriter writer(
-            flow_sources_out,
-            flow_targets_out,
-            flow_values_out,
-            n_flows_out,
-            max_flows_out
-        );
         
         auto sparse_cost = [&arc_costs](Arc a, int, int) {
             return arc_costs[a];
         };
         if (!extract_sparse_solution(
-                net, di, INVALID, indI, indJ, alpha, beta, cost, writer,
-                sparse_cost, 1e-15)) {
+                net, di, INVALID, indI, indJ, alpha, beta, cost,
+                flow_sources_out, flow_targets_out, flow_values_out,
+                n_flows_out, max_flows_out, sparse_cost, 1e-15)) {
             return (int)net.MAX_ITER_REACHED;
         }
     }
@@ -674,19 +643,13 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
         for (int i = 0; i < n1; i++) alpha[i] = 0.0;
         for (int i = 0; i < n2; i++) beta[i] = 0.0;
 
-        SparseFlowWriter writer(
-            flow_sources_out,
-            flow_targets_out,
-            flow_values_out,
-            n_flows_out,
-            max_flows_out
-        );
         auto lazy_cost = [&net](Arc, int i, int j) {
             return net.computeLazyCost(i, j);
         };
         if (!extract_sparse_solution(
-                net, di, INVALID, idx_a, idx_b, alpha, beta, cost, writer,
-                lazy_cost, 0.0)) {
+                net, di, INVALID, idx_a, idx_b, alpha, beta, cost,
+                flow_sources_out, flow_targets_out, flow_values_out,
+                n_flows_out, max_flows_out, lazy_cost, 0.0)) {
             return (int)net.MAX_ITER_REACHED;
         }
     }

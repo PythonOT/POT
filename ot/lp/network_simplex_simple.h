@@ -236,7 +236,7 @@ namespace lemon {
         };
 
         enum class CostStorageMode {
-            Dense,
+            AllArcCosts,
             ArtificialArcCosts
         };
 
@@ -264,7 +264,7 @@ namespace lemon {
             
             explicit SimplexOptions(bool arc_mixing_ = false)
                 : arc_mixing(arc_mixing_),
-                  cost_storage_mode(CostStorageMode::Dense),
+                  cost_storage_mode(CostStorageMode::AllArcCosts),
                   flow_storage_mode(FlowStorageMode::Dense),
                   endpoint_storage_mode(EndpointStorageMode::Dense),
                   state_storage_mode(StateStorageMode::Dense) {}
