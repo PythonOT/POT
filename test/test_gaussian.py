@@ -149,8 +149,6 @@ def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
     ltp = a_tp - sgm2_tp
     Cst = nx.to_numpy(dots(Utp, nx.diag(ltp), Utp.T) + sgm2_tp * nx.eye(p_))
 
-    np.sqrt(np.sum((Cst - Ct) ** 2))
-
     np.testing.assert_allclose(Ct, Cst, rtol=1e-1, atol=1e-1)
 
 
