@@ -1,5 +1,6 @@
 # Releases
 
+
 ## 0.9.7.dev0
 
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
@@ -12,9 +13,13 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
 - Geomloss function now handles both scalar and slice indices for i and j (PR #785)
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
 - Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
+- Add cost functions between linear operators following  
+  [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
+  implemented in `ot.sgot` (PR #792)
 
 #### Closed issues
 
@@ -30,7 +35,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Fix test of the version of jax in `ot.backend` (PR #794)
 - Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
 - Align documentation build dependencies and doc extras (PR #801)
-
+- Debug Debug linux test core dump (PR #815)
 
 ## 0.9.6.post1
 

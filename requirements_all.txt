@@ -5,7 +5,7 @@ autograd
 pymanopt @ git+https://github.com/pymanopt/pymanopt.git@master
 cvxopt
 scikit-learn
-torch
+torch<=2.11
 jax
 jaxlib
 tensorflow

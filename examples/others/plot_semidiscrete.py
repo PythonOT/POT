@@ -12,7 +12,7 @@ a grid.
 We call :func:`ot.semidiscrete.solve_semidiscrete` with its default
 arguments: the underlying algorithm is **Projected Averaged SGD**, and the
 default ``decreasing_reg=True`` adds the **DRAG** entropic-regularization
-schedule of [83]_, which improves convergence.
+schedule of [85]_, which improves convergence.
 
 For the returned potential :math:`g` we report:
 
@@ -25,7 +25,7 @@ For the returned potential :math:`g` we report:
   :func:`ot.semidiscrete.c_transform`. The solver **maximises** this
   objective.
 
-.. [83] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+.. [85] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
    (2025). *Decreasing Entropic Regularization Averaged Gradient for
    Semi-Discrete Optimal Transport.* NeurIPS 2025.
 """
@@ -103,7 +103,7 @@ def plot_laguerre_cells(target, g, ax, title, resolution=300):
 # (:math:`g = 0`) next to the Laguerre cells at the optimum.
 # In this problem, the maximum cost between samples is 1.0, so we pass it as
 # ``max_cost=1.0``. Knowing this bound, the potential values are clipped to
-# [-max_cost, max_cost], where it is known that an optimal potential lies ([83]_, Lemma 1),
+# [-max_cost, max_cost], where it is known that an optimal potential lies ([85]_, Lemma 1),
 # which speeds up convergence.
 g_drag = solve_semidiscrete(
     target_positions,
