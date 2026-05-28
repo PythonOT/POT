@@ -9,7 +9,7 @@ General OT solvers with unified API
 # License: MIT License
 
 from .utils import OTResult, BaryResult, dist
-from .lp import emd2, emd2_lazy, wasserstein_1d
+from .lp import emd2, emd2_lazy, wasserstein_1d, free_support_barycenter_generic_costs
 from .backend import get_backend
 from .unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
 from .bregman import (
@@ -2202,6 +2202,7 @@ def solve_bary_sample(
     unbalanced_type="KL",
     lazy=False,
     method=None,
+    auto_bary_method="L2_barycentric_proj",
     warmstart=False,
     stopping_criterion="loss",
     max_iter_bary=1000,
@@ -2221,7 +2222,10 @@ def solve_bary_sample(
 
     where the cost matrices :math:`\mathbf{M}^{(k)}` from each input distribution :math:`(\mathbf{X}^{(k)}, \mathbf{a}^{(k)})`
     to the barycenter domain are computed as :math:`M^{(k)}_{i,j} = d(x^{(k)}_i,x_j)` where
-    :math:`d` is a metric (by default the squared Euclidean distance). The barycenter probability weights are fixed to :math:`\mathbf{b}`.
+    :math:`d` is a metric (by default the squared Euclidean distance). For common metrics the barycenter is computed in closed-form.
+    For balanced OT, the `metric` parameter can also be any callable function, or list of functions, that computes the distance from an input to the barycenter.
+    In which case, the barycenter is updated by gradient descent using the provided metric(s) and the optimal transport plan(s) at each iteration.
+    The barycenter probability weights are fixed to :math:`\mathbf{b}`.
 
     The regularization is selected with `reg` (:math:`\lambda_r`) and `reg_type`. By
     default ``reg=None`` and there is no regularization. The unbalanced marginal
@@ -2243,8 +2247,11 @@ def solve_bary_sample(
         Initialization of the barycenter samples (default is gaussian random sampling)
     b_init : array-like, shape (n,), optional
         Initialization of the barycenter weights (default is uniform)
-    metric : str, optional
-        Metric to use for the cost matrix, by default "sqeuclidean"
+    metric : str, callable or list of callables optional
+        Metric to use for the computation of the cost matrix, by default "sqeuclidean".
+        It can be a list of callables (bary, source) of length N (number of source distributions) to use different metrics for each source distribution.
+        In this case, the barycenter is updated by gradient descent using the provided metric(s) and the optimal transport plan(s) at each iteration.
+        If only callable is provided the same cost function is used for all source distributions.
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
@@ -2273,6 +2280,9 @@ def solve_bary_sample(
         Method for solving the problem, this can be used to select the solver
         for unbalanced problems (see :any:`ot.solve`), or to select a specific
         large scale solver.
+    auto_bary_method: str, optional
+        For balanced OT with callable metric functions, the barycenter method to use in 'L2_barycentric_proj' (default) for Euclidean
+        barycentric projection, or 'true_fixed_point' for iterates using the North West Corner multi-marginal gluing method.
     warmstart : bool, optional
         Use the previous OT or potentials as initialization for the next inner solver iteration, by default False.
     stopping_criterion : str, optional
@@ -2288,7 +2298,7 @@ def solve_bary_sample(
     verbose : bool, optional
         Print information in the solver, by default False
     kwargs : optional
-        Additional parameters for the inner solver (see :any:`ot.solve`)
+        Additional parameters for the inner solver (see :any:`ot.solve_sample` and :any:`ot.lp.free_support_barycenter_generic_costs`)
     Returns
     -------
 
@@ -2322,14 +2332,18 @@ def solve_bary_sample(
 
 
 
-    can be solved with the following code:
+    can be solved with the following code for various cost metrics between the source distributions and the barycenter:
 
     .. code-block:: python
 
-        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w)
+        # for squared Euclidean cost, where closed-form solutions are used to update the barycenter
+        res = ot.solve_bary_sample([x1, x2], n , [a1, a2], w, metric='sqeuclidean')
 
         # for uniform sample weights and barycentric weights,
-        res = ot.solve_bary_sample([x1, x2], n)
+        res = ot.solve_bary_sample([x1, x2], n, [a1, a2], w, metric='sqeuclidean')
+
+        # for other cost functions, where the barycenter is updated with gradient descent using Pytorch
+        # refer to the documentation and examples for more details.
 
     - **Entropic regularized OT [2]** (when ``reg!=None``):
 
@@ -2476,68 +2490,134 @@ def solve_bary_sample(
         if b_init is None:
             b_init = nx.ones((n,), type_as=X_a_list[0]) / n
 
-        if warmstart:
-            if reg is None:  # exact OT
-                warmstart_plan = True
-                warmstart_potentials = False
-            else:  # regularized OT
-                # unbalanced AND regularized OT
-                if (
-                    not isinstance(reg_type, tuple)
-                    and reg_type.lower() in ["kl"]
-                    and unbalanced_type.lower() == "kl"
-                ):
-                    warmstart_plan = False
-                    warmstart_potentials = True
+        if callable(metric) or (
+            isinstance(metric, list) and all(callable(m) for m in metric)
+        ):
+            if reg is not None or unbalanced is not None:
+                raise NotImplementedError(
+                    "Custom callable metric only available for balanced OT (reg=None and unbalanced=None)"
+                )
+            else:
+                outputs = free_support_barycenter_generic_costs(
+                    X_a_list,
+                    a_list,
+                    X_b_init,
+                    metric,
+                    ground_bary=None,
+                    a=b_init,
+                    numItermax=max_iter_bary,
+                    method=auto_bary_method,
+                    stopThr=tol_bary,
+                    log=True,
+                    **kwargs,
+                )
+                if auto_bary_method == "L2_barycentric_proj":
+                    X_b, log_ = outputs
+                    b = b_init
+                elif auto_bary_method == "true_fixed_point":
+                    X_b, b, log_ = (
+                        outputs  # potentially modify the masses of the barycenter with the true fixed point method
+                    )
 
-                else:
+                # compute the pairwise transport plans and losses
+                metric_list = (
+                    metric if isinstance(metric, list) else [metric] * n_samples
+                )
+                list_res = [
+                    solve(
+                        M=metric_list[k](
+                            X_b, X_a_list[k]
+                        ).T,  # in the free support setting, the cost matrix is computed from the barycenter to the source distribution, so we transpose it here to be consistent with the inner_solver interface (X_a, X_b,
+                        a=a_list[k],
+                        b=b,
+                        reg=None,
+                        unbalanced=None,
+                    )
+                    for k in range(n_samples)
+                ]
+
+                value_linear = sum(
+                    w[k] * list_res[k].value_linear for k in range(n_samples)
+                )
+                res = BaryResult(
+                    X=X_b,
+                    b=b,
+                    value=value_linear,
+                    value_linear=value_linear,
+                    log=log_,
+                    list_res=list_res,
+                    backend=nx,
+                )
+                return res
+        else:  # check metric
+            if metric not in ["sqeuclidean", "euclidean"]:
+                raise NotImplementedError(
+                    'Not implemented BCD with closed-form on the barycenter samples with metric="{}"'.format(
+                        metric
+                    )
+                )
+            if warmstart:
+                if reg is None:  # exact OT
                     warmstart_plan = True
                     warmstart_potentials = False
-        else:
-            warmstart_plan = False
-            warmstart_potentials = False
+                else:  # regularized OT
+                    # unbalanced AND regularized OT
+                    if (
+                        not isinstance(reg_type, tuple)
+                        and reg_type.lower() in ["kl"]
+                        and unbalanced_type.lower() == "kl"
+                    ):
+                        warmstart_plan = False
+                        warmstart_potentials = True
 
-        def inner_solver(X_a, X_b, a, b, plan_init, potentials_init):
-            return solve_sample(
-                X_a=X_a,
-                X_b=X_b,
-                a=a,
-                b=b,
-                metric=metric,
-                reg=reg,
-                c=c,
-                reg_type=reg_type,
-                unbalanced=unbalanced,
-                unbalanced_type=unbalanced_type,
-                method=method,
-                plan_init=plan_init,
-                potentials_init=potentials_init,
-                verbose=False,
-                **kwargs,
+                    else:
+                        warmstart_plan = True
+                        warmstart_potentials = False
+            else:
+                warmstart_plan = False
+                warmstart_potentials = False
+
+            def inner_solver(X_a, X_b, a, b, plan_init, potentials_init):
+                return solve_sample(
+                    X_a=X_a,
+                    X_b=X_b,
+                    a=a,
+                    b=b,
+                    metric=metric,
+                    reg=reg,
+                    c=c,
+                    reg_type=reg_type,
+                    unbalanced=unbalanced,
+                    unbalanced_type=unbalanced_type,
+                    method=method,
+                    plan_init=plan_init,
+                    potentials_init=potentials_init,
+                    verbose=False,
+                    **kwargs,
+                )
+
+            # compute the barycenter using BCD
+            update_masses = unbalanced is not None
+            res = _bary_sample_bcd(
+                X_a_list,
+                X_b_init,
+                a_list,
+                b_init,
+                w,
+                metric,
+                inner_solver,
+                update_masses,
+                warmstart_plan,
+                warmstart_potentials,
+                stopping_criterion,
+                max_iter_bary,
+                tol_bary,
+                verbose,
+                True,  # log set to True by default
+                nx,
             )
 
-        # compute the barycenter using BCD
-        update_masses = unbalanced is not None
-        res = _bary_sample_bcd(
-            X_a_list,
-            X_b_init,
-            a_list,
-            b_init,
-            w,
-            metric,
-            inner_solver,
-            update_masses,
-            warmstart_plan,
-            warmstart_potentials,
-            stopping_criterion,
-            max_iter_bary,
-            tol_bary,
-            verbose,
-            True,  # log set to True by default
-            nx,
-        )
-
-        return res
+            return res
 
     else:
         raise (NotImplementedError("Barycenter solver with lazy=True not implemented"))
