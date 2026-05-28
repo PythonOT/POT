@@ -762,3 +762,32 @@ class TestSlicedWassersteinScaler:
         scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
         result = ot.max_sliced_wasserstein_distance(X_s, X_t, seed=0, scaler=scaler)
         assert np.isfinite(result)
+
+
+def test_sliced_wasserstein_scaler_backend(nx):
+    rng = np.random.RandomState(0)
+    X_s_np = rng.normal(0, 1, (60, 3))
+    X_t_np = rng.normal(2, 1, (60, 3))
+
+    X_s_b, X_t_b = nx.from_numpy(X_s_np, X_t_np)
+
+    scaler_np = ot.utils.DataScaler(norm="standard").fit([X_s_np, X_t_np])
+    scaler_b = ot.utils.DataScaler(norm="standard").fit([X_s_b, X_t_b])
+
+    val_np = ot.sliced_wasserstein_distance(
+        X_s_np, X_t_np, n_projections=50, seed=0, scaler=scaler_np
+    )
+    val_b = ot.sliced_wasserstein_distance(
+        X_s_b, X_t_b, n_projections=50, seed=0, scaler=scaler_b
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(val_b), val_np, atol=1e-5)
+
+    val_np_max = ot.max_sliced_wasserstein_distance(
+        X_s_np, X_t_np, n_projections=50, seed=0, scaler=scaler_np
+    )
+    val_b_max = ot.max_sliced_wasserstein_distance(
+        X_s_b, X_t_b, n_projections=50, seed=0, scaler=scaler_b
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(val_b_max), val_np_max, atol=1e-5)

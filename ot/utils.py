@@ -1545,6 +1545,7 @@ class DataScaler:
         self.std_ = None
         self.min_ = None
         self.max_ = None
+        self._nx = None
         self._fitted = False
 
     def fit(self, X):
@@ -1613,26 +1614,33 @@ class DataScaler:
         self._fitted = True
         return self
 
-    def transform(self, X):
-        r"""Apply the fitted transformation to X.
+    def _apply_transform(self, X):
+        r"""Apply the fitted transform to one array or a list of arrays.
+
+        Internal helper shared by :meth:`transform` and :meth:`fit_transform`.
+        Validates that the input's backend matches the one used at fit time.
 
         Parameters
         ----------
-        X : array-like
-            Data to transform.
+        X : array-like or list of array-like
 
         Returns
         -------
-        X_scaled : array-like
-            Transformed data, same shape and backend as X.
+        array-like or list of array-like
+            Transformed data; a list is returned when ``X`` is a list.
         """
-        if self.norm != "l2" and not self._fitted:
-            raise RuntimeError(
-                "DataScaler must be fitted before calling transform() "
-                "for norm='{}'.".format(self.norm)
-            )
+        if isinstance(X, (list, tuple)):
+            return [self._apply_transform(x) for x in X]
 
         nx = get_backend(X)
+
+        if self._nx is not None and nx is not self._nx:
+            raise ValueError(
+                "Backend mismatch: DataScaler was fitted with backend '{}' "
+                "but received input with backend '{}'.".format(
+                    type(self._nx).__name__, type(nx).__name__
+                )
+            )
 
         if self.norm == "standard":
             return (X - self.mean_) / self.std_
@@ -1653,6 +1661,28 @@ class DataScaler:
                 )
             return X / norms
 
+    def transform(self, X):
+        r"""Apply the fitted transformation to X.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to transform. If a list, each element is transformed and
+            returned as a list.
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            Transformed data, same shape and backend as X. If X was a list,
+            returns a list of transformed arrays.
+        """
+        if self.norm != "l2" and not self._fitted:
+            raise RuntimeError(
+                "DataScaler must be fitted before calling transform() "
+                "for norm='{}'.".format(self.norm)
+            )
+        return self._apply_transform(X)
+
     def fit_transform(self, X):
         r"""Fit then transform.
 
@@ -1666,9 +1696,7 @@ class DataScaler:
             If X was a list, returns a list of transformed arrays.
         """
         self.fit(X)
-        if isinstance(X, (list, tuple)):
-            return [self.transform(x) for x in X]
-        return self.transform(X)
+        return self._apply_transform(X)
 
 
 def apply_scaler(X_s, X_t, scaler=None):
