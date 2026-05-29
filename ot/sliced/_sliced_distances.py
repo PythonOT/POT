@@ -12,6 +12,7 @@ Sliced Wasserstein distances solvers: sliced and max-sliced.
 from ..backend import get_backend
 from ..utils import list_to_array
 from ._utils import get_random_projections
+from ..lp import wasserstein_1d
 
 
 def sliced_wasserstein_distance(
@@ -80,7 +81,6 @@ def sliced_wasserstein_distance(
 
     .. [31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
     """
-    from ..lp import wasserstein_1d
 
     X_s, X_t = list_to_array(X_s, X_t)
 
@@ -188,7 +188,6 @@ def max_sliced_wasserstein_distance(
 
     .. [35] Deshpande, I., Hu, Y. T., Sun, R., Pyrros, A., Siddiqui, N., Koyejo, S., ... & Schwing, A. G. (2019). Max-sliced wasserstein distance and its use for gans. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 10648-10656).
     """
-    from ..lp import wasserstein_1d
 
     X_s, X_t = list_to_array(X_s, X_t)
 

@@ -26,8 +26,9 @@ def sliced_plans(
     metric="sqeuclidean",
     p=1,
     thetas=None,
-    warm_theta=None,
-    n_proj=None,
+    n_projections=None,
+    seed=None,
+    batch_size=None,
     log=False,
 ):
     r"""
@@ -51,15 +52,19 @@ def sliced_plans(
         `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
-    thetas : array-like, shape (n_proj, d), optional
+    thetas : array-like, shape (n_projections, d), optional
         The projection directions. If None, random directions will be
         generated.
         Default is None.
-    warm_theta : array-like, shape (d,), optional
-        A direction to add to the set of directions. Default is None.
-        Default is False.
-    n_proj : int, optional
+    n_projections : int, optional
         The number of projection directions. Required if thetas is None.
+    seed : int, optional
+        The seed for the random number generator for sampling thetas, in case
+        thetas is None.
+        Default is None.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to
+        avoid memory issues for large datasets. Default is None (no batching).
     log : bool, optional
         If True, returns additional logging information. Default is False.
 
@@ -75,16 +80,7 @@ def sliced_plans(
         Returned only if `log` is True.
     """
 
-    X_s, X_t = list_to_array(X_s, X_t)
-
-    if a is not None and b is not None and thetas is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and thetas is not None:
-        nx = get_backend(X_s, X_t, a, b, thetas)
-    elif a is None and b is None and thetas is not None:
-        nx = get_backend(X_s, X_t, thetas)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, thetas)
 
     assert X_s.ndim == 2, f"X_s must be a 2d array, got {X_s.ndim}d array instead"
     assert X_t.ndim == 2, f"X_t must be a 2d array, got {X_t.ndim}d array instead"
@@ -113,30 +109,37 @@ def sliced_plans(
     if b is None:
         b = nx.ones(m) / m
 
-    is_perm = False
-    if n == m:
-        if (a == a.sum() / n).all() and (b == a.sum() / n).all():
-            is_perm = True
+    is_perm = (n == m) and (a == a.sum() / n).all() and (b == a.sum() / n).all()
 
-    if thetas is None:  # create thetas (n_proj, d)
-        assert n_proj is not None, "n_proj must be specified if thetas is None"
-        thetas = get_random_projections(d, n_proj, backend=nx, type_as=X_s).T
-        if warm_theta is not None:
-            thetas = nx.concatenate([thetas, warm_theta[:, None].T], axis=0)
+    if thetas is None:  # create thetas (n_projections, d)
+        assert (
+            n_projections is not None
+        ), "n_projections must be specified if thetas is None"
+        thetas = get_random_projections(
+            d, n_projections, seed, backend=nx, type_as=X_s
+        ).T
     else:
-        n_proj = thetas.shape[0]
+        n_projections = thetas.shape[0]
 
-    # project on each theta: (n or m, d) -> (n or m, n_proj)
-    Xs_theta = X_s @ thetas.T  # shape (n, n_proj)
-    Xt_theta = X_t @ thetas.T  # shape (m, n_proj)
+    # project on each theta: (n or m, d) -> (n or m, n_projections)
+    Xs_theta = X_s @ thetas.T  # shape (n, n_projections)
+    Xt_theta = X_t @ thetas.T  # shape (m, n_projections)
 
     if is_perm:  # we compute maps (permutations)
-        # sigma[:, i_proj] is a permutation sorting Xs_theta[:, i_proj]
-        sigma = nx.argsort(Xs_theta, axis=0)  # (n, n_proj)
-        tau = nx.argsort(Xt_theta, axis=0)  # (m, n_proj)
+        # sigma[:, i_projections] is a permutation sorting Xs_theta[:, i_projections]
+        sigma = nx.argsort(Xs_theta, axis=0)  # (n, n_projections)
+        tau = nx.argsort(Xt_theta, axis=0)  # (m, n_projections)
         costs = [
-            sparse_ot_dist(X_s, X_t, sigma[:, k], tau[:, k], metric=metric, p=p)
-            for k in range(n_proj)
+            sparse_ot_dist(
+                X_s,
+                X_t,
+                sigma[:, k],
+                tau[:, k],
+                metric=metric,
+                p=p,
+                batch_size=batch_size,
+            )
+            for k in range(n_projections)
         ]
 
         PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
@@ -146,7 +149,7 @@ def sliced_plans(
                 rows=sigma[:, k],
                 cols=tau[:, k],
             )
-            for k in range(n_proj)
+            for k in range(n_projections)
         ]
     else:  # we compute plans
         _, plans = wasserstein_1d(
@@ -161,8 +164,9 @@ def sliced_plans(
                 plans[k].data,
                 metric=metric,
                 p=p,
+                batch_size=batch_size,
             )
-            for k in range(n_proj)
+            for k in range(n_projections)
         ]
 
     if log:
@@ -180,17 +184,18 @@ def min_pivot_sliced(
     thetas=None,
     metric="sqeuclidean",
     p=2,
-    n_proj=None,
+    n_projections=None,
+    seed=None,
+    batch_size=None,
     dense=True,
     log=False,
-    warm_theta=None,
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
-    Discrepancy (introduced as SWGG in [83] and studied further in [84]). Given
+    Discrepancy (introduced as min-SWGG in [83] and studied further in [84]). Given
     the supports `X_s` and `X_t` of two discrete uniform measures with `ns` and `nt`
     atoms in dimension `d`, the min-Pivot Sliced Discrepancy goes through
-    `n_proj` different projections of the measures on random directions, and
+    `n_projections` different projections of the measures on random directions, and
     retains the couplings that yields the lowest cost between `X_s` and `X_t`
     (compared in :math:`\mathbb{R}^d`). When `ns=nt`, it gives
 
@@ -222,7 +227,7 @@ def min_pivot_sliced(
         Source histogram (default is uniform weight)
     b : ndarray of float64, shape (nt,), optional
         Target histogram (default is uniform weight)
-    thetas : array-like, shape (n_proj, d), optional
+    thetas : array-like, shape (n_projections, d), optional
         The projection directions. If None, random directions will be generated
         Default is None.
     metric: str, optional (default='sqeuclidean')
@@ -230,16 +235,20 @@ def min_pivot_sliced(
         `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=1.0)
          The p-norm to apply for if metric='minkowski'
-    n_proj : int, optional
+    n_projections : int, optional
         The number of projection directions. Required if thetas is None.
+    seed : int, optional
+        The seed for the random number generator for sampling thetas, in case
+        thetas is None. Default is None.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to
+        avoid memory issues for large datasets. Default is None (no batching).
     dense: boolean, optional (default=True)
         If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format.
     log : bool, optional
         If True, returns additional logging information. Default is False.
-    warm_theta : array-like, shape (d,), optional
-        A theta to add to the list of thetas. Default is None.
 
     Returns
     -------
@@ -276,16 +285,8 @@ def min_pivot_sliced(
     2.125
     """
 
-    X_s, X_t = list_to_array(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, thetas)
 
-    if a is not None and b is not None and thetas is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and thetas is not None:
-        nx = get_backend(X_s, X_t, a, b, thetas)
-    elif a is None and b is None and thetas is not None:
-        nx = get_backend(X_s, X_t, thetas)
-    else:
-        nx = get_backend(X_s, X_t)
     assert X_s.ndim == 2, f"X_s must be a 2d array, got {X_s.ndim}d array instead"
     assert X_t.ndim == 2, f"X_t must be a 2d array, got {X_t.ndim}d array instead"
 
@@ -306,8 +307,9 @@ def min_pivot_sliced(
         metric,
         p,
         thetas,
-        n_proj=n_proj,
-        warm_theta=warm_theta,
+        n_projections=n_projections,
+        seed=seed,
+        batch_size=batch_size,
         log=True,
     )
 
@@ -350,15 +352,17 @@ def expected_sliced(
     thetas=None,
     metric="sqeuclidean",
     p=2,
-    n_proj=None,
-    dense=True,
-    log=False,
+    n_projections=None,
     beta=0.0,
+    seed=None,
+    dense=True,
+    batch_size=None,
+    log=False,
 ):
     r"""
     Computes the Expected Sliced cost and plan between two  datasets `X_s` and
-    `X_t` of shapes `(ns, d)` and `(nt, d)`. Given a set of `n_proj` projection
-    directions, the expected sliced plan is obtained by averaging the `n_proj`
+    `X_t` of shapes `(ns, d)` and `(nt, d)`. Given a set of `n_projections` projection
+    directions, the expected sliced plan is obtained by averaging the `n_projections`
     1d optimal transport plans between the projections of `X_s` and `X_t` on each
     direction. Expected Sliced was introduced in [85] and further studied in
     [84].
@@ -384,24 +388,31 @@ def expected_sliced(
     b : ndarray of float64, shape (nt,), optional
         Target histogram (default is uniform weight)
     thetas : array-like, optional
-        An array-like of shape (n_proj, d) representing the projection directions.
+        An array-like of shape (n_projections, d) representing the projection directions.
         If None, random directions will be generated. Default is None.
     metric: str, optional (default='sqeuclidean')
         Metric to be used. Only works with either of the strings
         `'sqeuclidean'`, `'minkowski'`, `'cityblock'`,  or `'euclidean'`.
     p: float, optional (default=2)
             The p-norm to apply for if metric='minkowski'
-    n_proj : int, optional
+    n_projections : int, optional
         The number of projection directions. Required if thetas is None.
+    seed : int, optional
+        The seed for the random number generator for sampling thetas, in case
+        thetas is None. Default is None.
+    beta : float, optional
+        Inverse-temperature parameter which weights each projection's
+        contribution to the expected plan. Default is 0 (uniform weighting).
     dense: boolean, optional (default=True)
         If True, returns :math:`\gamma` as a dense ndarray of shape (ns, nt).
         Otherwise returns a sparse representation using scipy's `coo_matrix`
         format.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to
+        avoid memory issues for large datasets. Default is None (no batching).
     log : bool, optional
         If True, returns additional logging information. Default is False.
-    beta : float, optional
-        Inverse-temperature parameter which weights each projection's
-        contribution to the expected plan. Default is 0 (uniform weighting).
+
 
     Returns
     -------
@@ -436,15 +447,7 @@ def expected_sliced(
     2.625
     """
 
-    X_s, X_t = list_to_array(X_s, X_t)
-    if a is not None and b is not None and thetas is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and thetas is not None:
-        nx = get_backend(X_s, X_t, a, b, thetas)
-    elif a is None and b is None and thetas is not None:
-        nx = get_backend(X_s, X_t, thetas)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, thetas)
 
     assert X_s.ndim == 2, f"X_s must be a 2d array, got {X_s.ndim}d array instead"
     assert X_t.ndim == 2, f"X_t must be a 2d array, got {X_t.ndim}d array instead"
@@ -462,7 +465,17 @@ def expected_sliced(
 
     log_dict = {}
     plans, costs, log_dict_plans = sliced_plans(
-        X_s, X_t, a, b, metric, p, thetas, n_proj=n_proj, log=True
+        X_s,
+        X_t,
+        a,
+        b,
+        metric,
+        p,
+        thetas,
+        n_projections=n_projections,
+        seed=seed,
+        log=True,
+        batch_size=batch_size,
     )
 
     if beta != 0.0:  # computing the temperature weighting
@@ -470,9 +483,9 @@ def expected_sliced(
         weights = nx.exp(log_factors - nx.logsumexp(log_factors))
         cost = nx.sum(list_to_array(costs) * weights)
     else:  # uniform weights
-        if n_proj is None:
-            n_proj = thetas.shape[0]
-        weights = nx.ones(n_proj) / n_proj
+        if n_projections is None:
+            n_projections = thetas.shape[0]
+        weights = nx.ones(n_projections) / n_projections
 
     weights_e = nx.concatenate([plans[i].data * weights[i] for i in range(len(plans))])
     Xs_idx = nx.concatenate([plans[i].rows for i in range(len(plans))])

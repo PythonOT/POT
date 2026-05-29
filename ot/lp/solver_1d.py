@@ -122,10 +122,7 @@ def wasserstein_1d(
 
     assert p >= 1, "The OT loss is only valid for p>=1, {p} was given".format(p=p)
 
-    if u_weights is not None and v_weights is not None:
-        nx = get_backend(u_values, v_values, u_weights, v_weights)
-    else:
-        nx = get_backend(u_values, v_values)
+    nx = get_backend(u_values, v_values, u_weights, v_weights)
 
     n = u_values.shape[0]
     m = v_values.shape[0]
@@ -156,12 +153,12 @@ def wasserstein_1d(
     v_cumweights = nx.cumsum(v_weights, 0)
 
     qs = nx.sort(nx.concatenate((u_cumweights, v_cumweights), 0), 0)
-u_quantiles, idx_u = quantile_function(
-    qs, u_cumweights, u_values, return_index=True
-)
-v_quantiles, idx_v = quantile_function(
-    qs, v_cumweights, v_values, return_index=True
-)
+    u_quantiles, idx_u = quantile_function(
+        qs, u_cumweights, u_values, return_index=True
+    )
+    v_quantiles, idx_v = quantile_function(
+        qs, v_cumweights, v_values, return_index=True
+    )
 
     qs = nx.zero_pad(qs, pad_width=[(1, 0)] + (qs.ndim - 1) * [(0, 0)])
     delta = qs[1:, ...] - qs[:-1, ...]
