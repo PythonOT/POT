@@ -1583,6 +1583,250 @@ def check_number_threads(numThreads):
     return numThreads
 
 
+class DataScaler:
+    r"""Backend-aware data scaler with sklearn-compatible API.
+
+    Fit normalization statistics on a single array or on the concatenation
+    of multiple arrays (joint fitting), then apply the same fixed transform
+    to any array. Supports NumPy, PyTorch, JAX, and TensorFlow backends via
+    POT's backend abstraction.
+
+    Parameters
+    ----------
+    norm : str, optional
+        Normalization method. One of:
+
+        - ``'standard'`` (default) : zero mean, unit variance per feature
+        - ``'minmax'`` : scale each feature to [0, 1]
+        - ``'l2'`` : unit L2-norm per sample (row-wise, stateless)
+
+    Attributes
+    ----------
+    norm : str
+        The normalization method.
+    mean_ : array-like
+        Per-feature means (only for ``norm='standard'``).
+    std_ : array-like
+        Per-feature standard deviations (only for ``norm='standard'``).
+    min_ : array-like
+        Per-feature minimums (only for ``norm='minmax'``).
+    max_ : array-like
+        Per-feature maximums (only for ``norm='minmax'``).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.utils import DataScaler
+    >>> X_s = np.array([[1.0, 100.0], [2.0, 200.0]])
+    >>> X_t = np.array([[3.0, 300.0], [4.0, 400.0]])
+    >>> scaler = DataScaler(norm='standard').fit([X_s, X_t])
+    >>> X_s_scaled = scaler.transform(X_s)
+    """
+
+    _VALID_NORMS = ("standard", "minmax", "l2")
+
+    def __init__(self, norm="standard"):
+        if norm not in self._VALID_NORMS:
+            raise ValueError(
+                "Invalid norm '{}'. Expected one of: {}".format(norm, self._VALID_NORMS)
+            )
+        self.norm = norm
+        self.mean_ = None
+        self.std_ = None
+        self.min_ = None
+        self.max_ = None
+        self._nx = None
+        self._fitted = False
+
+    def fit(self, X):
+        r"""Compute normalization statistics from one array or a list of arrays.
+
+        When given a list, arrays are concatenated along axis 0 before
+        computing statistics (joint fitting).
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to fit on. If a list, arrays must have the same number of
+            features (columns).
+
+        Returns
+        -------
+        self : DataScaler
+        """
+        if isinstance(X, (list, tuple)):
+            if len(X) == 0:
+                raise ValueError("Cannot fit on empty list.")
+            nx = get_backend(*X)
+            X_concat = nx.concatenate(list(X), axis=0)
+        else:
+            nx = get_backend(X)
+            X_concat = X
+
+        self._nx = nx
+
+        if self.norm == "l2":
+            self._fitted = True
+            return self
+
+        if self.norm == "standard":
+            self.mean_ = nx.mean(X_concat, axis=0)
+            self.std_ = nx.std(X_concat, axis=0)
+            zero_var = self.std_ == 0
+            if nx.any(zero_var):
+                warnings.warn(
+                    "Zero variance detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.std_ = nx.where(
+                    zero_var,
+                    nx.ones(self.std_.shape, type_as=self.std_),
+                    self.std_,
+                )
+
+        elif self.norm == "minmax":
+            self.min_ = nx.min(X_concat, axis=0)
+            self.max_ = nx.max(X_concat, axis=0)
+            zero_range = self.max_ == self.min_
+            if nx.any(zero_range):
+                warnings.warn(
+                    "Zero range detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.max_ = nx.where(
+                    zero_range,
+                    self.min_ + 1.0,
+                    self.max_,
+                )
+
+        self._fitted = True
+        return self
+
+    def _apply_transform(self, X):
+        r"""Apply the fitted transform to one array or a list of arrays.
+
+        Internal helper shared by :meth:`transform` and :meth:`fit_transform`.
+        Validates that the input's backend matches the one used at fit time.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        array-like or list of array-like
+            Transformed data; a list is returned when ``X`` is a list.
+        """
+        if isinstance(X, (list, tuple)):
+            return [self._apply_transform(x) for x in X]
+
+        nx = get_backend(X)
+
+        if self._nx is not None and nx is not self._nx:
+            raise ValueError(
+                "Backend mismatch: DataScaler was fitted with backend '{}' "
+                "but received input with backend '{}'.".format(
+                    type(self._nx).__name__, type(nx).__name__
+                )
+            )
+
+        if self.norm == "standard":
+            return (X - self.mean_) / self.std_
+        elif self.norm == "minmax":
+            return (X - self.min_) / (self.max_ - self.min_)
+        elif self.norm == "l2":
+            norms = nx.sqrt(nx.sum(X**2, axis=1, keepdims=True))
+            zero_norm = norms == 0
+            if nx.any(zero_norm):
+                warnings.warn(
+                    "Zero-norm row(s) detected. These will be left unchanged.",
+                    RuntimeWarning,
+                )
+                norms = nx.where(
+                    zero_norm,
+                    nx.ones(norms.shape, type_as=norms),
+                    norms,
+                )
+            return X / norms
+
+    def transform(self, X):
+        r"""Apply the fitted transformation to X.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to transform. If a list, each element is transformed and
+            returned as a list.
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            Transformed data, same shape and backend as X. If X was a list,
+            returns a list of transformed arrays.
+        """
+        if self.norm != "l2" and not self._fitted:
+            raise RuntimeError(
+                "DataScaler must be fitted before calling transform() "
+                "for norm='{}'.".format(self.norm)
+            )
+        return self._apply_transform(X)
+
+    def fit_transform(self, X):
+        r"""Fit then transform.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            If X was a list, returns a list of transformed arrays.
+        """
+        self.fit(X)
+        return self._apply_transform(X)
+
+
+def apply_scaler(X_s, X_t, scaler=None):
+    r"""Apply a scaler to two arrays.
+
+    Dispatches based on the type of ``scaler``:
+
+    - ``None`` : returns inputs unchanged.
+    - Object with a ``.transform()`` method : calls ``scaler.transform()`` on each.
+    - Callable : calls ``scaler()`` on each (covers functions, lambdas,
+      PyTorch transforms, neural network encoders, etc.).
+
+    Parameters
+    ----------
+    X_s : array-like
+        Source samples.
+    X_t : array-like
+        Target samples.
+    scaler : None, object with .transform(), or callable, optional
+        Preprocessing to apply.
+
+    Returns
+    -------
+    X_s_out : array-like
+        Possibly transformed source samples.
+    X_t_out : array-like
+        Possibly transformed target samples.
+    """
+    if scaler is None:
+        return X_s, X_t
+    if hasattr(scaler, "transform") and callable(scaler.transform):
+        return scaler.transform(X_s), scaler.transform(X_t)
+    if callable(scaler):
+        return scaler(X_s), scaler(X_t)
+    raise ValueError(
+        "scaler must be None, an object with a .transform() method, "
+        "or a callable. Got type: {}".format(type(scaler).__name__)
+    )
+
+
 def fun_to_numpy(fun, arr, nx, warn=True):
     """Convert a function to a numpy function.
 
