@@ -84,6 +84,7 @@ def sliced_wasserstein_distance(
     Examples
     --------
 
+    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
@@ -206,6 +207,7 @@ def max_sliced_wasserstein_distance(
     Examples
     --------
 
+    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
     >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
