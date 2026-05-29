@@ -1,19 +1,32 @@
-"""Tests for module bregman on OT with bregman projections"""
+"""Tests for module batch"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
-#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
-#         Eduardo Fernandes Montesuma <eduardo.fernandes-montesuma@universite-paris-saclay.fr>
+#         Paul Krzakala <paul.krzakala@gmail.com>
+#         Sonia Mazelet <sonia.mazelet@polytechnique.edu>
+
+
 #
 # License: MIT License
 
 import numpy as np
-from ot.batch import solve_gromov_batch, loss_quadratic_samples_batch
+from ot.batch import (
+    solve_gromov_batch,
+    loss_quadratic_batch,
+    loss_linear_batch,
+    loss_quadratic_samples_batch,
+)
 from ot import solve_gromov
 from ot.batch._linear import dist_batch
 import pytest
 from itertools import product
 from ot.backend import torch
+from ot.batch._quadratic import (
+    tensor_batch,
+    loss_fugw_batch,
+    loss_fugw_samples_batch,
+    div_to_product_batch,
+)
+from ot.gromov._utils import div_to_product
 
 
 def test_solve_gromov_batch():
@@ -133,3 +146,190 @@ def test_backend(nx):
     C = np.random.randn(batchsize, n, n, d)
     C = nx.from_numpy(C)
     solve_gromov_batch(C1=C, C2=C, a=None, b=None, loss="sqeuclidean", logits=False)
+
+
+@pytest.mark.parametrize("divergence", ["kl", "l2"])
+@pytest.mark.parametrize(
+    "metric_linear", ["sqeuclidean", "euclidean", "minkowski", "kl"]
+)
+@pytest.mark.parametrize("metric_quadratic", ["sqeuclidean", "kl"])
+def test_fugw_loss(divergence, metric_linear, metric_quadratic):
+    """Check that loss_fugw_batch and loss_fugw_samples_batch run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    C1 = rng.rand(batchsize, n, n, d)
+    C2 = rng.rand(batchsize, n, n, d)
+    X = rng.rand(batchsize, n, d)
+    Y = rng.rand(batchsize, n, d)
+    M = rng.rand(batchsize, n, n)
+    a = np.ones((batchsize, n))
+    reg_marginals = 0
+    T = rng.rand(batchsize, n, n)
+    L = tensor_batch(a=a, b=a, C1=C1, C2=C2, loss="sqeuclidean")
+    alpha = rng.rand()
+    reg_marginals = rng.rand()
+    logits = False if metric_quadratic == "kl" else None
+
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals, divergence=divergence
+    )
+    loss_fugw_sample = loss_fugw_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha,
+        reg_marginals=reg_marginals,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
+    )
+    assert np.isfinite(loss_fugw).all()
+    assert np.isfinite(loss_fugw_sample).all()
+
+    # check that alpha and reg_marginals can be passed as lists or arrays of shape (batchsize,)
+    alpha = rng.rand(batchsize)
+    reg_marginals = rng.rand(batchsize)
+    alpha_list = alpha.tolist()
+    reg_marginals_list = reg_marginals.tolist()
+
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals, divergence=divergence
+    )
+    loss_fugw_sample = loss_fugw_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha,
+        reg_marginals=reg_marginals,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
+    )
+    loss_fugw_list = loss_fugw_batch(
+        a,
+        a,
+        L,
+        M,
+        T,
+        alpha=alpha_list,
+        reg_marginals=reg_marginals_list,
+        divergence=divergence,
+    )
+    loss_fugw_sample_list = loss_fugw_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        X,
+        Y,
+        T,
+        alpha=alpha_list,
+        reg_marginals=reg_marginals_list,
+        divergence=divergence,
+        metric_linear=metric_linear,
+        metric_quadratic=metric_quadratic,
+        logits=logits,
+    )
+
+    assert np.isfinite(loss_fugw).all()
+    assert np.isfinite(loss_fugw_sample).all()
+    assert np.isfinite(loss_fugw_list).all()
+    assert np.isfinite(loss_fugw_sample_list).all()
+    np.testing.assert_allclose(loss_fugw, loss_fugw_list)
+    np.testing.assert_allclose(loss_fugw_sample, loss_fugw_sample_list)
+
+    # check that invalid alpha shape raise an error
+    alpha = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    with pytest.raises(ValueError):
+        loss_fugw_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            X,
+            Y,
+            T,
+            alpha=alpha,
+            reg_marginals=reg_marginals,
+            divergence=divergence,
+            metric_linear=metric_linear,
+            metric_quadratic=metric_quadratic,
+            logits=logits,
+        )
+
+    # check that invalid rho shape raise an error
+    alpha = rng.rand(batchsize)
+    reg_marginals = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_fugw_batch(a, a, L, M, T, alpha=alpha, reg_marginals=reg_marginals)
+    with pytest.raises(ValueError):
+        loss_fugw_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            X,
+            Y,
+            T,
+            alpha=alpha,
+            reg_marginals=reg_marginals,
+            divergence=divergence,
+            metric_linear=metric_linear,
+            metric_quadratic=metric_quadratic,
+            logits=logits,
+        )
+
+
+def test_valid_fugw_loss_endpoints():
+    """Check that loss_fugw_batch gives the same results as solve_gromov_batch and solve_linear_batch for alpha=0 and alpha=1."""
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    C1 = rng.rand(batchsize, n, n, d)
+    C2 = rng.rand(batchsize, n, n, d)
+    M = rng.rand(batchsize, n, n)
+    a = np.ones((batchsize, n))
+    reg_marginals = 0
+    T = rng.rand(batchsize, n, n)
+    L = tensor_batch(a=a, b=a, C1=C1, C2=C2, loss="sqeuclidean")
+
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=0.0, divergence="l2", reg_marginals=reg_marginals
+    )
+    loss_linear = loss_linear_batch(M, T)
+    np.testing.assert_allclose(loss_fugw, loss_linear, atol=1e-5)
+
+    loss_fugw = loss_fugw_batch(
+        a, a, L, M, T, alpha=1.0, divergence="l2", reg_marginals=reg_marginals
+    )
+    loss_gromov = loss_quadratic_batch(L, T, recompute_const=True)
+    np.testing.assert_allclose(loss_fugw, loss_gromov, atol=1e-5)
+
+
+def test_div_to_product():
+    batchsize = 2
+    n = 4
+    batchsize = 1
+    rng = np.random.RandomState(0)
+    a = np.ones((batchsize, n))
+    T = rng.rand(batchsize, n, n)
+    res_batch = div_to_product_batch(
+        T, a, a, T1=None, T2=None, divergence="kl", mass=True, nx=None
+    )
+    res = div_to_product(T[0], a[0], a[0], divergence="kl", mass=True)
+    np.testing.assert_allclose(res_batch, res, atol=1e-5)

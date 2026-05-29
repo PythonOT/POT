@@ -19,6 +19,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
   implemented in `ot.sgot` (PR #792)
+- Add batch FUGW loss to `ot.batch` and fix issues in some default parameters in the batch module (PR #775)
 
 #### Closed issues
 
