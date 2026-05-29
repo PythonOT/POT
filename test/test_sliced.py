@@ -769,25 +769,28 @@ def test_sliced_wasserstein_scaler_backend(nx):
     X_s_np = rng.normal(0, 1, (60, 3))
     X_t_np = rng.normal(2, 1, (60, 3))
 
-    X_s_b, X_t_b = nx.from_numpy(X_s_np, X_t_np)
+    n_projections = 50
+    P = get_random_projections(X_s_np.shape[1], n_projections, seed=0)
+
+    X_s_b, X_t_b, Pb = nx.from_numpy(X_s_np, X_t_np, P)
 
     scaler_np = ot.utils.DataScaler(norm="standard").fit([X_s_np, X_t_np])
     scaler_b = ot.utils.DataScaler(norm="standard").fit([X_s_b, X_t_b])
 
     val_np = ot.sliced_wasserstein_distance(
-        X_s_np, X_t_np, n_projections=50, seed=0, scaler=scaler_np
+        X_s_np, X_t_np, projections=P, scaler=scaler_np
     )
     val_b = ot.sliced_wasserstein_distance(
-        X_s_b, X_t_b, n_projections=50, seed=0, scaler=scaler_b
+        X_s_b, X_t_b, projections=Pb, scaler=scaler_b
     )
 
     np.testing.assert_allclose(nx.to_numpy(val_b), val_np, atol=1e-5)
 
     val_np_max = ot.max_sliced_wasserstein_distance(
-        X_s_np, X_t_np, n_projections=50, seed=0, scaler=scaler_np
+        X_s_np, X_t_np, projections=P, scaler=scaler_np
     )
     val_b_max = ot.max_sliced_wasserstein_distance(
-        X_s_b, X_t_b, n_projections=50, seed=0, scaler=scaler_b
+        X_s_b, X_t_b, projections=Pb, scaler=scaler_b
     )
 
     np.testing.assert_allclose(nx.to_numpy(val_b_max), val_np_max, atol=1e-5)
