@@ -75,6 +75,13 @@ authors:
   - given-names: Nathan
     family-names: Neike
     affiliation: Hi! PARIS
+  - given-names: Baptiste
+    family-names: Genest
+    affiliation: CNRS, LIRIS
+  - given-names: David
+    family-names: Coeurjolly
+    affiliation: CNRS, LIRIS
+
 identifiers:
   - type: url
     value: 'https://github.com/PythonOT/POT'
