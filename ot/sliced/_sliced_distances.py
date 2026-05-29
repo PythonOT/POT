@@ -10,7 +10,7 @@ Sliced Wasserstein distances solvers: sliced and max-sliced.
 # License: MIT License
 
 from ..backend import get_backend
-from ..utils import list_to_array
+from ..utils import list_to_array, apply_scaler
 from ._utils import get_random_projections
 from ..lp import wasserstein_1d
 
@@ -25,6 +25,7 @@ def sliced_wasserstein_distance(
     projections=None,
     seed=None,
     log=False,
+    scaler=None,
 ):
     r"""
     Computes a Monte-Carlo approximation of the p-Sliced Wasserstein distance
@@ -58,6 +59,20 @@ def sliced_wasserstein_distance(
         Seed used for random number generator
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+    scaler: None, object with .transform(), or callable, optional
+        Preprocessing applied to X_s and X_t before computing the distance.
+        Useful for normalizing inputs when features have very different scales.
+
+        - ``None`` : no preprocessing (default)
+        - Object with ``.transform()`` method : e.g. an :class:`ot.utils.DataScaler`
+          fitted on a representative sample. This is the recommended way to get
+          stable, consistent normalization across multiple calls (e.g. when
+          using SWD as a loss in mini-batch training).
+        - Callable : any function, lambda, or PyTorch transform applied
+          directly as ``scaler(X_s)`` and ``scaler(X_t)``.
+
+        See :class:`ot.utils.DataScaler` for a backend-aware scaler that supports
+        joint fitting on multiple distributions.
 
     Returns
     -------
@@ -69,11 +84,9 @@ def sliced_wasserstein_distance(
     Examples
     --------
 
-    >>> import ot
-    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
-    >>> ot.sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
 
     References
@@ -85,6 +98,8 @@ def sliced_wasserstein_distance(
     X_s, X_t = list_to_array(X_s, X_t)
 
     nx = get_backend(X_s, X_t, a, b, projections)
+
+    X_s, X_t = apply_scaler(X_s, X_t, scaler)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -131,6 +146,7 @@ def max_sliced_wasserstein_distance(
     projections=None,
     seed=None,
     log=False,
+    scaler=None,
 ):
     r"""
     Computes a Monte-Carlo approximation of the max p-Sliced Wasserstein distance
@@ -165,6 +181,20 @@ def max_sliced_wasserstein_distance(
         Seed used for random number generator
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+    scaler : None, object with .transform(), or callable, optional
+        Preprocessing applied to X_s and X_t before computing the distance.
+        Useful for normalizing inputs when features have very different scales.
+
+        - ``None`` : no preprocessing (default)
+        - Object with ``.transform()`` method : e.g. an :class:`ot.utils.DataScaler`
+          fitted on a representative sample. This is the recommended way to get
+          stable, consistent normalization across multiple calls (e.g. when
+          using SWD as a loss in mini-batch training).
+        - Callable : any function, lambda, or PyTorch transform applied
+          directly as ``scaler(X_s)`` and ``scaler(X_t)``.
+
+        See :class:`ot.utils.DataScaler` for a backend-aware scaler that supports
+        joint fitting on multiple distributions.
 
     Returns
     -------
@@ -176,11 +206,9 @@ def max_sliced_wasserstein_distance(
     Examples
     --------
 
-    >>> import ot
-    >>> import numpy as np
     >>> n_samples_a = 20
     >>> X = np.random.normal(0., 1., (n_samples_a, 5))
-    >>> ot.sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    >>> sliced_wasserstein_distance(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
     0.0
 
     References
@@ -192,6 +220,8 @@ def max_sliced_wasserstein_distance(
     X_s, X_t = list_to_array(X_s, X_t)
 
     nx = get_backend(X_s, X_t, a, b, projections)
+
+    X_s, X_t = apply_scaler(X_s, X_t, scaler)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
