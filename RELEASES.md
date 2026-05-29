@@ -6,6 +6,13 @@
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
 
 #### New features 
+- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
+  distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
+  support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
+- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
+  a callable, or a no-op (PR #808)
+- Add optional `scaler` parameter to `sliced_wasserstein_distance` and
+  `max_sliced_wasserstein_distance` (PR #808)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
 - Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)
