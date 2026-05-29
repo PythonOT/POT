@@ -96,8 +96,8 @@ feature_min = all_features[:, :3].min(axis=0, keepdims=True)
 feature_max = all_features[:, :3].max(axis=0, keepdims=True)
 
 # get 2d positions for visualization
-pos1 = MDS(metric="precomputed", random_state=0, n_init=1).fit_transform(1 - C1)
-pos2 = MDS(metric="precomputed", random_state=0, n_init=1).fit_transform(1 - C2)
+pos1 = MDS(dissimilarity="precomputed", random_state=0, n_init=1).fit_transform(1 - C1)
+pos2 = MDS(dissimilarity="precomputed", random_state=0, n_init=1).fit_transform(1 - C2)
 
 colors1 = np.clip(
     (x1 - feature_min) / np.maximum(feature_max - feature_min, 1e-15), 0.0, 1.0
