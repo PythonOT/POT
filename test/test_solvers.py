@@ -53,8 +53,7 @@ lst_parameters_solve_sample_NotImplemented = [
         "method": "nystroem",
         "metric": "euclidean",
     },  # fail nystroem on metric not euclidean
-    {"lazy": True},  # fail lazy for non regularized
-    {"lazy": True, "unbalanced": 1},  # fail lazy for non regularized unbalanced
+    {"lazy": True, "unbalanced": 1},  # fail lazy for unbalanced (not supported)
     {
         "lazy": True,
         "reg": 1,
@@ -599,6 +598,99 @@ def test_solve_sample_lazy(nx):
     assert_allclose_sol(sol0, sol00)
 
     np.testing.assert_allclose(sol0.plan, sol.lazy_plan[:], rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "cityblock"])
+def test_solve_sample_lazy_emd(nx, metric):
+    # test lazy EMD solver (no regularization, computes distances on-the-fly)
+    n_s = 20
+    n_t = 25
+    d = 2
+    rng = np.random.RandomState(42)
+
+    X_s = rng.rand(n_s, d)
+    X_t = rng.rand(n_t, d)
+    a = ot.utils.unif(n_s)
+    b = ot.utils.unif(n_t)
+
+    X_sb, X_tb, ab, bb = nx.from_numpy(X_s, X_t, a, b)
+
+    # Standard solver: pre-compute distance matrix
+    M = ot.dist(X_sb, X_tb, metric=metric)
+    sol_standard = ot.solve(M, ab, bb)
+
+    # Lazy solver: compute distances on-the-fly
+    sol_lazy = ot.solve_sample(X_sb, X_tb, ab, bb, lazy=True, metric=metric)
+
+    # Check that optimal costs match
+    np.testing.assert_allclose(
+        nx.to_numpy(sol_standard.value),
+        nx.to_numpy(sol_lazy.value),
+        rtol=1e-10,
+        atol=1e-10,
+        err_msg=f"Lazy EMD cost mismatch for metric {metric}",
+    )
+
+    # Check that the lazy plan has the same cost when evaluated against M
+    # (OT can have multiple optimal plans with the same cost)
+    cost_standard = nx.to_numpy(nx.sum(sol_standard.plan * M))
+    cost_lazy = nx.to_numpy(nx.sum(sol_lazy.plan * M))
+    np.testing.assert_allclose(
+        cost_standard,
+        cost_lazy,
+        rtol=1e-10,
+        atol=1e-10,
+        err_msg=f"Lazy EMD plan cost mismatch for metric {metric}",
+    )
+
+    # Check that the lazy plan satisfies marginal constraints
+    np.testing.assert_allclose(
+        nx.to_numpy(nx.sum(sol_lazy.plan, axis=1)),
+        nx.to_numpy(ab),
+        rtol=1e-6,
+        atol=1e-8,
+        err_msg=f"Lazy EMD row marginal mismatch for metric {metric}",
+    )
+    np.testing.assert_allclose(
+        nx.to_numpy(nx.sum(sol_lazy.plan, axis=0)),
+        nx.to_numpy(bb),
+        rtol=1e-6,
+        atol=1e-8,
+        err_msg=f"Lazy EMD column marginal mismatch for metric {metric}",
+    )
+
+
+def test_solve_sample_lazy_emd_large(nx):
+    # Test larger problem to verify memory savings benefit
+    n_large = 100
+    d = 2
+    rng = np.random.RandomState(42)
+
+    X_s_large = rng.rand(n_large, d)
+    X_t_large = rng.rand(n_large, d)
+    a_large = ot.utils.unif(n_large)
+    b_large = ot.utils.unif(n_large)
+
+    X_sb_large, X_tb_large, ab_large, bb_large = nx.from_numpy(
+        X_s_large, X_t_large, a_large, b_large
+    )
+
+    # Standard solver
+    M_large = ot.dist(X_sb_large, X_tb_large, metric="sqeuclidean")
+    sol_standard_large = ot.solve(M_large, ab_large, bb_large)
+
+    # Lazy solver (avoids storing 100x100 cost matrix)
+    sol_lazy_large = ot.solve_sample(
+        X_sb_large, X_tb_large, ab_large, bb_large, lazy=True, metric="sqeuclidean"
+    )
+
+    np.testing.assert_allclose(
+        nx.to_numpy(sol_standard_large.value),
+        nx.to_numpy(sol_lazy_large.value),
+        rtol=1e-9,
+        atol=1e-9,
+        err_msg="Lazy EMD cost mismatch for large problem",
+    )
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")

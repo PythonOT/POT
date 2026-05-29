@@ -36,13 +36,16 @@ from . import solvers
 from . import gaussian
 from . import lowrank
 from . import gmm
+from . import sgot
 
 # OT functions
 from .lp import (
     emd,
     emd2,
+    emd2_lazy,
     emd_1d,
     emd2_1d,
+    emd_1d_dual_backprop,
     wasserstein_1d,
     binary_search_circle,
     wasserstein_circle,
@@ -50,7 +53,14 @@ from .lp import (
     linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
-from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
+from .unbalanced import (
+    sinkhorn_unbalanced,
+    barycenter_unbalanced,
+    sinkhorn_unbalanced2,
+    uot_1d,
+    unbalanced_sliced_ot,
+    sliced_unbalanced_ot,
+)
 from .da import sinkhorn_lpl1_mm
 from .sliced import (
     sliced_wasserstein_distance,
@@ -73,15 +83,19 @@ from .solvers import solve, solve_gromov, solve_sample
 from .lowrank import lowrank_sinkhorn
 
 from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_batch
+from .bsp import compute_bspot_bijection, merge_bijections
+
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.6.post1"
+
+__version__ = "0.9.7.dev0"
 
 __all__ = [
     "emd",
     "emd2",
+    "emd2_lazy",
     "emd_1d",
     "sinkhorn",
     "sinkhorn2",
@@ -94,6 +108,8 @@ __all__ = [
     "toq",
     "gromov",
     "emd2_1d",
+    "emd_1d_dual",
+    "emd_1d_dual_backprop",
     "wasserstein_1d",
     "backend",
     "gaussian",
@@ -108,6 +124,9 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "uot_1d",
+    "unbalanced_sliced_ot",
+    "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
     "gromov_wasserstein",
     "gromov_wasserstein2",
@@ -130,6 +149,7 @@ __all__ = [
     "factored",
     "lowrank",
     "gmm",
+    "sgot",
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
@@ -141,4 +161,6 @@ __all__ = [
     "solve_gromov_batch",
     "solve_sample_batch",
     "dist_batch",
+    "compute_bspot_bijection",
+    "merge_bijections",
 ]

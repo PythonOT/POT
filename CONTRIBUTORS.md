@@ -58,6 +58,7 @@ The contributors to this library are:
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
 * [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
+* [Nathan Neike](https://github.com/nathanneike) (Sparse EMD solver)
 
 
 ## Acknowledgments

@@ -6,12 +6,13 @@ Sliced OT Distances
 # Author: Adrien Corenflos <adrien.corenflos@aalto.fi>
 #         Nicolas Courty   <ncourty@irisa.fr>
 #         Rémi Flamary <remi.flamary@polytechnique.edu>
+#         Clément Bonet <clement.bonet.mapp@polytechnique.edu>
 #
 # License: MIT License
 
 import numpy as np
 from .backend import get_backend, NumpyBackend
-from .utils import list_to_array, get_coordinate_circle
+from .utils import list_to_array, get_coordinate_circle, apply_scaler
 from .lp import (
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
@@ -75,6 +76,7 @@ def sliced_wasserstein_distance(
     projections=None,
     seed=None,
     log=False,
+    scaler=None,
 ):
     r"""
     Computes a Monte-Carlo approximation of the p-Sliced Wasserstein distance
@@ -108,6 +110,20 @@ def sliced_wasserstein_distance(
         Seed used for random number generator
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+    scaler: None, object with .transform(), or callable, optional
+        Preprocessing applied to X_s and X_t before computing the distance.
+        Useful for normalizing inputs when features have very different scales.
+
+        - ``None`` : no preprocessing (default)
+        - Object with ``.transform()`` method : e.g. an :class:`ot.utils.DataScaler`
+          fitted on a representative sample. This is the recommended way to get
+          stable, consistent normalization across multiple calls (e.g. when
+          using SWD as a loss in mini-batch training).
+        - Callable : any function, lambda, or PyTorch transform applied
+          directly as ``scaler(X_s)`` and ``scaler(X_t)``.
+
+        See :class:`ot.utils.DataScaler` for a backend-aware scaler that supports
+        joint fitting on multiple distributions.
 
     Returns
     -------
@@ -133,14 +149,9 @@ def sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
+
+    X_s, X_t = apply_scaler(X_s, X_t, scaler)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -187,12 +198,13 @@ def max_sliced_wasserstein_distance(
     projections=None,
     seed=None,
     log=False,
+    scaler=None,
 ):
     r"""
     Computes a Monte-Carlo approximation of the max p-Sliced Wasserstein distance
 
     .. math::
-        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta _in
+        \mathcal{Max-SWD}_p(\mu, \nu) = \underset{\theta \in
         \mathcal{U}(\mathbb{S}^{d-1})}{\max} [\mathcal{W}_p^p(\theta_\#
         \mu, \theta_\# \nu)]^{\frac{1}{p}}
 
@@ -221,6 +233,20 @@ def max_sliced_wasserstein_distance(
         Seed used for random number generator
     log: bool, optional
         if True, sliced_wasserstein_distance returns the projections used and their associated EMD.
+    scaler : None, object with .transform(), or callable, optional
+        Preprocessing applied to X_s and X_t before computing the distance.
+        Useful for normalizing inputs when features have very different scales.
+
+        - ``None`` : no preprocessing (default)
+        - Object with ``.transform()`` method : e.g. an :class:`ot.utils.DataScaler`
+          fitted on a representative sample. This is the recommended way to get
+          stable, consistent normalization across multiple calls (e.g. when
+          using SWD as a loss in mini-batch training).
+        - Callable : any function, lambda, or PyTorch transform applied
+          directly as ``scaler(X_s)`` and ``scaler(X_t)``.
+
+        See :class:`ot.utils.DataScaler` for a backend-aware scaler that supports
+        joint fitting on multiple distributions.
 
     Returns
     -------
@@ -246,14 +272,9 @@ def max_sliced_wasserstein_distance(
 
     X_s, X_t = list_to_array(X_s, X_t)
 
-    if a is not None and b is not None and projections is None:
-        nx = get_backend(X_s, X_t, a, b)
-    elif a is not None and b is not None and projections is not None:
-        nx = get_backend(X_s, X_t, a, b, projections)
-    elif a is None and b is None and projections is not None:
-        nx = get_backend(X_s, X_t, projections)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b, projections)
+
+    X_s, X_t = apply_scaler(X_s, X_t, scaler)
 
     n = X_s.shape[0]
     m = X_t.shape[0]
@@ -340,6 +361,7 @@ def projection_sphere_to_circle(
     Projection of :math:`x\in S^{d-1}` on circles using coordinates on [0,1[.
 
     To get the projection on the circle, we use the following formula:
+
     .. math::
         P^U(x) = \frac{U^Tx}{\|U^Tx\|_2}
 
@@ -456,10 +478,7 @@ def sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(
@@ -545,10 +564,7 @@ def sliced_wasserstein_sphere_unif(
     """
     d = X_s.shape[-1]
 
-    if a is not None:
-        nx = get_backend(X_s, a)
-    else:
-        nx = get_backend(X_s)
+    nx = get_backend(X_s, a)
 
     if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
         raise ValueError("X_s is not on the sphere.")
@@ -632,10 +648,7 @@ def linear_sliced_wasserstein_sphere(
     """
     d = X_s.shape[-1]
 
-    if a is not None and b is not None:
-        nx = get_backend(X_s, X_t, a, b)
-    else:
-        nx = get_backend(X_s, X_t)
+    nx = get_backend(X_s, X_t, a, b)
 
     if X_s.shape[1] != X_t.shape[1]:
         raise ValueError(

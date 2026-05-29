@@ -178,6 +178,8 @@ def averaged_sgd_entropic_transport(
 
     Parameters
     ----------
+    a : ndarray, shape (ns,)
+        source measure
     b : ndarray, shape (nt,)
         target measure
     M : ndarray, shape (ns, nt)

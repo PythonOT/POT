@@ -164,7 +164,7 @@ def generic_conditional_gradient(
     conditional gradient or generalized conditional gradient depending on the
     provided linear program solver.
 
-        The function solves the following optimization problem if set as a conditional gradient:
+    The function solves the following optimization problem if set as a conditional gradient:
 
     .. math::
         \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
@@ -172,7 +172,7 @@ def generic_conditional_gradient(
 
         s.t. \ \gamma \mathbf{1} &= \mathbf{a}
 
-             \gamma^T \mathbf{1} &= \mathbf{b} (optional constraint)
+             \gamma^T \mathbf{1} &= \mathbf{b} \ (\text{optional constraint})
 
              \gamma &\geq 0
 
@@ -184,7 +184,7 @@ def generic_conditional_gradient(
 
     The algorithm used for solving the problem is conditional gradient as discussed in :ref:`[1] <references-cg>`
 
-        The function solves the following optimization problem if set a generalized conditional gradient:
+    The function solves the following optimization problem if set a generalized conditional gradient:
 
     .. math::
         \gamma = \mathop{\arg \min}_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +

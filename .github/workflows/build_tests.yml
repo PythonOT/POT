@@ -27,7 +27,9 @@ jobs:
 
 
     - name: Checking Out Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+      with:
+        submodules: true
     # Install Python & Packages
     - uses: actions/setup-python@v4
       with:
@@ -39,6 +41,23 @@ jobs:
         pre-commit install --install-hooks
         pre-commit run --all-files
 
+  build_from_source:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Build from source
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install cython numpy
+        python setup.py sdist bdist_wheel
+        pip install dist/*.tar.gz
 
   linux:
 
@@ -50,11 +69,20 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: insightsengineering/disk-space-reclaimer@v1
+      with:
+        android: true
+        dotnet: true
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: Install POT
       run: |
         pip install -e .
@@ -63,11 +91,14 @@ jobs:
         python -m pip install --upgrade pip setuptools
         pip install -r requirements_all.txt
         pip install pytest pytest-cov
+    - name: test POT import
+      run: |
+        python -c "import ot; print(ot.__version__)"
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
     - name: Upload coverage reports to Codecov with GitHub Action
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
   linux-minimal-deps:
 
@@ -75,10 +106,13 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'no ci')"
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.13"
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
@@ -89,8 +123,6 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
-    - name: Upload coverage reports to Codecov with GitHub Action
-      uses: codecov/codecov-action@v3
 
   macos:
      runs-on: ${{ matrix.os }}
@@ -103,10 +135,13 @@ jobs:
 
      steps:
      - uses: actions/checkout@v4
+       with:
+        submodules: true
      - name: Set up Python ${{ matrix.python-version }}
        uses: actions/setup-python@v5
        with:
          python-version: ${{ matrix.python-version }}
+         cache: 'pip'
      - name: Install POT
        run: |
          pip install -e .
@@ -130,10 +165,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
     - name: RC.exe
       run: |
         function Invoke-VSDevEnvironment {

@@ -14,14 +14,16 @@ from ..utils import dist
 
 cimport cython
 cimport libc.math as math
-from libc.stdint cimport uint64_t
+from libc.stdint cimport uint64_t, int64_t
 
 import warnings
 
 
 cdef extern from "EMD.h":
-    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
+    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
+    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -40,7 +42,7 @@ def check_result(result_code):
  
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, uint64_t max_iter, int numThreads):
+def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"]  b, np.ndarray[double, ndim=2, mode="c"]  M, uint64_t max_iter, int numThreads, alpha_init=None, beta_init=None):
     """
         Solves the Earth Movers distance problem and returns the optimal transport matrix
 
@@ -79,6 +81,10 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     max_iter : uint64_t
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
+    alpha_init : (ns,) numpy.ndarray, float64, optional
+        Initial dual potentials for sources (warmstart)
+    beta_init : (nt,) numpy.ndarray, float64, optional
+        Initial dual potentials for targets (warmstart)
 
     Returns
     -------
@@ -99,6 +105,12 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     cdef np.ndarray[double, ndim=2, mode="c"] G=np.zeros([0, 0])
 
     cdef np.ndarray[double, ndim=1, mode="c"] Gv=np.zeros(0)
+    
+    # Warmstart potentials
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha_init_c
+    cdef np.ndarray[double, ndim=1, mode="c"] beta_init_c
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
 
     if not len(a):
         a=np.ones((n1,))/n1
@@ -108,11 +120,18 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
 
     # init OT matrix
     G=np.zeros([n1, n2])
+    
+    # Setup warmstart pointers if provided
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_c = np.ascontiguousarray(alpha_init, dtype=np.float64)
+        beta_init_c = np.ascontiguousarray(beta_init, dtype=np.float64)
+        alpha_init_ptr = <double*> alpha_init_c.data
+        beta_init_ptr = <double*> beta_init_c.data
 
     # calling the function
     with nogil:
         if numThreads == 1:
-            result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter)
+            result_code = EMD_wrap(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
         else:
             result_code = EMD_wrap_omp(n1, n2, <double*> a.data, <double*> b.data, <double*> M.data, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, numThreads)
     return G, cost, alpha, beta, result_code
@@ -206,3 +225,140 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
         cur_idx += 1
     cur_idx += 1
     return G[:cur_idx], indices[:cur_idx], cost
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
+                np.ndarray[double, ndim=1, mode="c"] b,
+                np.ndarray[uint64_t, ndim=1, mode="c"] edge_sources,
+                np.ndarray[uint64_t, ndim=1, mode="c"] edge_targets,
+                np.ndarray[double, ndim=1, mode="c"] edge_costs,
+                uint64_t max_iter,
+                np.ndarray[double, ndim=1, mode="c"] alpha_init=None,
+                np.ndarray[double, ndim=1, mode="c"] beta_init=None):
+    """
+    Sparse EMD solver using cost matrix in COO (Coordinate) sparse format.
+    
+    The cost matrix is passed as three parallel arrays representing non-zero
+    entries in COO format: (edge_sources[i], edge_targets[i]) -> edge_costs[i].
+    Only edges explicitly provided will be considered by the solver.
+
+    Parameters
+    ----------
+    a : (n1,) array, float64
+        Source histogram
+    b : (n2,) array, float64
+        Target histogram
+    edge_sources : (k,) array, uint64
+        Source indices for each edge (row indices in COO format)
+    edge_targets : (k,) array, uint64
+        Target indices for each edge (column indices in COO format)
+    edge_costs : (k,) array, float64
+        Cost for each edge (non-zero values in COO format)
+    max_iter : uint64_t
+        Maximum number of iterations
+    alpha_init : (n1,) array, float64, optional
+        Initial dual variables for sources (warmstart)
+    beta_init : (n2,) array, float64, optional
+        Initial dual variables for targets (warmstart)
+
+    Returns
+    -------
+    flow_sources : (n_flows,) array, uint64
+        Source indices of non-zero flows
+    flow_targets : (n_flows,) array, uint64
+        Target indices of non-zero flows
+    flow_values : (n_flows,) array, float64
+        Flow values
+    cost : float
+        Total cost
+    alpha : (n1,) array
+        Dual variables for sources
+    beta : (n2,) array
+        Dual variables for targets
+    result_code : int
+        Result status
+    """
+    cdef int n1 = a.shape[0]
+    cdef int n2 = b.shape[0]
+    cdef uint64_t n_edges = edge_sources.shape[0]
+    cdef uint64_t n_flows_out = 0
+    cdef int result_code = 0
+    cdef double cost = 0
+
+    # Allocate output arrays (max size = n_edges)
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] flow_sources = np.zeros(n_edges, dtype=np.uint64)
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] flow_targets = np.zeros(n_edges, dtype=np.uint64)
+    cdef np.ndarray[double, ndim=1, mode="c"] flow_values = np.zeros(n_edges, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
+    cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
+
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_ptr = <double*> alpha_init.data
+        beta_init_ptr = <double*> beta_init.data
+    
+    with nogil:
+        result_code = EMD_wrap_sparse(
+            n1, n2,
+            <double*> a.data, <double*> b.data,
+            n_edges,
+            <uint64_t*> edge_sources.data, <uint64_t*> edge_targets.data, <double*> edge_costs.data,
+            <uint64_t*> flow_sources.data, <uint64_t*> flow_targets.data, <double*> flow_values.data,
+            &n_flows_out,
+            <double*> alpha.data, <double*> beta.data, &cost, max_iter,
+            alpha_init_ptr, beta_init_ptr
+        )
+
+    # Trim to actual number of flows
+    flow_sources = flow_sources[:n_flows_out]
+    flow_targets = flow_targets[:n_flows_out]
+    flow_values = flow_values[:n_flows_out]
+
+    return flow_sources, flow_targets, flow_values, cost, alpha, beta, result_code
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mode="c"] b, np.ndarray[double, ndim=2, mode="c"] coords_a, np.ndarray[double, ndim=2, mode="c"] coords_b, str metric='sqeuclidean', uint64_t max_iter=100000, np.ndarray[double, ndim=1, mode="c"] alpha_init=None, np.ndarray[double, ndim=1, mode="c"] beta_init=None):
+    """Solves the Earth Movers distance problem with lazy cost computation from coordinates."""
+    cdef int n1 = coords_a.shape[0]
+    cdef int n2 = coords_b.shape[0]
+    cdef int dim = coords_a.shape[1]
+    cdef int result_code = 0
+    cdef double cost = 0
+    cdef int metric_code
+    
+    # Validate dimension consistency
+    if coords_b.shape[1] != dim:
+        raise ValueError(f"Coordinate dimension mismatch: coords_a has {dim} dimensions but coords_b has {coords_b.shape[1]}")
+    
+    metric_map = {
+        'sqeuclidean': 0,
+        'euclidean': 1,
+        'cityblock': 2
+    }
+    
+    try:
+        metric_code = metric_map[metric]
+    except KeyError:
+        raise ValueError(f"Unknown metric: '{metric}'. Supported metrics are: {list(metric_map.keys())}")
+        
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
+    cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
+    cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros([n1, n2])
+    if not len(a):
+        a = np.ones((n1,)) / n1
+    if not len(b):
+        b = np.ones((n2,)) / n2
+    
+    cdef double* alpha_init_ptr = NULL
+    cdef double* beta_init_ptr = NULL
+    if alpha_init is not None and beta_init is not None:
+        alpha_init_ptr = <double*> alpha_init.data
+        beta_init_ptr = <double*> beta_init.data
+    
+    with nogil:
+        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
+    return G, cost, alpha, beta, result_code

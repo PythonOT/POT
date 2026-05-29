@@ -12,6 +12,7 @@ import pytest
 import ot
 from ot.datasets import make_1D_gauss as gauss
 from ot.backend import torch, tf, get_backend
+from ot.lp._network_simplex import center_ot_dual
 
 
 def test_emd_dimension_and_mass_mismatch():
@@ -914,6 +915,405 @@ def test_dual_variables():
     assert constraint_violation.max() < 1e-8
 
 
+def _get_sparse_test_matrices(n1, n2, k=2, seed=42, nx=None):
+    """Helper function to create sparse and dense test matrices."""
+    from scipy.sparse import coo_array
+    from ot.backend import NumpyBackend
+
+    if nx is None:
+        nx = NumpyBackend()
+
+    rng = np.random.RandomState(seed)
+    M_orig = rng.rand(n1, n2)
+
+    mask = np.zeros((n1, n2))
+    for i in range(n1):
+        j_list = rng.choice(n2, min(k, n2), replace=False)
+        for j in j_list:
+            mask[i, j] = 1
+    for j in range(n2):
+        i_list = rng.choice(n1, min(k, n1), replace=False)
+        for i in i_list:
+            mask[i, j] = 1
+
+    M_sparse_np = coo_array(M_orig * mask)
+    rows, cols, data = M_sparse_np.row, M_sparse_np.col, M_sparse_np.data
+
+    if nx.__name__ == "numpy":
+        M_sparse = M_sparse_np
+    else:
+        rows_b = nx.from_numpy(rows.astype(np.int64))
+        cols_b = nx.from_numpy(cols.astype(np.int64))
+        data_b = nx.from_numpy(data)
+        M_sparse = nx.coo_matrix(data_b, rows_b, cols_b, shape=(n1, n2))
+
+    M_dense = nx.from_numpy(M_orig + 1e8 * (1 - mask))
+
+    return M_sparse, M_dense
+
+
+def test_emd_sparse_vs_dense(nx):
+    """Test that sparse and dense EMD solvers produce identical results.
+
+    Uses random sparse graphs with k=2 edges per row/column, which guarantees
+    feasibility with uniform marginals.
+    """
+    # Skip for backends that don't support sparse matrices
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
+    n1 = 100
+    n2 = 100
+    k = 2
+
+    M_sparse, M_dense = _get_sparse_test_matrices(n1, n2, k=k, seed=42, nx=nx)
+
+    a = ot.utils.unif(n1, type_as=M_dense)
+    b = ot.utils.unif(n2, type_as=M_dense)
+
+    # Solve with both dense and sparse solvers
+    G_dense, log_dense = ot.emd(a, b, M_dense, log=True)
+    G_sparse, log_sparse = ot.emd(a, b, M_sparse, log=True)
+
+    cost_dense = log_dense["cost"]
+    cost_sparse = log_sparse["cost"]
+    np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
+
+    np.testing.assert_allclose(a, G_dense.sum(1), rtol=1e-5, atol=1e-7)
+    np.testing.assert_allclose(b, G_dense.sum(0), rtol=1e-5, atol=1e-7)
+
+    assert nx.issparse(G_sparse), "Sparse solver should return a sparse matrix"
+
+    G_sparse_dense = nx.todense(G_sparse)
+    np.testing.assert_allclose(
+        a, nx.to_numpy(nx.sum(G_sparse_dense, 1)), rtol=1e-5, atol=1e-7
+    )
+    np.testing.assert_allclose(
+        b, nx.to_numpy(nx.sum(G_sparse_dense, 0)), rtol=1e-5, atol=1e-7
+    )
+
+    # Test coo_array element-wise multiplication (only works with coo_array, not coo_matrix)
+    if nx.__name__ == "numpy":
+        # This tests that we're using coo_array which supports element-wise operations
+        M_sparse_np = M_sparse
+        G_sparse_np = G_sparse
+        loss_sparse = np.sum(G_sparse_np * M_sparse_np)
+        # Verify the loss calculation is reasonable
+        assert loss_sparse >= 0, "Sparse loss should be non-negative"
+
+
+def test_emd2_sparse_vs_dense(nx):
+    """Test that sparse and dense emd2 solvers produce identical costs.
+
+    Uses random sparse graphs with k=2 edges per row/column, which guarantees
+    feasibility with uniform marginals.
+    """
+    # Skip for backends that don't support sparse matrices
+    backend_name = nx.__class__.__name__.lower()
+    if "jax" in backend_name or "tensorflow" in backend_name:
+        pytest.skip("Backend does not support sparse matrices")
+
+    n1 = 100
+    n2 = 150
+    k = 2
+
+    M_sparse, M_dense = _get_sparse_test_matrices(n1, n2, k=k, seed=43, nx=nx)
+
+    a = ot.utils.unif(n1, type_as=M_dense)
+    b = ot.utils.unif(n2, type_as=M_dense)
+
+    # Solve with both dense and sparse solvers
+    cost_dense = ot.emd2(a, b, M_dense)
+    cost_sparse = ot.emd2(a, b, M_sparse)
+
+    # Check costs match
+    np.testing.assert_allclose(cost_dense, cost_sparse, rtol=1e-5, atol=1e-7)
+
+
+def test_emd2_sparse_gradients():
+    """Test that PyTorch sparse tensors support gradient computation."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = 10
+    a = torch.tensor(ot.utils.unif(n), requires_grad=True, dtype=torch.float64)
+    b = torch.tensor(ot.utils.unif(n), requires_grad=True, dtype=torch.float64)
+
+    rows, cols, costs = [], [], []
+    for i in range(n):
+        rows.append(i)
+        cols.append(i)
+        costs.append(0.1)
+        for offset in [1, 2]:
+            j = (i + offset) % n
+            rows.append(i)
+            cols.append(j)
+            costs.append(float(offset))
+
+    indices = torch.tensor(
+        np.vstack([np.array(rows), np.array(cols)]), dtype=torch.int64
+    )
+    values = torch.tensor(costs, dtype=torch.float64)
+    M_sparse = torch.sparse_coo_tensor(indices, values, (n, n), dtype=torch.float64)
+
+    cost = ot.emd2(a, b, M_sparse)
+    cost.backward()
+
+    assert a.grad is not None
+    assert b.grad is not None
+    np.testing.assert_allclose(
+        a.grad.sum().item(), -b.grad.sum().item(), rtol=1e-5, atol=1e-7
+    )
+
+
+def test_emd2_sparse_vs_dense_gradients():
+    """Verify gradient w.r.t. cost matrix M equals transport plan G."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = 4
+    a = torch.tensor([0.25, 0.25, 0.25, 0.25], requires_grad=True, dtype=torch.float64)
+    b = torch.tensor([0.25, 0.25, 0.25, 0.25], requires_grad=True, dtype=torch.float64)
+
+    M_full = torch.tensor(
+        [
+            [0.1, 1.0, 2.0, 3.0],
+            [1.0, 0.1, 1.0, 2.0],
+            [2.0, 1.0, 0.1, 1.0],
+            [3.0, 2.0, 1.0, 0.1],
+        ],
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+
+    cost_dense = ot.emd2(a, b, M_full)
+    cost_dense.backward()
+    G_dense = ot.emd(a.detach(), b.detach(), M_full.detach())
+
+    np.testing.assert_allclose(
+        M_full.grad.numpy(), G_dense.numpy(), rtol=1e-7, atol=1e-10
+    )
+
+    a.grad = None
+    b.grad = None
+
+    rows, cols, costs = [], [], []
+    for i in range(n):
+        for j in range(max(0, i - 1), min(n, i + 2)):
+            rows.append(i)
+            cols.append(j)
+            costs.append(M_full[i, j].item())
+
+    rows_t = torch.tensor(rows, dtype=torch.int64)
+    cols_t = torch.tensor(cols, dtype=torch.int64)
+    M_sparse = torch.sparse_coo_tensor(
+        torch.stack([rows_t, cols_t]),
+        torch.tensor(costs, dtype=torch.float64),
+        (n, n),
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+
+    cost_sparse = ot.emd2(a, b, M_sparse)
+    cost_sparse.backward()
+    G_sparse = ot.emd(a.detach(), b.detach(), M_sparse.detach()).to_dense()
+
+    grad_values = M_sparse.grad.coalesce().values().numpy()
+    G_values = G_sparse[rows_t, cols_t].numpy()
+
+    np.testing.assert_allclose(grad_values, G_values, rtol=1e-7, atol=1e-10)
+    assert grad_values.sum() > 0
+    assert np.abs(grad_values.sum() - 1.0) < 1e-7
+
+
+def test_emd__dual_warmstart():
+    # Test that warmstarting the network simplex from partial duals
+    n = 100
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    y = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(x, y)
+
+    # run solver with limited iterations (stop early)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    # resume from the partial duals with full iterations
+    G_warm, log_warm = ot.emd(a, b, M, log=True, potentials_init=(u_partial, v_partial))
+
+    # cold-start reference
+    G_cold, log_cold = ot.emd(a, b, M, log=True)
+
+    # costs should match
+    np.testing.assert_allclose(G_warm, G_cold, rtol=1e-7, atol=1e-10)
+    np.testing.assert_allclose(log_warm["cost"], log_cold["cost"], rtol=1e-7)
+
+    # Both should satisfy marginal constraints
+    np.testing.assert_allclose(G_warm.sum(1), a, atol=1e-7)
+    np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
+
+    # Test emd2 with warmstart
+    cost_warm_emd2, log_warm_emd2 = ot.emd2(
+        a, b, M, log=True, potentials_init=(u_partial, v_partial)
+    )
+    cost_cold_emd2, log_cold_emd2 = ot.emd2(a, b, M, log=True)
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
+
+def test_emd_lazy_warmstart():
+    n = 100
+    rng = np.random.RandomState(42)
+
+    X_s = rng.randn(n, 2)
+    X_t = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+    M = ot.dist(X_s, X_t, metric="sqeuclidean")
+
+    # run dense solver with limited iterations (stop early)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    from ot.lp import emd2_lazy
+
+    # resume from the partial duals with full iterations
+    cost_warm, log_warm = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        potentials_init=(u_partial, v_partial),
+    )
+
+    # cold-start reference
+    cost_cold, log_cold = emd2_lazy(X_s, X_t, a, b, metric="sqeuclidean", log=True)
+
+    # costs should match
+    np.testing.assert_allclose(cost_warm, cost_cold, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm, log_cold["cost"], rtol=1e-7)
+
+    # Check that warmstart returns valid potentials
+    assert "u" in log_warm and "v" in log_warm
+    assert len(log_warm["u"]) == n and len(log_warm["v"]) == n
+
+    # Test emd2_lazy with warmstart (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+        potentials_init=(u_partial, v_partial),
+    )
+    cost_cold_emd2, log_cold_emd2 = emd2_lazy(
+        X_s,
+        X_t,
+        a,
+        b,
+        metric="sqeuclidean",
+        log=True,
+    )
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
+
+def test_emd_sparse_warmstart():
+    n = 100
+    rng = np.random.RandomState(42)
+
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+
+    # Create a cost matrix and solve with limited iterations (stop early)
+    M = rng.rand(n, n)
+    G_partial, log_partial = ot.emd(a, b, M, numItermax=100, log=True)
+    u_partial = log_partial["u"]
+    v_partial = log_partial["v"]
+
+    # resume from the partial duals with full iterations
+    G_warm, log_warm = ot.emd(a, b, M, log=True, potentials_init=(u_partial, v_partial))
+
+    # cold-start reference
+    G_cold, log_cold = ot.emd(a, b, M, log=True)
+
+    # costs should match
+    np.testing.assert_allclose(G_warm, G_cold, rtol=1e-7, atol=1e-10)
+    np.testing.assert_allclose(log_warm["cost"], log_cold["cost"], rtol=1e-7)
+
+    # Both should satisfy marginal constraints
+    np.testing.assert_allclose(G_warm.sum(1), a, atol=1e-7)
+    np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
+
+    # Test sparse solver directly with warmstart via COO format
+    import scipy.sparse as sp
+    from ot.lp.emd_wrap import emd_c_sparse
+
+    row_indices = np.repeat(np.arange(n), n).astype(np.uint64)
+    col_indices = np.tile(np.arange(n), n).astype(np.uint64)
+    costs = M.ravel()
+
+    (
+        flow_sources,
+        flow_targets,
+        flow_values,
+        cost_warm_sparse,
+        alpha_warm,
+        beta_warm,
+        result_code,
+    ) = emd_c_sparse(
+        a,
+        b,
+        row_indices,
+        col_indices,
+        costs,
+        max_iter=100000,
+        alpha_init=u_partial,
+        beta_init=v_partial,
+    )
+
+    (
+        flow_sources_cold,
+        flow_targets_cold,
+        flow_values_cold,
+        cost_cold_sparse,
+        alpha_cold,
+        beta_cold,
+        result_code_cold,
+    ) = emd_c_sparse(a, b, row_indices, col_indices, costs, max_iter=100000)
+
+    # Costs should match
+    np.testing.assert_allclose(cost_warm_sparse, cost_cold_sparse, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_sparse, log_cold["cost"], rtol=1e-7)
+
+    # Check that we got valid flows
+    assert len(flow_sources) > 0, "Should have non-zero flows"
+    assert len(flow_sources) == len(flow_targets) == len(flow_values)
+
+    # Test emd2 with warmstart for sparse (same pattern as dense emd2 test)
+    cost_warm_emd2, log_warm_emd2 = ot.emd2(
+        a, b, M, log=True, potentials_init=(u_partial, v_partial)
+    )
+    cost_cold_emd2, log_cold_emd2 = ot.emd2(a, b, M, log=True)
+
+    # costs should match between warmstart and cold start
+    np.testing.assert_allclose(cost_warm_emd2, cost_cold_emd2, rtol=1e-7)
+    np.testing.assert_allclose(cost_warm_emd2, log_cold["cost"], rtol=1e-7)
+
+
 def check_duality_gap(a, b, M, G, u, v, cost):
     cost_dual = np.vdot(a, u) + np.vdot(b, v)
     # Check that dual and primal cost are equal
@@ -925,3 +1325,36 @@ def check_duality_gap(a, b, M, G, u, v, cost):
     np.testing.assert_array_almost_equal(
         (M - u.reshape(-1, 1) - v.reshape(1, -1))[ind1, ind2], np.zeros(ind1.size)
     )
+
+
+def test_batch_center_ot_dual(nx):
+    n = 100
+    rng = np.random.RandomState(42)
+
+    X_s = rng.randn(n, 2)
+    X_t = rng.randn(n, 2)
+
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n)
+
+    X_s, X_t, a, b = nx.from_numpy(X_s, X_t, a, b)
+
+    M = ot.dist(X_s, X_t, metric="sqeuclidean")
+
+    # run dense solver with limited iterations (stop early)
+    G, log = ot.emd(a, b, M, log=True)
+    u = log["u"]
+    v = log["v"]
+
+    alpha, beta = center_ot_dual(u, v)
+    alpha2, beta2 = center_ot_dual(u, v, a, b)
+
+    np.testing.assert_allclose(alpha, alpha2)
+    np.testing.assert_allclose(beta, beta2)
+
+    u_concat = nx.concatenate([u[:, None], u[:, None]], axis=1)
+    v_concat = nx.concatenate([v[:, None], v[:, None]], axis=1)
+
+    alpha_concat, beta_concat = center_ot_dual(u_concat, v_concat)
+    np.testing.assert_allclose(alpha, alpha_concat[:, 0])
+    np.testing.assert_allclose(beta, beta_concat[:, 0])

@@ -72,6 +72,16 @@ authors:
     family-names: Fernandes Montesuma
     affiliation: Université Paris-Saclay & CEA-List
     orcid: 'https://orcid.org/0000-0003-3850-4602'
+  - given-names: Nathan
+    family-names: Neike
+    affiliation: Hi! PARIS
+  - given-names: Baptiste
+    family-names: Genest
+    affiliation: CNRS, LIRIS
+  - given-names: David
+    family-names: Coeurjolly
+    affiliation: CNRS, LIRIS
+
 identifiers:
   - type: url
     value: 'https://github.com/PythonOT/POT'

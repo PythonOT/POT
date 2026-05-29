@@ -50,10 +50,10 @@ def fused_unbalanced_across_spaces_divergence(
     with the distributions on rows and columns. We consider two cases of matrix:
 
     - (Squared) similarity matrix in Gromov-Wasserstein setting,
-    whose rows and columns represent the samples.
+      whose rows and columns represent the samples.
 
     - Arbitrary-size matrix in Co-Optimal Transport setting,
-    whose rows represent samples, and columns represent corresponding features/dimensions.
+      whose rows represent samples, and columns represent corresponding features/dimensions.
 
     More precisely, this function returns the sample and feature transport plans between
     :math:`(\mathbf{X}, \mathbf{w}_{xs}, \mathbf{w}_{xf})` and
