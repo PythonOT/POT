@@ -16,6 +16,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
   implemented in `ot.sgot` (PR #792)
