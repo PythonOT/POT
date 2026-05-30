@@ -26,6 +26,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
   implemented in `ot.sgot` (PR #792)
+- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
 
 #### Closed issues
 
