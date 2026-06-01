@@ -6,6 +6,13 @@
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
 
 #### New features 
+- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
+  distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
+  support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
+- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
+  a callable, or a no-op (PR #808)
+- Add optional `scaler` parameter to `sliced_wasserstein_distance` and
+  `max_sliced_wasserstein_distance` (PR #808)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
 - Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)
@@ -13,6 +20,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
 - Geomloss function now handles both scalar and slice indices for i and j (PR #785)
 - Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
 - Add cost functions between linear operators following  

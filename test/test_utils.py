@@ -772,3 +772,163 @@ def test_fun_to_numpy(nx):
 
     with pytest.raises(ValueError):
         ot.utils.fun_to_numpy(fun, None, nx, warn=True)
+
+
+class TestDataScaler:
+    """Tests for the DataScaler class."""
+
+    def test_invalid_norm_raises(self):
+        with pytest.raises(ValueError, match="Invalid norm"):
+            ot.utils.DataScaler(norm="bogus")
+
+    def test_standard_joint_fit_mean_std(self):
+        X_s = np.array([[0.0, 0.0], [2.0, 200.0]])
+        X_t = np.array([[4.0, 400.0], [6.0, 600.0]])
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        expected_mean = np.array([3.0, 300.0])
+        np.testing.assert_allclose(scaler.mean_, expected_mean)
+
+    def test_standard_transform_zero_mean_unit_var(self):
+        rng = np.random.RandomState(0)
+        X_s = rng.normal(5, 2, (100, 3))
+        X_t = rng.normal(10, 3, (100, 3))
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        X_s_n = scaler.transform(X_s)
+        X_t_n = scaler.transform(X_t)
+        joint = np.concatenate([X_s_n, X_t_n], axis=0)
+        np.testing.assert_allclose(joint.mean(axis=0), 0, atol=1e-10)
+        np.testing.assert_allclose(joint.std(axis=0), 1, atol=1e-10)
+
+    def test_minmax_transform_in_unit_range(self):
+        X_s = np.array([[0.0], [5.0]])
+        X_t = np.array([[10.0]])
+        scaler = ot.utils.DataScaler(norm="minmax").fit([X_s, X_t])
+        joint = np.concatenate([scaler.transform(X_s), scaler.transform(X_t)], axis=0)
+        assert joint.min() == 0.0
+        assert joint.max() == 1.0
+
+    def test_l2_unit_norm_rows(self):
+        X = np.array([[3.0, 4.0], [1.0, 0.0]])
+        scaler = ot.utils.DataScaler(norm="l2")
+        X_n = scaler.fit_transform(X)
+        norms = np.linalg.norm(X_n, axis=1)
+        np.testing.assert_allclose(norms, 1.0)
+
+    def test_l2_no_explicit_fit_via_fit_transform(self):
+        scaler = ot.utils.DataScaler(norm="l2")
+        X = np.array([[3.0, 4.0]])
+        result = scaler.fit_transform(X)
+        np.testing.assert_allclose(np.linalg.norm(result, axis=1), 1.0)
+
+    def test_l2_transform_without_fit(self):
+        scaler = ot.utils.DataScaler(norm="l2")
+        X = np.array([[3.0, 4.0]])
+        result = scaler.transform(X)
+        np.testing.assert_allclose(np.linalg.norm(result, axis=1), 1.0)
+
+    def test_zero_variance_column_warns(self):
+        X = np.array([[1.0, 5.0], [2.0, 5.0], [3.0, 5.0]])
+        with pytest.warns(RuntimeWarning, match="Zero variance"):
+            ot.utils.DataScaler(norm="standard").fit(X)
+
+    def test_zero_range_column_warns(self):
+        X = np.array([[1.0, 5.0], [2.0, 5.0], [3.0, 5.0]])
+        with pytest.warns(RuntimeWarning, match="Zero range"):
+            ot.utils.DataScaler(norm="minmax").fit(X)
+
+    def test_zero_norm_row_warns(self):
+        X = np.array([[0.0, 0.0], [3.0, 4.0]])
+        scaler = ot.utils.DataScaler(norm="l2")
+        with pytest.warns(RuntimeWarning, match="Zero-norm"):
+            scaler.fit_transform(X)
+
+    def test_transform_before_fit_raises(self):
+        scaler = ot.utils.DataScaler(norm="standard")
+        with pytest.raises(RuntimeError, match="must be fitted"):
+            scaler.transform(np.array([[1.0, 2.0]]))
+
+    def test_fit_empty_list_raises(self):
+        with pytest.raises(ValueError, match="empty list"):
+            ot.utils.DataScaler(norm="standard").fit([])
+
+    def test_fit_single_array(self):
+        X = np.array([[1.0, 2.0], [3.0, 4.0]])
+        scaler = ot.utils.DataScaler(norm="standard").fit(X)
+        assert scaler.mean_ is not None
+
+    def test_fit_transform_list_returns_list(self):
+        X_s = np.array([[1.0, 2.0], [3.0, 4.0]])
+        X_t = np.array([[5.0, 6.0], [7.0, 8.0]])
+        results = ot.utils.DataScaler(norm="standard").fit_transform([X_s, X_t])
+        assert isinstance(results, list)
+        assert len(results) == 2
+        assert results[0].shape == X_s.shape
+        assert results[1].shape == X_t.shape
+
+
+class TestApplyScaler:
+    """Tests for the apply_scaler helper."""
+
+    def test_none_returns_inputs_unchanged(self):
+        X_s = np.array([[1.0, 2.0]])
+        X_t = np.array([[3.0, 4.0]])
+        out_s, out_t = ot.utils.apply_scaler(X_s, X_t, None)
+        np.testing.assert_array_equal(out_s, X_s)
+        np.testing.assert_array_equal(out_t, X_t)
+
+    def test_with_datascaler(self):
+        rng = np.random.RandomState(0)
+        X_s = rng.normal(0, 1, (50, 4))
+        X_t = rng.normal(5, 1, (50, 4))
+        scaler = ot.utils.DataScaler(norm="standard").fit([X_s, X_t])
+        out_s, out_t = ot.utils.apply_scaler(X_s, X_t, scaler)
+        np.testing.assert_allclose(out_s, scaler.transform(X_s))
+        np.testing.assert_allclose(out_t, scaler.transform(X_t))
+
+    def test_with_lambda(self):
+        X_s = np.array([[1.0]])
+        X_t = np.array([[2.0]])
+        out_s, out_t = ot.utils.apply_scaler(X_s, X_t, lambda x: x * 10)
+        np.testing.assert_array_equal(out_s, X_s * 10)
+        np.testing.assert_array_equal(out_t, X_t * 10)
+
+    def test_invalid_scaler_raises(self):
+        with pytest.raises(ValueError, match="scaler must be"):
+            ot.utils.apply_scaler(np.zeros((2, 2)), np.zeros((2, 2)), scaler=42)
+
+
+@pytest.mark.parametrize("norm", ["standard", "minmax", "l2"])
+def test_datascaler_backend(nx, norm):
+    rng = np.random.RandomState(0)
+    X_s_np = rng.normal(0, 1, (50, 3))
+    X_t_np = rng.normal(5, 2, (50, 3))
+
+    X_s_b, X_t_b = nx.from_numpy(X_s_np, X_t_np)
+
+    ref = ot.utils.DataScaler(norm=norm).fit([X_s_np, X_t_np])
+    ref_s = ref.transform(X_s_np)
+
+    scaler = ot.utils.DataScaler(norm=norm).fit([X_s_b, X_t_b])
+
+    out_s = scaler.transform(X_s_b)
+    np.testing.assert_allclose(nx.to_numpy(out_s), ref_s, atol=1e-5)
+
+    outs = scaler.transform([X_s_b, X_t_b])
+    assert isinstance(outs, list) and len(outs) == 2
+    np.testing.assert_allclose(nx.to_numpy(outs[0]), ref_s, atol=1e-5)
+
+    ft_ref = ot.utils.DataScaler(norm=norm).fit_transform([X_s_np, X_t_np])
+    ft_b = ot.utils.DataScaler(norm=norm).fit_transform([X_s_b, X_t_b])
+    assert isinstance(ft_b, list) and len(ft_b) == 2
+    np.testing.assert_allclose(nx.to_numpy(ft_b[0]), ft_ref[0], atol=1e-5)
+
+    single_out = ot.utils.DataScaler(norm=norm).fit(X_s_b).transform(X_s_b)
+    assert nx.to_numpy(single_out).shape == X_s_np.shape
+
+
+def test_datascaler_backend_mismatch_raises():
+    X = np.array([[1.0, 2.0], [3.0, 4.0]])
+    scaler = ot.utils.DataScaler(norm="standard").fit(X)
+    scaler._nx = object()
+    with pytest.raises(ValueError, match="Backend mismatch"):
+        scaler.transform(X)
