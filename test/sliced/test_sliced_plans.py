@@ -24,7 +24,7 @@ def test_sliced_permutations():
     x = rng.randn(n, 2)
     y = rng.randn(n, 2)
 
-    projections = ot.sliced.get_random_projections(d, n_projections, seed=0).T
+    projections = ot.sliced.get_random_projections(d, n_projections, seed=0)
 
     # test without provided projections
     _, _ = ot.sliced.sliced_plans(x, y, n_projections=n_projections)
@@ -49,7 +49,7 @@ def test_sliced_plans():
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    projections = ot.sliced.get_random_projections(d, n_projections, seed=0).T
+    projections = ot.sliced.get_random_projections(d, n_projections, seed=0)
 
     # test with a and b not uniform
     ot.sliced.sliced_plans(x, y, a, b, projections=projections)
@@ -97,7 +97,7 @@ def test_min_pivot_sliced():
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    projections = ot.sliced.get_random_projections(d, n_projections, seed=0).T
+    projections = ot.sliced.get_random_projections(d, n_projections, seed=0)
 
     # identity of the indiscernibles
     _, min_cost = ot.sliced.min_pivot_sliced(x, x, a, a, n_projections=10)
@@ -126,7 +126,7 @@ def test_min_pivot_sliced():
     assert len(log) == 5
     costs = log["costs"]
     assert len(costs) == projections.shape[0]
-    assert len(log["min_theta"]) == d
+    assert len(log["min_projection"]) == d
     assert (log["projections"] == projections).all()
     for c in costs:
         assert c > 0
@@ -158,7 +158,7 @@ def test_expected_sliced():
     b = rng.uniform(0, 1, m)
     b /= b.sum()
 
-    projections = ot.sliced.get_random_projections(d, n_projections, seed=0).T
+    projections = ot.sliced.get_random_projections(d, n_projections, seed=0)
 
     _, expected_cost = ot.sliced.expected_sliced(
         x, y, a, b, dense=True, projections=projections
@@ -227,7 +227,7 @@ def test_sliced_plans_backends(nx):
 
     projections_b = ot.sliced.get_random_projections(
         d, n_projections, seed=0, backend=nx, type_as=x_b
-    ).T
+    )
     projections = nx.to_numpy(projections_b)
 
     _, expected_cost_b = ot.sliced.expected_sliced(
@@ -252,7 +252,7 @@ def test_sliced_plans_backends(nx):
     # for projections
     projections_b = ot.sliced.get_random_projections(
         d, n_projections, seed=0, backend=nx, type_as=x_b
-    ).T
+    )
 
     # test with the minkowski metric
     ot.sliced.min_pivot_sliced(x_b, y_b, projections=projections_b, metric="minkowski")
