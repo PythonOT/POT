@@ -26,6 +26,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
   implemented in `ot.sgot` (PR #792)
+- Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
 
 #### Closed issues
 
@@ -43,6 +44,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Align documentation build dependencies and doc extras (PR #801)
 - Debug Debug linux test core dump (PR #815)
 - Fix entropic regularization in `gcg`(PR #817, Issue #758)
+- Fix documentation build on master with submodules (PR #818)
 
 ## 0.9.6.post1
 
