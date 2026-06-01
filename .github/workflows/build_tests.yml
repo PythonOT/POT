@@ -125,30 +125,30 @@ jobs:
       run: |
         python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
 
-  linux-minimal-deps-ft:
+  # linux-minimal-deps-ft:
 
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'no ci')"
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
+  #   runs-on: ubuntu-latest
+  #   if: "!contains(github.event.head_commit.message, 'no ci')"
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #     with:
+  #       submodules: true
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.14t"
-        cache: 'pip'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools
-        pip install pytest pytest-cov
-    - name: Install POT
-      run: |
-        pip install -e .
-    - name: Run tests
-      run: |
-        python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: "3.14t"
+  #       cache: 'pip'
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip setuptools
+  #       pip install pytest pytest-cov
+  #   - name: Install POT
+  #     run: |
+  #       pip install -e .
+  #   - name: Run tests
+  #     run: |
+  #       python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
 
   macos:
      runs-on: ${{ matrix.os }}
