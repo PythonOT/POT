@@ -18,15 +18,15 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
 - Add cost functions between linear operators following\
-  [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),\
-  implemented in `ot.sgot` (PR #792)
-  - Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
+  [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  implemented in `ot.sgot` (PR #792)
+- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
   distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
   support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
 - Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
   a callable, or a no-op (PR #808)
 - Add optional `scaler` parameter to `sliced_wasserstein_distance` and
   `max_sliced_wasserstein_distance` (PR #808)
+- Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
 
 #### Closed issues
 
@@ -43,6 +43,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
 - Align documentation build dependencies and doc extras (PR #801)
 - Debug Debug linux test core dump (PR #815)
+- Fix documentation build on master with submodules (PR #818)
 
 ## 0.9.6.post1
 
