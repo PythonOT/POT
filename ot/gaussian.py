@@ -626,34 +626,22 @@ def bures_wasserstein_distance_hd(
 ):
     r"""Return the 2-Wassestein distance between HD Gaussian distritutions.
 
-    The function estimates the optimal linear operator that aligns the two
+    The function estimates the 2-Wasserstein distance between the two
     HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[3] <references-OT-mapping-linear>`, Th. 2.9
-    .
-
-    The linear operator from source to target :math:`M`
+    :ref:`[3] <references-bures-wasserstein-distance-hd>`, Prop. 2.3
 
     .. math::
-        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
 
     where :
 
     .. math::
-        \mathbf{A}      &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2} 
-        \Sigma_s^{-1/2}                            \\
-            
-        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
-            
-        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
-            
-        \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
-            
-        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
-            
-        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
-            
-        \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
+        \Lambda_s &= \diag(ls) \\
+        \Lambda_t &= \diag(lt) \\    
+        \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
 
     Parameters
     ----------
@@ -683,15 +671,10 @@ def bures_wasserstein_distance_hd(
 
     Returns
     -------
-    A : (d, d) array-like
-        Linear operator
-    b : (1, d) array-like
-        bias
-    log : dict
-        log dictionary return only if log==True in parameters
+    W : float 
+        Bures Wasserstein distance
 
-
-    .. _references-OT-mapping-linear:
+    .. _references-bures-wasserstein-distance-hd:
     References
     ----------
     .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
@@ -711,12 +694,31 @@ def bures_wasserstein_distance_hd(
 
     p = Us.shape[0]
 
-    A = (Us @ nx.diag(ls) @ Us.T + sigma2_s * nx.eye(p)) @ (
-        Ut @ nx.diag(lt) @ Ut.T + sigma2_t * nx.eye(p)
-    )
-    W2 = nx.sum((ms - mt) ** 2) + nx.sum(ls) + nx.sum(lt) - 2 * nx.trace(nx.sqrtm(A))
+    # source
+    Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
 
-    return W2
+    # destination
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
+    A = dots(Ss_sq, St, Ss_sq)
+    W2 = (
+        nx.sum((ms - mt) ** 2)
+        + nx.sum(ls)
+        + nx.sum(lt)
+        + p * (sigma2_s + sigma2_t)
+        - 2 * nx.trace(nx.sqrtm(A))
+    )
+    W = nx.sqrt(W2)
+
+    if log:
+        log = {}
+        log["Ss_sq"] = Ss_sq
+        log["St"] = St
+
+        return W, log
+
+    else:
+        return W
 
 
 def empirical_bures_wasserstein_distance(

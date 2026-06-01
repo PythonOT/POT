@@ -240,6 +240,61 @@ def test_bures_wasserstein_distance_batch(nx):
         Wb3 = ot.gaussian.bures_wasserstein_distance(m[0, 0], m[:, 0], C[0], C)
 
 
+@pytest.mark.parametrize("sub_the_same", [True, False])
+def test_bures_wasserstein_distance_hd(nx, sub_the_same):
+    ns = 1000
+    nt = 1000
+
+    m_diff = 4.0
+
+    if sub_the_same:
+        Xs, Xt, ll = make_gauss_hd(
+            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1), sub_the_same=True
+        )
+
+        ms = ll["ms"]
+        mt = ll["mt"]
+        sigma2_s = ll["sigma2_s"]
+        sigma2_t = ll["sigma2_t"]
+        ls = ll["ls"]
+        lt = ll["lt"]
+        Us = ll["Us"]
+        Ut = ll["Ut"]
+        ds = ll["ds"]
+        dt = ll["dt"]
+
+        W = ot.gaussian.bures_wasserstein_distance_hd(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+        )
+
+        np.testing.assert_allclose(m_diff, W, rtol=1e-4, atol=1e-4)
+
+    else:
+        Xs, Xt, ll = make_gauss_hd(
+            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1)
+        )
+
+        ms = ll["ms"]
+        mt = ll["mt"]
+        sigma2_s = ll["sigma2_s"]
+        sigma2_t = ll["sigma2_t"]
+        ls = ll["ls"]
+        lt = ll["lt"]
+        Us = ll["Us"]
+        Ut = ll["Ut"]
+        ds = ll["ds"]
+        dt = ll["dt"]
+        Cs = ll["Cs"]
+        Ct = ll["Ct"]
+
+        W = ot.gaussian.bures_wasserstein_distance_hd(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+        )
+        W_ = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
+
+        np.testing.assert_allclose(W, W_, rtol=1e-2, atol=1e-2)
+
+
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance(nx, bias):
     ns = 400
