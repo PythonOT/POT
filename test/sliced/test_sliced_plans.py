@@ -125,7 +125,7 @@ def test_min_pivot_sliced():
     )
     assert len(log) == 5
     costs = log["costs"]
-    assert len(costs) == projections.shape[0]
+    assert len(costs) == projections.shape[1]
     assert len(log["min_projection"]) == d
     assert (log["projections"] == projections).all()
     for c in costs:
@@ -192,8 +192,8 @@ def test_expected_sliced():
     )
     assert len(log) == 4
     costs = log["costs"]
-    assert len(costs) == projections.shape[0]
-    assert len(log["weights"]) == projections.shape[0]
+    assert len(costs) == projections.shape[1]
+    assert len(log["weights"]) == projections.shape[1]
     assert (log["projections"] == projections).all()
     for c in costs:
         assert c > 0

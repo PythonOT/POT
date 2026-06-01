@@ -115,7 +115,7 @@ def sliced_plans(
         ), "n_projections must be specified if projections is None"
         projections = get_random_projections(
             d, n_projections, seed, backend=nx, type_as=X_s
-        ).T
+        )
     else:
         n_projections = projections.shape[1]
 
@@ -492,7 +492,7 @@ def expected_sliced(
         cost = nx.sum(list_to_array(costs) * weights)
     else:  # uniform weights
         if n_projections is None:
-            n_projections = projections.shape[0]
+            n_projections = projections.shape[1]
         weights = nx.ones(n_projections) / n_projections
 
     weights_e = nx.concatenate([plans[i].data * weights[i] for i in range(len(plans))])

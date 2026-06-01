@@ -38,19 +38,21 @@ d = 2
 X = np.random.randn(n, 2)
 Y = np.random.randn(m, 2) + np.array([5.0, 0.0])[None, :]
 n_proj = 50
-thetas = get_random_projections(d, n_proj).T
+projections = get_random_projections(d, n_proj)
 alpha = 0.3
 
 ##############################################################################
 # Compute min-Pivot Sliced permutation
 # ------------------------------------
-min_plan, min_cost, log_min = ot.min_pivot_sliced(X, Y, thetas=thetas, log=True)
+min_plan, min_cost, log_min = ot.min_pivot_sliced(
+    X, Y, projections=projections, log=True
+)
 
 ##############################################################################
 # Compute Expected Sliced Plan
 # ------------------------------------
 expected_plan, expected_cost, log_expected = ot.expected_sliced(
-    X, Y, thetas=thetas, log=True
+    X, Y, projections=projections, log=True
 )
 ##############################################################################
 # Compute 2-Wasserstein Plan
@@ -133,7 +135,9 @@ fig.suptitle(
     "Expected Sliced plan varying $\\beta$ (inverse temperature)", y=0.95, fontsize=16
 )
 for beta_idx, beta in enumerate(betas):
-    expected_plan, expected_cost = ot.expected_sliced(X, Y, thetas=thetas, beta=beta)
+    expected_plan, expected_cost = ot.expected_sliced(
+        X, Y, projections=projections, beta=beta
+    )
     print(f"beta={beta}: cost={expected_cost:.2f}")
 
     axs[0, beta_idx].set_title(f"$\\beta$={beta}: cost={expected_cost:.2f}")
