@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   release:
   pull_request:
-  push:
-    branches:
-      - "*"
 
 jobs:
   build_wheels:
