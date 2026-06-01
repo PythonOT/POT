@@ -10,15 +10,18 @@ Numerically-stable entropic partial Wasserstein (log-domain solver)
 `ot.partial.entropic_partial_wasserstein` is numerically unstable at small
 regularisation: the iterates underflow to zero and the returned plan
 contains NaNs (see PythonOT/POT issue #723). This example reproduces the
-failure mode on a small problem and shows that
-:any:`ot.partial.entropic_partial_wasserstein_logscale` produces a finite
-plan over the same sweep, agreeing with the original solver at large
-``reg`` and degrading gracefully at small ``reg``.
+failure mode on a small problem and shows that the log-domain solver,
+selected with ``entropic_partial_wasserstein(..., method='sinkhorn_log')``
+(equivalently :any:`ot.partial.entropic_partial_wasserstein_logscale`),
+produces a finite plan over the same sweep, agreeing with the original
+solver at large ``reg`` and degrading gracefully at small ``reg``.
 
-The log-domain solver is slower per iteration than the standard one, so
-the recommendation is to use the standard solver by default and fall
-back to the log-domain solver when ``reg`` is small enough to risk
-underflow.
+Following the :any:`ot.sinkhorn` convention, the solver to use is chosen
+through the ``method`` parameter: ``'sinkhorn'`` (default) for the classical
+solver and ``'sinkhorn_log'`` for the log-domain one. The log-domain solver
+is slower per iteration than the standard one, so the recommendation is to
+use the standard solver by default and fall back to the log-domain solver
+when ``reg`` is small enough to risk underflow.
 """
 
 # Author: wzm2256 <wzm2256@qq.com> (original PR #724)
@@ -68,8 +71,8 @@ for reg in regs:
     G_std = ot.partial.entropic_partial_wasserstein(
         a, b, M, reg=reg, m=m, numItermax=2000
     )
-    G_log = ot.partial.entropic_partial_wasserstein_logscale(
-        a, b, M, reg=reg, m=m, numItermax=2000
+    G_log = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=reg, m=m, method="sinkhorn_log", numItermax=2000
     )
     standard_finite.append(bool(np.isfinite(G_std).all()))
     logscale_finite.append(bool(np.isfinite(G_log).all()))
@@ -105,8 +108,8 @@ for ax, reg in zip(axes[:, 0], (1.0, 0.01)):
     ax.set_ylabel("source")
 
 for ax, reg in zip(axes[:, 1], (1.0, 0.01)):
-    G_log = ot.partial.entropic_partial_wasserstein_logscale(
-        a, b, M, reg=reg, m=m, numItermax=2000
+    G_log = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=reg, m=m, method="sinkhorn_log", numItermax=2000
     )
     ax.set_title(f"logscale, reg={reg}")
     ax.imshow(G_log, cmap="viridis", aspect="auto")

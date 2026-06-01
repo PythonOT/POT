@@ -424,7 +424,16 @@ def partial_wasserstein2(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
 
 
 def entropic_partial_wasserstein(
-    a, b, M, reg, m=None, numItermax=1000, stopThr=1e-100, verbose=False, log=False
+    a,
+    b,
+    M,
+    reg,
+    m=None,
+    method="sinkhorn",
+    numItermax=1000,
+    stopThr=1e-100,
+    verbose=False,
+    log=False,
 ):
     r"""
     Solves the partial optimal transport problem
@@ -453,6 +462,17 @@ def entropic_partial_wasserstein(
     The formulation of the problem has been proposed in
     :ref:`[3] <references-entropic-partial-wasserstein>` (prop. 5)
 
+    **Choosing a solver**
+
+    By default (``method='sinkhorn'``) the problem is solved with the classical
+    Sinkhorn-like iterations in the multiplicative (exponential) domain. These
+    are fast, but the kernel :math:`K = e^{-\mathbf{M}/\mathrm{reg}}` underflows
+    to zero for small ``reg`` (or large cost values), making the plan collapse
+    to ``NaN``/``Inf`` (see Issue #723). When this happens, set
+    ``method='sinkhorn_log'`` to switch to the mathematically equivalent
+    log-domain solver :any:`entropic_partial_wasserstein_logscale`, which relies
+    on the log-sum-exp trick and stays finite at the price of being slower.
+
 
     Parameters
     ----------
@@ -466,6 +486,10 @@ def entropic_partial_wasserstein(
         Regularization term > 0
     m : float, optional
         Amount of mass to be transported
+    method : str, optional
+        Solver used, either ``'sinkhorn'`` (classical multiplicative-domain
+        solver, default) or ``'sinkhorn_log'`` (numerically stable log-domain
+        solver). See the *Choosing a solver* note above.
     numItermax : int, optional
         Max number of iterations
     stopThr : float, optional
@@ -505,6 +529,48 @@ def entropic_partial_wasserstein(
     See Also
     --------
     ot.partial.partial_wasserstein: exact Partial Wasserstein
+    ot.partial.entropic_partial_wasserstein_logscale: stable log-domain solver
+    """
+    if method.lower() == "sinkhorn":
+        return _entropic_partial_wasserstein_sinkhorn(
+            a,
+            b,
+            M,
+            reg,
+            m=m,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+        )
+    elif method.lower() == "sinkhorn_log":
+        return entropic_partial_wasserstein_logscale(
+            a,
+            b,
+            M,
+            reg,
+            m=m,
+            numItermax=numItermax,
+            stopThr=stopThr,
+            verbose=verbose,
+            log=log,
+        )
+    else:
+        raise ValueError("Unknown method '%s'." % method)
+
+
+def _entropic_partial_wasserstein_sinkhorn(
+    a, b, M, reg, m=None, numItermax=1000, stopThr=1e-100, verbose=False, log=False
+):
+    r"""Classical multiplicative-domain solver for the entropic partial OT
+    problem.
+
+    This is the backend used by
+    ``entropic_partial_wasserstein(..., method="sinkhorn")``; see that function
+    for the problem definition, parameters and references. It is kept as a
+    separate solver so that the public ``entropic_partial_wasserstein`` is a
+    thin wrapper dispatching between this solver and
+    :any:`entropic_partial_wasserstein_logscale`.
     """
 
     a, b, M = list_to_array(a, b, M)
@@ -668,7 +734,8 @@ def entropic_partial_wasserstein_logscale(
     See Also
     --------
     ot.partial.partial_wasserstein: exact Partial Wasserstein
-    ot.partial.entropic_partial_wasserstein: numerically unstable entropic version
+    ot.partial.entropic_partial_wasserstein: classical entropic solver and
+        dispatcher (this solver is also reachable through its ``method='sinkhorn_log'`` argument)
     """
 
     a, b, M = list_to_array(a, b, M)
