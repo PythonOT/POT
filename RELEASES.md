@@ -20,6 +20,13 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add cost functions between linear operators following\
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),\
   implemented in `ot.sgot` (PR #792)
+  - Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
+  distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
+  support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
+- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
+  a callable, or a no-op (PR #808)
+- Add optional `scaler` parameter to `sliced_wasserstein_distance` and
+  `max_sliced_wasserstein_distance` (PR #808)
 
 #### Closed issues
 
