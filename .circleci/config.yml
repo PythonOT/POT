@@ -9,6 +9,10 @@ jobs:
       steps:
         - checkout
         - run:
+            name: Update submodules
+            command: |
+              git submodule update --init --recursive
+        - run:
             name: Set BASH_ENV
             command: |
               echo "set -e" >> $BASH_ENV

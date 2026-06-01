@@ -15,7 +15,7 @@ jobs:
     if: "contains(github.event.head_commit.message, 'build wheels')"
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
 
     - name: Build wheels
       env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp36* cp37* cp38* cp*musl* *i686" # remove pypy on mac and win (wrong version)
+        CIBW_SKIP: "cp38* cp*musl* *i686 *win32" # remove pypy on mac and win (wrong version)
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
@@ -45,48 +45,4 @@ jobs:
         name: wheels-${{ strategy.job-index }}
         path: ./wheelhouse
 
-
-  build_all_wheels:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    if: "contains(github.event.head_commit.message, 'build all wheels')"
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools
-
-    - name: Install cibuildwheel
-      run: |
-        python -m pip install cibuildwheel==3.1.4
-
-    - name: Set up QEMU
-      if: runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v1
-      with:
-        platforms: all
-
-    - name: Build wheels
-      env:
-        CIBW_SKIP: "pp*-win* pp*-macosx* cp2* pp* cp*musl* *i686" # remove pypy on mac and win (wrong version)
-        CIBW_ARCHS_LINUX: auto aarch64 # force aarch64 with QEMU
-        CIBW_ARCHS_MACOS: x86_64 universal2 arm64
-      run: |
-        python -m cibuildwheel --output-dir wheelhouse
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: wheels-${{ strategy.job-index }}
-        path: ./wheelhouse
 

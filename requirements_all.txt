@@ -8,7 +8,7 @@ scikit-learn
 torch<=2.11
 jax
 jaxlib
-tensorflow
+tensorflow; python_version < '3.14'
 pytest
 torch_geometric
 cvxpy
