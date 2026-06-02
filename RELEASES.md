@@ -1,18 +1,12 @@
 # Releases
 
-
 ## 0.9.7.dev0
 
 This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
 
-#### New features 
-- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
-  distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
-  support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
-- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
-  a callable, or a no-op (PR #808)
-- Add optional `scaler` parameter to `sliced_wasserstein_distance` and
-  `max_sliced_wasserstein_distance` (PR #808)
+#### New features
+
+- Add sliced transport plans (min-pivot sliced and expected sliced) solvers (PR #767)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
 - Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)
@@ -23,6 +17,13 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input
+  distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and
+  support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
+- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
+  a callable, or a no-op (PR #808)
+- Add optional `scaler` parameter to `sliced_wasserstein_distance` and
+  `max_sliced_wasserstein_distance` (PR #808)
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
@@ -33,7 +34,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 
 - Mitigate NaN regime of `entropic_partial_wasserstein` at small `reg` via a new log-domain solver, reachable with `entropic_partial_wasserstein(..., method='sinkhorn_log')` (Issue #723; the default `method='sinkhorn'` path is unchanged — callers opt into the log-domain variant)
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
-- Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
+- Fix MSVC Windows build by removing **restrict** keyword (PR #788)
 - Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
 - Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
 - Add test for build from source (PR #772, Issue #764)
