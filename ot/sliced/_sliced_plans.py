@@ -184,7 +184,7 @@ def sliced_plans(
         return plans, nx.stack(costs)
 
 
-def min_pivot_sliced(
+def min_sliced_transport_plan(
     X_s,
     X_t,
     a=None,
@@ -285,7 +285,7 @@ def min_pivot_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> projections=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = ot.min_pivot_sliced(x, y, projections=projections)
+    >>> plan, cost = ot.min_sliced_transport_plan(x, y, projections=projections)
     >>> plan
     array([[0. , 0.5],
            [0.5, 0. ]])
@@ -352,7 +352,7 @@ def min_pivot_sliced(
         return plan, cost
 
 
-def expected_sliced(
+def expected_sliced_plan(
     X_s,
     X_t,
     a=None,
@@ -447,7 +447,7 @@ def expected_sliced(
     >>> x=np.array([[3.,3.], [1.,1.]])
     >>> y=np.array([[2.,2.5], [3.,2.]])
     >>> projections=np.array([[1, 0], [0, 1]])
-    >>> plan, cost = ot.expected_sliced(x, y, projections=projections)
+    >>> plan, cost = ot.expected_sliced_plan(x, y, projections=projections)
     >>> plan
     array([[0.25, 0.25],
            [0.25, 0.25]])

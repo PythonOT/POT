@@ -4,8 +4,8 @@
 Sliced OT Plans
 ===============
 
-Compares different Sliced OT plans between two 2D point clouds. The min-Pivot
-Sliced plan was introduced in [83], and the Expected Sliced plan in [85], both
+Compares different Sliced OT plans between two 2D point clouds. The min-Sliced
+transport plan was introduced in [83], and the Expected Sliced plan in [85], both
 were further studied theoretically in [84].
 
 .. [83] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics. Advances in Neural Information Processing Systems, 36, 35350–35385.
@@ -42,16 +42,16 @@ projections = get_random_projections(d, n_proj)
 alpha = 0.3
 
 ##############################################################################
-# Compute min-Pivot Sliced permutation
+# Compute min-sliced transport plan
 # ------------------------------------
-min_plan, min_cost, log_min = ot.min_pivot_sliced(
+min_plan, min_cost, log_min = ot.min_sliced_transport_plan(
     X, Y, projections=projections, log=True
 )
 
 ##############################################################################
 # Compute Expected Sliced Plan
 # ------------------------------------
-expected_plan, expected_cost, log_expected = ot.expected_sliced(
+expected_plan, expected_cost, log_expected = ot.expected_sliced_plan(
     X, Y, projections=projections, log=True
 )
 ##############################################################################
@@ -70,7 +70,7 @@ fig, axs = plt.subplots(2, 3, figsize=(12, 4))
 fig.suptitle("Sliced plans comparison", y=0.95, fontsize=16)
 
 # draw min sliced permutation
-axs[0, 0].set_title(f"Min Pivot Sliced: cost={min_cost:.2f}")
+axs[0, 0].set_title(f"Min Sliced Transport: cost={min_cost:.2f}")
 for i in range(X.shape[0]):
     for j in range(Y.shape[0]):
         if min_plan[i, j] > 0:
@@ -135,7 +135,7 @@ fig.suptitle(
     "Expected Sliced plan varying $\\beta$ (inverse temperature)", y=0.95, fontsize=16
 )
 for beta_idx, beta in enumerate(betas):
-    expected_plan, expected_cost = ot.expected_sliced(
+    expected_plan, expected_cost = ot.expected_sliced_plan(
         X, Y, projections=projections, beta=beta
     )
     print(f"beta={beta}: cost={expected_cost:.2f}")
@@ -157,7 +157,7 @@ for beta_idx, beta in enumerate(betas):
     axs[1, beta_idx].imshow(expected_plan, interpolation="nearest", cmap="Blues")
 
 # draw min sliced permutation (limit when beta -> +inf)
-axs[0, -1].set_title(f"Min Pivot Sliced: cost={min_cost:.2f}")
+axs[0, -1].set_title(f"Min Sliced Transport: cost={min_cost:.2f}")
 for i in range(X.shape[0]):
     for j in range(Y.shape[0]):
         if min_plan[i, j] > 0:

@@ -69,8 +69,8 @@ from .sliced import (
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
     linear_sliced_wasserstein_sphere,
-    min_pivot_sliced,
-    expected_sliced,
+    min_sliced_transport_plan,
+    expected_sliced_plan,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -132,8 +132,8 @@ __all__ = [
     "unbalanced_sliced_ot",
     "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
-    "min_pivot_sliced",
-    "expected_sliced",
+    "min_sliced_transport_plan",
+    "expected_sliced_plan",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",

@@ -24,14 +24,14 @@ from ._spherical_sliced import (
     sliced_wasserstein_sphere_unif,
     linear_sliced_wasserstein_sphere,
 )
-from ._sliced_plans import min_pivot_sliced, expected_sliced, sliced_plans
+from ._sliced_plans import min_sliced_transport_plan, expected_sliced_plan, sliced_plans
 
 __all__ = [
     "get_random_projections",
     "get_projections_sphere",
     "projection_sphere_to_circle",
-    "min_pivot_sliced",
-    "expected_sliced",
+    "min_sliced_transport_plan",
+    "expected_sliced_plan",
     "sliced_plans",
     "sliced_wasserstein_distance",
     "max_sliced_wasserstein_distance",
