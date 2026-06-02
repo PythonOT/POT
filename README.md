@@ -74,6 +74,7 @@ POT provides the following generic OT solvers:
 * [Optimal Transport Barycenters for Generic Costs](https://pythonot.github.io/auto_examples/barycenters/plot_free_support_barycenter_generic_cost.html) [77]
 * [Barycenters between Gaussian Mixture Models](https://pythonot.github.io/auto_examples/barycenters/plot_gmm_barycenter.html) [69, 77]
 * [Fast and accurate transport bijections using BSP-OT](https://pythonot.github.io/auto_examples/plot_bsp_ot.html) [84]
+* [Sliced Transport Plans](https://pythonot.github.io/auto_examples/sliced-wasserstein/plot_sliced_plans.html) [85, 86, 87]
 
 POT provides the following Machine Learning related solvers:
 
@@ -454,14 +455,12 @@ Artificial Intelligence.
 
 \[82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2024). [Slicing Unbalanced Optimal Transport](https://openreview.net/forum?id=AjJTg5M0r8). Transactions on Machine Learning Research.
 
-\[83] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). [Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics](https://proceedings.neurips.cc/paper_files/paper/2023/hash/6f1346bac8b02f76a631400e2799b24b-Abstract-Conference.html). Advances in Neural Information Processing Systems, 36, 35350–35385.
-
-\[84] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Optimal Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
-
-\[85] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
-
-[82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2024). [Slicing Unbalanced Optimal Transport](https://openreview.net/forum?id=AjJTg5M0r8). Transactions on Machine Learning Research.
-
 [83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025). [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
 
 [84] Genest, B., Bonneel, N., Nivoliers, V., & Coeurjolly, D. (2025). [BSP-OT: Sparse transport plans between discrete measures in loglinear time.](https://dl.acm.org/doi/10.1145/3763281) ACM Transactions on Graphics (TOG), 44(6), 1-15.
+
+[85] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). [Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics](https://proceedings.neurips.cc/paper_files/paper/2023/hash/6f1346bac8b02f76a631400e2799b24b-Abstract-Conference.html). Advances in Neural Information Processing Systems, 36, 35350–35385.
+
+[86] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
+
+[87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
