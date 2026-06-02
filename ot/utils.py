@@ -307,6 +307,96 @@ def euclidean_distances(X, Y, squared=False, nx=None):
     return c
 
 
+def sparse_ot_dist(
+    x1,
+    x2,
+    i,
+    j,
+    w=None,
+    metric="sqeuclidean",
+    p=2,
+    batch_size=None,
+):
+    r"""Compute ot distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
+    with sparse weights given by `w` for the pairs of samples with indices `i` and `j`.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends for the following metrics:
+        'sqeuclidean', 'euclidean', 'cityblock', 'minkowski'.
+
+    Parameters
+    ----------
+
+    x1 : array-like, shape (n1,d)
+        matrix with `n1` samples of size `d`
+    x2 : array-like, shape (n2,d), optional
+        matrix with `n2` samples of size `d` (if None then :math:`\mathbf{x_2} = \mathbf{x_1}`)
+    i : array-like, shape (k,)
+        indices of samples in `x1` to compute distance from
+    j : array-like, shape (k,)
+        indices of samples in `x2` to compute distance to
+    w : array-like, shape (k,), optional
+        weights for each pair of samples to compute distance between.
+        If None, all pairs are weighted equally (=1/k).
+    metric : str | callable, optional
+        'sqeuclidean', 'euclidean', 'cityblock' or 'minkowski'.
+    p : float, optional
+        p-norm for the Minkowski metric. Default value is 2.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to avoid memory issues for large datasets. Default is None (no batching).
+    Returns
+    -------
+    dist : float
+        sum of the distance between :math:`\mathbf{x_1}_i` and :math:`\mathbf{x_2}_j` computed with given metric and weighted by `w`
+    """
+    nx = get_backend(x1, x2)
+
+    assert x1.ndim == 2, f"x1 must be a 2d array, got {x1.ndim}d array instead"
+    assert x2.ndim == 2, f"x2 must be a 2d array, got {x2.ndim}d array instead"
+
+    assert len(i) == len(
+        j
+    ), f"i and j must have the same length, got {len(i)} and {len(j)}"
+    if w is not None:
+        assert len(w) == len(
+            i
+        ), f"w must have the same length as i and j, got {len(w)} and {len(i)}"
+
+    assert metric in ("minkowski", "euclidean", "cityblock", "sqeuclidean"), (
+        "sparse_dist work only with metrics from the following list: "
+        + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+    )
+
+    assert (
+        x1.shape[1] == x2.shape[1]
+    ), f"x1 ({x1.shape}) and x2 ({x2.shape}) must have the same number of columns"
+
+    if metric == "euclidean":
+        p = 2
+    elif metric == "cityblock":
+        p = 1
+
+    def dist_idxs(idx_x1, idx_x2):
+        if metric == "sqeuclidean":
+            return nx.sum((x1[idx_x1] - x2[idx_x2]) ** 2, axis=1)
+        else:
+            return nx.sum(nx.abs(x1[idx_x1] - x2[idx_x2]) ** p, axis=1) ** (1 / p)
+
+    if w is None:
+        w = nx.ones(len(i), type_as=x1) / len(i)
+
+    d = 0
+    if batch_size is None:
+        batch_size = len(i)
+    for b in range(0, len(i), batch_size):
+        d += nx.sum(
+            dist_idxs(i[b : b + batch_size], j[b : b + batch_size])
+            * w[i[b : b + batch_size]]
+        )
+
+    return d
+
+
 def dist(
     x1,
     x2=None,
