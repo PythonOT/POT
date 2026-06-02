@@ -147,6 +147,62 @@ inline void extract_compressed_support(
     }
 }
 
+template <
+    typename NetType,
+    typename DigraphType,
+    typename InvalidType,
+    typename SourceIndexVector,
+    typename TargetIndexVector,
+    typename CostAccessor
+>
+inline bool extract_sparse_solution(
+    const NetType& net,
+    DigraphType& di,
+    InvalidType invalid,
+    const SourceIndexVector& idx_a,
+    const TargetIndexVector& idx_b,
+    double* alpha,
+    double* beta,
+    double* cost,
+    uint64_t* flow_sources_out,
+    uint64_t* flow_targets_out,
+    double* flow_values_out,
+    uint64_t* n_flows_out,
+    uint64_t max_flows_out,
+    CostAccessor cost_accessor,
+    double min_output_flow
+) {
+    const int n = static_cast<int>(idx_a.size());
+
+    for (int i = 0; i < n; i++) {
+        alpha[static_cast<uint64_t>(idx_a[i])] = -net.potential(i);
+    }
+    for (int j = 0; j < static_cast<int>(idx_b.size()); j++) {
+        beta[static_cast<uint64_t>(idx_b[j])] = net.potential(j + n);
+    }
+
+    typename DigraphType::Arc a;
+    di.first(a);
+    for (; a != invalid; di.next(a)) {
+        const int i = di.source(a);
+        const int j = di.target(a) - n;
+        const double flow = net.flow(a);
+        if (flow != 0) {
+            *cost += flow * cost_accessor(a, i, j);
+        }
+        if (flow > min_output_flow) {
+            if (*n_flows_out >= max_flows_out) {
+                return false;
+            }
+            flow_sources_out[*n_flows_out] = static_cast<uint64_t>(idx_a[i]);
+            flow_targets_out[*n_flows_out] = static_cast<uint64_t>(idx_b[j]);
+            flow_values_out[*n_flows_out] = flow;
+            ++(*n_flows_out);
+        }
+    }
+    return true;
+}
+
 } // namespace
 
 
@@ -186,9 +242,9 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
     std::vector<double> weights1(n), weights2(m);
     Digraph di(n, m);
     const SetupPolicy policy = make_setup_policy(n, m, n1, n2, true);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(
-        di, policy.use_arc_mixing, (int) (n + m), n * m, maxIter
-    );
+    typedef NetworkSimplexSimple<Digraph, double, double, node_id_type> Simplex;
+    Simplex::SimplexOptions simplex_options(policy.use_arc_mixing);
+    Simplex net(di, simplex_options, (int) (n + m), n * m, maxIter);
 
     // Set supply and demand, don't account for 0 values (faster)
 
@@ -341,6 +397,7 @@ int EMD_wrap_sparse(
     uint64_t *flow_targets_out,
     double *flow_values_out,
     uint64_t *n_flows_out,
+    uint64_t max_flows_out,
     double *alpha,
     double *beta,
     double *cost,
@@ -432,9 +489,9 @@ int EMD_wrap_sparse(
 
     di.buildFromEdges(edges);
 
-    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(
-        di, true, (int)(n + m), di.arcNum(), maxIter
-    );
+    typedef NetworkSimplexSimple<Digraph, double, double, node_id_type> Simplex;
+    Simplex::SimplexOptions simplex_options(true);
+    Simplex net(di, simplex_options, (int)(n + m), di.arcNum(), maxIter);
 
     net.supplyMap(&weights1[0], (int)n, &weights2[0], (int)m);
 
@@ -463,41 +520,27 @@ int EMD_wrap_sparse(
     int ret = net.run();
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
         *cost = 0;
-        *n_flows_out = 0; 
+        *n_flows_out = 0;
         
-        Arc a;
-        di.first(a);
-        for (; a != INVALID; di.next(a)) {
-            uint64_t i = di.source(a); 
-            uint64_t j = di.target(a);  
-            double flow = net.flow(a);
-            
-            uint64_t orig_i = indI[i];
-            uint64_t orig_j = indJ[j - n];  
-
-
-            double arc_cost = arc_costs[a]; 
-
-            *cost += flow * arc_cost;
-            
-
-            *(alpha + orig_i) = -net.potential(i);
-            *(beta + orig_j) = net.potential(j);
-            
-            if (flow > 1e-15) {  
-                flow_sources_out[*n_flows_out] = orig_i;
-                flow_targets_out[*n_flows_out] = orig_j;
-                flow_values_out[*n_flows_out] = flow;
-                (*n_flows_out)++;
-            }
+        auto sparse_cost = [&arc_costs](Arc a, int, int) {
+            return arc_costs[a];
+        };
+        if (!extract_sparse_solution(
+                net, di, INVALID, indI, indJ, alpha, beta, cost,
+                flow_sources_out, flow_targets_out, flow_values_out,
+                n_flows_out, max_flows_out, sparse_cost, 1e-15)) {
+            return (int)net.MAX_ITER_REACHED;
         }
     }
     return ret;
 }
 
 int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, 
-                  int dim, int metric, double *G, double *alpha, double *beta, 
-                  double *cost, uint64_t maxIter, double *alpha_init, double *beta_init) {
+                  int dim, int metric, uint64_t *flow_sources_out,
+                  uint64_t *flow_targets_out, double *flow_values_out,
+                  uint64_t *n_flows_out, uint64_t max_flows_out,
+                  double *alpha, double *beta, double *cost, uint64_t maxIter,
+                  double *alpha_init, double *beta_init) {
     using namespace lemon;
     typedef FullBipartiteDigraph Digraph;
     DIGRAPH_TYPEDEFS(Digraph);
@@ -552,8 +595,19 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     // Create full bipartite graph
     Digraph di(n, m);
     
-    NetworkSimplexSimple<Digraph, double, double, node_id_type> net(
-        di, true, (int)(n + m), (uint64_t)(n) * (uint64_t)(m), maxIter
+    typedef NetworkSimplexSimple<Digraph, double, double, node_id_type> Simplex;
+    Simplex::SimplexOptions simplex_options(false);
+    // Lazy mode does not store costs or endpoints for the real complete
+    // bipartite arcs. Artificial root arcs are still explicit because the
+    // simplex initialization assigns them costs 0 or ART_COST.
+    simplex_options.cost_storage_mode = Simplex::CostStorageMode::ArtificialArcCosts;
+    simplex_options.flow_storage_mode = Simplex::FlowStorageMode::SparseArcFlows;
+    simplex_options.endpoint_storage_mode =
+        Simplex::EndpointStorageMode::ArcEndpoints;
+    simplex_options.state_storage_mode = Simplex::StateStorageMode::PackedArcStates;
+
+    Simplex net(
+        di, simplex_options, (int)(n + m), (uint64_t)(n) * (uint64_t)(m), maxIter
     );
     
     // Set supplies
@@ -583,32 +637,20 @@ int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double
     
     if (ret == (int)net.OPTIMAL || ret == (int)net.MAX_ITER_REACHED) {
         *cost = 0;
+        *n_flows_out = 0;
         
         // Initialize output arrays
-        for (int i = 0; i < n1 * n2; i++) G[i] = 0.0;
         for (int i = 0; i < n1; i++) alpha[i] = 0.0;
         for (int i = 0; i < n2; i++) beta[i] = 0.0;
-        
-        // Extract solution
-        Arc a;
-        di.first(a);
-        for (; a != INVALID; di.next(a)) {
-            int i = di.source(a);
-            int j = di.target(a) - n;
-            
-            int orig_i = idx_a[i];
-            int orig_j = idx_b[j];
-            
-            double flow = net.flow(a);
-            G[orig_i * n2 + orig_j] = flow;
-            
-            alpha[orig_i] = -net.potential(i);
-            beta[orig_j] = net.potential(j + n);
-            
-            if (flow > 0) {
-                double c = net.computeLazyCost(i, j);
-                *cost += flow * c;
-            }
+
+        auto lazy_cost = [&net](Arc, int i, int j) {
+            return net.computeLazyCost(i, j);
+        };
+        if (!extract_sparse_solution(
+                net, di, INVALID, idx_a, idx_b, alpha, beta, cost,
+                flow_sources_out, flow_targets_out, flow_values_out,
+                n_flows_out, max_flows_out, lazy_cost, 0.0)) {
+            return (int)net.MAX_ITER_REACHED;
         }
     }
 
