@@ -1282,8 +1282,12 @@ class OTResult:
         """Transport plan, encoded as a dense array."""
         # N.B.: We may catch out-of-memory errors and suggest
         # the use of lazy_plan or sparse_plan when appropriate.
-
-        return self._plan
+        if self._plan is not None:
+            return self._plan
+        elif self._sparse_plan is not None:
+            return self._backend.todense(self._sparse_plan)
+        else:
+            return None
 
     @property
     def sparse_plan(self):

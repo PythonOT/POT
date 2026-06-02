@@ -1763,6 +1763,7 @@ def solve_sample(
         and X_b is not None
     ):
         # Use lazy EMD solver with coordinates (no regularization, balanced)
+        nx = get_backend(X_a, X_b, a, b)
         value_linear, log = emd2_lazy(
             X_a,
             X_b,
@@ -1779,7 +1780,8 @@ def solve_sample(
             potentials=(log["u"], log["v"]),
             value=value_linear,
             value_linear=value_linear,
-            plan=log["G"],
+            sparse_plan=log["G"],
+            backend=nx,
             status=log["warning"] if log["warning"] is not None else "Converged",
         )
 
