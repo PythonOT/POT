@@ -45,6 +45,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
 - Align documentation build dependencies and doc extras (PR #801)
 - Debug Debug linux test core dump (PR #815)
+- Fix entropic regularization in `gcg`(PR #817, Issue #758)
 - Fix documentation build on master with submodules (PR #818)
 
 ## 0.9.6.post1
