@@ -910,7 +910,7 @@ def gcg(
         f,
         df,
         reg2,
-        reg1,
+        None,
         lp_solver,
         line_search,
         G0=G0,

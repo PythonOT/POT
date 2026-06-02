@@ -24,6 +24,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
 - Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
+- Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
   implemented in `ot.sgot` (PR #792)
@@ -31,6 +32,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 
 #### Closed issues
 
+- Mitigate NaN regime of `entropic_partial_wasserstein` at small `reg` via a new log-domain solver, reachable with `entropic_partial_wasserstein(..., method='sinkhorn_log')` (Issue #723; the default `method='sinkhorn'` path is unchanged — callers opt into the log-domain variant)
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
 - Fix MSVC Windows build by removing __restrict__ keyword (PR #788)
 - Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
@@ -44,6 +46,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
 - Align documentation build dependencies and doc extras (PR #801)
 - Debug Debug linux test core dump (PR #815)
+- Fix entropic regularization in `gcg`(PR #817, Issue #758)
 - Fix documentation build on master with submodules (PR #818)
 
 ## 0.9.6.post1

@@ -123,6 +123,37 @@ def test_generalized_conditional_gradient(nx):
     np.testing.assert_allclose(b, Gb.sum(0), atol=1e-05)
 
 
+def test_gcg_no_reg():
+    n = 100
+    X = ot.datasets.make_2D_samples_gauss(n, m=[0, 0], sigma=np.eye(2))
+    Y = ot.datasets.make_2D_samples_gauss(n, m=[1, 1], sigma=np.eye(2))
+
+    a = ot.unif(n)
+    b = ot.unif(n)
+
+    M = ot.dist(X, Y)
+    M /= M.max()
+
+    eps = 1e-2
+
+    G_gcg = ot.optim.gcg(
+        a,
+        b,
+        M,
+        eps,
+        0.0,
+        lambda x: 0.0,
+        lambda x: np.zeros(x.shape),
+        numInnerItermax=1000,
+        numItermax=10,
+    )
+    G_sinkhorn = ot.sinkhorn(a, b, M, eps, numItermax=1000)
+
+    np.testing.assert_allclose(G_gcg, G_sinkhorn, atol=1e-12)
+    np.testing.assert_allclose(a, G_gcg.sum(1), atol=1e-5)
+    np.testing.assert_allclose(b, G_gcg.sum(0), atol=1e-5)
+
+
 def test_solve_1d_linesearch_quad_funct():
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(1, -1), 0.5)
     np.testing.assert_allclose(ot.optim.solve_1d_linesearch_quad(-1, 5), 0)
