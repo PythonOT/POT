@@ -338,3 +338,180 @@ def test_partial_wasserstein_1d():
 
         np.testing.assert_array_equal(np.sort(indices_x[:i]), np.sort(ind_x))
         np.testing.assert_array_equal(np.sort(indices_y[:i]), np.sort(ind_y))
+
+
+# ---------------------------------------------------------------------------
+# entropic_partial_wasserstein_logscale — new in this PR (rescue of #724)
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("reg", [10.0, 1.0])
+def test_entropic_partial_wasserstein_logscale_matches_old_at_large_reg(reg):
+    """At large reg both solvers are stable; the plans must agree."""
+    rng = np.random.RandomState(0)
+    n = 20
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    M = ot.dist(rng.rand(n, 2), rng.rand(n, 2))
+    m = 0.5
+
+    G_old = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=reg, m=m, numItermax=2000
+    )
+    G_log = ot.partial.entropic_partial_wasserstein_logscale(
+        a, b, M, reg=reg, m=m, numItermax=2000
+    )
+
+    # At reg >= 1.0 the two solvers agree to machine precision; if this
+    # tightens it would indicate the logscale path silently diverged.
+    np.testing.assert_allclose(G_old, G_log, atol=1e-10, rtol=1e-10)
+    np.testing.assert_allclose(G_log.sum(), m, atol=1e-10)
+
+
+@pytest.mark.parametrize("reg", [0.1, 0.05, 0.01, 5e-3, 1e-3, 5e-4])
+def test_entropic_partial_wasserstein_logscale_no_nan_at_small_reg(reg):
+    """Issue #723: entropic_partial_wasserstein returns NaN at small reg.
+
+    The logscale variant introduced by this PR is the fix; check that it
+    stays finite and conserves mass across the regime that breaks the
+    original solver.
+    """
+    rng = np.random.RandomState(1)
+    n = 50
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    M = ot.dist(rng.rand(n, 2), rng.rand(n, 2)) * 50.0  # match issue cost scale
+    m = 0.6
+
+    G = ot.partial.entropic_partial_wasserstein_logscale(
+        a, b, M, reg=reg, m=m, numItermax=2000
+    )
+    assert np.isfinite(G).all(), f"non-finite plan at reg={reg}"
+    np.testing.assert_allclose(G.sum(), m, atol=5e-3)
+
+
+def test_entropic_partial_wasserstein_logscale_approaches_exact_at_small_reg():
+    """At small `reg` the entropic plan should approach the exact partial
+    OT plan (modulo discretisation). Verifies the fix is mathematically
+    meaningful, not just NaN-free."""
+    rng = np.random.RandomState(3)
+    n = 30
+    a = np.ones(n) / n
+    b = np.ones(n) / n
+    M = ot.dist(rng.rand(n, 2), rng.rand(n, 2))
+    m = 0.5
+
+    G_exact = ot.partial.partial_wasserstein(a, b, M, m=m)
+    G_log = ot.partial.entropic_partial_wasserstein_logscale(
+        a, b, M, reg=1e-3, m=m, numItermax=5000
+    )
+
+    cost_exact = float((G_exact * M).sum())
+    cost_log = float((G_log * M).sum())
+    # The entropic objective is a relaxation of the exact one, so the
+    # plan-cost gap should be small but non-negative at reg → 0.
+    assert cost_log >= cost_exact - 1e-6
+    assert (
+        cost_log - cost_exact < 0.01
+    ), f"logscale plan cost {cost_log:.4f} diverges from exact {cost_exact:.4f}"
+
+
+def test_entropic_partial_wasserstein_logscale_log_dict():
+    """`log=True` returns a dict with `err` and `partial_w_dist` keys."""
+    rng = np.random.RandomState(2)
+    n = 10
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    M = ot.dist(rng.rand(n, 2), rng.rand(n, 2))
+
+    G, log = ot.partial.entropic_partial_wasserstein_logscale(
+        a, b, M, reg=0.1, m=0.5, log=True
+    )
+    assert "err" in log
+    assert "partial_w_dist" in log
+    assert np.isfinite(G).all()
+
+
+def test_entropic_partial_wasserstein_logscale_input_validation():
+    """Out-of-range `m` should raise ValueError, matching the unstable solver."""
+    n = 10
+    a = np.ones(n) / n
+    b = np.ones(n) / n
+    M = np.ones((n, n))
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_wasserstein_logscale(a, b, M, reg=0.1, m=-1.0)
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_wasserstein_logscale(a, b, M, reg=0.1, m=2.0)
+
+
+# ---------------------------------------------------------------------------
+# entropic_partial_wasserstein method dispatch (sinkhorn / sinkhorn_log)
+# ---------------------------------------------------------------------------
+def _partial_problem(seed=7, n=20, m=0.5, scale=1.0):
+    rng = np.random.RandomState(seed)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    M = ot.dist(rng.rand(n, 2), rng.rand(n, 2)) * scale
+    return a, b, M, m
+
+
+def test_entropic_partial_wasserstein_method_default_is_sinkhorn():
+    """The default call and ``method='sinkhorn'`` must be identical."""
+    a, b, M, m = _partial_problem()
+    G_default = ot.partial.entropic_partial_wasserstein(a, b, M, reg=1.0, m=m)
+    G_sinkhorn = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=1.0, m=m, method="sinkhorn"
+    )
+    np.testing.assert_array_equal(G_default, G_sinkhorn)
+
+
+@pytest.mark.parametrize("reg", [1.0, 0.05])
+def test_entropic_partial_wasserstein_method_sinkhorn_log_matches_logscale(reg):
+    """``method='sinkhorn_log'`` must dispatch to the standalone logscale solver."""
+    a, b, M, m = _partial_problem(scale=50.0)
+    G_wrap = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=reg, m=m, method="sinkhorn_log", numItermax=2000
+    )
+    G_log = ot.partial.entropic_partial_wasserstein_logscale(
+        a, b, M, reg=reg, m=m, numItermax=2000
+    )
+    np.testing.assert_array_equal(G_wrap, G_log)
+
+
+def test_entropic_partial_wasserstein_method_is_case_insensitive():
+    """Method matching follows ``ot.sinkhorn`` and is case-insensitive."""
+    a, b, M, m = _partial_problem()
+    G_lower = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=1.0, m=m, method="sinkhorn_log"
+    )
+    G_upper = ot.partial.entropic_partial_wasserstein(
+        a, b, M, reg=1.0, m=m, method="Sinkhorn_Log"
+    )
+    np.testing.assert_array_equal(G_lower, G_upper)
+
+
+def test_entropic_partial_wasserstein_method_log_dict():
+    """``log=True`` is forwarded to the selected solver for both methods."""
+    a, b, M, m = _partial_problem(n=10)
+    for method in ("sinkhorn", "sinkhorn_log"):
+        G, log = ot.partial.entropic_partial_wasserstein(
+            a, b, M, reg=0.1, m=m, method=method, log=True
+        )
+        assert "err" in log
+        assert "partial_w_dist" in log
+        assert np.isfinite(G).all()
+
+
+def test_entropic_partial_wasserstein_method_invalid():
+    """An unknown method raises ValueError, matching ``ot.sinkhorn``."""
+    a, b, M, m = _partial_problem(n=10)
+    with pytest.raises(ValueError):
+        ot.partial.entropic_partial_wasserstein(
+            a, b, M, reg=0.1, m=m, method="not_a_solver"
+        )
