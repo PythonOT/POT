@@ -13,6 +13,9 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
   a callable, or a no-op (PR #808)
 - Add optional `scaler` parameter to `sliced_wasserstein_distance` and
   `max_sliced_wasserstein_distance` (PR #808)
+- Refactor lazy EMD network simplex storage to avoid dense per-arc cost,
+  endpoint, flow, and state storage where possible, and return sparse lazy
+  transport plans instead of materializing dense plans internally (PR #813)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
 - Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)

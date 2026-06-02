@@ -261,7 +261,7 @@ namespace lemon {
             FlowStorageMode flow_storage_mode;
             EndpointStorageMode endpoint_storage_mode;
             StateStorageMode state_storage_mode;
-            
+
             explicit SimplexOptions(bool arc_mixing_ = false)
                 : arc_mixing(arc_mixing_),
                   cost_storage_mode(CostStorageMode::AllArcCosts),
