@@ -153,85 +153,73 @@ def tensor_batch(
     return compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=symmetric)
 
 
-def div_to_product_batch(
-    T, a, b, T1=None, T2=None, divergence="kl", mass=True, nx=None
-):
-    r"""Fast computation of the Bregman divergence between a batch of arbitrary measures and a product measures.
+def div_between_product_batch(mu, nu, alpha, beta, divergence, nx=None):
+    r"""Fast computation of the Bregman divergence between batches of product measures.
     Only support for Kullback-Leibler and half-squared L2 divergences.
 
-    - For half-squared L2 divergence:
+    For half-squared L2 divergence:
 
     .. math::
-        \frac{1}{2} || \pi - a \otimes b ||^2
-        = \frac{1}{2} \Big[ \sum_{i, j} \pi_{ij}^2 + (\sum_i a_i^2) ( \sum_j b_j^2) - 2 \sum_{i, j} a_i \pi_{ij} b_j \Big]
+        \frac{1}{2} || \mu \otimes \nu, \alpha \otimes \beta ||^2
+        = \frac{1}{2} \Big[ ||\alpha||^2 ||\beta||^2 + ||\mu||^2 ||\nu||^2 - 2 \langle \alpha, \mu \rangle \langle \beta, \nu \rangle \Big]
 
-    - For Kullback-Leibler divergence:
+    For Kullback-Leibler divergence:
 
     .. math::
-        KL(\pi | a \otimes b)
-        = \langle \pi, \log \pi \rangle - \langle \pi_1, \log a \rangle
-        - \langle \pi_2, \log b \rangle - m(\pi) + m(a) m(b)
+        KL(\mu \otimes \nu, \alpha \otimes \beta)
+        = m(\mu) * KL(\nu, \beta) + m(\nu) * KL(\mu, \alpha) + (m(\mu) - m(\alpha)) * (m(\nu) - m(\beta))
 
-    where :
+    where:
 
-    - :math:`\pi` is the (`dim_a`, `dim_b`) transport plan
-    - :math:`\pi_1` and :math:`\pi_2` are the marginal distributions
-    - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
+    - :math:`\mu` and :math:`\alpha` are two measures having the same shape.
+    - :math:`\nu` and :math:`\beta` are two measures having the same shape.
     - :math:`m` denotes the mass of the measure
 
     Parameters
     ----------
-    pi : array-like (B, n, m)
-        Transport plan for each problem in the batch
-    a : array-like (B,n)
-        Unnormalized histogram of dimension `n` for each problem in the batch
-    b : array-like (B,m)
-        Unnormalized histogram of dimension `m` for each problem in the batch
-    T1 : array-like (B, n), optional (default = None)
-        Marginal distribution with respect to the first dimension of the transport plan for each problem in the batch
-        Only used in case of Kullback-Leibler divergence.
-    T2 : array-like (B, m), optional (default = None)
-        Marginal distribution with respect to the second dimension of the transport plan for each problem in the batch
-        Only used in case of Kullback-Leibler divergence.
+    mu : array-like, shape (B, ...)
+        First factor of each product measure in the batch.
+    nu : array-like, shape (B, ...)
+        Second factor of each product measure in the batch.
+    alpha : array-like, shape (B, ...)
+        Reference factor with the same shape as `mu`.
+    beta : array-like, shape (B, ...)
+        Reference factor with the same shape as `nu`.
     divergence : string, default = "kl"
         Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
-    mass : bool, optional. Default is False.
-        Only used in case of Kullback-Leibler divergence.
-        If False, calculate the relative entropy.
-        If True, calculate the Kullback-Leibler divergence.
     nx : backend, optional
         If let to its default value None, a backend test will be conducted.
 
     Returns
-    -------
-    Bregman divergence between an arbitrary measure and a product measure for each problem in the batch.
+    ----------
+    Bregman divergence between two product measures for each problem in the batch.
     """
 
-    arr = [T, a, b, T1, T2]
-
     if nx is None:
-        nx = get_backend(*arr, T1, T2)
+        nx = get_backend(mu, nu, alpha, beta)
+
+    axis_mu = tuple(range(1, mu.ndim)) if mu.ndim > 1 else 0
+    axis_nu = tuple(range(1, nu.ndim)) if nu.ndim > 1 else 0
+    axis_alpha = tuple(range(1, alpha.ndim)) if alpha.ndim > 1 else 0
+    axis_beta = tuple(range(1, beta.ndim)) if beta.ndim > 1 else 0
 
     if divergence == "kl":
-        if T1 is None:
-            T1 = nx.sum(T, 2)
-        if T2 is None:
-            T2 = nx.sum(T, 1)
-
-    if divergence == "kl":
+        m_mu = nx.sum(mu, axis=axis_mu)
+        m_nu = nx.sum(nu, axis=axis_nu)
+        m_alpha = nx.sum(alpha, axis=axis_alpha)
+        m_beta = nx.sum(beta, axis=axis_beta)
+        const = (m_mu - m_alpha) * (m_nu - m_beta)
         res = (
-            nx.sum((T * nx.log(T + 1.0 * (T == 0))), (1, 2))
-            - nx.sum(T1 * nx.log(a), 1)
-            - nx.sum(T2 * nx.log(b), 1)
+            m_nu * nx.kl_div(mu, alpha, mass=True, axis=axis_mu)
+            + m_mu * nx.kl_div(nu, beta, mass=True, axis=axis_nu)
+            + const
         )
-        if mass:
-            res = res - nx.sum(T1, 1) + nx.sum(a, 1) * nx.sum(b, 1)
 
     elif divergence == "l2":
         res = (
-            nx.sum(T**2, (1, 2))
-            + nx.sum(a**2, 1) * nx.sum(b**2, 1)
-            - 2 * nx.sum((a * (T @ b[:, :, None]).squeeze(-1)), 1)
+            nx.sum(alpha**2, axis=axis_alpha) * nx.sum(beta**2, axis=axis_beta)
+            - 2 * nx.sum(alpha * mu, axis=axis_mu) * nx.sum(beta * nu, axis=axis_nu)
+            + nx.sum(mu**2, axis=axis_mu) * nx.sum(nu**2, axis=axis_nu)
         ) / 2
 
     return res
@@ -424,12 +412,14 @@ def loss_fugw_batch(
 
     linear = loss_linear_batch(M, T, nx=nx)
 
-    unbalanced = div_to_product_batch(
-        T,
+    T1 = nx.sum(T, 2)
+    T2 = nx.sum(T, 1)
+    unbalanced = div_between_product_batch(
+        T1,
+        T2,
         a,
         b,
         divergence=divergence,
-        mass=True,
         nx=nx,
     )
 
@@ -535,12 +525,14 @@ def loss_fugw_samples_batch(
 
     linear = loss_linear_samples_batch(X, Y, T, metric=metric_linear)
 
-    unbalanced = div_to_product_batch(
-        T,
+    T1 = nx.sum(T, 2)
+    T2 = nx.sum(T, 1)
+    unbalanced = div_between_product_batch(
+        T1,
+        T2,
         a,
         b,
         divergence=divergence,
-        mass=True,
         nx=nx,
     )
 
