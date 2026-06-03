@@ -173,7 +173,7 @@ def bures_wasserstein_mapping_hd(
     .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
         
-    .. [3] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
 
     ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
@@ -322,7 +322,7 @@ def empirical_bures_wasserstein_mapping_hd(
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[3] <references-OT-mapping-linear>`, Th. 2.9.
+    :ref:`[1] <references-empirical-bures-wasserstein-mapping-hd>`, Th. 2.9.
     
     The linear operator from source to target :math:`M`
 
@@ -346,6 +346,8 @@ def empirical_bures_wasserstein_mapping_hd(
         \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
             
         \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
+        
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                          distributions, the probabilistic PCA estimators proposed in :ref: `[2] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formulas.        
         
         
     Parameters
@@ -380,17 +382,11 @@ def empirical_bures_wasserstein_mapping_hd(
         log dictionary return only if log==True in parameters
 
 
-    .. _references-OT-mapping-linear:
+    .. _references-empirical-bures-wasserstein-hd:
     References
     ----------
-    .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
-        distributions", Journal of Optimization Theory and Applications
-        Vol 43, 1984
-
-    .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
-        Transport", 2018.
- 
-    .. [3] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")       
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+       [89] Tipping, M.E. & Bishop, C.M, ("Probabilistic Principal Component Analysis")    
         
     """
 
@@ -684,7 +680,7 @@ def bures_wasserstein_distance_hd(
     .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
         
-    .. [3] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
 
     ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
@@ -804,6 +800,132 @@ def empirical_bures_wasserstein_distance(
         return W, log
     else:
         W = bures_wasserstein_distance(mxs[0], mxt[0], Cs, Ct)
+        return W
+
+
+def empirical_bures_wasserstein_distance_hd(
+    xs, xt, ds, dt, reg=0.0, ws=None, wt=None, bias=True, log=False
+):
+    r"""Return 2D Wasserstein between high-dimensional (HD) Gaussian distributions.
+
+    The function estimates the 2-Wasserstein distance between the two
+    HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[1] <references-empirical-bures-wasserstein-distance-hd>`, Prop. 2.3
+    
+    .. math::
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
+
+    where :
+
+    .. math::
+        \Lambda_s &= \diag(ls) \\
+        \Lambda_t &= \diag(lt) \\    
+        \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
+    
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                      distributions, the probabilistic PCA estimators proposed in :ref: `[2] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formula of the Wasserstein distance.
+   
+        
+    Parameters
+    ----------
+    xs : array-like (ns,p)
+        samples in the source domain
+    xt : array-like (nt,p)
+        samples in the target domain
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like(1,)
+        the intrinsic dimension of the target distribution       
+    reg : float,optional
+        regularization added to the diagonals of covariances (null by default)
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (nt,1), optional
+        weights for the target samples
+    bias: boolean, optional
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (p, p) array-like
+        Linear operator
+    b : (1, p) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-empirical-bures-wasserstein-distance-hd:
+    References
+    ----------
+ 
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")
+       [89] Tipping, M.E. & Bishop, C.M, ("Probabilistic Principal Component Analysis")        
+        
+    """
+
+    xs, xt, ds, dt = list_to_array(xs, xt, ds, dt)
+    nx = get_backend(xs, xt, ds, dt)
+    is_input_finite = is_all_finite(xs, xt, ds, dt)
+
+    p = xs.shape[1]
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
+    if bias:
+        mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+        mxt = nx.dot(wt.T, xt) / nx.sum(wt)
+
+        xs = xs - mxs
+        xt = xt - mxt
+    else:
+        mxs = nx.zeros((1, p), type_as=xs)
+        mxt = nx.zeros((1, p), type_as=xs)
+
+    Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(p, type_as=xs)
+    Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(p, type_as=xt)
+
+    eigs = nx.eigh(Cs)
+    a_s = eigs[0][-ds[0] :]
+    sgm2_s = (nx.trace(Cs) - nx.sum(a_s)) / (p - ds)
+    Qs = eigs[1]
+    Us = Qs[:, -ds[0] :]
+    ls = a_s - sgm2_s
+
+    eigt = nx.eigh(Ct)
+    a_t = eigt[0][-dt[0] :]
+    sgm2_t = (nx.trace(Ct) - nx.sum(a_t)) / (p - dt)
+    Qt = eigt[1]
+    Ut = Qt[:, -dt[0] :]
+    lt = a_t - sgm2_t
+
+    if log:
+        W, log = bures_wasserstein_distance_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt, log=log
+        )
+    else:
+        W = bures_wasserstein_distance_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt
+        )
+
+    if is_input_finite and not is_all_finite(W):
+        warnings.warn(
+            "Numerical errors were encountered in ot.gaussian.empirical_bures_wasserstein_distance_hd. "
+            "Consider increasing the regularization parameter `reg` or reducing the intrinsic dimensions ds/dt."
+        )
+
+    if log:
+        return W, log
+    else:
         return W
 
 
