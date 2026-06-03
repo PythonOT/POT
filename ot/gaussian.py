@@ -101,7 +101,7 @@ def bures_wasserstein_mapping_hd(
     The function estimates the optimal linear operator that aligns the two
     HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[3] <references-OT-mapping-linear>`, Th. 2.9
+    :ref:`[88] <references-OT-mapping-linear>`, Th. 2.9
     .
 
     The linear operator from source to target :math:`M`
@@ -322,7 +322,7 @@ def empirical_bures_wasserstein_mapping_hd(
     empirical distributions. This is equivalent to estimating the closed
     form mapping between two HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[1] <references-empirical-bures-wasserstein-mapping-hd>`, Th. 2.9.
+    :ref:`[88] <references-empirical-bures-wasserstein-mapping-hd>`, Th. 2.9.
     
     The linear operator from source to target :math:`M`
 
@@ -347,7 +347,7 @@ def empirical_bures_wasserstein_mapping_hd(
             
         \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
         
-    Assuming that the source and destination data samples have been generated from HD Gaussian                                          distributions, the probabilistic PCA estimators proposed in :ref: `[2] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formulas.        
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                          distributions, the probabilistic PCA estimators proposed in :ref: `[89] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formulas.        
         
         
     Parameters
@@ -625,7 +625,7 @@ def bures_wasserstein_distance_hd(
     The function estimates the 2-Wasserstein distance between the two
     HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[3] <references-bures-wasserstein-distance-hd>`, Prop. 2.3
+    :ref:`[88] <references-bures-wasserstein-distance-hd>`, Prop. 2.3
 
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
@@ -811,7 +811,7 @@ def empirical_bures_wasserstein_distance_hd(
     The function estimates the 2-Wasserstein distance between the two
     HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
     and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
-    :ref:`[1] <references-empirical-bures-wasserstein-distance-hd>`, Prop. 2.3
+    :ref:`[88] <references-empirical-bures-wasserstein-distance-hd>`, Prop. 2.3
     
     .. math::
         \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
@@ -825,7 +825,7 @@ def empirical_bures_wasserstein_distance_hd(
         \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
         C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
     
-    Assuming that the source and destination data samples have been generated from HD Gaussian                                      distributions, the probabilistic PCA estimators proposed in :ref: `[2] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formula of the Wasserstein distance.
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                      distributions, the probabilistic PCA estimators proposed in :ref: `[89] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formula of the Wasserstein distance.
    
         
     Parameters
