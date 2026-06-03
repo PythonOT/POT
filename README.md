@@ -464,3 +464,7 @@ Artificial Intelligence.
 [86] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
 
 [87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
+
+[88] Bouveyron, C. & Corneli, M. (2026).  [Scaling optimal transport to high-dimensional Gaussian distributions with application to domain adaptation](https://hal.science/hal-04930868v4/file/Article-OT-HDGauss-v4.pdf). Statistics and Computing 36.2 (2026): 88.
+
+[89] Tipping, M.E. & Bishop, C.M. (1999). [Probabilistic principal component analysis]. Journal of the Royal Statistical Society Series B: Statistical Methodology 61.3 (1999): 611-622.

@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 
 import ot
-from ot.datasets import make_data_classif
-from ot.utils import is_all_finite
+from ot.datasets import make_data_classif, make_gauss_hd
+from ot.utils import is_all_finite, dots
 
 
 def test_bures_wasserstein_mapping(nx):
@@ -40,6 +40,34 @@ def test_bures_wasserstein_mapping(nx):
 
     np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
+def test_bures_wasserstein_mapping_hd(nx):
+    ns = 100
+    nt = 100
+
+    Xs, Xt, ll = make_gauss_hd(ns, nt, p=50, dim=10, m_diff=5, a=(7, 7), b=(1, 1))
+
+    ms = ll["ms"]
+    mt = ll["mt"]
+    sigma2_s = ll["sigma2_s"]
+    sigma2_t = ll["sigma2_t"]
+    ls = ll["ls"]
+    lt = ll["lt"]
+    Us = ll["Us"]
+    Ut = ll["Ut"]
+    ds = ll["ds"]
+    dt = ll["dt"]
+    Cs = ll["Cs"]
+    Ct = ll["Ct"]
+
+    A_hd, b_hd = ot.gaussian.bures_wasserstein_mapping_hd(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+    )
+    A, b = ot.gaussian.bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False)
+
+    np.testing.assert_allclose(A_hd, A, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(b_hd, b, rtol=1e-2, atol=1e-2)
 
 
 @pytest.mark.parametrize("bias", [True, False])
@@ -75,6 +103,53 @@ def test_empirical_bures_wasserstein_mapping(nx, bias):
 
     np.testing.assert_allclose(Cst_log, Cst, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(Ct, Cst, rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize("bias", [True, False])
+def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
+    ns = 100000
+    nt = 100000
+
+    id_ = 2
+    p_ = 30
+
+    Xs, Xt, ll = ot.datasets.make_gauss_hd(
+        ns, nt, p=p_, dim=id_, m_diff=5, a=(6, 6), b=(1, 1)
+    )
+
+    # covariance matrix of the target
+    Ct = ll["Ct"]
+
+    if not bias:
+        ms = np.mean(Xs, axis=0)[None, :]
+        mt = np.mean(Xt, axis=0)[None, :]
+
+        Xs = Xs - ms
+        Xt = Xt - mt
+
+    ds = dt = np.array([id_])
+    Xsb, Xtb, dsb, dtb = nx.from_numpy(Xs, Xt, ds, dt)
+
+    A, b, log = ot.gaussian.empirical_bures_wasserstein_mapping_hd(
+        Xsb, Xtb, dsb, dtb, log=True, bias=bias
+    )
+
+    Xst = nx.dot(Xsb, A) + b
+
+    mst = nx.mean(Xst, axis=0)[None, :]
+    Xst = Xst - mst
+
+    Cst = nx.dot(Xst.T, Xst) / ns
+
+    eigtp = nx.eigh(Cst)
+    a_tp = eigtp[0][-dt[0] :]
+    sgm2_tp = (nx.trace(Cst) - nx.sum(a_tp)) / (Cst.shape[0] - dt)
+    Qtp = eigtp[1]
+    Utp = Qtp[:, -dt[0] :]
+    ltp = a_tp - sgm2_tp
+    Cst = nx.to_numpy(dots(Utp, nx.diag(ltp), Utp.T) + sgm2_tp * nx.eye(p_))
+
+    np.testing.assert_allclose(Ct, Cst, rtol=1e-1, atol=1e-1)
 
 
 def test_empirical_bures_wasserstein_mapping_numerical_error_warning():
@@ -165,6 +240,61 @@ def test_bures_wasserstein_distance_batch(nx):
         Wb3 = ot.gaussian.bures_wasserstein_distance(m[0, 0], m[:, 0], C[0], C)
 
 
+@pytest.mark.parametrize("sub_the_same", [True, False])
+def test_bures_wasserstein_distance_hd(nx, sub_the_same):
+    ns = 1000
+    nt = 1000
+
+    m_diff = 4.0
+
+    if sub_the_same:
+        Xs, Xt, ll = make_gauss_hd(
+            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1), sub_the_same=True
+        )
+
+        ms = ll["ms"]
+        mt = ll["mt"]
+        sigma2_s = ll["sigma2_s"]
+        sigma2_t = ll["sigma2_t"]
+        ls = ll["ls"]
+        lt = ll["lt"]
+        Us = ll["Us"]
+        Ut = ll["Ut"]
+        ds = ll["ds"]
+        dt = ll["dt"]
+
+        W = ot.gaussian.bures_wasserstein_distance_hd(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+        )
+
+        np.testing.assert_allclose(m_diff, W, rtol=1e-4, atol=1e-4)
+
+    else:
+        Xs, Xt, ll = make_gauss_hd(
+            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1)
+        )
+
+        ms = ll["ms"]
+        mt = ll["mt"]
+        sigma2_s = ll["sigma2_s"]
+        sigma2_t = ll["sigma2_t"]
+        ls = ll["ls"]
+        lt = ll["lt"]
+        Us = ll["Us"]
+        Ut = ll["Ut"]
+        ds = ll["ds"]
+        dt = ll["dt"]
+        Cs = ll["Cs"]
+        Ct = ll["Ct"]
+
+        W = ot.gaussian.bures_wasserstein_distance_hd(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+        )
+        W_ = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
+
+        np.testing.assert_allclose(W, W_, rtol=1e-2, atol=1e-2)
+
+
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance(nx, bias):
     ns = 400
@@ -186,6 +316,59 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
         nx.to_numpy(Wb_log), nx.to_numpy(Wb), rtol=1e-2, atol=1e-2
     )
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize("bias", [True, False])
+def test_empirical_bures_wasserstein_distance_hd(nx, bias):
+    ns = 100000
+    nt = 100000
+
+    id_ = 2
+    p_ = 30
+
+    if bias:
+        m_diff = 5.0
+    else:
+        m_diff = 0.0
+
+    Xs, Xt, ll = ot.datasets.make_gauss_hd(
+        ns, nt, p=p_, dim=id_, m_diff=m_diff, a=(6, 6), b=(1, 1)
+    )
+
+    # The actual Wasserstein distance:
+
+    ms = ll["ms"]
+    mt = ll["mt"]
+    sigma2_s = ll["sigma2_s"]
+    sigma2_t = ll["sigma2_t"]
+    ls = ll["ls"]
+    lt = ll["lt"]
+    Us = ll["Us"]
+    Ut = ll["Ut"]
+    ds = ll["ds"]
+    dt = ll["dt"]
+
+    W = ot.gaussian.bures_wasserstein_distance_hd(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    )
+
+    # The estimated Wasserstein distance
+
+    if not bias:
+        ms = np.mean(Xs, axis=0)[None, :]
+        mt = np.mean(Xt, axis=0)[None, :]
+
+        Xs = Xs - ms
+        Xt = Xt - mt
+
+    ds = dt = np.array([id_])
+    Xsb, Xtb, dsb, dtb = nx.from_numpy(Xs, Xt, ds, dt)
+
+    W_, log = ot.gaussian.empirical_bures_wasserstein_distance_hd(
+        Xsb, Xtb, dsb, dtb, log=True, bias=bias
+    )
+
+    np.testing.assert_allclose(W, W_, rtol=1e-2, atol=1e-2)
 
 
 @pytest.mark.parametrize(

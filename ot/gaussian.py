@@ -93,6 +93,119 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
         return A, b
 
 
+def bures_wasserstein_mapping_hd(
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+):
+    r"""Return OT linear operator between HD Gaussian distritutions.
+
+    The function estimates the optimal linear operator that aligns the two
+    HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[88] <references-OT-mapping-linear>`, Th. 2.9
+    .
+
+    The linear operator from source to target :math:`M`
+
+    .. math::
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+
+    where :
+
+    .. math::
+        \mathbf{A}      &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2} 
+        \Sigma_s^{-1/2}                            \\
+            
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
+            
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
+            
+        \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
+            
+        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
+            
+        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
+            
+        \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
+
+    Parameters
+    ----------
+    ms : array-like (p,)
+        mean of the source distribution
+    mt : array-like (p,)
+        mean of the target distribution
+    Us : array-like (p,ds)
+        orthogonal matrix spanning the principal subspace of the source distribution
+    Ut : array-like (p,dt)
+        orthogonal matrix spanning the principal subspace of the target distribution
+    ls : array-like (ds,) 
+        the variances associated with the principal sub-axes for the source distribution
+    lt : array-like (dt,) 
+        the variances associated with the principal sub-axes for the target distribution
+    sigma_s^2 : array-like (1,) 
+                the residual variance of the source distribution
+    sigma_t^2 : array-like (1,)
+                the residual variance of the target distribution     
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like (1,)
+        the intrinsic dimension of the target distribution            
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (d, d) array-like
+        Linear operator
+    b : (1, d) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-OT-mapping-linear:
+    References
+    ----------
+    .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
+        distributions", Journal of Optimization Theory and Applications
+        Vol 43, 1984
+
+    .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+        
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+    """
+
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    )
+    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt)
+
+    p = Us.shape[0]
+
+    # source
+    Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
+    Ds = nx.diag((nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s)) / nx.sqrt(ls + sigma2_s))
+    Ss_sqinv = (1 / nx.sqrt(sigma2_s)) * (nx.eye(p) - dots(Us, Ds, Us.T))
+
+    # destination
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
+
+    M0 = nx.sqrtm(dots(Ss_sq, St, Ss_sq))
+
+    A = dots(Ss_sqinv, M0, Ss_sqinv)
+    b = mt - nx.dot(ms, A)
+
+    if log:
+        log = {}
+        log["Ss_sq"] = Ss_sq
+        log["Ss_sqinv"] = Ss_sqinv
+        return A, b, log
+    else:
+        return A, b
+
+
 def empirical_bures_wasserstein_mapping(
     xs, xt, reg=1e-6, ws=None, wt=None, bias=True, log=False
 ):
@@ -128,7 +241,7 @@ def empirical_bures_wasserstein_mapping(
         regularization added to the diagonals of covariances (>0)
     ws : array-like (ns,1), optional
         weights for the source samples
-    wt : array-like (ns,1), optional
+    wt : array-like (nt,1), optional
         weights for the target samples
     bias: boolean, optional
         estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
@@ -195,6 +308,149 @@ def empirical_bures_wasserstein_mapping(
     if log:
         log["Cs"] = Cs
         log["Ct"] = Ct
+        return A, b, log
+    else:
+        return A, b
+
+
+def empirical_bures_wasserstein_mapping_hd(
+    xs, xt, ds, dt, reg=0.0, ws=None, wt=None, bias=True, log=False
+):
+    r"""Return OT HD linear operator between samples.
+
+    The function estimates the optimal linear HD operator that aligns the two
+    empirical distributions. This is equivalent to estimating the closed
+    form mapping between two HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[88] <references-empirical-bures-wasserstein-mapping-hd>`, Th. 2.9.
+    
+    The linear operator from source to target :math:`M`
+
+    .. math::
+        M(\mathbf{x})= \mathbf{A} \mathbf{x} + \mathbf{b}
+
+    where :
+
+    .. math::
+        \mathbf{A}      &= \Sigma_s^{-1/2} \left(\Sigma_s^{1/2}\Sigma_t\Sigma_s^{1/2} \right)^{1/2} 
+        \Sigma_s^{-1/2}                            \\
+            
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
+            
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
+            
+        \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
+            
+        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
+            
+        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
+            
+        \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
+        
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                          distributions, the probabilistic PCA estimators proposed in :ref: `[89] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formulas.        
+        
+        
+    Parameters
+    ----------
+    xs : array-like (ns,p)
+        samples in the source domain
+    xt : array-like (nt,p)
+        samples in the target domain
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like(1,)
+        the intrinsic dimension of the target distribution       
+    reg : float,optional
+        regularization added to the diagonals of covariances (null by default)
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (nt,1), optional
+        weights for the target samples
+    bias: boolean, optional
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (p, p) array-like
+        Linear operator
+    b : (1, p) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-empirical-bures-wasserstein-hd:
+    References
+    ----------
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+       [89] Tipping, M.E. & Bishop, C.M, ("Probabilistic Principal Component Analysis")    
+        
+    """
+
+    xs, xt, ds, dt = list_to_array(xs, xt, ds, dt)
+    nx = get_backend(xs, xt, ds, dt)
+    is_input_finite = is_all_finite(xs, xt, ds, dt)
+
+    p = xs.shape[1]
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
+    if bias:
+        mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+        mxt = nx.dot(wt.T, xt) / nx.sum(wt)
+
+        xs = xs - mxs
+        xt = xt - mxt
+    else:
+        mxs = nx.zeros((1, p), type_as=xs)
+        mxt = nx.zeros((1, p), type_as=xs)
+
+    Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(p, type_as=xs)
+    Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(p, type_as=xt)
+
+    eigs = nx.eigh(Cs)
+    a_s = eigs[0][-ds[0] :]
+    sgm2_s = (nx.trace(Cs) - nx.sum(a_s)) / (p - ds)
+    Qs = eigs[1]
+    Us = Qs[:, -ds[0] :]
+    ls = a_s - sgm2_s
+
+    eigt = nx.eigh(Ct)
+    a_t = eigt[0][-dt[0] :]
+    sgm2_t = (nx.trace(Ct) - nx.sum(a_t)) / (p - dt)
+    Qt = eigt[1]
+    Ut = Qt[:, -dt[0] :]
+    lt = a_t - sgm2_t
+
+    if log:
+        A, b, log = bures_wasserstein_mapping_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt, log=log
+        )
+    else:
+        A, b = bures_wasserstein_mapping_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt
+        )
+
+    if is_input_finite and not is_all_finite(A, b):
+        warnings.warn(
+            "Numerical errors were encountered in ot.gaussian.empirical_bures_wasserstein_mapping_hd. "
+            "Consider increasing the regularization parameter `reg` or reducing the intrinsic dimensions ds/dt."
+        )
+
+    if log:
+        log["Us"] = Us
+        log["Ut"] = Ut
+        log["ls"] = ls
+        log["lt"] = lt
+        log["sigma2_s"] = sgm2_s
+        log["sigma2_t"] = sgm2_t
         return A, b, log
     else:
         return A, b
@@ -361,6 +617,106 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, paired=False, log=False):
         return W
 
 
+def bures_wasserstein_distance_hd(
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+):
+    r"""Return the 2-Wassestein distance between HD Gaussian distritutions.
+
+    The function estimates the 2-Wasserstein distance between the two
+    HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[88] <references-bures-wasserstein-distance-hd>`, Prop. 2.3
+
+    .. math::
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
+
+    where :
+
+    .. math::
+        \Lambda_s &= \diag(ls) \\
+        \Lambda_t &= \diag(lt) \\    
+        \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
+
+    Parameters
+    ----------
+    ms : array-like (p,)
+        mean of the source distribution
+    mt : array-like (p,)
+        mean of the target distribution
+    Us : array-like (p,ds)
+        orthogonal matrix spanning the principal subspace of the source distribution
+    Ut : array-like (p,dt)
+        orthogonal matrix spanning the principal subspace of the target distribution
+    ls : array-like (ds,) 
+        the variances associated with the principal sub-axes for the source distribution
+    lt : array-like (dt,) 
+        the variances associated with the principal sub-axes for the target distribution
+    sigma_s^2 : array-like (1,) 
+                the residual variance of the source distribution
+    sigma_t^2 : array-like (1,)
+                the residual variance of the target distribution     
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like (1,)
+        the intrinsic dimension of the target distribution            
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    W : float 
+        Bures Wasserstein distance
+
+    .. _references-bures-wasserstein-distance-hd:
+    References
+    ----------
+    .. [1] Knott, M. and Smith, C. S. "On the optimal mapping of
+        distributions", Journal of Optimization Theory and Applications
+        Vol 43, 1984
+
+    .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
+        Transport", 2018.
+        
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
+    """
+
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    )
+    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt)
+
+    p = Us.shape[0]
+
+    # source
+    Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
+
+    # destination
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
+    A = dots(Ss_sq, St, Ss_sq)
+    W2 = (
+        nx.sum((ms - mt) ** 2)
+        + nx.sum(ls)
+        + nx.sum(lt)
+        + p * (sigma2_s + sigma2_t)
+        - 2 * nx.trace(nx.sqrtm(A))
+    )
+    W = nx.sqrt(W2)
+
+    if log:
+        log = {}
+        log["Ss_sq"] = Ss_sq
+        log["St"] = St
+
+        return W, log
+
+    else:
+        return W
+
+
 def empirical_bures_wasserstein_distance(
     xs, xt, reg=1e-6, ws=None, wt=None, bias=True, log=False
 ):
@@ -444,6 +800,132 @@ def empirical_bures_wasserstein_distance(
         return W, log
     else:
         W = bures_wasserstein_distance(mxs[0], mxt[0], Cs, Ct)
+        return W
+
+
+def empirical_bures_wasserstein_distance_hd(
+    xs, xt, ds, dt, reg=0.0, ws=None, wt=None, bias=True, log=False
+):
+    r"""Return 2D Wasserstein between high-dimensional (HD) Gaussian distributions.
+
+    The function estimates the 2-Wasserstein distance between the two
+    HD Gaussian distributions :math:`\mathcal{N}(\mu_s, U_s, l_s, \sigma_s^2, d_s)`
+    and :math:`\mathcal{N}(\mu_t, U_t, l_t, \sigma_t^2, d_t)` as proposed in
+    :ref:`[88] <references-empirical-bures-wasserstein-distance-hd>`, Prop. 2.3
+    
+    .. math::
+        \mathcal{W}(\mu_s, \mu_t)_2^2= \left\lVert \mathbf{m}_s - \mathbf{m}_t \right\rVert^2 + \text{Tr}(\Lambda_s) + \text{Tr}(\Lambda_t) + p(\sigma_s^2 + \sigma_t^2) - 2\text{Tr}((\Sigma_s^{(1/2)}\Sigma_t \Sigma_s^{1/2})^{1/2})
+
+    where :
+
+    .. math::
+        \Lambda_s &= \diag(ls) \\
+        \Lambda_t &= \diag(lt) \\    
+        \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
+        \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
+        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
+    
+    Assuming that the source and destination data samples have been generated from HD Gaussian                                      distributions, the probabilistic PCA estimators proposed in :ref: `[89] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formula of the Wasserstein distance.
+   
+        
+    Parameters
+    ----------
+    xs : array-like (ns,p)
+        samples in the source domain
+    xt : array-like (nt,p)
+        samples in the target domain
+    ds : array-like (1,)
+        the intrinsic dimension of the source distribution
+    dt : array-like(1,)
+        the intrinsic dimension of the target distribution       
+    reg : float,optional
+        regularization added to the diagonals of covariances (null by default)
+    ws : array-like (ns,1), optional
+        weights for the source samples
+    wt : array-like (nt,1), optional
+        weights for the target samples
+    bias: boolean, optional
+        estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
+    log : bool, optional
+        record log if True
+
+
+    Returns
+    -------
+    A : (p, p) array-like
+        Linear operator
+    b : (1, p) array-like
+        bias
+    log : dict
+        log dictionary return only if log==True in parameters
+
+
+    .. _references-empirical-bures-wasserstein-distance-hd:
+    References
+    ----------
+ 
+    .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")
+       [89] Tipping, M.E. & Bishop, C.M, ("Probabilistic Principal Component Analysis")        
+        
+    """
+
+    xs, xt, ds, dt = list_to_array(xs, xt, ds, dt)
+    nx = get_backend(xs, xt, ds, dt)
+    is_input_finite = is_all_finite(xs, xt, ds, dt)
+
+    p = xs.shape[1]
+
+    if ws is None:
+        ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+
+    if wt is None:
+        wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+
+    if bias:
+        mxs = nx.dot(ws.T, xs) / nx.sum(ws)
+        mxt = nx.dot(wt.T, xt) / nx.sum(wt)
+
+        xs = xs - mxs
+        xt = xt - mxt
+    else:
+        mxs = nx.zeros((1, p), type_as=xs)
+        mxt = nx.zeros((1, p), type_as=xs)
+
+    Cs = nx.dot((xs * ws).T, xs) / nx.sum(ws) + reg * nx.eye(p, type_as=xs)
+    Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(p, type_as=xt)
+
+    eigs = nx.eigh(Cs)
+    a_s = eigs[0][-ds[0] :]
+    sgm2_s = (nx.trace(Cs) - nx.sum(a_s)) / (p - ds)
+    Qs = eigs[1]
+    Us = Qs[:, -ds[0] :]
+    ls = a_s - sgm2_s
+
+    eigt = nx.eigh(Ct)
+    a_t = eigt[0][-dt[0] :]
+    sgm2_t = (nx.trace(Ct) - nx.sum(a_t)) / (p - dt)
+    Qt = eigt[1]
+    Ut = Qt[:, -dt[0] :]
+    lt = a_t - sgm2_t
+
+    if log:
+        W, log = bures_wasserstein_distance_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt, log=log
+        )
+    else:
+        W = bures_wasserstein_distance_hd(
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt
+        )
+
+    if is_input_finite and not is_all_finite(W):
+        warnings.warn(
+            "Numerical errors were encountered in ot.gaussian.empirical_bures_wasserstein_distance_hd. "
+            "Consider increasing the regularization parameter `reg` or reducing the intrinsic dimensions ds/dt."
+        )
+
+    if log:
+        return W, log
+    else:
         return W
 
 

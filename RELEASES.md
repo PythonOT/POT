@@ -28,6 +28,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
 - Add cost functions between linear operators following [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  implemented in `ot.sgot` (PR #792)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
+- Add new methods to compute the linear transport map and the related 2-Wasserstein distance betweeen high-dimensional (HD) Gaussian distributions as described in [88], implemented in  `ot.gaussian.bures_wasserstein_mapping_hd` and `ot.gaussian.bures_wasserstein_distance_hd`, respectively. Two additional methods estimate the same quantities from the source and destination observed data and are implemented in `ot.gaussian.empirical_bures_wasserstein_mapping_hd` and `ot.gaussian.empirical_bures_wasserstein_distance_hd`, respectively (PR #814)   
+
 
 #### Closed issues
 
