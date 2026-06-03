@@ -200,7 +200,7 @@ def min_sliced_transport_plan(
 ):
     r"""
     Computes the cost and permutation associated to the min-Pivot Sliced
-    Discrepancy (introduced as min-SWGG in [83] and studied further in [84]). Given
+    Discrepancy (introduced as min-SWGG in [85] and studied further in [86]). Given
     the supports `X_s` and `X_t` of two discrete uniform measures with `ns` and `nt`
     atoms in dimension `d`, the min-Pivot Sliced Discrepancy goes through
     `n_projections` different projections of the measures on random directions, and
@@ -270,12 +270,12 @@ def min_sliced_transport_plan(
 
     References
     ----------
-    .. [83] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023).
+    .. [85] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023).
             Fast Optimal Transport through Sliced Generalized Wasserstein
             Geodesics. Advances in Neural Information Processing Systems, 36,
             35350–35385.
 
-    .. [84] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+    .. [86] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Transport
             Plans. arXiv preprint 2506.03661.
 
     Examples
@@ -372,8 +372,8 @@ def expected_sliced_plan(
     `X_t` of shapes `(ns, d)` and `(nt, d)`. Given a set of `n_projections` projection
     directions, the expected sliced plan is obtained by averaging the `n_projections`
     1d optimal transport plans between the projections of `X_s` and `X_t` on each
-    direction. Expected Sliced was introduced in [85] and further studied in
-    [84].
+    direction. Expected Sliced was introduced in [87] and further studied in
+    [86].
 
     .. note::
         The computation ignores potential ambiguities in the projections: if
@@ -434,9 +434,9 @@ def expected_sliced_plan(
 
     References
     ----------
-    .. [84] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Optimal Transport
+    .. [86] Tanguy, E., Chapel, L., Delon, J. (2025). Sliced Transport
             Plans. arXiv preprint 2506.03661.
-    .. [85] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
+    .. [87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi
             A., Kolouri, S. (2024). Expected Sliced Transport Plans.
             International Conference on Learning Representations.
 
