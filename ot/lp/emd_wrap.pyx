@@ -22,8 +22,8 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_omp(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads) nogil
-    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
-    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
+    int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
+    int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
 
@@ -306,7 +306,7 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
             n_edges,
             <uint64_t*> edge_sources.data, <uint64_t*> edge_targets.data, <double*> edge_costs.data,
             <uint64_t*> flow_sources.data, <uint64_t*> flow_targets.data, <double*> flow_values.data,
-            &n_flows_out,
+            &n_flows_out, n_edges,
             <double*> alpha.data, <double*> beta.data, &cost, max_iter,
             alpha_init_ptr, beta_init_ptr
         )
@@ -329,6 +329,8 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     cdef int result_code = 0
     cdef double cost = 0
     cdef int metric_code
+    cdef uint64_t n_flows_out = 0
+    cdef uint64_t max_flows_out = n1 + n2
     
     # Validate dimension consistency
     if coords_b.shape[1] != dim:
@@ -345,9 +347,11 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     except KeyError:
         raise ValueError(f"Unknown metric: '{metric}'. Supported metrics are: {list(metric_map.keys())}")
         
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] flow_sources = np.zeros(max_flows_out, dtype=np.uint64)
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] flow_targets = np.zeros(max_flows_out, dtype=np.uint64)
+    cdef np.ndarray[double, ndim=1, mode="c"] flow_values = np.zeros(max_flows_out, dtype=np.float64)
     cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta = np.zeros(n2)
-    cdef np.ndarray[double, ndim=2, mode="c"] G = np.zeros([n1, n2])
     if not len(a):
         a = np.ones((n1,)) / n1
     if not len(b):
@@ -360,5 +364,10 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
         beta_init_ptr = <double*> beta_init.data
     
     with nogil:
-        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <double*> G.data, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
-    return G, cost, alpha, beta, result_code
+        result_code = EMD_wrap_lazy(n1, n2, <double*> a.data, <double*> b.data, <double*> coords_a.data, <double*> coords_b.data, dim, metric_code, <uint64_t*> flow_sources.data, <uint64_t*> flow_targets.data, <double*> flow_values.data, &n_flows_out, max_flows_out, <double*> alpha.data, <double*> beta.data, <double*> &cost, max_iter, alpha_init_ptr, beta_init_ptr)
+
+    flow_sources = flow_sources[:n_flows_out]
+    flow_targets = flow_targets[:n_flows_out]
+    flow_values = flow_values[:n_flows_out]
+
+    return flow_sources, flow_targets, flow_values, cost, alpha, beta, result_code
