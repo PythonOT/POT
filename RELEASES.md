@@ -6,6 +6,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 
 #### New features 
 
+- Fix reference number error introduced in PR #767 (PR #819)
 - Refactor lazy EMD network simplex storage to avoid dense per-arc cost,
   endpoint, flow, and state storage where possible, and return sparse lazy
   transport plans instead of materializing dense plans internally (PR #813)
