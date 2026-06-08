@@ -1063,17 +1063,19 @@ def test_solve_bary_sample_callable_metric(nx):
         assert sol_list.X is not None
 
         # Test with auto_bary_method="true_fixed_point"
-        sol_fixed_point = ot.solve_bary_sample(
-            X_listb,
-            n,
-            a_list=a_listb,
-            w=wb,
-            metric=custom_metric,
-            auto_bary_method="true_fixed_point",
-            max_iter_bary=1,
-        )
-        assert sol_fixed_point is not None
-        assert sol_fixed_point.X is not None
+        with pytest.raises(
+            ValueError,
+            match="ground_bary must be provided in kwargs for true_fixed_point method with callable metrics",
+        ):
+            sol_fixed_point = ot.solve_bary_sample(
+                X_listb,
+                n,
+                a_list=a_listb,
+                w=wb,
+                metric=custom_metric,
+                auto_bary_method="true_fixed_point",
+                max_iter_bary=1,
+            )
     else:
         with pytest.raises(
             AssertionError,
@@ -1085,6 +1087,5 @@ def test_solve_bary_sample_callable_metric(nx):
                 a_list=a_listb,
                 w=wb,
                 metric=custom_metric,
-                auto_bary_method="true_fixed_point",
                 max_iter_bary=1,
             )

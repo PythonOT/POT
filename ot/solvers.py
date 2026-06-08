@@ -2498,6 +2498,13 @@ def solve_bary_sample(
                     "Custom callable metric only available for balanced OT (reg=None and unbalanced=None)"
                 )
             else:
+                if auto_bary_method == "true_fixed_point":
+                    ground_bary = kwargs.get("ground_bary", None)
+                    if ground_bary is None:
+                        raise ValueError(
+                            "ground_bary must be provided in kwargs for true_fixed_point method with callable metrics"
+                        )
+
                 outputs = free_support_barycenter_generic_costs(
                     X_a_list,
                     a_list,
