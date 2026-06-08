@@ -307,6 +307,96 @@ def euclidean_distances(X, Y, squared=False, nx=None):
     return c
 
 
+def sparse_ot_dist(
+    x1,
+    x2,
+    i,
+    j,
+    w=None,
+    metric="sqeuclidean",
+    p=2,
+    batch_size=None,
+):
+    r"""Compute ot distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
+    with sparse weights given by `w` for the pairs of samples with indices `i` and `j`.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends for the following metrics:
+        'sqeuclidean', 'euclidean', 'cityblock', 'minkowski'.
+
+    Parameters
+    ----------
+
+    x1 : array-like, shape (n1,d)
+        matrix with `n1` samples of size `d`
+    x2 : array-like, shape (n2,d), optional
+        matrix with `n2` samples of size `d` (if None then :math:`\mathbf{x_2} = \mathbf{x_1}`)
+    i : array-like, shape (k,)
+        indices of samples in `x1` to compute distance from
+    j : array-like, shape (k,)
+        indices of samples in `x2` to compute distance to
+    w : array-like, shape (k,), optional
+        weights for each pair of samples to compute distance between.
+        If None, all pairs are weighted equally (=1/k).
+    metric : str | callable, optional
+        'sqeuclidean', 'euclidean', 'cityblock' or 'minkowski'.
+    p : float, optional
+        p-norm for the Minkowski metric. Default value is 2.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to avoid memory issues for large datasets. Default is None (no batching).
+    Returns
+    -------
+    dist : float
+        sum of the distance between :math:`\mathbf{x_1}_i` and :math:`\mathbf{x_2}_j` computed with given metric and weighted by `w`
+    """
+    nx = get_backend(x1, x2)
+
+    assert x1.ndim == 2, f"x1 must be a 2d array, got {x1.ndim}d array instead"
+    assert x2.ndim == 2, f"x2 must be a 2d array, got {x2.ndim}d array instead"
+
+    assert len(i) == len(
+        j
+    ), f"i and j must have the same length, got {len(i)} and {len(j)}"
+    if w is not None:
+        assert len(w) == len(
+            i
+        ), f"w must have the same length as i and j, got {len(w)} and {len(i)}"
+
+    assert metric in ("minkowski", "euclidean", "cityblock", "sqeuclidean"), (
+        "sparse_dist work only with metrics from the following list: "
+        + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+    )
+
+    assert (
+        x1.shape[1] == x2.shape[1]
+    ), f"x1 ({x1.shape}) and x2 ({x2.shape}) must have the same number of columns"
+
+    if metric == "euclidean":
+        p = 2
+    elif metric == "cityblock":
+        p = 1
+
+    def dist_idxs(idx_x1, idx_x2):
+        if metric == "sqeuclidean":
+            return nx.sum((x1[idx_x1] - x2[idx_x2]) ** 2, axis=1)
+        else:
+            return nx.sum(nx.abs(x1[idx_x1] - x2[idx_x2]) ** p, axis=1) ** (1 / p)
+
+    if w is None:
+        w = nx.ones(len(i), type_as=x1) / len(i)
+
+    d = 0
+    if batch_size is None:
+        batch_size = len(i)
+    for b in range(0, len(i), batch_size):
+        d += nx.sum(
+            dist_idxs(i[b : b + batch_size], j[b : b + batch_size])
+            * w[i[b : b + batch_size]]
+        )
+
+    return d
+
+
 def dist(
     x1,
     x2=None,
@@ -1192,8 +1282,12 @@ class OTResult:
         """Transport plan, encoded as a dense array."""
         # N.B.: We may catch out-of-memory errors and suggest
         # the use of lazy_plan or sparse_plan when appropriate.
-
-        return self._plan
+        if self._plan is not None:
+            return self._plan
+        elif self._sparse_plan is not None:
+            return self._backend.todense(self._sparse_plan)
+        else:
+            return None
 
     @property
     def sparse_plan(self):
@@ -1668,6 +1762,250 @@ def check_number_threads(numThreads):
             'numThreads should either be "max" or a strictly positive integer'
         )
     return numThreads
+
+
+class DataScaler:
+    r"""Backend-aware data scaler with sklearn-compatible API.
+
+    Fit normalization statistics on a single array or on the concatenation
+    of multiple arrays (joint fitting), then apply the same fixed transform
+    to any array. Supports NumPy, PyTorch, JAX, and TensorFlow backends via
+    POT's backend abstraction.
+
+    Parameters
+    ----------
+    norm : str, optional
+        Normalization method. One of:
+
+        - ``'standard'`` (default) : zero mean, unit variance per feature
+        - ``'minmax'`` : scale each feature to [0, 1]
+        - ``'l2'`` : unit L2-norm per sample (row-wise, stateless)
+
+    Attributes
+    ----------
+    norm : str
+        The normalization method.
+    mean_ : array-like
+        Per-feature means (only for ``norm='standard'``).
+    std_ : array-like
+        Per-feature standard deviations (only for ``norm='standard'``).
+    min_ : array-like
+        Per-feature minimums (only for ``norm='minmax'``).
+    max_ : array-like
+        Per-feature maximums (only for ``norm='minmax'``).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.utils import DataScaler
+    >>> X_s = np.array([[1.0, 100.0], [2.0, 200.0]])
+    >>> X_t = np.array([[3.0, 300.0], [4.0, 400.0]])
+    >>> scaler = DataScaler(norm='standard').fit([X_s, X_t])
+    >>> X_s_scaled = scaler.transform(X_s)
+    """
+
+    _VALID_NORMS = ("standard", "minmax", "l2")
+
+    def __init__(self, norm="standard"):
+        if norm not in self._VALID_NORMS:
+            raise ValueError(
+                "Invalid norm '{}'. Expected one of: {}".format(norm, self._VALID_NORMS)
+            )
+        self.norm = norm
+        self.mean_ = None
+        self.std_ = None
+        self.min_ = None
+        self.max_ = None
+        self._nx = None
+        self._fitted = False
+
+    def fit(self, X):
+        r"""Compute normalization statistics from one array or a list of arrays.
+
+        When given a list, arrays are concatenated along axis 0 before
+        computing statistics (joint fitting).
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to fit on. If a list, arrays must have the same number of
+            features (columns).
+
+        Returns
+        -------
+        self : DataScaler
+        """
+        if isinstance(X, (list, tuple)):
+            if len(X) == 0:
+                raise ValueError("Cannot fit on empty list.")
+            nx = get_backend(*X)
+            X_concat = nx.concatenate(list(X), axis=0)
+        else:
+            nx = get_backend(X)
+            X_concat = X
+
+        self._nx = nx
+
+        if self.norm == "l2":
+            self._fitted = True
+            return self
+
+        if self.norm == "standard":
+            self.mean_ = nx.mean(X_concat, axis=0)
+            self.std_ = nx.std(X_concat, axis=0)
+            zero_var = self.std_ == 0
+            if nx.any(zero_var):
+                warnings.warn(
+                    "Zero variance detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.std_ = nx.where(
+                    zero_var,
+                    nx.ones(self.std_.shape, type_as=self.std_),
+                    self.std_,
+                )
+
+        elif self.norm == "minmax":
+            self.min_ = nx.min(X_concat, axis=0)
+            self.max_ = nx.max(X_concat, axis=0)
+            zero_range = self.max_ == self.min_
+            if nx.any(zero_range):
+                warnings.warn(
+                    "Zero range detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.max_ = nx.where(
+                    zero_range,
+                    self.min_ + 1.0,
+                    self.max_,
+                )
+
+        self._fitted = True
+        return self
+
+    def _apply_transform(self, X):
+        r"""Apply the fitted transform to one array or a list of arrays.
+
+        Internal helper shared by :meth:`transform` and :meth:`fit_transform`.
+        Validates that the input's backend matches the one used at fit time.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        array-like or list of array-like
+            Transformed data; a list is returned when ``X`` is a list.
+        """
+        if isinstance(X, (list, tuple)):
+            return [self._apply_transform(x) for x in X]
+
+        nx = get_backend(X)
+
+        if self._nx is not None and nx is not self._nx:
+            raise ValueError(
+                "Backend mismatch: DataScaler was fitted with backend '{}' "
+                "but received input with backend '{}'.".format(
+                    type(self._nx).__name__, type(nx).__name__
+                )
+            )
+
+        if self.norm == "standard":
+            return (X - self.mean_) / self.std_
+        elif self.norm == "minmax":
+            return (X - self.min_) / (self.max_ - self.min_)
+        elif self.norm == "l2":
+            norms = nx.sqrt(nx.sum(X**2, axis=1, keepdims=True))
+            zero_norm = norms == 0
+            if nx.any(zero_norm):
+                warnings.warn(
+                    "Zero-norm row(s) detected. These will be left unchanged.",
+                    RuntimeWarning,
+                )
+                norms = nx.where(
+                    zero_norm,
+                    nx.ones(norms.shape, type_as=norms),
+                    norms,
+                )
+            return X / norms
+
+    def transform(self, X):
+        r"""Apply the fitted transformation to X.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to transform. If a list, each element is transformed and
+            returned as a list.
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            Transformed data, same shape and backend as X. If X was a list,
+            returns a list of transformed arrays.
+        """
+        if self.norm != "l2" and not self._fitted:
+            raise RuntimeError(
+                "DataScaler must be fitted before calling transform() "
+                "for norm='{}'.".format(self.norm)
+            )
+        return self._apply_transform(X)
+
+    def fit_transform(self, X):
+        r"""Fit then transform.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            If X was a list, returns a list of transformed arrays.
+        """
+        self.fit(X)
+        return self._apply_transform(X)
+
+
+def apply_scaler(X_s, X_t, scaler=None):
+    r"""Apply a scaler to two arrays.
+
+    Dispatches based on the type of ``scaler``:
+
+    - ``None`` : returns inputs unchanged.
+    - Object with a ``.transform()`` method : calls ``scaler.transform()`` on each.
+    - Callable : calls ``scaler()`` on each (covers functions, lambdas,
+      PyTorch transforms, neural network encoders, etc.).
+
+    Parameters
+    ----------
+    X_s : array-like
+        Source samples.
+    X_t : array-like
+        Target samples.
+    scaler : None, object with .transform(), or callable, optional
+        Preprocessing to apply.
+
+    Returns
+    -------
+    X_s_out : array-like
+        Possibly transformed source samples.
+    X_t_out : array-like
+        Possibly transformed target samples.
+    """
+    if scaler is None:
+        return X_s, X_t
+    if hasattr(scaler, "transform") and callable(scaler.transform):
+        return scaler.transform(X_s), scaler.transform(X_t)
+    if callable(scaler):
+        return scaler(X_s), scaler(X_t)
+    raise ValueError(
+        "scaler must be None, an object with a .transform() method, "
+        "or a callable. Got type: {}".format(type(scaler).__name__)
+    )
 
 
 def fun_to_numpy(fun, arr, nx, warn=True):

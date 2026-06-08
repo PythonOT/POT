@@ -1037,7 +1037,7 @@ def emd2_lazy(
         alpha_init_np = np.asarray(alpha_init_np, dtype=np.float64, order="C")
         beta_init_np = np.asarray(beta_init_np, dtype=np.float64, order="C")
 
-    G, cost, u, v, result_code = emd_c_lazy(
+    flow_sources, flow_targets, flow_values, cost, u, v, result_code = emd_c_lazy(
         a_np, b_np, X_a_np, X_b_np, metric, numItermax, alpha_init_np, beta_init_np
     )
 
@@ -1052,8 +1052,6 @@ def emd2_lazy(
             "histogram consists of floating point elements.",
             stacklevel=2,
         )
-
-    G_backend = nx.from_numpy(G, type_as=type_as)
 
     cost_backend = nx.set_gradients(
         nx.from_numpy(cost, type_as=type_as),
@@ -1075,6 +1073,16 @@ def emd2_lazy(
             "result_code": result_code,
         }
         if return_matrix:
+            flow_values_backend = nx.from_numpy(flow_values, type_as=type_as)
+            flow_sources_backend = nx.from_numpy(flow_sources.astype(np.int64))
+            flow_targets_backend = nx.from_numpy(flow_targets.astype(np.int64))
+            G_backend = nx.coo_matrix(
+                flow_values_backend,
+                flow_sources_backend,
+                flow_targets_backend,
+                shape=(n1, n2),
+                type_as=type_as,
+            )
             log_dict["G"] = G_backend
         return cost_backend, log_dict
     else:
