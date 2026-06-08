@@ -67,6 +67,7 @@ lst_parameters_solve_bary_sample_NotImplemented = [
     {"method": method} for method in lst_method_lazy
 ] + [
     {"lazy": True},  # fail lazy
+    {"metric": "cosine"},  # fail on invalid metric
 ]
 
 # set readable ids for each param
@@ -877,95 +878,95 @@ def test_solve_bary_sample(nx, reg, reg_type, unbalanced, unbalanced_type, warms
 
     stopping_criterion = "loss" if rng.choice([True, False]) else "bary"
 
-    try:
-        if reg_type == "tuple":
+    # try:
+    if reg_type == "tuple":
 
-            def f(G):
-                return np.sum(G**2)
+        def f(G):
+            return np.sum(G**2)
 
-            def df(G):
-                return 2 * G
+        def df(G):
+            return 2 * G
 
-            reg_type = (f, df)
-            # print('test reg_type:', reg_type[0](None), reg_type[1](None))
-        # solve default None weights
-        sol0 = ot.solve_bary_sample(
-            X_list,
-            n,
-            w=None,
-            metric="sqeuclidean",
-            reg=reg,
-            reg_type=reg_type,
-            unbalanced=unbalanced,
-            unbalanced_type=unbalanced_type,
-            warmstart=warmstart,
-            max_iter_bary=2,
-            tol_bary=1e-3,
-            stopping_criterion=stopping_criterion,
-            verbose=True,
-        )
-        print("------ [done] sol0 - no backend")
+        reg_type = (f, df)
+        # print('test reg_type:', reg_type[0](None), reg_type[1](None))
+    # solve default None weights
+    sol0 = ot.solve_bary_sample(
+        X_list,
+        n,
+        w=None,
+        metric="sqeuclidean",
+        reg=reg,
+        reg_type=reg_type,
+        unbalanced=unbalanced,
+        unbalanced_type=unbalanced_type,
+        warmstart=warmstart,
+        max_iter_bary=2,
+        tol_bary=1e-3,
+        stopping_criterion=stopping_criterion,
+        verbose=True,
+    )
+    print("------ [done] sol0 - no backend")
 
-        # solve provided uniform weights
+    # solve provided uniform weights
 
-        sol = ot.solve_bary_sample(
-            X_list,
-            n,
-            a_list=a_list,
-            b_init=b,
-            w=w,
-            metric="sqeuclidean",
-            reg=reg,
-            reg_type=reg_type,
-            unbalanced=unbalanced,
-            unbalanced_type=unbalanced_type,
-            warmstart=warmstart,
-            max_iter_bary=2,
-            tol_bary=1e-3,
-            stopping_criterion=stopping_criterion,
-            verbose=True,
-        )
-        print("------ [done] sol - no backend")
+    sol = ot.solve_bary_sample(
+        X_list,
+        n,
+        a_list=a_list,
+        b_init=b,
+        w=w,
+        metric="sqeuclidean",
+        reg=reg,
+        reg_type=reg_type,
+        unbalanced=unbalanced,
+        unbalanced_type=unbalanced_type,
+        warmstart=warmstart,
+        max_iter_bary=2,
+        tol_bary=1e-3,
+        stopping_criterion=stopping_criterion,
+        verbose=True,
+    )
+    print("------ [done] sol - no backend")
 
-        assert_allclose_bary_sol(sol0, sol)
+    assert_allclose_bary_sol(sol0, sol)
 
-        # solve in backend
-        X_listb = nx.from_numpy(*X_list)
-        a_listb = nx.from_numpy(*a_list)
-        wb, bb = nx.from_numpy(w, b)
+    # solve in backend
+    X_listb = nx.from_numpy(*X_list)
+    a_listb = nx.from_numpy(*a_list)
+    wb, bb = nx.from_numpy(w, b)
 
-        if isinstance(reg_type, tuple):
+    if isinstance(reg_type, tuple):
 
-            def fb(G):
-                return nx.sum(
-                    G**2
-                )  # otherwise we keep previously defined (f, df) as required by inner solver
+        def fb(G):
+            return nx.sum(
+                G**2
+            )  # otherwise we keep previously defined (f, df) as required by inner solver
 
-            reg_type = (fb, df)
+        reg_type = (fb, df)
 
-        solb = ot.solve_bary_sample(
-            X_listb,
-            n,
-            a_list=a_listb,
-            b_init=bb,
-            w=wb,
-            metric="sqeuclidean",
-            reg=reg,
-            reg_type=reg_type,
-            unbalanced=unbalanced,
-            unbalanced_type=unbalanced_type,
-            warmstart=warmstart,
-            max_iter_bary=2,
-            tol_bary=1e-3,
-            stopping_criterion=stopping_criterion,
-            verbose=True,
-        )
-        print("------  [done] sol - with backend")
+    solb = ot.solve_bary_sample(
+        X_listb,
+        n,
+        a_list=a_listb,
+        b_init=bb,
+        w=wb,
+        metric="sqeuclidean",
+        reg=reg,
+        reg_type=reg_type,
+        unbalanced=unbalanced,
+        unbalanced_type=unbalanced_type,
+        warmstart=warmstart,
+        max_iter_bary=2,
+        tol_bary=1e-3,
+        stopping_criterion=stopping_criterion,
+        verbose=True,
+    )
+    print("------  [done] sol - with backend")
 
-        assert_allclose_bary_sol(sol, solb)
+    assert_allclose_bary_sol(sol, solb)
 
-    except NotImplementedError:
-        pytest.skip("Not implemented")
+    # except NotImplementedError:
+    #    pytest.skip("Not implemented")
 
 
 @pytest.mark.parametrize(
@@ -996,3 +997,94 @@ def test_solve_bary_sample_NotImplemented(nx, method_params):
         ot.solve_bary_sample(
             X_listb, n, a_list=a_listb, b_init=bb, w=wb, **method_params
         )
+
+
+def test_solve_bary_sample_ValueError(nx):
+    # Test ValueError cases: stopping_criterion and X_b_init shape
+    rng = np.random.RandomState(42)
+
+    K = 2
+    ns = [10, 12]
+    n = 5
+    X_list = [rng.randn(ns_i, 2) for ns_i in ns]
+    a_list = [ot.utils.unif(ns_i) for ns_i in ns]
+    w = ot.utils.unif(K)
+
+    X_listb = nx.from_numpy(*X_list)
+    a_listb = nx.from_numpy(*a_list)
+    wb = nx.from_numpy(w)
+
+    # Test Invalid stopping_criterion
+    with pytest.raises(ValueError, match="stopping_criterion must be"):
+        ot.solve_bary_sample(
+            X_listb, n, a_list=a_listb, w=wb, stopping_criterion="invalid"
+        )
+
+    # Test Invalid X_b_init shape
+    bad_X_b_init = rng.randn(n + 1, 2)
+    bad_X_b_init = nx.from_numpy(bad_X_b_init)
+    with pytest.raises(ValueError, match="X_b_init must have shape"):
+        ot.solve_bary_sample(X_listb, n, X_b_init=bad_X_b_init, a_list=a_listb, w=wb)
+
+
+def test_solve_bary_sample_callable_metric(nx):
+    # Test callable metric paths (lines 2496-2551)
+    rng = np.random.RandomState(42)
+
+    K = 2
+    ns = [8, 9]
+    n = 4
+    X_list = [rng.randn(ns_i, 2) for ns_i in ns]
+    a_list = [ot.utils.unif(ns_i) for ns_i in ns]
+    w = ot.utils.unif(K)
+
+    X_listb = nx.from_numpy(*X_list)
+    a_listb = nx.from_numpy(*a_list)
+    wb = nx.from_numpy(w)
+
+    # Define custom metric function
+    def custom_metric(X_b, X_a):
+        return nx.sqrt(nx.sum((X_b[:, None, :] - X_a[None, :, :]) ** 2, axis=2))
+
+    if str(nx) == "torch":
+        # Test single callable metric
+        sol_callable = ot.solve_bary_sample(
+            X_listb, n, a_list=a_listb, w=wb, metric=custom_metric, max_iter_bary=1
+        )
+        assert sol_callable is not None
+        assert sol_callable.X is not None
+
+        # Test list of callable metrics
+        metrics_list = [custom_metric, custom_metric]
+        sol_list = ot.solve_bary_sample(
+            X_listb, n, a_list=a_listb, w=wb, metric=metrics_list, max_iter_bary=1
+        )
+        assert sol_list is not None
+        assert sol_list.X is not None
+
+        # Test with auto_bary_method="true_fixed_point"
+        sol_fixed_point = ot.solve_bary_sample(
+            X_listb,
+            n,
+            a_list=a_listb,
+            w=wb,
+            metric=custom_metric,
+            auto_bary_method="true_fixed_point",
+            max_iter_bary=1,
+        )
+        assert sol_fixed_point is not None
+        assert sol_fixed_point.X is not None
+    else:
+        with pytest.raises(
+            AssertionError,
+            match=f"Backend {str(nx)} is not compatible with ground_bary=None, it must be provided if not using PyTorch backend",
+        ):
+            sol_fixed_point = ot.solve_bary_sample(
+                X_listb,
+                n,
+                a_list=a_listb,
+                w=wb,
+                metric=custom_metric,
+                auto_bary_method="true_fixed_point",
+                max_iter_bary=1,
+            )

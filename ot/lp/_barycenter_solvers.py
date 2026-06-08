@@ -674,7 +674,7 @@ def free_support_barycenter_generic_costs(
     if ground_bary is None:
         auto_ground_bary = True
         assert str(nx) == "torch", (
-            f"Backend {str(nx)} is not compatible with ground_bary=None, it"
+            f"Backend {str(nx)} is not compatible with ground_bary=None, it "
             "must be provided if not using PyTorch backend"
         )
         try:
