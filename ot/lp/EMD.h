@@ -44,7 +44,8 @@ int EMD_wrap_sparse(
     uint64_t *flow_sources_out,  // Output: source indices of non-zero flows
     uint64_t *flow_targets_out,  // Output: target indices of non-zero flows
     double *flow_values_out,     // Output: flow values
-    uint64_t *n_flows_out,       
+    uint64_t *n_flows_out,
+    uint64_t max_flows_out,
     double *alpha,               // Output: dual variables for sources (n1)
     double *beta,                // Output: dual variables for targets (n2)
     double *cost,                // Output: total transportation cost
@@ -62,7 +63,11 @@ int EMD_wrap_lazy(
     double *coords_b,            // Target coordinates (n2 x dim)
     int dim,                     // Dimension of coordinates
     int metric,                  // Distance metric: 0=sqeuclidean, 1=euclidean, 2=cityblock
-    double *G,                   // Output: transport plan (n1 x n2)
+    uint64_t *flow_sources_out,  // Output: source indices of non-zero flows
+    uint64_t *flow_targets_out,  // Output: target indices of non-zero flows
+    double *flow_values_out,     // Output: flow values
+    uint64_t *n_flows_out,
+    uint64_t max_flows_out,
     double *alpha,               // Output: dual variables for sources (n1)
     double *beta,                // Output: dual variables for targets (n2)
     double *cost,                // Output: total transportation cost
