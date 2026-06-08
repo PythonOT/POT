@@ -464,3 +464,5 @@ Artificial Intelligence.
 [86] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
 
 [87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
+
+[88] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.

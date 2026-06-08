@@ -25,6 +25,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
   a callable, or a no-op (PR #808)
 - Add optional `scaler` parameter to `sliced_wasserstein_distance` and  `max_sliced_wasserstein_distance` (PR #808)
+- Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
 - Add cost functions between linear operators following [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  implemented in `ot.sgot` (PR #792)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
