@@ -1,19 +1,30 @@
-"""Tests for module bregman on OT with bregman projections"""
+"""Tests for module batch"""
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
-#         Kilian Fatras <kilian.fatras@irisa.fr>
-#         Quang Huy Tran <quang-huy.tran@univ-ubs.fr>
-#         Eduardo Fernandes Montesuma <eduardo.fernandes-montesuma@universite-paris-saclay.fr>
+#         Paul Krzakala <paul.krzakala@gmail.com>
+#         Sonia Mazelet <sonia.mazelet@polytechnique.edu>
+
+
 #
 # License: MIT License
 
 import numpy as np
-from ot.batch import solve_gromov_batch, loss_quadratic_samples_batch
+from ot.batch import (
+    solve_gromov_batch,
+    loss_quadratic_batch,
+    loss_linear_batch,
+    loss_quadratic_samples_batch,
+)
 from ot import solve_gromov
 from ot.batch._linear import dist_batch
 import pytest
 from itertools import product
 from ot.backend import torch
+from ot.batch._quadratic import (
+    tensor_batch,
+    div_between_product_batch,
+)
+from ot.gromov._utils import div_between_product
 
 
 def test_solve_gromov_batch():
@@ -133,3 +144,260 @@ def test_backend(nx):
     C = np.random.randn(batchsize, n, n, d)
     C = nx.from_numpy(C)
     solve_gromov_batch(C1=C, C2=C, a=None, b=None, loss="sqeuclidean", logits=False)
+
+
+@pytest.mark.parametrize("unbalanced_type", ["kl", "l2"])
+@pytest.mark.parametrize("loss", ["sqeuclidean", "kl"])
+def test_fugw_loss(unbalanced_type, loss):
+    """Check that loss_fugw_batch and loss_fugw_samples_batch run without error."""
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    C1 = rng.rand(batchsize, n, n, d)
+    C2 = rng.rand(batchsize, n, n, d)
+    M = rng.rand(batchsize, n, n)
+    a = np.ones((batchsize, n))
+    T = rng.rand(batchsize, n, n)
+    alpha = rng.rand()
+    reg_marginals = rng.rand()
+
+    loss_fugw = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M,
+        alpha=alpha,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_fugw_unbalanced_only = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M=None,
+        alpha=alpha,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_fugw_no_alpha = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M=None,
+        alpha=None,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_fugw_no_unbalanced = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M=M,
+        alpha=alpha,
+        loss=loss,
+        logits=False,
+    )
+    assert np.isfinite(loss_fugw_unbalanced_only).all()
+    assert np.isfinite(loss_fugw).all()
+    assert np.isfinite(loss_fugw_no_alpha).all()
+    assert np.isfinite(loss_fugw_no_unbalanced).all()
+
+    # check that alpha and reg_marginals can be passed as lists or arrays of shape (batchsize,)
+    alpha = rng.rand(batchsize)
+    reg_marginals = rng.rand(batchsize)
+    alpha_list = alpha.tolist()
+    reg_marginals_list = reg_marginals.tolist()
+
+    loss_fugw = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M,
+        alpha=alpha,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_fugw_list = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M,
+        alpha=alpha_list,
+        unbalanced=reg_marginals_list,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+
+    assert np.isfinite(loss_fugw).all()
+    assert np.isfinite(loss_fugw_list).all()
+    np.testing.assert_allclose(loss_fugw, loss_fugw_list)
+
+    # check that invalid loss raise an error
+    with pytest.raises(ValueError):
+        loss_fugw = loss_quadratic_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            T,
+            M,
+            alpha=alpha,
+            unbalanced=reg_marginals,
+            unbalanced_type=unbalanced_type,
+            loss="test",
+            logits=False,
+        )
+
+    # check that invalid loss raise an error
+    with pytest.raises(ValueError):
+        loss_fugw = loss_quadratic_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            T,
+            M,
+            alpha=alpha,
+            unbalanced=reg_marginals,
+            unbalanced_type="test",
+            loss=loss,
+            logits=False,
+        )
+
+    # check that invalid alpha shape raise an error
+    alpha = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_quadratic_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            T,
+            M,
+            alpha=alpha,
+            unbalanced=reg_marginals,
+            unbalanced_type=unbalanced_type,
+            loss=loss,
+            logits=False,
+        )
+
+    # check that invalid rho shape raise an error
+    alpha = rng.rand(batchsize)
+    reg_marginals = rng.rand(batchsize + 1)
+    with pytest.raises(ValueError):
+        loss_quadratic_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            T,
+            M,
+            alpha=alpha,
+            unbalanced=reg_marginals,
+            unbalanced_type=unbalanced_type,
+            loss=loss,
+            logits=False,
+        )
+
+
+@pytest.mark.parametrize("unbalanced_type", ["kl", "l2"])
+@pytest.mark.parametrize("loss", ["sqeuclidean", "kl"])
+def test_valid_fugw_loss_endpoints(unbalanced_type, loss):
+    """Check that loss_fugw_batch gives the same results as solve_gromov_batch and solve_linear_batch for alpha=0 and alpha=1."""
+    batchsize = 2
+    n = 4
+    d = 2
+    rng = np.random.RandomState(0)
+    C1 = rng.rand(batchsize, n, n, d)
+    C2 = rng.rand(batchsize, n, n, d)
+    M = rng.rand(batchsize, n, n)
+    a = np.ones((batchsize, n))
+    reg_marginals = 0
+    T = rng.rand(batchsize, n, n)
+
+    loss_fugw = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M,
+        alpha=0.0,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_linear = loss_linear_batch(M, T)
+    np.testing.assert_allclose(loss_fugw, loss_linear, atol=1e-5)
+
+    loss_fugw = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M,
+        alpha=1.0,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_gromov = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    np.testing.assert_allclose(loss_fugw, loss_gromov, atol=1e-5)
+
+
+@pytest.mark.parametrize("divergence", ["kl", "l2"])
+def test_div_between_product(divergence):
+    batchsize = 2
+    n = 4
+    m = 3
+    rng = np.random.RandomState(0)
+    mu = rng.rand(batchsize, n)
+    nu = rng.rand(batchsize, m)
+    alpha = rng.rand(batchsize, n)
+    beta = rng.rand(batchsize, m)
+
+    res_batch = div_between_product_batch(
+        mu, nu, alpha, beta, divergence=divergence, nx=None
+    )
+    res = np.array(
+        [
+            div_between_product(mu[i], nu[i], alpha[i], beta[i], divergence)
+            for i in range(batchsize)
+        ]
+    )
+    np.testing.assert_allclose(res_batch, res, atol=1e-5)

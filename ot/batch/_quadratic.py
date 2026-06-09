@@ -12,6 +12,7 @@ from ..utils import OTResult
 from ot.backend import get_backend
 from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
+from ot.utils import list_to_array
 
 
 def tensor_batch(
@@ -105,7 +106,9 @@ def tensor_batch(
     if nx is None:
         nx = get_backend(C1)
 
-    if loss == "sqeuclidean":
+    loss = loss.lower()
+
+    if loss == "sqeuclidean" or loss == "l2":
 
         def f1(C1):
             if C1.ndim == 4:
@@ -150,6 +153,78 @@ def tensor_batch(
             return C2
 
     return compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=symmetric)
+
+
+def div_between_product_batch(mu, nu, alpha, beta, divergence, nx=None):
+    r"""Fast computation of the Bregman divergence between batches of product measures.
+    Only support for Kullback-Leibler and half-squared L2 divergences.
+
+    For half-squared L2 divergence:
+
+    .. math::
+        \frac{1}{2} || \mu \otimes \nu, \alpha \otimes \beta ||^2
+        = \frac{1}{2} \Big[ ||\alpha||^2 ||\beta||^2 + ||\mu||^2 ||\nu||^2 - 2 \langle \alpha, \mu \rangle \langle \beta, \nu \rangle \Big]
+
+    For Kullback-Leibler divergence:
+
+    .. math::
+        KL(\mu \otimes \nu, \alpha \otimes \beta)
+        = m(\mu) * KL(\nu, \beta) + m(\nu) * KL(\mu, \alpha) + (m(\mu) - m(\alpha)) * (m(\nu) - m(\beta))
+
+    where:
+
+    - :math:`\mu` and :math:`\alpha` are two measures having the same shape.
+    - :math:`\nu` and :math:`\beta` are two measures having the same shape.
+    - :math:`m` denotes the mass of the measure
+
+    Parameters
+    ----------
+    mu : array-like, shape (B, ...)
+        First factor of each product measure in the batch.
+    nu : array-like, shape (B, ...)
+        Second factor of each product measure in the batch.
+    alpha : array-like, shape (B, ...)
+        Reference factor with the same shape as `mu`.
+    beta : array-like, shape (B, ...)
+        Reference factor with the same shape as `nu`.
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Bregman divergence between two product measures for each problem in the batch.
+    """
+
+    if nx is None:
+        nx = get_backend(mu, nu, alpha, beta)
+
+    axis_mu = tuple(range(1, mu.ndim)) if mu.ndim > 1 else 0
+    axis_nu = tuple(range(1, nu.ndim)) if nu.ndim > 1 else 0
+    axis_alpha = tuple(range(1, alpha.ndim)) if alpha.ndim > 1 else 0
+    axis_beta = tuple(range(1, beta.ndim)) if beta.ndim > 1 else 0
+
+    if divergence == "kl":
+        m_mu = nx.sum(mu, axis=axis_mu)
+        m_nu = nx.sum(nu, axis=axis_nu)
+        m_alpha = nx.sum(alpha, axis=axis_alpha)
+        m_beta = nx.sum(beta, axis=axis_beta)
+        const = (m_mu - m_alpha) * (m_nu - m_beta)
+        res = (
+            m_nu * nx.kl_div(mu, alpha, mass=True, axis=axis_mu)
+            + m_mu * nx.kl_div(nu, beta, mass=True, axis=axis_nu)
+            + const
+        )
+
+    elif divergence == "l2":
+        res = (
+            nx.sum(alpha**2, axis=axis_alpha) * nx.sum(beta**2, axis=axis_beta)
+            - 2 * nx.sum(alpha * mu, axis=axis_mu) * nx.sum(beta * nu, axis=axis_nu)
+            + nx.sum(mu**2, axis=axis_mu) * nx.sum(nu**2, axis=axis_nu)
+        ) / 2
+
+    return res
 
 
 def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
@@ -204,8 +279,12 @@ def loss_quadratic_samples_batch(
     C1,
     C2,
     T,
+    M=None,
+    alpha=None,
+    unbalanced=None,
+    unbalanced_type="kl",
     loss="sqeuclidean",
-    symmetric=None,
+    symmetric=True,
     nx=None,
     logits=None,
     recompute_const=False,
@@ -225,15 +304,33 @@ def loss_quadratic_samples_batch(
         Target cost matrices.
     T : array-like, shape (B, n, m)
         Transport plan.
+    M : array-like, shape (B, n, m)
+        Cost matrix between features across domains (default is None).
+    alpha : float, array-like or list (B,) optional
+        Weight the quadratic term (alpha*Gromov) and the linear term
+        ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
+        Gromov problem (when M is not provided). By default ``alpha=None``
+        corresponds to ``alpha=1`` for Gromov problem (``M==None``) and
+        ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``).
+        If alpha is a scalar, it is used for all problems in the batch.
+    unbalanced : float array-like or list(B,) optional
+        Unbalanced penalization weight :math:`\lambda_u`. If unbalanced is a scalar, it is used for all problems in the batch.
+    unbalanced_type : string, optional
+        Type of unbalanced penalization function, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
     loss : str, optional
         Loss function to use. Supported values: 'sqeuclidean', 'kl'.
         Default is 'sqeuclidean'.
-    recompute_const : bool, optional
-        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
     symmetric : bool, optional
         Whether to use symmetric version. Default is True.
     nx : module, optional
         Backend to use. Default is None.
+    logits : bool, optional
+        For KL divergence, whether inputs are logits (unnormalized log probabilities).
+        If True, inputs are treated as logits. Default is None.
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
+        Will be set to True if unbalanced is not None.
+
 
     Examples
     --------
@@ -255,15 +352,81 @@ def loss_quadratic_samples_batch(
     ot.batch.tensor_batch : From computing the cost tensor L.
     ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
     """
-    if isinstance(loss, str):
+    if nx is None:
+        nx = get_backend(T)
+
+    if isinstance(loss, str) and loss in ["sqeuclidean", "kl", "l2"]:
         L = tensor_batch(
             a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )
     else:
         raise ValueError(f"Unknown loss function: {loss}")
-    return loss_quadratic_batch(
+
+    if unbalanced is not None:
+        recompute_const = True
+
+    quadratic = loss_quadratic_batch(
         L, T, recompute_const=recompute_const, symmetric=symmetric, nx=nx
     )
+
+    if unbalanced is None and M is None:
+        return quadratic
+
+    B = T.shape[0]
+
+    if unbalanced is not None:
+        if unbalanced_type is None:
+            raise ValueError(
+                "unbalanced_type must be specified if unbalanced is not None"
+            )
+
+        unbalanced_type = unbalanced_type.lower()
+
+        if unbalanced_type not in ["kl", "l2"]:
+            raise ValueError(
+                f"Unknown unbalanced_type: {unbalanced_type}, expected 'kl' or 'l2'"
+            )
+
+        if isinstance(unbalanced, list):
+            unbalanced = list_to_array(unbalanced, nx=nx)
+
+        if hasattr(unbalanced, "ndim") and unbalanced.ndim > 0:
+            if unbalanced.ndim != 1 or unbalanced.shape[0] != B:
+                raise ValueError(
+                    f"If reg_marginals is not a scalar, it must have shape ({B},), got {unbalanced.shape}"
+                )
+
+        T1 = nx.sum(T, 2)
+        T2 = nx.sum(T, 1)
+        unbalanced_term = div_between_product_batch(
+            T1,
+            T2,
+            a,
+            b,
+            divergence=unbalanced_type,
+            nx=nx,
+        )
+
+    if M is not None:
+        if alpha is None:
+            alpha = 0.5
+        if isinstance(alpha, list):
+            alpha = list_to_array(alpha, nx=nx)
+        if hasattr(alpha, "ndim") and alpha.ndim > 0:
+            if alpha.ndim != 1 or alpha.shape[0] != B:
+                raise ValueError(
+                    f"If alpha is not a scalar, it must have shape ({B},), got {alpha.shape}"
+                )
+        linear = loss_linear_batch(M, T, nx=nx)
+
+    if M is not None and unbalanced is not None:
+        return (1 - alpha) * linear + alpha * quadratic + unbalanced * unbalanced_term
+
+    elif M is not None and unbalanced is None:
+        return (1 - alpha) * linear + alpha * quadratic
+
+    else:
+        return quadratic + unbalanced * unbalanced_term
 
 
 def solve_gromov_batch(
