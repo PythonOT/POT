@@ -355,7 +355,7 @@ def loss_quadratic_samples_batch(
     if nx is None:
         nx = get_backend(T)
 
-    if isinstance(loss, str):
+    if isinstance(loss, str) and loss in ["sqeuclidean", "kl", "l2"]:
         L = tensor_batch(
             a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )

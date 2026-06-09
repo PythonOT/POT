@@ -173,7 +173,7 @@ def test_fugw_loss(unbalanced_type, loss):
         unbalanced=reg_marginals,
         unbalanced_type=unbalanced_type,
         loss=loss,
-        logits=(loss == "kl"),
+        logits=False,
     )
     loss_fugw_unbalanced_only = loss_quadratic_samples_batch(
         a,
@@ -188,7 +188,34 @@ def test_fugw_loss(unbalanced_type, loss):
         loss=loss,
         logits=False,
     )
+    loss_fugw_no_alpha = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M=None,
+        alpha=None,
+        unbalanced=reg_marginals,
+        unbalanced_type=unbalanced_type,
+        loss=loss,
+        logits=False,
+    )
+    loss_fugw_no_unbalanced = loss_quadratic_samples_batch(
+        a,
+        a,
+        C1,
+        C2,
+        T,
+        M=M,
+        alpha=alpha,
+        loss=loss,
+        logits=False,
+    )
     assert np.isfinite(loss_fugw_unbalanced_only).all()
+    assert np.isfinite(loss_fugw).all()
+    assert np.isfinite(loss_fugw_no_alpha).all()
+    assert np.isfinite(loss_fugw_no_unbalanced).all()
 
     # check that alpha and reg_marginals can be passed as lists or arrays of shape (batchsize,)
     alpha = rng.rand(batchsize)
@@ -227,7 +254,23 @@ def test_fugw_loss(unbalanced_type, loss):
     assert np.isfinite(loss_fugw_list).all()
     np.testing.assert_allclose(loss_fugw, loss_fugw_list)
 
-    # test that invalid unbalanced_type raise an error
+    # check that invalid loss raise an error
+    with pytest.raises(ValueError):
+        loss_fugw = loss_quadratic_samples_batch(
+            a,
+            a,
+            C1,
+            C2,
+            T,
+            M,
+            alpha=alpha,
+            unbalanced=reg_marginals,
+            unbalanced_type=unbalanced_type,
+            loss="test",
+            logits=False,
+        )
+
+    # check that invalid loss raise an error
     with pytest.raises(ValueError):
         loss_fugw = loss_quadratic_samples_batch(
             a,
