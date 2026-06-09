@@ -21,13 +21,16 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
 - Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
 - Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Add cost functions between linear operators following  
+  [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
+  implemented in `ot.sgot` (PR #792)
 - Add `ot.utils.DataScaler` class for backend-aware joint normalization of input distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and   support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
 - Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
   a callable, or a no-op (PR #808)
 - Add optional `scaler` parameter to `sliced_wasserstein_distance` and  `max_sliced_wasserstein_distance` (PR #808)
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
-- Add cost functions between linear operators following [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  implemented in `ot.sgot` (PR #792)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
+- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
 
 #### Closed issues
 
