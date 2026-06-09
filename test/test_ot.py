@@ -213,8 +213,8 @@ def test_emd_emd2():
     np.testing.assert_allclose(w, 0)
 
 
-def test_omp_emd2():
-    # test emd2 and emd2 with openmp for simple identity
+def test_emd2_num_threads_compatibility():
+    # numThreads is kept as a no-op compatibility parameter.
     n = 100
     rng = np.random.RandomState(0)
 

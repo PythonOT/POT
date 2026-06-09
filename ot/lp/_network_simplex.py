@@ -287,9 +287,9 @@ def emd(
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :py:func:`ot.lp.center_ot_dual`.
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter. The network simplex solver no
+        longer uses OpenMP, so this parameter is ignored.
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
@@ -590,9 +590,9 @@ def emd2(
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :py:func:`ot.lp.center_ot_dual`.
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter. The network simplex solver no
+        longer uses OpenMP, so this parameter is ignored.
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
