@@ -21,7 +21,7 @@ import matplotlib.pylab as pl
 import torch
 from time import perf_counter
 import ot
-from ot.batch._quadratic import loss_fugw_batch, tensor_batch
+from ot.batch._quadratic import loss_quadratic_samples_batch, tensor_batch
 from ot.gromov import fused_unbalanced_gromov_wasserstein
 from sklearn.manifold import MDS
 
@@ -145,7 +145,7 @@ alpha_batch = 0.5
 alpha_bcd = (1 - alpha_batch) / alpha_batch
 
 reg_marginals_batch = 0.5
-reg_marginals_bcd = reg_marginals_batch / alpha_batch
+reg_marginals_bcd = reg_marginals_batch / (2 * alpha_batch)
 lr = 5e-2
 nb_iter_max = 1500
 tol = 1e-7
@@ -162,15 +162,16 @@ for i in range(nb_iter_max):
     optimizer.zero_grad()
     # Positive transport plan parameterized as log(1 + exp(T)).
     plan_torch = torch.nn.functional.softplus(T_torch)
-    loss = loss_fugw_batch(
+    loss = loss_quadratic_samples_batch(
         a_torch,
         b_torch,
-        L,
-        M_torch,
+        C1_torch,
+        C2_torch,
         plan_torch,
+        M_torch,
         alpha=alpha_batch,
-        reg_marginals=reg_marginals_batch,
-        divergence="kl",
+        unbalanced=reg_marginals_batch,
+        unbalanced_type="kl",
         recompute_const=True,
     )[0]
 
@@ -187,19 +188,6 @@ time_adam = perf_counter() - tic
 
 T_adam = torch.nn.functional.softplus(T_torch).detach().cpu().numpy()[0]
 
-pl.figure(2, (10, 4))
-pl.clf()
-pl.subplot(1, 2, 1)
-pl.plot(loss_iter)
-pl.grid()
-pl.title("FUGW loss along iterations")
-pl.xlabel("Iterations")
-pl.subplot(1, 2, 2)
-pl.plot(mass_iter)
-pl.grid()
-pl.title("Transport mass")
-_ = pl.xlabel("Iterations")
-
 
 # %%
 # Compare with the dedicated FUGW solver
@@ -212,15 +200,16 @@ _ = pl.xlabel("Iterations")
 
 def evaluate_batch_fugw_loss(plan):
     plan_torch = torch.tensor(plan[None, :, :], dtype=M_torch.dtype)
-    loss = loss_fugw_batch(
+    loss = loss_quadratic_samples_batch(
         a_torch,
         b_torch,
-        L,
-        M_torch,
+        C1_torch,
+        C2_torch,
         plan_torch,
+        M_torch,
         alpha=alpha_batch,
-        reg_marginals=reg_marginals_batch,
-        divergence="kl",
+        unbalanced=reg_marginals_batch,
+        unbalanced_type="kl",
         recompute_const=True,
     )[0]
     return float(loss.detach())
@@ -248,6 +237,25 @@ time_bcd = perf_counter() - tic
 
 loss_adam_final = evaluate_batch_fugw_loss(T_adam)
 loss_bcd_final = evaluate_batch_fugw_loss(T_bcd)
+print(log["fugw_cost"])
+mass_bcd = T_bcd.sum()
+
+pl.figure(2, (10, 4))
+pl.clf()
+pl.subplot(1, 2, 1)
+pl.plot(loss_iter, label="Adam")
+pl.axhline(loss_bcd_final, color="C1", linestyle="--", label="BCD solver")
+pl.grid()
+pl.title("FUGW loss along iterations")
+pl.xlabel("Iterations")
+pl.legend()
+pl.subplot(1, 2, 2)
+pl.plot(mass_iter, label="Adam")
+pl.axhline(mass_bcd, color="C1", linestyle="--", label="BCD solver")
+pl.grid()
+pl.title("Transport mass")
+pl.xlabel("Iterations")
+_ = pl.legend()
 
 
 # %%
@@ -257,10 +265,12 @@ loss_bcd_final = evaluate_batch_fugw_loss(T_bcd)
 # but direct minimization reaches a lower `loss_fugw_batch` value at the cost
 # of a longer runtime.
 
+vmin = min(T_adam.min(), T_bcd.min())
+vmax = max(T_adam.max(), T_bcd.max())
 pl.figure(3, (10, 4))
 pl.clf()
 pl.subplot(1, 2, 1)
-pl.imshow(T_adam, interpolation="nearest")
+pl.imshow(T_adam, interpolation="nearest", cmap="Blues", vmin=vmin, vmax=vmax)
 pl.title(
     f"Coupling from direct minimization\nloss={loss_adam_final:.3f}, time={time_adam:.2f}s"
 )
@@ -268,7 +278,7 @@ pl.xlabel("Target nodes")
 pl.ylabel("Source nodes")
 pl.colorbar()
 pl.subplot(1, 2, 2)
-pl.imshow(T_bcd, interpolation="nearest")
+pl.imshow(T_bcd, interpolation="nearest", cmap="Blues", vmin=vmin, vmax=vmax)
 pl.title(f"Coupling from BCD solver\nloss={loss_bcd_final:.3f}, time={time_bcd:.2f}s")
 pl.xlabel("Target nodes")
 pl.ylabel("Source nodes")
