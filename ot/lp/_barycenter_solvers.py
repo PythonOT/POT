@@ -590,7 +590,7 @@ def free_support_barycenter_generic_costs(
         of shape :math:`(n\times d_K)`, computing the ground barycenters
         (broadcasted over n). If not provided, done with Adam on PyTorch
         (requires PyTorch backend), inefficiently using the cost functions in
-        `cost_list`.
+        `cost_list`. This function must be provided if `method="true_fixed_point"` is used.
     a : array-like, optional
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
@@ -673,6 +673,9 @@ def free_support_barycenter_generic_costs(
 
     if ground_bary is None:
         auto_ground_bary = True
+        assert (
+            method == "L2_barycentric_proj"
+        ), "ground_bary must be provided if method is 'true_fixed_point'"
         assert str(nx) == "torch", (
             f"Backend {str(nx)} is not compatible with ground_bary=None, it "
             "must be provided if not using PyTorch backend"
