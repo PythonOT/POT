@@ -14,7 +14,6 @@
 
 
 #include "network_simplex_simple.h"
-#include "network_simplex_simple_omp.h"
 #include "sparse_bipartitegraph.h"
 #include "EMD.h"
 #include <cstdint>
@@ -299,87 +298,6 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 
 
 
-
-int EMD_wrap_omp(int n1, int n2, double *X, double *Y, double *D, double *G,
-             double* alpha, double* beta, double *cost, uint64_t maxIter, int numThreads)  {
-    // beware M and C are stored in row major C style!!!
-
-    using namespace lemon_omp;
-    uint64_t n, m, cur;
-
-    typedef FullBipartiteDigraph Digraph;
-    DIGRAPH_TYPEDEFS(Digraph);
-
-    // Get the number of non zero coordinates for r and c
-    n=0;
-    for (int i=0; i<n1; i++) {
-        double val=*(X+i);
-        if (val>0) {
-            n++;
-        }else if(val<0){
-            return INFEASIBLE;
-        }
-    }
-    m=0;
-    for (int i=0; i<n2; i++) {
-        double val=*(Y+i);
-        if (val>0) {
-            m++;
-        }else if(val<0){
-            return INFEASIBLE;
-        }
-    }
-
-    // Define the graph
-
-    std::vector<uint64_t> indI(n), indJ(m);
-    std::vector<double> weights1(n), weights2(m);
-    Digraph di(n, m);
-    const SetupPolicy policy = make_setup_policy(n, m, n1, n2, false);
-    NetworkSimplexSimple<Digraph,double,double, node_id_type> net(
-        di, policy.use_arc_mixing, (int) (n + m), n * m, maxIter, numThreads
-    );
-
-    // Set supply and demand, don't account for 0 values (faster)
-
-    cur=0;
-    for (uint64_t i=0; i<n1; i++) {
-        double val=*(X+i);
-        if (val>0) {
-            weights1[ cur ] = val;
-            indI[cur++]=i;
-        }
-    }
-
-    // Demand is actually negative supply...
-
-    cur=0;
-    for (uint64_t i=0; i<n2; i++) {
-        double val=*(Y+i);
-        if (val>0) {
-            weights2[ cur ] = -val;
-            indJ[cur++]=i;
-        }
-    }
-
-
-    net.supplyMap(&weights1[0], (int) n, &weights2[0], (int) m);
-
-    setup_explicit_arc_costs(net, di, D, n2, indI, indJ, n, m);
-
-    // Solve the problem with the network simplex algorithm
-
-    int ret=net.run();
-    if (ret==(int)net.OPTIMAL || ret==(int)net.MAX_ITER_REACHED) {
-        *cost = 0;
-        extract_compressed_support(
-            net, di, INVALID, D, G, alpha, beta, cost, indI, indJ, n, n2
-        );
-
-    }
-
-    return ret;
-}
 
 // ============================================================================
 // SPARSE VERSION: Accepts edge list instead of dense cost matrix
