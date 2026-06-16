@@ -10,6 +10,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Refactor lazy EMD network simplex storage to avoid dense per-arc cost,
   endpoint, flow, and state storage where possible, and return sparse lazy
   transport plans instead of materializing dense plans internally (PR #813)
+- Removed OpenMP implementation in Simplex since no time gains are observed #820
 - Add sliced transport plans (min-pivot sliced and expected sliced) solvers (PR #767)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
