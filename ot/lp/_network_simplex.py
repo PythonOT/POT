@@ -425,6 +425,15 @@ def emd(
 
     numThreads = check_number_threads(numThreads)
 
+    if numThreads != 1:
+        warnings.warn(
+            "The 'numThreads' parameter is deprecated and will be removed in a "
+            "future version. The network simplex solver no longer uses OpenMP, "
+            "so this parameter is ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     # ============================================================================
     # CALL SOLVER (sparse or dense)
     # ============================================================================
@@ -731,6 +740,15 @@ def emd2(
     asel = a != 0
 
     numThreads = check_number_threads(numThreads)
+
+    if numThreads != 1:
+        warnings.warn(
+            "The 'numThreads' parameter is deprecated and will be removed in a "
+            "future version. The network simplex solver no longer uses OpenMP, "
+            "so this parameter is ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     # ============================================================================
     # DEFINE SOLVER FUNCTION
