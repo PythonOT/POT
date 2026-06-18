@@ -139,9 +139,9 @@ def bures_wasserstein_mapping_hd(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log
         the variances associated with the principal sub-axes for the source distribution
     lt : array-like (dt,) 
         the variances associated with the principal sub-axes for the target distribution
-    sigma_s^2 : positive int 
+    sigma_s^2 : array-like (1,) 
                 the residual variance of the source distribution
-    sigma_t^2 : positive int
+    sigma_t^2 : array-like (1,)
                 the residual variance of the target distribution                         
     log : bool, optional
         record log if True
@@ -169,10 +169,6 @@ def bures_wasserstein_mapping_hd(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log
         
     .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
-
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = list_to_array(
-        ms, mt, Us, Ut, ls, lt, [sigma2_s], [sigma2_t]
-    )
     nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t)
 
     p = Us.shape[0]
@@ -386,7 +382,6 @@ def empirical_bures_wasserstein_mapping_hd(
         (d_intrinsic, d_intrinsic) if isinstance(d_intrinsic, int) else d_intrinsic
     )
 
-    xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
     is_input_finite = is_all_finite(xs, xt)
 
@@ -424,6 +419,9 @@ def empirical_bures_wasserstein_mapping_hd(
     Qt = eigt[1]
     Ut = Qt[:, -dt:]
     lt = a_t - sgm2_t
+
+    sgm2_s = nx.unsqueeze(sgm2_s, 0)
+    sgm2_t = nx.unsqueeze(sgm2_t, 0)
 
     if log:
         A, b, log = bures_wasserstein_mapping_hd(
@@ -647,9 +645,9 @@ def bures_wasserstein_distance_hd(
         the variances associated with the principal sub-axes for the source distribution
     lt : array-like (dt,) 
         the variances associated with the principal sub-axes for the target distribution
-    sigma_s^2 : positive int 
+    sigma_s^2 : array-like (1,) 
                 the residual variance of the source distribution
-    sigma_t^2 : positive int
+    sigma_t^2 : array-like(1,)
                 the residual variance of the target distribution                                                      
     log : bool, optional
         record log if True
@@ -672,10 +670,6 @@ def bures_wasserstein_distance_hd(
         
     .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
-
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = list_to_array(
-        ms, mt, Us, Ut, ls, lt, [sigma2_s], [sigma2_t]
-    )
     nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t)
 
     p = Us.shape[0]
@@ -860,7 +854,6 @@ def empirical_bures_wasserstein_distance_hd(
         (d_intrinsic, d_intrinsic) if isinstance(d_intrinsic, int) else d_intrinsic
     )
 
-    xs, xt = list_to_array(xs, xt)
     nx = get_backend(xs, xt)
     is_input_finite = is_all_finite(xs, xt)
 
@@ -898,6 +891,9 @@ def empirical_bures_wasserstein_distance_hd(
     Qt = eigt[1]
     Ut = Qt[:, -dt:]
     lt = a_t - sgm2_t
+
+    sgm2_s = nx.unsqueeze(sgm2_s, 0)
+    sgm2_t = nx.unsqueeze(sgm2_t, 0)
 
     if log:
         W, log = bures_wasserstein_distance_hd(
