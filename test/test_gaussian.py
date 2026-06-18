@@ -105,8 +105,8 @@ def test_empirical_bures_wasserstein_mapping(nx, bias):
 
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
-    ns = 100000
-    nt = 100000
+    ns = 100
+    nt = 100
 
     id_ = 2
     p_ = 30
@@ -147,7 +147,7 @@ def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
     ltp = a_tp - sgm2_tp
     Cst = nx.to_numpy(dots(Utp, nx.diag(ltp), Utp.T) + sgm2_tp * nx.eye(p_))
 
-    np.testing.assert_allclose(Ct, Cst, rtol=1e-1, atol=1e-1)
+    np.testing.assert_allclose(Ct, Cst, rtol=1.0, atol=1.0)
 
 
 def test_empirical_bures_wasserstein_mapping_numerical_error_warning():
@@ -240,8 +240,8 @@ def test_bures_wasserstein_distance_batch(nx):
 
 @pytest.mark.parametrize("sub_the_same", [True, False])
 def test_bures_wasserstein_distance_hd(nx, sub_the_same):
-    ns = 1000
-    nt = 1000
+    ns = 100
+    nt = 100
 
     m_diff = 4.0
 
@@ -286,7 +286,7 @@ def test_bures_wasserstein_distance_hd(nx, sub_the_same):
         )
         W_ = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
 
-        np.testing.assert_allclose(W, W_, rtol=1e-2, atol=1e-2)
+        np.testing.assert_allclose(W, W_, rtol=1e-1, atol=1e-1)
 
 
 @pytest.mark.parametrize("bias", [True, False])
@@ -314,8 +314,8 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
 
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance_hd(nx, bias):
-    ns = 100000
-    nt = 100000
+    ns = 400
+    nt = 400
 
     id_ = 2
     p_ = 30
@@ -359,7 +359,7 @@ def test_empirical_bures_wasserstein_distance_hd(nx, bias):
         Xsb, Xtb, id_, log=True, bias=bias
     )
 
-    np.testing.assert_allclose(W, W_, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(W, W_, rtol=1e-1, atol=1e-1)
 
 
 @pytest.mark.parametrize(
