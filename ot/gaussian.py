@@ -93,9 +93,7 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
         return A, b
 
 
-def bures_wasserstein_mapping_hd(
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
-):
+def bures_wasserstein_mapping_hd(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log=False):
     r"""Return OT linear operator between HD Gaussian distritutions.
 
     The function estimates the optimal linear operator that aligns the two
@@ -141,14 +139,10 @@ def bures_wasserstein_mapping_hd(
         the variances associated with the principal sub-axes for the source distribution
     lt : array-like (dt,) 
         the variances associated with the principal sub-axes for the target distribution
-    sigma_s^2 : array-like (1,) 
+    sigma_s^2 : positive int 
                 the residual variance of the source distribution
-    sigma_t^2 : array-like (1,)
-                the residual variance of the target distribution     
-    ds : array-like (1,)
-        the intrinsic dimension of the source distribution
-    dt : array-like (1,)
-        the intrinsic dimension of the target distribution            
+    sigma_t^2 : positive int
+                the residual variance of the target distribution                         
     log : bool, optional
         record log if True
 
@@ -176,10 +170,10 @@ def bures_wasserstein_mapping_hd(
     .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
 
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
-        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = list_to_array(
+        ms, mt, Us, Ut, ls, lt, [sigma2_s], [sigma2_t]
     )
-    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt)
+    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t)
 
     p = Us.shape[0]
 
@@ -314,7 +308,7 @@ def empirical_bures_wasserstein_mapping(
 
 
 def empirical_bures_wasserstein_mapping_hd(
-    xs, xt, ds, dt, reg=0.0, ws=None, wt=None, bias=True, log=False
+    xs, xt, d_intrinsic, reg=0.0, ws=None, wt=None, bias=True, log=False
 ):
     r"""Return OT HD linear operator between samples.
 
@@ -356,10 +350,8 @@ def empirical_bures_wasserstein_mapping_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    ds : array-like (1,)
-        the intrinsic dimension of the source distribution
-    dt : array-like(1,)
-        the intrinsic dimension of the target distribution       
+    d_instrinsic : int or list of two ints
+                  the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same                            
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
     ws : array-like (ns,1), optional
@@ -390,9 +382,13 @@ def empirical_bures_wasserstein_mapping_hd(
         
     """
 
-    xs, xt, ds, dt = list_to_array(xs, xt, ds, dt)
-    nx = get_backend(xs, xt, ds, dt)
-    is_input_finite = is_all_finite(xs, xt, ds, dt)
+    (ds, dt) = (
+        (d_intrinsic, d_intrinsic) if isinstance(d_intrinsic, int) else d_intrinsic
+    )
+
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
+    is_input_finite = is_all_finite(xs, xt)
 
     p = xs.shape[1]
 
@@ -416,27 +412,25 @@ def empirical_bures_wasserstein_mapping_hd(
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(p, type_as=xt)
 
     eigs = nx.eigh(Cs)
-    a_s = eigs[0][-ds[0] :]
+    a_s = eigs[0][-ds:]
     sgm2_s = (nx.trace(Cs) - nx.sum(a_s)) / (p - ds)
     Qs = eigs[1]
-    Us = Qs[:, -ds[0] :]
+    Us = Qs[:, -ds:]
     ls = a_s - sgm2_s
 
     eigt = nx.eigh(Ct)
-    a_t = eigt[0][-dt[0] :]
+    a_t = eigt[0][-dt:]
     sgm2_t = (nx.trace(Ct) - nx.sum(a_t)) / (p - dt)
     Qt = eigt[1]
-    Ut = Qt[:, -dt[0] :]
+    Ut = Qt[:, -dt:]
     lt = a_t - sgm2_t
 
     if log:
         A, b, log = bures_wasserstein_mapping_hd(
-            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt, log=log
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, log=log
         )
     else:
-        A, b = bures_wasserstein_mapping_hd(
-            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt
-        )
+        A, b = bures_wasserstein_mapping_hd(mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t)
 
     if is_input_finite and not is_all_finite(A, b):
         warnings.warn(
@@ -618,7 +612,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, paired=False, log=False):
 
 
 def bures_wasserstein_distance_hd(
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt, log=False
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log=False
 ):
     r"""Return the 2-Wassestein distance between HD Gaussian distritutions.
 
@@ -653,14 +647,10 @@ def bures_wasserstein_distance_hd(
         the variances associated with the principal sub-axes for the source distribution
     lt : array-like (dt,) 
         the variances associated with the principal sub-axes for the target distribution
-    sigma_s^2 : array-like (1,) 
+    sigma_s^2 : positive int 
                 the residual variance of the source distribution
-    sigma_t^2 : array-like (1,)
-                the residual variance of the target distribution     
-    ds : array-like (1,)
-        the intrinsic dimension of the source distribution
-    dt : array-like (1,)
-        the intrinsic dimension of the target distribution            
+    sigma_t^2 : positive int
+                the residual variance of the target distribution                                                      
     log : bool, optional
         record log if True
 
@@ -683,10 +673,10 @@ def bures_wasserstein_distance_hd(
     .. [88] Bouveyron, C. & Corneli, M. ("Scaling Optimal Transport to High-Dimensional Gaussian Distributions")    
     """
 
-    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt = list_to_array(
-        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = list_to_array(
+        ms, mt, Us, Ut, ls, lt, [sigma2_s], [sigma2_t]
     )
-    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, ds, dt)
+    nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t)
 
     p = Us.shape[0]
 
@@ -804,7 +794,7 @@ def empirical_bures_wasserstein_distance(
 
 
 def empirical_bures_wasserstein_distance_hd(
-    xs, xt, ds, dt, reg=0.0, ws=None, wt=None, bias=True, log=False
+    xs, xt, d_intrinsic, reg=0.0, ws=None, wt=None, bias=True, log=False
 ):
     r"""Return 2D Wasserstein between high-dimensional (HD) Gaussian distributions.
 
@@ -834,10 +824,8 @@ def empirical_bures_wasserstein_distance_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    ds : array-like (1,)
-        the intrinsic dimension of the source distribution
-    dt : array-like(1,)
-        the intrinsic dimension of the target distribution       
+    d_instrinsic : int or list of two ints
+                  the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same     
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
     ws : array-like (ns,1), optional
@@ -868,10 +856,13 @@ def empirical_bures_wasserstein_distance_hd(
        [89] Tipping, M.E. & Bishop, C.M, ("Probabilistic Principal Component Analysis")        
         
     """
+    (ds, dt) = (
+        (d_intrinsic, d_intrinsic) if isinstance(d_intrinsic, int) else d_intrinsic
+    )
 
-    xs, xt, ds, dt = list_to_array(xs, xt, ds, dt)
-    nx = get_backend(xs, xt, ds, dt)
-    is_input_finite = is_all_finite(xs, xt, ds, dt)
+    xs, xt = list_to_array(xs, xt)
+    nx = get_backend(xs, xt)
+    is_input_finite = is_all_finite(xs, xt)
 
     p = xs.shape[1]
 
@@ -895,27 +886,25 @@ def empirical_bures_wasserstein_distance_hd(
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(p, type_as=xt)
 
     eigs = nx.eigh(Cs)
-    a_s = eigs[0][-ds[0] :]
+    a_s = eigs[0][-ds:]
     sgm2_s = (nx.trace(Cs) - nx.sum(a_s)) / (p - ds)
     Qs = eigs[1]
-    Us = Qs[:, -ds[0] :]
+    Us = Qs[:, -ds:]
     ls = a_s - sgm2_s
 
     eigt = nx.eigh(Ct)
-    a_t = eigt[0][-dt[0] :]
+    a_t = eigt[0][-dt:]
     sgm2_t = (nx.trace(Ct) - nx.sum(a_t)) / (p - dt)
     Qt = eigt[1]
-    Ut = Qt[:, -dt[0] :]
+    Ut = Qt[:, -dt:]
     lt = a_t - sgm2_t
 
     if log:
         W, log = bures_wasserstein_distance_hd(
-            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt, log=log
+            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, log=log
         )
     else:
-        W = bures_wasserstein_distance_hd(
-            mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t, ds, dt
-        )
+        W = bures_wasserstein_distance_hd(mxs, mxt, Us, Ut, ls, lt, sgm2_s, sgm2_t)
 
     if is_input_finite and not is_all_finite(W):
         warnings.warn(
