@@ -117,13 +117,13 @@ def bures_wasserstein_mapping_hd(
             
         \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
             
-        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
+        C_s             &=\text{diag}(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
             
         \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
             
-        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
+        D_s &= \text{diag}((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
             
-        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
+        \Sigma_t        &= U_t \text{diag}(l_t) U_t^T + \sigma_t^2 I_p    \\
             
         \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
 
@@ -337,13 +337,13 @@ def empirical_bures_wasserstein_mapping_hd(
             
         \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T                  \\
             
-        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
+        C_s             &=\text{diag}(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\
             
         \Sigma_s^{-1/2} &= \frac{1}{\sigma_s} (I_p - U_s D_s U_s^T )   \\
             
-        D_s &= \diag((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
+        D_s &= \text{diag}((\sqrt{l_{s1} + \sigma_s^2} - \sigma_s)/\sqrt{l_{s1} + \sigma_s^2}, \dots, (\sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)/\sqrt{l_{sd_s} + \sigma_s^2}) \\
             
-        \Sigma_t        &= U_t \diag(l_t) U_t^T + \sigma_t^2 I_p    \\
+        \Sigma_t        &= U_t \text{diag}(l_t) U_t^T + \sigma_t^2 I_p    \\
             
         \mathbf{b}      &= \mu_t - \mathbf{A} \mu_s
         
@@ -633,11 +633,11 @@ def bures_wasserstein_distance_hd(
     where :
 
     .. math::
-        \Lambda_s &= \diag(ls) \\
-        \Lambda_t &= \diag(lt) \\    
+        \Lambda_s &= \text{diag}(ls) \\
+        \Lambda_t &= \text{diag}(lt) \\    
         \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
         \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
-        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
+        C_s             &=\text{diag}(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
 
     Parameters
     ----------
@@ -819,11 +819,11 @@ def empirical_bures_wasserstein_distance_hd(
     where :
 
     .. math::
-        \Lambda_s &= \diag(ls) \\
-        \Lambda_t &= \diag(lt) \\    
+        \Lambda_s &= \text{diag}(ls) \\
+        \Lambda_t &= \text{diag}(lt) \\    
         \Sigma_t &= U_t \Lambda_t U_t^T + \sigma_t^2 I_p  \\
         \Sigma_s^{1/2}  &=\sigma_s I_p + U_s C_s U_s^T    \\
-        C_s             &=\diag(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
+        C_s             &=\text{diag}(\sqrt{l_{s1} + \sigma_s^2} - \sigma_s, \dots, \sqrt{l_{sd_s} + \sigma_s^2} - \sigma_s)    \\ 
     
     Assuming that the source and destination data samples have been generated from HD Gaussian                                      distributions, the probabilistic PCA estimators proposed in :ref: `[89] <references-empirical-bures-wasserstein-distance-hd>` are used to estimate the model parameters and plugged into the above formula of the Wasserstein distance.
    
