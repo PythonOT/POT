@@ -81,6 +81,9 @@ authors:
   - given-names: David
     family-names: Coeurjolly
     affiliation: CNRS, LIRIS
+  - given-names: Marco
+    family-names: Corneli
+    affiliation: Université Côte d'Azur
 
 identifiers:
   - type: url
