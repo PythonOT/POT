@@ -46,7 +46,9 @@ def test_bures_wasserstein_mapping_hd(nx):
     ns = 100
     nt = 100
 
-    Xs, Xt, ll = make_gauss_hd(ns, nt, p=50, dim=10, m_diff=5, a=(7, 7), b=(1, 1))
+    Xs, Xt, ll = make_gauss_hd(
+        ns, nt, p=50, dim=10, m_diff=5.0, a=(7.0, 7.0), b=(1.0, 1.0)
+    )
 
     ms = ll["ms"]
     mt = ll["mt"]
@@ -58,6 +60,10 @@ def test_bures_wasserstein_mapping_hd(nx):
     Ut = ll["Ut"]
     Cs = ll["Cs"]
     Ct = ll["Ct"]
+
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, Cs, Ct = nx.from_numpy(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, Cs, Ct
+    )
 
     A_hd, b_hd = ot.gaussian.bures_wasserstein_mapping_hd(
         ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log=False
@@ -112,7 +118,7 @@ def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
     p_ = 30
 
     Xs, Xt, ll = ot.datasets.make_gauss_hd(
-        ns, nt, p=p_, dim=id_, m_diff=5, a=(6, 6), b=(1, 1)
+        ns, nt, p=p_, dim=id_, m_diff=5.0, a=(6.0, 6.0), b=(1.0, 1.0)
     )
 
     # covariance matrix of the target
@@ -247,7 +253,14 @@ def test_bures_wasserstein_distance_hd(nx, sub_the_same):
 
     if sub_the_same:
         Xs, Xt, ll = make_gauss_hd(
-            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1), sub_the_same=True
+            ns,
+            nt,
+            p=50,
+            dim=10,
+            m_diff=m_diff,
+            a=(7.0, 7.0),
+            b=(1.0, 1.0),
+            sub_the_same=True,
         )
 
         ms = ll["ms"]
@@ -259,6 +272,10 @@ def test_bures_wasserstein_distance_hd(nx, sub_the_same):
         Us = ll["Us"]
         Ut = ll["Ut"]
 
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = nx.from_numpy(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t
+        )
+
         W = ot.gaussian.bures_wasserstein_distance_hd(
             ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t
         )
@@ -267,7 +284,7 @@ def test_bures_wasserstein_distance_hd(nx, sub_the_same):
 
     else:
         Xs, Xt, ll = make_gauss_hd(
-            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7, 7), b=(1, 1)
+            ns, nt, p=50, dim=10, m_diff=m_diff, a=(7.0, 7.0), b=(1.0, 1.0)
         )
 
         ms = ll["ms"]
@@ -280,6 +297,10 @@ def test_bures_wasserstein_distance_hd(nx, sub_the_same):
         Ut = ll["Ut"]
         Cs = ll["Cs"]
         Ct = ll["Ct"]
+
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, Cs, Ct = nx.from_numpy(
+            ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, Cs, Ct
+        )
 
         W = ot.gaussian.bures_wasserstein_distance_hd(
             ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t
@@ -326,7 +347,7 @@ def test_empirical_bures_wasserstein_distance_hd(nx, bias):
         m_diff = 0.0
 
     Xs, Xt, ll = ot.datasets.make_gauss_hd(
-        ns, nt, p=p_, dim=id_, m_diff=m_diff, a=(6, 6), b=(1, 1)
+        ns, nt, p=p_, dim=id_, m_diff=m_diff, a=(6.0, 6.0), b=(1.0, 1.0)
     )
 
     # The actual Wasserstein distance:
@@ -339,6 +360,10 @@ def test_empirical_bures_wasserstein_distance_hd(nx, bias):
     lt = ll["lt"]
     Us = ll["Us"]
     Ut = ll["Ut"]
+
+    ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t = nx.from_numpy(
+        ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t
+    )
 
     W = ot.gaussian.bures_wasserstein_distance_hd(
         ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t

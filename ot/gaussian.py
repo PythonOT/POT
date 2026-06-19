@@ -171,6 +171,15 @@ def bures_wasserstein_mapping_hd(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log
     """
     nx = get_backend(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t)
 
+    print(ms.dtype)
+    print(mt.dtype)
+    print(Us.dtype)
+    print(Ut.dtype)
+    print(ls.dtype)
+    print(lt.dtype)
+    print(sigma2_s.dtype)
+    print(sigma2_t.dtype)
+
     p = Us.shape[0]
 
     # source

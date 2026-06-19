@@ -184,7 +184,7 @@ def get_data_classif(dataset, n, nz=0.5, theta=0, random_state=None, **kwargs):
 
 
 def make_gauss_hd(
-    ns, nt, p=100, dim=5, m_diff=3, a=(10, 15), b=(3, 3), sub_the_same=False
+    ns, nt, p=100, dim=5, m_diff=3.0, a=(10.0, 15.0), b=(3.0, 3.0), sub_the_same=False
 ):
     """Generation of source and target domains from Gaussian HD distributions
 
