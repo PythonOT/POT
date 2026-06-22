@@ -31,6 +31,7 @@ from .gromov import (
     partial_fused_gromov_wasserstein2,
     entropic_partial_gromov_wasserstein2,
     entropic_partial_fused_gromov_wasserstein2,
+    fused_unbalanced_gromov_wasserstein,
 )
 from .gaussian import empirical_bures_wasserstein_distance
 from .factored import factored_optimal_transport
@@ -679,7 +680,7 @@ def solve_gromov(
         function :math:`U`. Corresponds to the total transport mass for partial OT.
     unbalanced_type : str, optional
         Type of unbalanced penalization function :math:`U` either "KL", "semirelaxed",
-        "partial", by default "KL" but note that it is not implemented yet.
+        "partial", by default "KL".
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     method : str, optional
@@ -1090,7 +1091,55 @@ def solve_gromov(
                 # potentials = (log['u'], log['v']) TODO
 
         elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
-            raise (NotImplementedError('Unbalanced_type="{}"'.format(unbalanced_type)))
+            if alpha == 0:  # unbalanced Wasserstein problem
+                res = solve(
+                    M,
+                    a=a,
+                    b=b,
+                    reg=None,
+                    reg_type=reg_type,
+                    unbalanced=unbalanced,
+                    unbalanced_type=unbalanced_type,
+                    method=method,
+                    max_iter=max_iter,
+                    plan_init=plan_init,
+                    tol=tol,
+                    verbose=verbose,
+                )
+
+                plan = res.plan
+                potentials = res.potentials
+                value_linear = res.value_linear
+                value = res.value
+                value_quad = 0
+                status = res.status
+
+            else:
+                if max_iter is None:
+                    max_iter = 100
+                if tol is None:
+                    tol = 1e-7
+
+                # in this function alpha weights the linear and quadratic terms : alpha * quadratic + (1 - alpha) * linear
+                # while fused_unbalanced_gromov_wasserstein uses alpha as the coefficient of the linear term.
+                alpha_fugw = (1 - alpha) / alpha
+                reg_fugw = unbalanced / (2 * alpha)
+                plan, _, log = fused_unbalanced_gromov_wasserstein(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg_marginals=reg_fugw,
+                    divergence=unbalanced_type.lower(),
+                    alpha=alpha_fugw,
+                    M=M,
+                    max_iter=max_iter,
+                    tol=tol,
+                    log=True,
+                    epsilon=0,
+                )
+                value_linear = log["linear_cost"] * alpha
+                value = log["fugw_cost"] * alpha
 
         else:
             raise (
@@ -1332,6 +1381,58 @@ def solve_gromov(
                 plan = log["T"]
                 # potentials = (log['u'], log['v']) TODO
                 value = value_noreg + reg * nx.sum(plan * nx.log(plan + 1e-16))
+
+        elif unbalanced_type.lower() in ["kl", "l2"]:
+            if alpha == 0:  # regularized unbalanced Wasserstein problem
+                res = solve(
+                    M,
+                    a=a,
+                    b=b,
+                    reg=reg,
+                    reg_type=reg_type,
+                    unbalanced=unbalanced,
+                    unbalanced_type=unbalanced_type,
+                    method=method,
+                    max_iter=max_iter,
+                    plan_init=plan_init,
+                    tol=tol,
+                    verbose=verbose,
+                )
+
+                plan = res.plan
+                potentials = res.potentials
+                value_linear = res.value_linear
+                value = res.value
+                value_quad = 0
+                status = res.status
+
+            else:
+                if max_iter is None:
+                    max_iter = 100
+                if tol is None:
+                    tol = 1e-7
+
+                # in this function alpha weights the linear and quadratic terms : alpha * quadratic + (1 - alpha) * linear
+                # while fused_unbalanced_gromov_wasserstein uses alpha as the coefficient of the linear term.
+                alpha_fugw = (1 - alpha) / alpha
+                reg_fugw = unbalanced / (2 * alpha)
+                epsilon_fugw = reg / (2 * alpha)
+                plan, _, log = fused_unbalanced_gromov_wasserstein(
+                    Ca,
+                    Cb,
+                    a,
+                    b,
+                    reg_marginals=reg_fugw,
+                    divergence=unbalanced_type.lower(),
+                    alpha=alpha_fugw,
+                    M=M,
+                    max_iter=max_iter,
+                    tol=tol,
+                    log=True,
+                    epsilon=epsilon_fugw,
+                )
+                value_linear = log["linear_cost"] * alpha
+                value = log["fugw_cost"] * alpha
 
         else:  # unbalanced AND regularized OT
             raise (

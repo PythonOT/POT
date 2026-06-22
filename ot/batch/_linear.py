@@ -147,7 +147,7 @@ def loss_linear_batch(M, T, nx=None):
     return nx.sum(M * T, axis=(1, 2))
 
 
-def loss_linear_samples_batch(X, Y, T, metric="l2"):
+def loss_linear_samples_batch(X, Y, T, metric="sqeuclidean"):
     r"""Computes the linear optimal transport loss given samples and transport plan. This is the equivalent of
     calling `dist_batch` and then `loss_linear_batch`.
 
