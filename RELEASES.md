@@ -50,6 +50,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Debug Debug linux test core dump (PR #815)
 - Fix entropic regularization in `gcg`(PR #817, Issue #758)
 - Fix documentation build on master with submodules (PR #818)
+- Fix failing test for unbalanced solver with generic regularization (PR #824)
 
 ## 0.9.6.post1
 

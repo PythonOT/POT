@@ -557,6 +557,11 @@ def solve(
                 isinstance(reg_type, tuple)
                 or reg_type.lower() in ["kl", "l2", "entropy"]
             ) and unbalanced_type.lower() in ["kl", "l2", "tv"]:
+                if isinstance(reg_type, tuple) and nx.__name__ == "tf":
+                    raise NotImplementedError(
+                        "Custom regularization is not implemented for TensorFlow backend."
+                    )
+
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
