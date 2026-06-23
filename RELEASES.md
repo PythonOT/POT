@@ -32,7 +32,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
   implemented in `ot.sgot` (PR #792)
 - Add batch FUGW loss to `ot.batch` and fix issues in some default parameters in the batch module (PR #775)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
-- Add new methods to compute the linear transport map and the related 2-Wasserstein distance betweeen high-dimensional (HD) Gaussian distributions as described in [88], implemented in  `ot.gaussian.bures_wasserstein_mapping_hd` and `ot.gaussian.bures_wasserstein_distance_hd`, respectively. Two additional methods estimate the same quantities from the source and destination observed data and are implemented in `ot.gaussian.empirical_bures_wasserstein_mapping_hd` and `ot.gaussian.empirical_bures_wasserstein_distance_hd`, respectively (PR #814)   
+- Add new methods to compute the linear transport map and the related 2-Wasserstein distance betweeen high-dimensional (HD) Gaussian distributions as described in [88], implemented in  `ot.gaussian.bures_wasserstein_mapping_hd` and `ot.gaussian.bures_wasserstein_distance_hd`, respectively. Two additional methods estimate the same quantities from the source and destination observed data and are implemented in `ot.gaussian.empirical_bures_wasserstein_mapping_hd` and `ot.gaussian.empirical_bures_wasserstein_distance_hd`, respectively (PR #814)
+- Fix docstrings for `lowrank_gromov_wasserstein_samples` and `lowrank_sinkhorn` (PR #823)   
 
 
 #### Closed issues
