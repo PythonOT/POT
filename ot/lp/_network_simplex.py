@@ -287,9 +287,9 @@ def emd(
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :py:func:`ot.lp.center_ot_dual`.
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter. The network simplex solver no
+        longer uses OpenMP, so this parameter is ignored.
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
@@ -424,6 +424,15 @@ def emd(
     bsel = b != 0
 
     numThreads = check_number_threads(numThreads)
+
+    if numThreads != 1:
+        warnings.warn(
+            "The 'numThreads' parameter is deprecated and will be removed in a "
+            "future version. The network simplex solver no longer uses OpenMP, "
+            "so this parameter is ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     # ============================================================================
     # CALL SOLVER (sparse or dense)
@@ -590,9 +599,9 @@ def emd2(
     center_dual: boolean, optional (default=True)
         If True, centers the dual potential using function
         :py:func:`ot.lp.center_ot_dual`.
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter. The network simplex solver no
+        longer uses OpenMP, so this parameter is ignored.
     check_marginals: bool, optional (default=True)
         If True, checks that the marginals mass are equal. If False, skips the
         check.
@@ -731,6 +740,15 @@ def emd2(
     asel = a != 0
 
     numThreads = check_number_threads(numThreads)
+
+    if numThreads != 1:
+        warnings.warn(
+            "The 'numThreads' parameter is deprecated and will be removed in a "
+            "future version. The network simplex solver no longer uses OpenMP, "
+            "so this parameter is ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     # ============================================================================
     # DEFINE SOLVER FUNCTION

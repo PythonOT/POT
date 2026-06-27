@@ -1,3 +1,17 @@
+numpy>=1.20
+scipy>=1.6
+matplotlib
+autograd
+pymanopt
+cvxopt
+scikit-learn
+torch<2.12
+pytest
+torch_geometric
+cvxpy
+geomloss
+pykeops
+
 sphinx
 sphinx-rtd-theme
 sphinx-gallery

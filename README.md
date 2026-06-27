@@ -465,4 +465,8 @@ Artificial Intelligence.
 
 [87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
 
-[88] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.
+[88] Bouveyron, C. & Corneli, M. (2026).  [Scaling optimal transport to high-dimensional Gaussian distributions with application to domain adaptation](https://hal.science/hal-04930868v4/file/Article-OT-HDGauss-v4.pdf). Statistics and Computing 36.2 (2026): 88.
+
+[89] Tipping, M.E. & Bishop, C.M. (1999). [Probabilistic principal component analysis]. Journal of the Royal Statistical Society Series B: Statistical Methodology 61.3 (1999): 611-622.
+
+[90] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.

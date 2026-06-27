@@ -93,7 +93,7 @@ def lowrank_gromov_wasserstein_samples(
     where :
 
     - :math:`A` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the source domain.
-    - :math:`B` is the (`dim_a`, `dim_a`) square pairwise cost matrix of the target domain.
+    - :math:`B` is the (`dim_b`, `dim_b`) square pairwise cost matrix of the target domain.
     - :math:`\mathcal{Q}_{A,B}` is quadratic objective function of the Gromov Wasserstein plan.
     - :math:`Q` and `R` are the low-rank matrix decomposition of the Gromov-Wasserstein plan.
     - :math:`g` is the weight vector for the low-rank decomposition of the Gromov-Wasserstein plan.
@@ -119,9 +119,9 @@ def lowrank_gromov_wasserstein_samples(
         Regularization term >=0
     rank : int, optional. Default is None. (>0)
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
-    alpha : int, optional. Default is 1e-10. (>0 and <1/r)
+    alpha : float, optional. Default is 1e-10. (>0 and <1/r)
         Lower bound for the weight vector g.
-    rescale_cost : bool, optional. Default is False
+    rescale_cost : bool, optional. Default is True
         Rescale the low rank factorization of the sqeuclidean cost matrix
     seed_init : int, optional. Default is 49. (>0)
         Random state for the 'random' initialization of low rank couplings
@@ -135,9 +135,9 @@ def lowrank_gromov_wasserstein_samples(
         Stop threshold on error (>0) for Low Rank GW
         The error is the sum of Kullback Divergences computed for each low rank
         coupling (Q, R and g) and scaled using gamma.
-    numItermax_dykstra : int, optional. Default is 2000.
+    numItermax_dykstra : int, optional. Default is 10000.
         Max number of iterations for the Dykstra algorithm
-    stopThr_dykstra : float, optional. Default is 1e-7.
+    stopThr_dykstra : float, optional. Default is 1e-3.
         Stop threshold on error (>0) in Dykstra
     cost_factorized_Xs: tuple, optional. Default is None
         Tuple with two pre-computed low rank decompositions (A1, A2) of the source cost

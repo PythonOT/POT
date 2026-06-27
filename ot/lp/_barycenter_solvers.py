@@ -213,9 +213,9 @@ def free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter forwarded to EMD. The network
+        simplex solver no longer uses OpenMP, so this parameter is ignored.
 
     Returns
     -------
@@ -349,9 +349,9 @@ def generalized_free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter forwarded to EMD. The network
+        simplex solver no longer uses OpenMP, so this parameter is ignored.
     eps: Stability coefficient for the change of variable matrix inversion
         If the :math:`\mathbf{P}_i^T` matrices don't span :math:`\mathbb{R}^d`, the problem is ill-defined and a matrix
         inversion will fail. In this case one may set eps=1e-8 and get a solution anyway (which may make little sense)
@@ -590,7 +590,7 @@ def free_support_barycenter_generic_costs(
         of shape :math:`(n\times d_K)`, computing the ground barycenters
         (broadcasted over n). If not provided, done with Adam on PyTorch
         (requires PyTorch backend), inefficiently using the cost functions in
-        `cost_list`.
+        `cost_list`. This function must be provided if `method="true_fixed_point"` is used.
     a : array-like, optional
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
@@ -673,8 +673,11 @@ def free_support_barycenter_generic_costs(
 
     if ground_bary is None:
         auto_ground_bary = True
+        assert (
+            method == "L2_barycentric_proj"
+        ), "ground_bary must be provided if method is 'true_fixed_point'"
         assert str(nx) == "torch", (
-            f"Backend {str(nx)} is not compatible with ground_bary=None, it"
+            f"Backend {str(nx)} is not compatible with ground_bary=None, it "
             "must be provided if not using PyTorch backend"
         )
         try:

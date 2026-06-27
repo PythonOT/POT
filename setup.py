@@ -15,19 +15,20 @@ from setuptools.extension import Extension
 import numpy
 from Cython.Build import cythonize
 
-sys.path.append(os.path.join("ot", "helpers"))
+ROOT = os.path.abspath(os.path.dirname(__file__))
+
+sys.path.append(os.path.join(ROOT, "ot", "helpers"))
 from openmp_helpers import check_openmp_support
 
 # dirty but working
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
-    open("ot/__init__.py").read(),
+    open(os.path.join(ROOT, "ot/__init__.py")).read(),
 ).group(1)
 # The beautiful part is, I don't even need to check exceptions here.
 # If something messes up, let the build process fail noisy, BEFORE my release!
 
 # thanks PyPI for handling markdown now
-ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as f:
     README = f.read()
 
@@ -56,6 +57,11 @@ if sys.platform.startswith("darwin"):
     compile_args.append("-std=c++17")  # Needed for ot/bsp
     sdk_path = subprocess.check_output(["xcrun", "--show-sdk-path"])
     os.environ["CFLAGS"] = '-isysroot "{}"'.format(sdk_path.rstrip().decode("utf-8"))
+    # Add libomp linker flags on macOS
+    if os.path.isfile("/opt/homebrew/opt/libomp/lib/libomp.dylib"):
+        link_args += ["-L/opt/homebrew/opt/libomp/lib", "-lomp"]
+    elif os.path.isfile("/usr/local/opt/libomp/lib/libomp.dylib"):
+        link_args += ["-L/usr/local/opt/libomp/lib", "-lomp"]
 
 
 setup(

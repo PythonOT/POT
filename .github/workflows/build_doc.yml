@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'master'  
+      - 'master'
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true
     # Standard drop-in approach that should work for most people.
@@ -31,7 +31,6 @@ jobs:
     - name: Get Python running
       run: |
         python -m pip install --user --upgrade --progress-bar off pip
-        python -m pip install --user --upgrade --progress-bar off -r requirements_all.txt
         python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
         python -m pip install --user --upgrade --progress-bar off ipython sphinx-gallery memory_profiler
         python -m pip install -v --user -e .
@@ -45,7 +44,7 @@ jobs:
       uses: rickstaa/sphinx-action@master
       with:
         docs-folder: "docs/"
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: Documentation
         path: docs/build/html/

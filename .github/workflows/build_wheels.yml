@@ -15,11 +15,11 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
 
@@ -41,5 +41,3 @@ jobs:
       with:
         name: wheels-${{ strategy.job-index }}
         path: ./wheelhouse
-
-

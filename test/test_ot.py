@@ -213,8 +213,8 @@ def test_emd_emd2():
     np.testing.assert_allclose(w, 0)
 
 
-def test_omp_emd2():
-    # test emd2 and emd2 with openmp for simple identity
+def test_emd2_num_threads_compatibility():
+    # numThreads is kept as a no-op compatibility parameter.
     n = 100
     rng = np.random.RandomState(0)
 
@@ -224,9 +224,23 @@ def test_omp_emd2():
     M = ot.dist(x, x)
 
     w = ot.emd2(u, u, M)
-    w2 = ot.emd2(u, u, M, numThreads=2)
+    with pytest.warns(DeprecationWarning, match="numThreads"):
+        w2 = ot.emd2(u, u, M, numThreads=2)
 
     np.testing.assert_allclose(w, w2)
+
+
+def test_emd_num_threads_deprecation_warning():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 2)
+    u = ot.utils.unif(n)
+
+    M = ot.dist(x, x)
+
+    with pytest.warns(DeprecationWarning, match="numThreads"):
+        ot.emd(u, u, M, numThreads=2)
 
 
 def test_emd_empty():

@@ -1,8 +1,8 @@
 # Releases
 
-## 0.9.7.dev0
+## 0.9.7
 
-This new release adds support for sparse cost matrices and a new lazy EMD solver that computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation.
+This new release adds support for sparse cost matrices and a new lazy exact OT solver that re-computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m). Both implementations are backend-agnostic and preserve gradient computation for automatic differentiation. 
 
 #### New features 
 
@@ -10,6 +10,7 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Refactor lazy EMD network simplex storage to avoid dense per-arc cost,
   endpoint, flow, and state storage where possible, and return sparse lazy
   transport plans instead of materializing dense plans internally (PR #813)
+- Removed OpenMP implementation in Simplex since no time gains are observed #820
 - Add sliced transport plans (min-pivot sliced and expected sliced) solvers (PR #767)
 - Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
 - Add Warmstart feature to the EMD solver for existing potentials (PR #793)
@@ -27,8 +28,16 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Add optional `scaler` parameter to `sliced_wasserstein_distance` and  `max_sliced_wasserstein_distance` (PR #808)
 - Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
-- Add cost functions between linear operators following [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  implemented in `ot.sgot` (PR #792)
+- Add cost functions between linear operators following  
+  [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
+  implemented in `ot.sgot` (PR #792)
+- Add batch FUGW loss to `ot.batch` and fix issues in some default parameters in the batch module (PR #775)
+- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
+- Add new methods to compute the linear transport map and the related 2-Wasserstein distance betweeen high-dimensional (HD) Gaussian distributions as described in [88], implemented in  `ot.gaussian.bures_wasserstein_mapping_hd` and `ot.gaussian.bures_wasserstein_distance_hd`, respectively. Two additional methods estimate the same quantities from the source and destination observed data and are implemented in `ot.gaussian.empirical_bures_wasserstein_mapping_hd` and `ot.gaussian.empirical_bures_wasserstein_distance_hd`, respectively (PR #814)
+- Fix docstrings for `lowrank_gromov_wasserstein_samples` and `lowrank_sinkhorn` (PR #823)
+- Reorganize all tests per backend (PR #828)
+
 
 #### Closed issues
 
@@ -48,6 +57,8 @@ This new release adds support for sparse cost matrices and a new lazy EMD solver
 - Debug Debug linux test core dump (PR #815)
 - Fix entropic regularization in `gcg`(PR #817, Issue #758)
 - Fix documentation build on master with submodules (PR #818)
+- Fix failing test for unbalanced solver with generic regularization (PR #824)
+
 
 ## 0.9.6.post1
 

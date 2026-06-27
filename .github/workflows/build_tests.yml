@@ -14,6 +14,9 @@ on:
     tags:
       - '**'
 
+env:
+  PY_VERSION: "3.13"
+
 jobs:
 
   Lint:
@@ -27,13 +30,13 @@ jobs:
 
 
     - name: Checking Out Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         submodules: true
     # Install Python & Packages
     - uses: actions/setup-python@v6
       with:
-        python-version: "3.14"
+        python-version: ${{ env.PY_VERSION }}
     - run: which python
     - name: Lint with pre-commit
       run: |
@@ -44,14 +47,14 @@ jobs:
   build_from_source:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: "3.14"
+        python-version: ${{ env.PY_VERSION }}
     - name: Build from source
       run: |
         python -m pip install --upgrade pip setuptools wheel
@@ -59,8 +62,63 @@ jobs:
         python setup.py sdist bdist_wheel
         pip install dist/*.tar.gz
 
-  linux:
+  doctests:
 
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
+    steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: insightsengineering/disk-space-reclaimer@v1
+      with:
+        android: true
+        dotnet: true
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PY_VERSION }}
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install -r .github/requirements_doctests.txt
+        pip install pytest pytest-cov
+    - name: Install POT
+      run: |
+        pip install -e .
+    - name: Run tests
+      run: |
+        python -m pytest -v ot/ test/conftest.py --doctest-modules --color=yes --cov=./ --cov-report=xml
+
+  linux-minimal:
+
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PY_VERSION }}
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install pytest pytest-cov
+    - name: Install POT
+      run: |
+        pip install -e .
+    - name: Run tests
+      run: |
+        python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
+
+  linux:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'no ci')"
     strategy:
@@ -69,12 +127,12 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
-    - name: Free Disk Space (Ubuntu)
-      uses: insightsengineering/disk-space-reclaimer@v1
-      with:
-        android: true
-        dotnet: true
-    - uses: actions/checkout@v4
+    # - name: Free Disk Space (Ubuntu)
+    #   uses: insightsengineering/disk-space-reclaimer@v1
+    #   with:
+    #     android: true
+    #     dotnet: true
+    - uses: actions/checkout@v7
       with:
         submodules: true
 
@@ -89,41 +147,100 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools
-        pip install -r requirements_all.txt
+        pip install -r .github/requirements_no_backend.txt
         pip install pytest pytest-cov
     - name: test POT import
       run: |
         python -c "import ot; print(ot.__version__)"
     - name: Run tests
       run: |
-        python -m pytest --durations=20 -v test/ ot/ --doctest-modules --color=yes --cov=./ --cov-report=xml
+        python -m pytest --durations=20 -v test/ --color=yes --cov=./ --cov-report=xml
     - name: Upload coverage reports to Codecov with GitHub Action
       uses: codecov/codecov-action@v4
 
-  linux-minimal-deps:
-
+  linux-torch:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'no ci')"
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PY_VERSION }}
+      uses: actions/setup-python@v6
       with:
-        python-version: "3.14"
+        python-version: ${{ env.PY_VERSION }}
         cache: 'pip'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools
-        pip install pytest pytest-cov
     - name: Install POT
       run: |
         pip install -e .
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install torch torch_geometric geomloss pykeops scikit-learn
+        pip install pytest pytest-cov
     - name: Run tests
       run: |
-        python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
+        python -m pytest --durations=20 -v test/ --color=yes --cov=./ --cov-report=xml
+    - name: Upload coverage reports to Codecov with GitHub Action
+      uses: codecov/codecov-action@v4
+
+  linux-jax:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Set up Python ${{ env.PY_VERSION }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PY_VERSION }}
+        cache: 'pip'
+    - name: Install POT
+      run: |
+        pip install -e .
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install jax jaxlib
+        pip install pytest pytest-cov
+    - name: Run tests
+      run: |
+        python -m pytest --durations=20 -v test/ --color=yes --cov=./ --cov-report=xml
+    - name: Upload coverage reports to Codecov with GitHub Action
+      uses: codecov/codecov-action@v4
+
+  linux-tf:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'no ci')"
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+
+    - name: Set up Python ${{ env.PY_VERSION }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PY_VERSION }}
+        cache: 'pip'
+    - name: Install POT
+      run: |
+        pip install -e .
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install tensorflow
+        pip install pytest pytest-cov
+    - name: Run tests
+      run: |
+        python -m pytest --durations=20 -v test/ --color=yes --cov=./ --cov-report=xml
+    - name: Upload coverage reports to Codecov with GitHub Action
+      uses: codecov/codecov-action@v4
 
   # linux-minimal-deps-ft:
 
@@ -151,22 +268,17 @@ jobs:
   #       python -m pytest --durations=20 -v test/ ot/ --color=yes --cov=./ --cov-report=xml
 
   macos:
-     runs-on: ${{ matrix.os }}
+     runs-on: macos-latest
      if: "!contains(github.event.head_commit.message, 'no ci')"
-     strategy:
-       max-parallel: 4
-       matrix:
-         os: [macos-latest]
-         python-version: ["3.13"]
 
      steps:
-     - uses: actions/checkout@v4
+     - uses: actions/checkout@v7
        with:
         submodules: true
-     - name: Set up Python ${{ matrix.python-version }}
-       uses: actions/setup-python@v5
+     - name: Set up Python ${{ env.PY_VERSION }}
+       uses: actions/setup-python@v6
        with:
-         python-version: ${{ matrix.python-version }}
+         python-version: ${{ env.PY_VERSION }}
          cache: 'pip'
      - name: Install POT
        run: |
@@ -174,7 +286,7 @@ jobs:
      - name: Install dependencies
        run: |
          python -m pip install --upgrade pip setuptools
-         pip install -r requirements_all.txt
+         pip install -r .github/requirements_no_backend.txt
          pip install pytest
      - name: Run tests
        run: |
@@ -184,19 +296,15 @@ jobs:
   windows:
     runs-on: windows-latest
     if: "!contains(github.event.head_commit.message, 'no ci')"
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: ["3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PY_VERSION }}
+      uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ env.PY_VERSION }}
         cache: 'pip'
     - name: RC.exe
       run: |
@@ -213,7 +321,7 @@ jobs:
         Invoke-VSDevEnvironment
         Get-Command rc.exe | Format-Table -AutoSize
     - name: Update pip
-      run : |
+      run: |
         python -m pip install --upgrade pip setuptools
         python -m pip install cython
     - name: Install POT
