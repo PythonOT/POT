@@ -244,9 +244,7 @@ def test_string_metric_runs(nx):
 # ---------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "name", ["unif", "unif_cube", "ball", "unif_ball", "normal"]
-)
+@pytest.mark.parametrize("name", ["unif", "unif_cube", "ball", "unif_ball", "normal"])
 def test_string_sampler_runs(nx, name):
     """Each built-in string sampler yields a finite potential of the right shape."""
     target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()

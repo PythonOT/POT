@@ -84,6 +84,8 @@ authors:
   - given-names: Marco
     family-names: Corneli
     affiliation: Université Côte d'Azur
+  - given-names: Ferdinand Genans
+    affiliation: Sorbonne Université, LPSM, CNRS
 identifiers:
   - type: url
     value: 'https://github.com/PythonOT/POT'
