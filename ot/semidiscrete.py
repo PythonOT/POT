@@ -9,11 +9,11 @@ of [1]_, with an optional decreasing entropic regularization schedule
 
 References
 ----------
-.. [1] Genans, Godichon-Baggioni, Vialard, Wintenberger (2025).
-   "Stochastic Optimization in Semi-Discrete Optimal Transport:
+.. [1] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+   (2025). "Stochastic Optimization in Semi-Discrete Optimal Transport:
    Convergence Analysis and Minimax Rate." NeurIPS 2025.
-.. [2] Genans, Godichon-Baggioni, Vialard, Wintenberger (2025).
-   "Decreasing Entropic Regularization Averaged Gradient for
+.. [2] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+   (2025). "Decreasing Entropic Regularization Averaged Gradient for
    Semi-Discrete Optimal Transport." NeurIPS 2025.
 """
 
@@ -26,28 +26,60 @@ import math
 import numpy as np
 
 from .backend import get_backend
+from .utils import dist
 
 
-def _quadratic_cost(x, y, nx):
-    r"""Default cost: :math:`\tfrac{1}{2} \|x - y\|^2`."""
-    x_sq = nx.sum(x**2, axis=1)[:, None]
-    y_sq = nx.sum(y**2, axis=1)[None, :]
-    cross = nx.einsum("ij,kj->ik", x, y)
-    return 0.5 * (x_sq + y_sq - 2.0 * cross)
+def _resolve_metric(metric):
+    r"""Turn ``metric`` into a callable ``(x, y) -> (n_samples, n_atoms)`` matrix.
+
+    ``None`` defaults to ``'sqeuclidean'``. A string is forwarded to
+    :func:`ot.dist`; a callable is returned unchanged.
+    """
+    if metric is None:
+        metric = "sqeuclidean"
+    if callable(metric):
+        return metric
+    return lambda x, y: dist(x, y, metric=metric)
 
 
-def _setup(target_positions, target_weights, cost):
-    """Resolve backend, default weights and default cost."""
-    nx = get_backend(target_positions)
-    m = target_positions.shape[0]
-    if target_weights is None:
-        target_weights = nx.full((m,), 1.0 / m, type_as=target_positions)
-    if cost is None:
+def _setup(X_target, a_target, metric):
+    """Resolve backend, default weights and metric callable."""
+    nx = get_backend(X_target)
+    m = X_target.shape[0]
+    if a_target is None:
+        a_target = nx.full((m,), 1.0 / m, type_as=X_target)
+    return nx, m, a_target, nx.log(a_target), _resolve_metric(metric)
 
-        def cost(x, y):
-            return _quadratic_cost(x, y, nx)
 
-    return nx, m, target_weights, nx.log(target_weights), cost
+def _resolve_sampler(sampler_source, X_target, nx):
+    r"""Turn ``sampler_source`` into a callable ``batch_size -> (batch_size, d)``.
+
+    A callable is returned unchanged. A string selects a built-in sampler
+    drawing in the same backend as ``X_target``:
+
+    - ``'unif'`` / ``'unif_cube'``: uniform on the unit cube :math:`[0, 1]^d`;
+    - ``'ball'`` / ``'unif_ball'``: uniform on the unit ball;
+    - ``'normal'``: standard Gaussian :math:`\mathcal{N}(0, I_d)`.
+    """
+    if callable(sampler_source):
+        return sampler_source
+    d = X_target.shape[1]
+    if sampler_source in ("unif", "unif_cube"):
+        return lambda b: nx.rand(b, d, type_as=X_target)
+    if sampler_source in ("ball", "unif_ball"):
+
+        def sampler(b):
+            z = nx.randn(b, d, type_as=X_target)
+            r = nx.rand(b, 1, type_as=X_target) ** (1.0 / d)
+            return r * z / nx.sqrt(nx.sum(z**2, axis=1))[:, None]
+
+        return sampler
+    if sampler_source == "normal":
+        return lambda b: nx.randn(b, d, type_as=X_target)
+    raise ValueError(
+        f"Unknown sampler_source {sampler_source!r}. Expected a callable or one "
+        "of 'unif', 'unif_cube', 'ball', 'unif_ball', 'normal'."
+    )
 
 
 def _atom_weights(score, reg, log_b, nx):
@@ -69,73 +101,227 @@ def _atom_weights(score, reg, log_b, nx):
     return nx.where(mask, one, zero)
 
 
-def atom_weights(
-    target_positions,
-    source_samples,
+def semidiscrete_atom_weights(
+    X_target,
+    X_source,
     semi_dual_potential,
-    target_weights=None,
-    cost=None,
+    a_target=None,
+    metric=None,
     reg=0.0,
 ):
-    r"""Row-stochastic atom-assignment weights induced by ``semi_dual_potential``.
+    r"""(Entropic) assignment weights of source samples to target atoms.
 
-    Returns an array ``w`` of shape ``(n_samples, n_atoms)`` such that
-    ``w[i, j]`` is the (entropic) probability that sample ``x_i`` is
-    transported to atom ``y_j``.
+    For target atoms :math:`(y_j)_{j=1}^M` (``X_target``) with weights
+    :math:`(w_j)_j` (``a_target``), a ground cost :math:`c` (``metric``) and a
+    semi-dual potential :math:`g` (``semi_dual_potential``), this returns, for
+    each source sample :math:`x` (a row of ``X_source``), the (entropic)
+    assignment weights :math:`\chi^\varepsilon(x, g)` ([2]_, Sec. 2.2):
+
+    .. math::
+        \chi^{\mathrm{reg}}_j(x, g) =
+        \begin{cases}
+        \displaystyle
+        \frac{w_j \exp\!\big((g_j - c(x, y_j))/\mathrm{reg}\big)}
+                {\sum_{k=1}^M w_k \exp\!\big((g_k - c(x, y_k))/\mathrm{reg}\big)},
+        & \mathrm{reg} > 0, \\[1.2em]
+        \mathbf{1}\big[\, j = \arg\min_k\, c(x, y_k) - g_k \,\big]
+        & \mathrm{reg} = 0.
+        \end{cases}
+
+    :math:`\mathbb{E}_{X}[\chi^\varepsilon(X, g)]` is the atom marginal that
+    the semi-dual gradient matches to :math:`w` ([1]_); cf.
+    :func:`solve_semidiscrete`.
+
+    Parameters
+    ----------
+    X_target : array-like, shape (n_atoms, d)
+        Target atom positions :math:`y_j`.
+    X_source : array-like, shape (n_samples, d)
+        Source samples :math:`x` to assign.
+    semi_dual_potential : array-like, shape (n_atoms,)
+        Semi-dual potential :math:`g`, e.g. from :func:`solve_semidiscrete`.
+    a_target : array-like, shape (n_atoms,), optional
+        Atom weights :math:`w_j`. Defaults to uniform.
+    metric : str or callable, optional
+        Ground cost. A string is passed to :func:`ot.dist` (e.g.
+        ``'sqeuclidean'``, ``'euclidean'``); a callable ``metric(x, y)``
+        must return the ``(n_samples, n_atoms)`` cost matrix. Defaults to
+        ``'sqeuclidean'`` (:math:`\|x - y\|^2`).
+    reg : float, default=0.0
+        Entropic regularization :math:`\varepsilon`. ``0`` gives hard,
+        one-hot assignments; ``> 0`` the softmax above.
+
+    Returns
+    -------
+    w : array, shape (n_samples, n_atoms)
+        Row-stochastic assignment weights: ``w[i, j]`` is the (entropic)
+        probability that sample :math:`x_i` is sent to atom :math:`y_j`.
+        Each row sums to 1.
+
+    References
+    ----------
+    .. [1] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Stochastic Optimization in Semi-Discrete Optimal Transport:
+       Convergence Analysis and Minimax Rate." NeurIPS 2025.
+    .. [2] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Decreasing Entropic Regularization Averaged Gradient for
+       Semi-Discrete Optimal Transport." NeurIPS 2025.
     """
-    nx, _, _, log_b, cost_fn = _setup(target_positions, target_weights, cost)
-    score = semi_dual_potential[None, :] - cost_fn(source_samples, target_positions)
+    nx, _, _, log_b, metric_fn = _setup(X_target, a_target, metric)
+    score = semi_dual_potential[None, :] - metric_fn(X_source, X_target)
     return _atom_weights(score, reg, log_b, nx)
 
 
-def ot_map(
-    target_positions,
-    source_samples,
+def semidiscrete_ot_map(
+    X_target,
+    X_source,
     semi_dual_potential,
-    target_weights=None,
-    cost=None,
+    a_target=None,
+    metric=None,
     reg=0.0,
 ):
-    r"""Transport map :math:`T(x) = \sum_j w_j(x)\, y_j` induced by the potential."""
-    w = atom_weights(
-        target_positions,
-        source_samples,
+    r"""Semi-discrete OT map (barycentric projection) induced by a potential.
+
+    For each source sample :math:`x` (a row of ``X_source``), the transported
+    position uses the (entropic) assignment weights
+    :math:`\chi^\varepsilon(x, g)` of :func:`semidiscrete_atom_weights`:
+
+    .. math::
+        T(x) = \begin{cases}
+            \displaystyle \sum_{j=1}^M \chi^\varepsilon_j(x, g)\, y_j
+                & \varepsilon = \mathrm{reg} > 0, \\[1em]
+            y_j \ \text{ for } x \in \mathbb{L}_j(g)
+                & \varepsilon = 0.
+        \end{cases}
+
+    For :math:`\varepsilon > 0` this is the smoothed barycentric projection;
+    for :math:`\varepsilon = 0` the weights are one-hot and :math:`T` is the
+    Monge map of the (generalized) Brenier theorem ([1]_), sending :math:`x`
+    to the atom of its Laguerre cell
+
+    .. math::
+        \mathbb{L}_j(g) = \big\{\, x : g^{c}(x) = c(x, y_j) - g_j \,\big\},
+
+    cf. [2]_, Sec. 2.2.
+
+    Parameters
+    ----------
+    X_target : array-like, shape (n_atoms, d)
+        Target atom positions :math:`y_j`.
+    X_source : array-like, shape (n_samples, d)
+        Source samples :math:`x` to transport.
+    semi_dual_potential : array-like, shape (n_atoms,)
+        Semi-dual potential :math:`g`, e.g. from :func:`solve_semidiscrete`.
+    a_target : array-like, shape (n_atoms,), optional
+        Atom weights :math:`w_j`. Defaults to uniform.
+    metric : str or callable, optional
+        Ground cost. A string is passed to :func:`ot.dist` (e.g.
+        ``'sqeuclidean'``, ``'euclidean'``); a callable ``metric(x, y)``
+        must return the ``(n_samples, n_atoms)`` cost matrix. Defaults to
+        ``'sqeuclidean'`` (:math:`\|x - y\|^2`).
+    reg : float, default=0.0
+        Entropic regularization :math:`\varepsilon`. ``0`` gives the hard
+        Monge map; ``> 0`` the smoothed barycentric map.
+
+    Returns
+    -------
+    T : array, shape (n_samples, d)
+        Transported source positions :math:`T(x_i)`.
+
+    References
+    ----------
+    .. [1] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Stochastic Optimization in Semi-Discrete Optimal Transport:
+       Convergence Analysis and Minimax Rate." NeurIPS 2025.
+    .. [2] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Decreasing Entropic Regularization Averaged Gradient for
+       Semi-Discrete Optimal Transport." NeurIPS 2025.
+    """
+    w = semidiscrete_atom_weights(
+        X_target,
+        X_source,
         semi_dual_potential,
-        target_weights=target_weights,
-        cost=cost,
+        a_target=a_target,
+        metric=metric,
         reg=reg,
     )
-    return w @ target_positions
+    return w @ X_target
 
 
-def c_transform(
-    target_positions,
-    source_samples,
+def semidiscrete_c_transform(
+    X_target,
+    X_source,
     semi_dual_potential,
-    target_weights=None,
-    cost=None,
+    a_target=None,
+    metric=None,
     reg=0.0,
 ):
-    r"""Pointwise (entropic) c-transform of ``semi_dual_potential``.
+    r"""(Entropic) :math:`c`-transform of a semi-dual potential.
 
-    - ``reg == 0``:  :math:`\varphi_g(x) = \min_j\, c(x, y_j) - g_j`.
-    - ``reg > 0``:   :math:`\varphi_g(x) = -\varepsilon \log \sum_j b_j
-      \exp\!\big((g_j - c(x, y_j))/\varepsilon\big)`.
+    The vectorial :math:`(c, \varepsilon)`-transform
+    :math:`g^{c,\varepsilon}` of the potential :math:`g`
+    (``semi_dual_potential``), evaluated at the source samples ([1]_, Eq. (3);
+    entropic form in [2]_, Eq. (4)):
+
+    .. math::
+        g^{c,\varepsilon}(x) = \begin{cases}
+            \min_{j}\, \big(c(x, y_j) - g_j\big) & \varepsilon = 0, \\[4pt]
+            -\varepsilon \log \sum_{j=1}^M w_j
+                \exp\!\big((g_j - c(x, y_j))/\varepsilon\big) & \varepsilon > 0.
+        \end{cases}
+
+    For :math:`\varepsilon = 0` this is the standard :math:`c`-transform
+    :math:`g^{c}(x) = \min_j (c(x, y_j) - g_j)` whose expectation gives the
+    concave semi-dual :math:`H(g) = \mathbb{E}_X[g^{c}(X)] + \langle g, w\rangle`
+    maximized by :func:`solve_semidiscrete` ([1]_, Eq. (2)).
+
+    Parameters
+    ----------
+    X_target : array-like, shape (n_atoms, d)
+        Target atom positions :math:`y_j`.
+    X_source : array-like, shape (n_samples, d)
+        Source samples :math:`x` at which to evaluate the transform.
+    semi_dual_potential : array-like, shape (n_atoms,)
+        Semi-dual potential :math:`g`, e.g. from :func:`solve_semidiscrete`.
+    a_target : array-like, shape (n_atoms,), optional
+        Atom weights :math:`w_j`. Defaults to uniform.
+    metric : str or callable, optional
+        Ground cost. A string is passed to :func:`ot.dist` (e.g.
+        ``'sqeuclidean'``, ``'euclidean'``); a callable ``metric(x, y)``
+        must return the ``(n_samples, n_atoms)`` cost matrix. Defaults to
+        ``'sqeuclidean'`` (:math:`\|x - y\|^2`).
+    reg : float, default=0.0
+        Entropic regularization :math:`\varepsilon`. ``0`` gives the hard
+        :math:`\min`; ``> 0`` the soft log-sum-exp.
+
+    Returns
+    -------
+    phi : array, shape (n_samples,)
+        The :math:`c`-transform :math:`g^{c,\varepsilon}(x_i)` at each sample.
+
+    References
+    ----------
+    .. [1] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Stochastic Optimization in Semi-Discrete Optimal Transport:
+       Convergence Analysis and Minimax Rate." NeurIPS 2025.
+    .. [2] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Decreasing Entropic Regularization Averaged Gradient for
+       Semi-Discrete Optimal Transport." NeurIPS 2025.
     """
-    nx, _, _, log_b, cost_fn = _setup(target_positions, target_weights, cost)
-    score = semi_dual_potential[None, :] - cost_fn(source_samples, target_positions)
+    nx, _, _, log_b, metric_fn = _setup(X_target, a_target, metric)
+    score = semi_dual_potential[None, :] - metric_fn(X_source, X_target)
     if reg == 0:
         return -nx.max(score, axis=1)
     return -reg * nx.logsumexp(score / reg + log_b[None, :], axis=1)
 
 
 def solve_semidiscrete(
-    target_positions,
-    source_sampler,
-    target_weights=None,
-    cost=None,
+    X_target,
+    sampler_source="unif",
+    a_target=None,
+    metric=None,
     reg=0.0,
-    n_iter=10_000,
+    max_iter=10_000,
     batch_size=32,
     lr0=None,
     lr_exponent=2.0 / 3.0,
@@ -147,43 +333,47 @@ def solve_semidiscrete(
     polyak_average=True,
     log=False,
 ):
-    r"""Solve semi-discrete OT by Polyak-averaged SGD on the semi-dual.
+    r"""Solve semi-discrete OT by (projected) averaged SGD on the semi-dual.
 
-    Maximizes the semi-dual :math:`g \mapsto \langle g, b \rangle + \mathbb{E}_X[\varphi_g(X)]`
-    by averaged stochastic gradient ascent with projection and decreasing
-    regularization, which corresponds to the DRAG algorithm [1]_.
-    Here :math:`\varphi_g` denotes the (entropic) c-transform of :math:`g`,
+    Maximizes the concave semi-dual objective ([1]_, Eq. (4), in its negative convex form)
 
     .. math::
-        \varphi_g(x) = \begin{cases}
-            \min_j \big(c(x, y_j) - g_j\big) & \text{if } \mathrm{reg} = 0, \\
-            -\varepsilon \log \sum_j b_j \exp\!\big((g_j - c(x, y_j))/\varepsilon\big)
-            & \text{if } \mathrm{reg} = \varepsilon > 0,
-        \end{cases}
+        H(g) = \mathbb{E}_{X}[g^{c}(X)] + \langle g, w\rangle ,
 
-    cf. :func:`c_transform`.
+    over the potential :math:`g \in \mathbb{R}^M`, where :math:`g^{c}` is the
+    (entropic) :math:`c`-transform of :math:`g` (see
+    :func:`semidiscrete_c_transform`).
+
+    The base solver is the projected averaged SGD of [1]_ (Algorithm 1); the
+    projection ``max_cost`` clips each iterate to the localizing set
+    :math:`\{|g_j| \le \texttt{max\_cost}\}` ([1]_, Sec. 3.1). When
+    ``decreasing_reg=True``, the entropic regularization is annealed along the
+    iterations following the DRAG schedule of [2]_ (Algorithm 1), which
+    accelerates convergence.
 
     With ``decreasing_reg=True`` the regularization at iteration ``t`` is
     :math:`\varepsilon_t = \max(\text{reg},\, \varepsilon_0 / t^\alpha)` — large
     at first for smoothness, then annealed towards ``reg``. This is the
-    DRAG schedule of [1]_.
+    DRAG schedule of [2]_.
 
     Parameters
     ----------
-    target_positions : array-like, shape (n_atoms, d)
+    X_target : array-like, shape (n_atoms, d)
         Positions of the target atoms. The backend of this array drives
         all subsequent computations.
-    source_sampler : callable
-        ``source_sampler(batch_size)`` returns a ``(batch_size, d)`` array
-        of source samples, in the same backend as ``target_positions``.
-    target_weights : array-like, shape (n_atoms,), optional
+    sampler_source : str or callable, default='unif'
+        Source distribution to sample from: either a callable
+        ``sampler_source(batch_size)`` returning a ``(batch_size, d)`` batch in
+        the backend of ``X_target``, or a built-in name -- one of ``'unif'``
+        (``'unif_cube'``), ``'ball'`` (``'unif_ball'``) or ``'normal'``.
+    a_target : array-like, shape (n_atoms,), optional
         Atom weights. Defaults to uniform.
-    cost : callable, optional
-        ``cost(x, y)`` returns the ``(n_samples, n_atoms)`` cost matrix.
-        Defaults to ``0.5 * ||x - y||^2``.
+    metric : str or callable, optional
+        Ground cost, see ``metric`` in :func:`semidiscrete_atom_weights`.
+        Defaults to ``'sqeuclidean'``.
     reg : float, default=0.0
         Entropic regularization (target value when ``decreasing_reg=True``).
-    n_iter : int, default=10000
+    max_iter : int, default=10000
     batch_size : int, default=32
     lr0 : float, optional
         Initial learning rate. Defaults to ``sqrt(n_atoms * batch_size)``.
@@ -212,9 +402,12 @@ def solve_semidiscrete(
 
     References
     ----------
-    .. [1] Genans, Godichon-Baggioni, Vialard, Wintenberger (2025).
-    "Decreasing Entropic Regularization Averaged Gradient for
-    Semi-Discrete Optimal Transport." NeurIPS 2025.
+    .. [1] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Stochastic Optimization in Semi-Discrete Optimal Transport:
+       Convergence Analysis and Minimax Rate." NeurIPS 2025.
+    .. [2] Genans, F., Godichon-Baggioni, A., Vialard, F.-X., Wintenberger, O.
+       (2025). "Decreasing Entropic Regularization Averaged Gradient for
+       Semi-Discrete Optimal Transport." NeurIPS 2025.
 
     Examples
     --------
@@ -224,29 +417,30 @@ def solve_semidiscrete(
     >>> target = np.linspace(0.0, 1.0, 10).reshape(-1, 1)
     >>> g = solve_semidiscrete(
     ...     target, lambda b: rng.random((b, 1)),
-    ...     n_iter=500, batch_size=32, max_cost=1.0,
+    ...     max_iter=500, batch_size=32, max_cost=1.0,
     ... )
     """
-    nx, m, b, log_b, cost_fn = _setup(target_positions, target_weights, cost)
+    nx, m, b, log_b, metric_fn = _setup(X_target, a_target, metric)
+    sampler_source = _resolve_sampler(sampler_source, X_target, nx)
 
     if init_potential is None:
-        g = nx.zeros((m,), type_as=target_positions)
+        g = nx.zeros((m,), type_as=X_target)
     else:
-        g = init_potential + nx.zeros((m,), type_as=target_positions)
+        g = init_potential + nx.zeros((m,), type_as=X_target)
 
     if lr0 is None:
         lr0 = math.sqrt(m * batch_size)
 
-    g_avg = nx.zeros((m,), type_as=target_positions) if polyak_average else None
+    g_avg = nx.zeros((m,), type_as=X_target) if polyak_average else None
 
-    for t in range(1, n_iter + 1):
+    for t in range(1, max_iter + 1):
         if decreasing_reg:
             reg_t = max(reg, decreasing_reg_initial_eps / (t**decreasing_reg_exponent))
         else:
             reg_t = reg
 
-        x = source_sampler(batch_size)
-        score = g[None, :] - cost_fn(x, target_positions)
+        x = sampler_source(batch_size)
+        score = g[None, :] - metric_fn(x, X_target)
         w = _atom_weights(score, reg_t, log_b, nx)
         grad = nx.mean(w, axis=0) - b
 
@@ -260,7 +454,7 @@ def solve_semidiscrete(
     result = g_avg if polyak_average else g
     if log:
         return result, {
-            "n_iter": n_iter,
+            "max_iter": max_iter,
             "batch_size": batch_size,
             "max_cost": max_cost,
             "polyak_average": polyak_average,
@@ -271,7 +465,7 @@ def solve_semidiscrete(
 
 __all__ = [
     "solve_semidiscrete",
-    "atom_weights",
-    "ot_map",
-    "c_transform",
+    "semidiscrete_atom_weights",
+    "semidiscrete_ot_map",
+    "semidiscrete_c_transform",
 ]

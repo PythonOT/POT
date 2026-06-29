@@ -11,10 +11,11 @@ optimum. All tests run across every POT backend (via the ``nx`` fixture).
 import numpy as np
 import pytest
 
+from ot.backend import get_backend
 from ot.semidiscrete import (
-    atom_weights,
-    c_transform,
-    ot_map,
+    semidiscrete_atom_weights,
+    semidiscrete_c_transform,
+    semidiscrete_ot_map,
     solve_semidiscrete,
 )
 
@@ -25,7 +26,7 @@ TOLERANCE = 0.05
 
 # ---------------------------------------------------------------------
 # Three toy problems with known optimal potentials.
-# Each builder returns numpy arrays so we can lift them onto any backend.
+# Each builder returns numpy arrays so we can move them onto any backend.
 # ---------------------------------------------------------------------
 
 
@@ -126,11 +127,15 @@ def centered_l2_error(estimated, reference):
     return float(np.linalg.norm(estimated - reference))
 
 
-def lift(nx, target_np, weights_np):
-    """Move numpy ``target`` and ``weights`` arrays onto backend ``nx``."""
-    target = nx.from_numpy(target_np)
-    weights = nx.from_numpy(weights_np, type_as=target)
-    return target, weights
+def half_sqeuclidean(x, y):
+    r"""Backend-aware ``0.5 * ||x - y||^2`` cost, used to pin closed forms.
+
+    The closed-form optima below are derived for this cost; passing it
+    explicitly keeps the tests valid independently of the default metric.
+    """
+    nx = get_backend(x, y)
+    diff = x[:, None, :] - y[None, :, :]
+    return 0.5 * nx.sum(diff**2, axis=2)
 
 
 # ---------------------------------------------------------------------
@@ -142,14 +147,15 @@ def lift(nx, target_np, weights_np):
 def test_solve_converges(nx, build_problem):
     """Plain SGD (no decreasing reg) reaches the optimum on every toy problem."""
     target_np, weights_np, optimal, max_cost, d, kind = build_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     g = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=N_ITER,
+        a_target=weights,
+        metric=half_sqeuclidean,
+        max_iter=N_ITER,
         batch_size=BATCH_SIZE,
         decreasing_reg=False,
         max_cost=max_cost,
@@ -162,14 +168,15 @@ def test_solve_converges(nx, build_problem):
 def test_drag_converges(nx, build_problem):
     """DRAG (decreasing entropic reg) reaches the optimum on every toy problem."""
     target_np, weights_np, optimal, max_cost, d, kind = build_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     g = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=N_ITER,
+        a_target=weights,
+        metric=half_sqeuclidean,
+        max_iter=N_ITER,
         batch_size=BATCH_SIZE,
         decreasing_reg=True,
         max_cost=max_cost,
@@ -184,22 +191,22 @@ def test_drag_converges(nx, build_problem):
 
 
 def test_entropic_solver_runs(nx):
-    """In the entropic regime, the solver and ``c_transform`` produce finite values."""
+    """In the entropic regime, the solver and ``semidiscrete_c_transform`` produce finite values."""
     target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     g = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
+        a_target=weights,
         reg=0.05,
-        n_iter=N_ITER,
+        max_iter=N_ITER,
         batch_size=BATCH_SIZE,
         max_cost=max_cost,
     )
     samples = sampler(64)
-    phi = c_transform(target, samples, g, target_weights=weights, reg=0.05)
+    phi = semidiscrete_c_transform(target, samples, g, a_target=weights, reg=0.05)
     assert np.isfinite(nx.to_numpy(g)).all()
     assert np.isfinite(nx.to_numpy(phi)).all()
 
@@ -209,27 +216,77 @@ def test_entropic_solver_runs(nx):
 # ---------------------------------------------------------------------
 
 
-def test_custom_quadratic_cost_matches_default(nx):
-    """A user-supplied quadratic cost reaches the same optimum as the default."""
-    target_np, weights_np, optimal, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+def test_string_metric_runs(nx):
+    """A string metric is routed through ``ot.dist`` and yields finite output."""
+    target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
-
-    def cost(x, y):
-        diff = x[:, None, :] - y[None, :, :]
-        return 0.5 * nx.sum(diff**2, axis=2)
 
     g = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        cost=cost,
-        n_iter=N_ITER,
+        a_target=weights,
+        metric="euclidean",
+        max_iter=N_ITER,
+        batch_size=BATCH_SIZE,
+        max_cost=max_cost,
+    )
+    samples = sampler(32)
+    phi = semidiscrete_c_transform(
+        target, samples, g, a_target=weights, metric="euclidean"
+    )
+    assert np.isfinite(nx.to_numpy(g)).all()
+    assert np.isfinite(nx.to_numpy(phi)).all()
+
+
+# ---------------------------------------------------------------------
+# Built-in samplers
+# ---------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name", ["unif", "unif_cube", "ball", "unif_ball", "normal"]
+)
+def test_string_sampler_runs(nx, name):
+    """Each built-in string sampler yields a finite potential of the right shape."""
+    target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
+    target, weights = nx.from_numpy(target_np, weights_np)
+
+    g = solve_semidiscrete(
+        target,
+        name,
+        a_target=weights,
+        max_iter=200,
+        batch_size=BATCH_SIZE,
+        max_cost=max_cost,
+    )
+    assert nx.to_numpy(g).shape == (target_np.shape[0],)
+    assert np.isfinite(nx.to_numpy(g)).all()
+
+
+def test_default_sampler_unif_converges(nx):
+    """The default ``sampler_source='unif'`` matches the uniform-cube problem."""
+    target_np, weights_np, optimal, max_cost, d, kind = regular_grid_problem()
+    target, weights = nx.from_numpy(target_np, weights_np)
+
+    g = solve_semidiscrete(
+        target,
+        a_target=weights,
+        metric=half_sqeuclidean,
+        max_iter=N_ITER,
         batch_size=BATCH_SIZE,
         max_cost=max_cost,
     )
     err = centered_l2_error(nx.to_numpy(g), optimal)
     assert err < TOLERANCE, f"err={err:.4f}"
+
+
+def test_unknown_sampler_raises(nx):
+    """An unknown sampler string is rejected with ``ValueError``."""
+    target_np, weights_np, _, _, _, _ = regular_grid_problem()
+    target, _ = nx.from_numpy(target_np, weights_np)
+    with pytest.raises(ValueError):
+        solve_semidiscrete(target, "nope", max_iter=10)
 
 
 # ---------------------------------------------------------------------
@@ -239,13 +296,13 @@ def test_custom_quadratic_cost_matches_default(nx):
 
 @pytest.mark.parametrize("reg", [0.0, 0.1])
 def test_atom_weights_are_row_stochastic(nx, reg):
-    """``atom_weights`` returns nonnegative weights that sum to 1 per row."""
+    """``semidiscrete_atom_weights`` returns nonnegative weights that sum to 1 per row."""
     target_np, weights_np, _, _, d, kind = nonuniform_weights_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
     samples = sampler(32)
     g = nx.zeros((target_np.shape[0],), type_as=target)
-    w = atom_weights(target, samples, g, target_weights=weights, reg=reg)
+    w = semidiscrete_atom_weights(target, samples, g, a_target=weights, reg=reg)
     w_np = nx.to_numpy(w)
     assert w_np.shape == (32, target_np.shape[0])
     assert (w_np >= 0).all()
@@ -253,13 +310,13 @@ def test_atom_weights_are_row_stochastic(nx, reg):
 
 
 def test_ot_map_shape_and_finiteness(nx):
-    """``ot_map`` returns finite values with the source-sample shape."""
+    """``semidiscrete_ot_map`` returns finite values with the source-sample shape."""
     target_np, weights_np, _, _, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
     samples = sampler(16)
     g = nx.zeros((target_np.shape[0],), type_as=target)
-    transported = ot_map(target, samples, g, target_weights=weights)
+    transported = semidiscrete_ot_map(target, samples, g, a_target=weights)
     transported_np = nx.to_numpy(transported)
     samples_np = nx.to_numpy(samples)
     assert transported_np.shape == samples_np.shape
@@ -269,11 +326,13 @@ def test_ot_map_shape_and_finiteness(nx):
 def test_c_transform_minimum_for_zero_potential(nx):
     """At ``g = 0``, ``phi_g(x) = -max_j(-c(x, y_j)) = min_j c(x, y_j)``."""
     target_np, weights_np, _, _, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
     samples = sampler(8)
     g = nx.zeros((target_np.shape[0],), type_as=target)
-    phi = c_transform(target, samples, g, target_weights=weights)
+    phi = semidiscrete_c_transform(
+        target, samples, g, a_target=weights, metric=half_sqeuclidean
+    )
     samples_np = nx.to_numpy(samples)
     target_np = nx.to_numpy(target)
     diff = samples_np[:, None, :] - target_np[None, :, :]
@@ -289,22 +348,24 @@ def test_c_transform_minimum_for_zero_potential(nx):
 def test_warm_start_converges(nx):
     """Splitting one run into two warm-started halves still converges."""
     target_np, weights_np, optimal, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     half = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=N_ITER // 2,
+        a_target=weights,
+        metric=half_sqeuclidean,
+        max_iter=N_ITER // 2,
         batch_size=BATCH_SIZE,
         max_cost=max_cost,
     )
     g = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=N_ITER // 2,
+        a_target=weights,
+        metric=half_sqeuclidean,
+        max_iter=N_ITER // 2,
         batch_size=BATCH_SIZE,
         init_potential=half,
         max_cost=max_cost,
@@ -316,7 +377,7 @@ def test_warm_start_converges(nx):
 def test_init_potential_is_not_mutated(nx):
     """The ``init_potential`` array passed by the caller is left intact."""
     target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     init_np = np.full(target_np.shape[0], 0.5)
@@ -326,9 +387,9 @@ def test_init_potential_is_not_mutated(nx):
     solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
+        a_target=weights,
         init_potential=init,
-        n_iter=10,
+        max_iter=10,
         batch_size=4,
         max_cost=max_cost,
     )
@@ -338,15 +399,15 @@ def test_init_potential_is_not_mutated(nx):
 def test_projection_clamps_last_iterate(nx):
     """With ``max_cost=b``, every coordinate of the last iterate lies in ``[-b, b]``."""
     target_np, weights_np, _, _, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     bound = 0.05
     _, info = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=300,
+        a_target=weights,
+        max_iter=300,
         batch_size=4,
         max_cost=bound,
         log=True,
@@ -358,14 +419,14 @@ def test_projection_clamps_last_iterate(nx):
 def test_polyak_average_off_returns_last_iterate(nx):
     """With ``polyak_average=False`` the returned potential equals the last iterate."""
     target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     final, info = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=20,
+        a_target=weights,
+        max_iter=20,
         batch_size=4,
         polyak_average=False,
         max_cost=max_cost,
@@ -379,19 +440,19 @@ def test_polyak_average_off_returns_last_iterate(nx):
 def test_log_returns_metadata(nx):
     """``log=True`` returns an info dict with the expected fields."""
     target_np, weights_np, _, max_cost, d, kind = regular_grid_problem()
-    target, weights = lift(nx, target_np, weights_np)
+    target, weights = nx.from_numpy(target_np, weights_np)
     sampler = make_sampler(kind, d, nx, target)
 
     g, info = solve_semidiscrete(
         target,
         sampler,
-        target_weights=weights,
-        n_iter=50,
+        a_target=weights,
+        max_iter=50,
         batch_size=4,
         max_cost=max_cost,
         log=True,
     )
     assert nx.to_numpy(g).shape == (target_np.shape[0],)
-    assert info["n_iter"] == 50
+    assert info["max_iter"] == 50
     assert info["batch_size"] == 4
     assert info["max_cost"] == max_cost
