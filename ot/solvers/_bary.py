@@ -12,7 +12,7 @@ from ..utils import BaryResult
 from ..lp import free_support_barycenter_generic_costs
 from ..backend import get_backend
 
-from ._linear import solve, solve_sample, lst_method_lazy
+from ._linear import solve, solve_sample, lst_method_solve_sample
 
 
 def _bary_sample_bcd(
@@ -434,7 +434,7 @@ def solve_bary_sample(
 
     """
 
-    if method is not None and method.lower() in lst_method_lazy:
+    if method is not None and method.lower() in lst_method_solve_sample:
         raise NotImplementedError(
             f"method {method} operating on lazy tensors is not implemented yet"
         )

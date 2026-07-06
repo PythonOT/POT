@@ -455,18 +455,20 @@ Artificial Intelligence.
 
 \[82] Bonet, C., Nadjahi, K., Séjourné, T., Fatras, K., & Courty, N. (2024). [Slicing Unbalanced Optimal Transport](https://openreview.net/forum?id=AjJTg5M0r8). Transactions on Machine Learning Research.
 
-[83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025). [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
+\[83] Germain, T., Flamary, R., Kostic, V. R., & Lounici, K. (2025). [A Spectral-Grassmann Wasserstein Metric for Operator Representations of Dynamical Systems](https://arxiv.org/abs/2509.24920).
 
-[84] Genest, B., Bonneel, N., Nivoliers, V., & Coeurjolly, D. (2025). [BSP-OT: Sparse transport plans between discrete measures in loglinear time.](https://dl.acm.org/doi/10.1145/3763281) ACM Transactions on Graphics (TOG), 44(6), 1-15.
+\[84] Genest, B., Bonneel, N., Nivoliers, V., & Coeurjolly, D. (2025). [BSP-OT: Sparse transport plans between discrete measures in loglinear time.](https://dl.acm.org/doi/10.1145/3763281) ACM Transactions on Graphics (TOG), 44(6), 1-15.
 
-[85] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). [Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics](https://proceedings.neurips.cc/paper_files/paper/2023/hash/6f1346bac8b02f76a631400e2799b24b-Abstract-Conference.html). Advances in Neural Information Processing Systems, 36, 35350–35385.
+\[85] Mahey, G., Chapel, L., Gasso, G., Bonet, C., & Courty, N. (2023). [Fast Optimal Transport through Sliced Generalized Wasserstein Geodesics](https://proceedings.neurips.cc/paper_files/paper/2023/hash/6f1346bac8b02f76a631400e2799b24b-Abstract-Conference.html). Advances in Neural Information Processing Systems, 36, 35350–35385.
 
-[86] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
+\[86] Tanguy, E., Chapel, L., Delon, J. (2025). [Sliced Transport Plans](https://arxiv.org/abs/2508.01243) arXiv preprint 2506.03661.
 
-[87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
+\[87] Liu, X., Diaz Martin, R., Bai Y., Shahbazi A., Thorpe M., Aldroubi A., Kolouri, S. (2024). [Expected Sliced Transport Plans](https://openreview.net/forum?id=P7O1Vt1BdU). International Conference on Learning Representations.
 
-[88] Bouveyron, C. & Corneli, M. (2026).  [Scaling optimal transport to high-dimensional Gaussian distributions with application to domain adaptation](https://hal.science/hal-04930868v4/file/Article-OT-HDGauss-v4.pdf). Statistics and Computing 36.2 (2026): 88.
+\[88] Bouveyron, C. & Corneli, M. (2026).  [Scaling optimal transport to high-dimensional Gaussian distributions with application to domain adaptation](https://hal.science/hal-04930868v4/file/Article-OT-HDGauss-v4.pdf). Statistics and Computing 36.2 (2026): 88.
 
-[89] Tipping, M.E. & Bishop, C.M. (1999). [Probabilistic principal component analysis]. Journal of the Royal Statistical Society Series B: Statistical Methodology 61.3 (1999): 611-622.
+\[89] Tipping, M.E. & Bishop, C.M. (1999). [Probabilistic principal component analysis]. Journal of the Royal Statistical Society Series B: Statistical Methodology 61.3 (1999): 611-622.
 
-[90] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.
+\[90] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.
+
+\[91] Fatras, K., Zine, Y., Majewski, S., Flamary, R., Gribonval, R., & Courty, N. (2021). [Minibatch optimal transport distances; analysis and applications](https://arxiv.org/pdf/2101.01792). arXiv preprint arXiv:2101.01792.

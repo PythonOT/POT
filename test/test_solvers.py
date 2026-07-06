@@ -13,7 +13,8 @@ import sys
 import ot
 from ot.bregman import geomloss
 from ot.backend import torch
-from ot.solvers._linear import lst_method_lazy
+from ot.solvers._linear import lst_method_solve_sample
+from ot.utils import DataScaler
 
 
 lst_reg = [None, 0.1]
@@ -32,15 +33,25 @@ lst_method_params_solve_sample = [
     {"method": "1d", "metric": "euclidean"},
     {"method": "gaussian"},
     {"method": "gaussian", "reg": 1},
+    {"method": "gaussian_hd", "rank": 1},
+    {"method": "gaussian_hd", "rank": 3},
     {"method": "factored", "rank": 2},
     {"method": "lowrank", "rank": 2, "max_iter": 5},
     {"method": "nystroem", "rank": 2},
+    {"method": "sliced", "n_projections": 10},
+    {"method": "sliced", "n_projections": 10, "metric": "euclidean"},
+    {"method": "max_sliced", "n_projections": 10},
+    {"method": "max_sliced", "n_projections": 10, "metric": "euclidean"},
 ]
 
 lst_parameters_solve_sample_NotImplemented = [
     {"method": "1d", "metric": "any other one"},  # fail 1d on weird metrics
     {
         "method": "gaussian",
+        "metric": "euclidean",
+    },  # fail gaussian on metric not euclidean
+    {
+        "method": "gaussian_hd",
         "metric": "euclidean",
     },  # fail gaussian on metric not euclidean
     {
@@ -61,10 +72,18 @@ lst_parameters_solve_sample_NotImplemented = [
         "reg": 1,
         "unbalanced": 1,
     },  # fail lazy for unbalanced and regularized
+    {
+        "method": "sliced",
+        "metric": "wrong_metric",
+    },  # fail sliced on metric not euclidean
+    {
+        "method": "max_sliced",
+        "metric": "wrong_metric",
+    },  # fail sliced on metric not euclidean
 ]
 
 lst_parameters_solve_bary_sample_NotImplemented = [
-    {"method": method} for method in lst_method_lazy
+    {"method": method} for method in lst_method_solve_sample
 ] + [
     {"lazy": True},  # fail lazy
     {"metric": "cosine"},  # fail on invalid metric
@@ -735,33 +754,36 @@ def test_solve_sample_geomloss(nx, metric):
     sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=False, method="geomloss")
     assert_allclose_sol(sol0, sol)
 
-    sol1 = ot.solve_sample(
-        xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_tensorized"
-    )
-    np.testing.assert_allclose(
-        nx.to_numpy(sol1.plan),
-        nx.to_numpy(sol.plan),
-        rtol=1e-5,
-        atol=1e-5,
-    )
+    # commented because geomloss_tensorized and geomloss_online are not
+    # implemented in geomloss 0.2.0 yet
 
-    sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_online")
-    np.testing.assert_allclose(
-        nx.to_numpy(sol1.plan),
-        nx.to_numpy(sol.plan),
-        rtol=1e-5,
-        atol=1e-5,
-    )
+    # sol1 = ot.solve_sample(
+    #     xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_tensorized"
+    # )
+    # np.testing.assert_allclose(
+    #     nx.to_numpy(sol1.plan),
+    #     nx.to_numpy(sol.plan),
+    #     rtol=1e-5,
+    #     atol=1e-5,
+    # )
 
-    sol1 = ot.solve_sample(
-        xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_multiscale"
-    )
-    np.testing.assert_allclose(
-        nx.to_numpy(sol1.plan),
-        nx.to_numpy(sol.plan),
-        rtol=1e-5,
-        atol=1e-5,
-    )
+    # sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_online")
+    # np.testing.assert_allclose(
+    #     nx.to_numpy(sol1.plan),
+    #     nx.to_numpy(sol.plan),
+    #     rtol=1e-5,
+    #     atol=1e-5,
+    # )
+
+    # sol1 = ot.solve_sample(
+    #     xb, yb, ab, bb, reg=1, lazy=True, method="geomloss_multiscale"
+    # )
+    # np.testing.assert_allclose(
+    #     nx.to_numpy(sol1.plan),
+    #     nx.to_numpy(sol.plan),
+    #     rtol=1e-5,
+    #     atol=1e-5,
+    # )
 
     sol1 = ot.solve_sample(xb, yb, ab, bb, reg=1, lazy=True, method="geomloss")
     np.testing.assert_allclose(
@@ -793,8 +815,132 @@ def test_solve_sample_methods(nx, method_params):
     assert_allclose_sol(sol, solb)
 
     sol2 = ot.solve_sample(x, x, **method_params)
-    if method_params["method"] not in ["factored", "lowrank", "nystroem"]:
+    if method_params["method"] not in [
+        "factored",
+        "lowrank",
+        "nystroem",
+        "gaussian_hd",
+    ]:
         np.testing.assert_allclose(sol2.value, 0, atol=1e-10)
+
+
+def test_zero_mass_solvers():
+    # test that solvers handle zero mass distributions correctly
+    n_samples_s = 10
+    n_samples_t = 9
+    n_features = 2
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    # Set one of the distributions to zero mass
+    a[0] = 0.0
+    b[0] = 0.0
+
+    a /= a.sum()
+    b /= b.sum()
+
+    res = ot.solve_sample(x, y, a, b)
+    res_reg = ot.solve_sample(x, y, a, b, reg=1.0)
+
+    assert np.isnan(res.value) == False
+    assert np.isnan(res_reg.value) == False
+
+
+@pytest.skip_backend("tf", reason="Not implemented for tf backend")
+@pytest.mark.parametrize("debias", [True, False, "split"])
+@pytest.mark.parametrize("reg", [None, 10])
+def test_solve_sample_debias(nx, debias, reg):
+    n_samples_s = 10
+    n_samples_t = 9
+    n_features = 2
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    sol = ot.solve_sample(x, y, reg=reg, debias=debias)
+    solb = ot.solve_sample(xb, yb, ab, bb, reg=reg, debias=debias)
+
+    # check some attributes (no need )
+    assert_allclose_sol(sol, solb)
+
+
+def test_solve_sample_bsp(nx):
+    n_samples_s = 10
+    n_samples_t = 10  # same number of samples for source and target
+    n_features = 2
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+
+    xb, yb = nx.from_numpy(x, y)
+
+    sol = ot.solve_sample(x, y, method="bsp")
+    solb = ot.solve_sample(xb, yb, method="bsp")
+
+    # check some attributes (no need )
+    assert_allclose_sol(sol, solb)
+
+    with pytest.raises(ValueError):
+        # bsp method requires same number of samples for source and target
+        ot.solve_sample(x, y[:5], method="bsp")
+
+    with pytest.raises(NotImplementedError):
+        # bsp method requires same number of samples for source and target
+        ot.solve_sample(x, y, method="bsp", metric="wrong_metric")
+
+
+def test_solvers_bad_method():
+    n_samples_s = 20
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+
+    C = ot.dist(x, y)
+
+    with pytest.raises(ValueError):
+        ot.solve_sample(x, y, method="invalid_method")
+
+    with pytest.raises(ValueError):
+        ot.solve(C, method="invalid_method")
+
+
+@pytest.mark.parametrize("norm", ["standard", "minmax", "l2"])
+def test_solve_sample_scaler(nx, norm):
+    n_samples_s = 20
+    n_samples_t = 7
+    n_features = 2
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n_samples_s, n_features)
+    y = rng.randn(n_samples_t, n_features)
+    a = ot.utils.unif(n_samples_s)
+    b = ot.utils.unif(n_samples_t)
+
+    xb, yb, ab, bb = nx.from_numpy(x, y, a, b)
+
+    scaler0 = DataScaler(norm=norm)
+    scaler0.fit(x)
+
+    scaler1 = DataScaler(norm=norm)
+    scaler1.fit(xb)
+
+    sol0 = ot.solve_sample(x, y, a, b, scaler=scaler0)
+    sol1 = ot.solve_sample(xb, yb, ab, bb, scaler=scaler1)
+
+    assert_allclose_sol(sol0, sol1)
 
 
 @pytest.mark.parametrize("method_params", lst_parameters_solve_sample_NotImplemented)

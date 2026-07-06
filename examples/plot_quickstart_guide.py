@@ -467,8 +467,8 @@ pl.show()
 #      loss_fgw = ot.gromov.fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1)
 #      loss_efgw = ot.gromov.entropic_fused_gromov_wasserstein2(C1, C2, M, a, b, alpha=0.1, epsilon=reg)
 #
-# Large scale OT
-# --------------
+# Large scale OT and approximations
+# ---------------------------------
 #
 # We discuss here strategies to solve large scale OT problems using approximations
 # of the exact OT problem.
@@ -584,10 +584,66 @@ print(f"Exact OT loss = {loss:1.3f}")
 print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
 
 # %%
+# One can also use the HD gaussian assumption (low rank covariance + diagonal)
+# that has better properties in high dimension. The rank of the covariance
+# matrices can be controlled with the :code:`rank` parameter.
+
+hdbw_value = ot.solve_sample(x1, x2, a, b, method="gaussian_hd", rank=1).value
+
+print(f"Bures-Wasserstein distance = {bw_value:1.3f}")
+print(f"High Dimensional Bures-Wasserstein distance = {hdbw_value}")
+
+# %%
 # .. note::
 #    The Gaussian Wasserstein problem can be solved with the classic API using the
 #    :func:`ot.gaussian.empirical_bures_wasserstein_distance` function.
 #
+# Sliced Wasserstein
+# ~~~~~~~~~~~~~~~~~~
+#
+# The Sliced Wasserstein distance is a Wasserstein distance between
+# empirical distributions that is computed by projecting the samples on random
+# directions and averaging the Wasserstein distances between the projected
+# distributions. It can be used as an approximation of the Wasserstein distance
+# between empirical distributions.
+
+sw_value = ot.solve_sample(x1, x2, a, b, method="sliced", n_projections=10).value
+max_sw_value = ot.solve_sample(
+    x1, x2, a, b, method="max_sliced", n_projections=10
+).value
+
+print(f"Exact OT loss = {loss:1.3f}")
+print(f"Sliced Wasserstein distance = {sw_value:1.3f}")
+print(f"Max Sliced Wasserstein distance = {max_sw_value:1.3f}")
+
+# %%
+# Binary Space Partitioning (BSP) OT
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# One can also use the BSP OT approximation that is based on a recursive
+# partitioning of the space and computes the Wasserstein distance between the
+# empirical distributions by solving small OT problems between the samples in each
+# partition. The number of partitions can be controlled with the
+# `n_projections` parameter.
+
+# BSP can only find bijections so require same number of points
+x1_bsp = np.concatenate([x1, x1], axis=0)
+
+sol_bsp = ot.solve_sample(x1_bsp, x2, method="bsp", n_projections=10)
+bsp_value = sol_bsp.value
+bsp_sparse_plan = sol_bsp.sparse_plan
+
+# sphinx_gallery_start_ignore
+
+pl.figure(1, (3, 3))
+plot2D_samples_mat(x1_bsp, x2, bsp_sparse_plan)
+pl.plot(x1_bsp[:, 0], x1_bsp[:, 1], "ob", label="Source samples", **style)
+pl.plot(x2[:, 0], x2[:, 1], "or", label="Target samples", **style)
+pl.title("BSP OT plan loss={:.3f}".format(bsp_value))
+pl.show()
+
+# sphinx_gallery_end_ignore
+# %%
 # Comparing all OT plans
 # ----------------------
 #

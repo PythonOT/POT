@@ -8,7 +8,7 @@ General OT solvers with unified API
 #
 # License: MIT License
 
-from ..utils import OTResult, dist
+from ..utils import OTResult, dist, split_sample_ratio, apply_scaler
 from ..lp import emd2, emd2_lazy, wasserstein_1d
 from ..backend import get_backend
 from ..unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
@@ -18,17 +18,30 @@ from ..bregman import (
     empirical_sinkhorn_nystroem2,
     old_geomloss,
 )
+from ..sliced import sliced_wasserstein_distance, max_sliced_wasserstein_distance
+from ..bsp import compute_bspot_bijection
 from ..smooth import smooth_ot_dual
-from ..gaussian import empirical_bures_wasserstein_distance
+from ..gaussian import (
+    empirical_bures_wasserstein_distance,
+    empirical_bures_wasserstein_distance_hd,
+)
 from ..factored import factored_optimal_transport
 from ..lowrank import lowrank_sinkhorn
 from ..optim import cg
 from warnings import warn
 
+lst_valid_methods_solve = [
+    "sinkhorn",  # sinkhorn for unbalanced
+    "sinkhorn_log",  # sinkhorn for unbalanced
+    "mm",  # unbalanced
+    "lbfgsb",  # unbalanced
+]
 
-lst_method_lazy = [
+
+lst_method_solve_sample = [
     "1d",
     "gaussian",
+    "gaussian_hd",
     "lowrank",
     "nystroem",
     "factored",
@@ -37,7 +50,12 @@ lst_method_lazy = [
     "geomloss_tensorized",
     "geomloss_online",
     "geomloss_multiscale",
+    "sliced",
+    "max_sliced",
+    "bsp",
 ]
+
+all_valid_methods_solve_sample = lst_valid_methods_solve + lst_method_solve_sample
 
 
 def solve(
@@ -294,6 +312,13 @@ def solve(
     if reg is None:
         reg = 0
 
+    if method is not None and method not in lst_valid_methods_solve:
+        raise ValueError(
+            "Unknown method={} for solve, must be in {}".format(
+                method, lst_valid_methods_solve
+            )
+        )
+
     # default values for solutions
     potentials = None
     value = None
@@ -463,8 +488,15 @@ def solve(
                 if reg_type.lower() == "entropy":
                     value = value_linear + reg * nx.sum(plan * nx.log(plan + 1e-16))
                 else:
+                    # stabilize kl of 0 mass
+                    if nx.any(a == 0) or nx.any(b == 0):
+                        a = a + 1e-15 * nx.min(a)
+                        b = b + 1e-15 * nx.min(b)
+                        print(
+                            "Warning: a or b has 0 mass, adding small mass to avoid NaN in KL divergence."
+                        )
                     value = value_linear + reg * nx.kl_div(
-                        plan, a[:, None] * b[None, :]
+                        plan, a[:, None] * b[None, :] + 1e-15
                     )
 
                 if grad == "envelope":  # set the gradient at convergence
@@ -619,6 +651,10 @@ def solve_sample(
     verbose=False,
     grad="autodiff",
     random_state=None,
+    debias=False,
+    n_projections=50,
+    projections=None,
+    scaler=None,
 ):
     r"""Solve the discrete optimal transport problem using the samples in the source and target domains.
 
@@ -655,17 +691,17 @@ def solve_sample(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If `reg_type='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
         Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
     unbalanced : float or indexable object of length 1 or 2
         Marginal relaxation term.
         If it is a scalar or an indexable object of length 1,
         then the same relaxation is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`unbalanced=float("inf")`.
+        The balanced OT can be recovered using `unbalanced=float("inf")`.
         For semi-relaxed case, use either
-        :math:`unbalanced=(float("inf"), scalar)` or
-        :math:`unbalanced=(scalar, float("inf"))`.
+        `unbalanced=(float("inf"), scalar)` or
+        `unbalanced=(scalar, float("inf"))`.
         If unbalanced is an array,
         it must have the same backend as input arrays `(a, b, M)`.
     unbalanced_type : str, optional
@@ -679,7 +715,21 @@ def solve_sample(
     method : str, optional
         Method for solving the problem, this can be used to select the solver
         for unbalanced problems (see :any:`ot.solve`), or to select a specific
-        large scale solver.
+        large scale solver. Available methods are:
+
+        - "1d" for 1D OT solver done in parallel for each dimension.
+        - "gaussian" for Gaussian OT solver that estimates mean and
+              covariance and solve the closed form solution)
+        - "gaussian_hd" for high-dimensional Gaussian OT solver with rank given by `rank` parameter .
+        - "lowrank" for low-rank Sinkhorn solver (see :any:`ot.lowrank`)
+        - "nystroem" for Nystroem Sinkhorn solver
+        - "factored" for factored OT solver
+        - "geomloss" for GeomLoss Sinkhorn solver
+        - "sliced" for sliced wasserstein distance (see :any:`ot.sliced`)
+        - "max_sliced" for max sliced wasserstein distance (see
+          :any:`ot.sliced`)
+        - "bsp" for BSP-OT solver (only for distribution with same number of
+          samples and uniform weights)
     n_threads : int, optional
         Number of OMP threads for exact OT solver, by default 1
     max_iter : int, optional
@@ -706,6 +756,20 @@ def solve_sample(
         detached. This is useful for memory saving when only the value is needed.
     random_state : int, optional
         The random state for sampling the components in each distribution for method='nystroem'.
+    debias : bool, optional
+        Whether to use the debiased version of the OT problem, by default False
+        if True, the value returned is the Sinkhorn divergence [23] but the plan is
+        still the Sinkhorn plan. The results for all pairs of problems and
+        provided in the log dictionary. if debiased='split', then X_a and X_b
+        are split into two halves and the debiased value is computed using the
+        two halves as proposed in minibatch OT [91].
+    n_projections : int, optional
+        Number of projections for sliced OT, by default 50
+    projections : array-like, shape (n_projections, dim), optional
+        Projections for sliced OT, by default None (random projections are used)
+    scaler : callable, optional
+        Function to scale the input data, following :any:`ot.utils.apply_scaler`.
+        by default None (no scaling).
 
     Returns
     -------
@@ -812,6 +876,22 @@ def solve_sample(
 
         res = ot.solve_sample(xa, xb, a, b, reg=1.0, reg_type='L2')
 
+    - **Debiased OT and Sinkhorn divergence** (when ``debias=True``):
+
+    One can compute the Sinkhorn divergence between two distributions using the
+    following code:
+
+    .. code-block:: python
+
+        div = ot.solve_sample(xa, xb, a, b, reg=1.0, debias=True).value
+
+    Debiasing for all existing solvers is implemented and in particular one can
+    recover the minibatch exact OT debiasing [91] using the following code:
+
+    .. code-block:: python
+
+        div = ot.solve_sample(xa, xb, a, b, debias='split').value
+
     - **Unbalanced OT [41]** (when ``unbalanced!=None``):
 
     .. math::
@@ -879,7 +959,7 @@ def solve_sample(
 
     Corresponds to a low rank approximation of entropic OT (for a squared Euclidean cost) that runs in linear time.
 
-    - **Gaussian Bures-Wasserstein [2]** (when ``method='gaussian'``):
+    - **Gaussian Bures-Wasserstein** (when ``method='gaussian'``):
 
     This method computes the Gaussian Bures-Wasserstein distance between two
     Gaussian distributions estimated from the empirical distributions
@@ -901,6 +981,14 @@ def solve_sample(
         # recover the squared Gaussian Bures-Wasserstein distance
         BW_dist = res.value
 
+    The Gaussian-HD variant of this method can be used for high-dimensional data with the following code:
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, method='gaussian_hd', rank=10)
+
+    where the rank parameter controls the rank of the covariance matrices used in the computation of the Bures-Wasserstein distance.
+
     - **Wasserstein 1d [1]** (when ``method='1D'``):
 
     This method computes the Wasserstein distance between two 1d distributions
@@ -913,6 +1001,38 @@ def solve_sample(
 
         # recover the squared Wasserstein distances
         W_dists = res.value
+
+    - **Sliced Wasserstein distance** (when ``method='sliced'``):
+
+    This method computes the sliced Wasserstein distance between two
+    distributions. The sliced Wasserstein distance
+    is defined as the average of the Wasserstein distances between the projected
+    distributions on random directions.
+
+    .. code-block:: python
+
+        swd = ot.solve_sample(xa, xb, method='sliced', n_projections=50).value
+
+    - **Max Sliced Wasserstein [34]** (when ``method='max_sliced'``):
+
+    This method computes the max sliced Wasserstein distance between two
+    distributions.
+
+    .. code-block:: python
+
+        mswd = ot.solve_sample(xa, xb, method='max_sliced', n_projections=50).value
+
+    - **Binary Space Partitioning OT  (BSP)** (when ``method='bsp'``):
+
+    This method computes the BSP-OT distance between two distributions and
+    alignments. The number of partitioning directions can be set with the `n_projections` parameter.
+
+    .. code-block:: python
+
+        res = ot.solve_sample(xa, xb, method='bsp', n_projections=50)
+
+        bsp_ot_distance = res.value
+        bsp_plan = res.plan
 
 
     .. _references-solve-sample:
@@ -936,6 +1056,10 @@ def solve_sample(
         Optimal Transport. Proceedings of the Twenty-First International
         Conference on Artificial Intelligence and Statistics (AISTATS).
 
+    .. [23] Aude, G., Peyré, G., Cuturi, M., Learning Generative Models with
+        Sinkhorn Divergences, Proceedings of the Twenty-First International
+        Conference on Artificial Intelligence and Statistics, (AISTATS) 21, 2018
+
     .. [34] Feydy, J., Séjourné, T., Vialard, F. X., Amari, S. I., Trouvé,
         A., & Peyré, G. (2019, April). Interpolating between optimal transport
         and MMD using Sinkhorn divergences. In The 22nd International Conference
@@ -957,10 +1081,129 @@ def solve_sample(
     .. [80] Altschuler, J., Bach, F., Rudi, A., Niles-Weed, J. (2019).
         Massively scalable Sinkhorn distances via the Nyström method. NeurIPS.
 
+    .. [91] Fatras, K., Zine, Y., Majewski, S., Flamary, R., Gribonval, R., &
+        Courty, N. (2021). [Minibatch optimal transport distances; analysis and
+        applications](https://arxiv.org/pdf/2101.01792). arXiv preprint arXiv:2101.01792.
 
     """
 
-    if method is not None and method.lower() in lst_method_lazy:
+    if method is not None and method.lower() not in all_valid_methods_solve_sample:
+        raise ValueError(
+            "Unknown method={} for solve_sample. Available methods are: {}".format(
+                method, all_valid_methods_solve_sample
+            )
+        )
+
+    if scaler is not None:
+        X_a, Xb = apply_scaler(X_a, X_b, scaler=scaler)
+
+    if debias:
+        dict_params = dict(
+            metric=metric,
+            reg=reg,
+            c=c,
+            reg_type=reg_type,
+            unbalanced=unbalanced,
+            unbalanced_type=unbalanced_type,
+            lazy=lazy,
+            batch_size=batch_size,
+            method=method,
+            n_threads=n_threads,
+            max_iter=max_iter,
+            plan_init=plan_init,
+            rank=rank,
+            scaling=scaling,
+            potentials_init=potentials_init,
+            X_init=X_init,
+            tol=tol,
+            verbose=verbose,
+            grad=grad,
+            random_state=random_state,
+            debias=False,
+        )
+
+        nx = get_backend(X_a, X_b, a, b)
+
+        if nx.__name__ == "tf":
+            raise NotImplementedError(
+                "Debiasing is not implemented for TensorFlow backend."
+            )
+
+        if isinstance(debias, str) and debias == "split":
+            # split the samples into two halves with each half the mass
+            X_a1, X_a2, a1, a2, sel_a1, sel_a2 = split_sample_ratio(X_a, a, nx=nx)
+            X_b1, X_b2, b1, b2, sel_b1, sel_b2 = split_sample_ratio(X_b, b, nx=nx)
+
+            # compute the four OT problems
+            resaa = solve_sample(X_a1, X_a2, a=a1, b=a2, **dict_params)
+            resbb = solve_sample(X_b1, X_b2, a=b1, b=b2, **dict_params)
+            resab1 = solve_sample(X_a1, X_b1, a=a1, b=b1, **dict_params)
+            resab2 = solve_sample(X_a2, X_b2, a=a2, b=b2, **dict_params)
+
+            # compute debiased values
+            value = (resab1.value + resab2.value) - (resaa.value + resbb.value)
+            value_linear = value
+
+            log = {
+                "res_aa": resaa,
+                "res_bb": resbb,
+                "res_ab1": resab1,
+                "res_ab2": resab2,
+                "sel_a1": sel_a1,
+                "sel_a2": sel_a2,
+                "sel_b1": sel_b1,
+                "sel_b2": sel_b2,
+                "a1": a1,
+                "a2": a2,
+                "b1": b1,
+                "b2": b2,
+            }
+
+            res = OTResult(
+                value=value,
+                value_linear=value_linear,
+                plan=None,  # no plan for debiased version
+                potentials=None,  # no potentials for debiased version
+                sparse_plan=None,  # no sparse plan for debiased version
+                lazy_plan=None,  # no lazy plan for debiased version
+                status="Debiased",
+                log=log,
+                backend=nx,
+            )
+
+        else:
+            # standard debiasing à la sinkhorn divergence
+
+            resaa = solve_sample(X_a, X_a, a=a, b=a, **dict_params)
+
+            resbb = solve_sample(X_b, X_b, a=b, b=b, **dict_params)
+
+            resab = solve_sample(X_a, X_b, a=a, b=b, **dict_params)
+
+            # compute debiased values
+            value = resab.value - 0.5 * (resaa.value + resbb.value)
+            value_linear = resab.value_linear - 0.5 * (
+                resaa.value_linear + resbb.value_linear
+            )
+
+            log = {"res_aa": resaa, "res_bb": resbb, "res_ab": resab}
+
+            res = OTResult(
+                value=value,
+                value_linear=value_linear,
+                plan=resab.plan,
+                potentials=resab.potentials,
+                sparse_plan=resab.sparse_plan,
+                lazy_plan=resab.lazy_plan,
+                status=resab.status,
+                log=log,
+                backend=nx,
+            )
+
+        # return debiased result
+        return res
+
+    if method is not None and method.lower() in all_valid_methods_solve_sample:
         lazy0 = lazy
         lazy = True
 
@@ -989,14 +1232,7 @@ def solve_sample(
 
         return res
 
-    elif (
-        lazy
-        and method is None
-        and (reg is None or reg == 0)
-        and unbalanced is None
-        and X_a is not None
-        and X_b is not None
-    ):
+    elif lazy and method is None and (reg is None or reg == 0) and unbalanced is None:
         # Use lazy EMD solver with coordinates (no regularization, balanced)
         nx = get_backend(X_a, X_b, a, b)
         value_linear, log = emd2_lazy(
@@ -1032,6 +1268,7 @@ def solve_sample(
         value_linear = None
         plan = None
         lazy_plan = None
+        sparse_plan = None
         status = None
         log = None
 
@@ -1050,6 +1287,89 @@ def solve_sample(
             value = wasserstein_1d(X_a, X_b, a, b, p=p)
             value_linear = value
 
+        elif method == "sliced":  # Sliced Wasserstein distance
+            if metric == "sqeuclidean":
+                p = 2
+            elif metric in ["euclidean", "cityblock"]:
+                p = 1
+            else:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
+
+            value, log = sliced_wasserstein_distance(
+                X_a,
+                X_b,
+                a=a,
+                b=b,
+                p=p,
+                n_projections=n_projections,
+                projections=projections,
+                seed=random_state,
+                log=True,
+            )
+            value_linear = value
+
+        elif method == "max_sliced":  # Max Sliced Wasserstein distance
+            if metric == "sqeuclidean":
+                p = 2
+            elif metric in ["euclidean", "cityblock"]:
+                p = 1
+            else:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
+
+            value, log = max_sliced_wasserstein_distance(
+                X_a,
+                X_b,
+                a=a,
+                b=b,
+                p=p,
+                n_projections=n_projections,
+                projections=projections,
+                seed=random_state,
+                log=True,
+            )
+            value_linear = value
+
+        elif method == "bsp":  # BSP-OT solver
+            if metric == "sqeuclidean":
+                p = 2
+            elif metric in ["euclidean", "cityblock"]:
+                p = 1
+            else:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
+
+            if (X_a.shape[0] != X_b.shape[0]) or a is not None or b is not None:
+                raise ValueError(
+                    "BSP-OT solver requires the same number of samples in both distributions and uniform weights (provided as None)."
+                )
+
+            if random_state is None:
+                random_state = 0
+
+            n = X_a.shape[0]
+
+            value, perm, perms = compute_bspot_bijection(
+                X_a, X_b, p=p, seed=random_state, n_plans=n_projections
+            )
+            value_linear = value
+            sparse_plan = nx.coo_matrix(
+                nx.ones(n, type_as=X_a) / n,
+                nx.arange(n),
+                perm,
+                shape=(n, n),
+                type_as=X_a,
+            )
+
+            log = {
+                "perm": perm,
+                "perms": perms,
+            }
+
         elif method == "gaussian":  # Gaussian Bures-Wasserstein
             if metric.lower() not in ["sqeuclidean"]:
                 raise (
@@ -1059,8 +1379,39 @@ def solve_sample(
             if reg is None:
                 reg = 1e-6
 
+            if a is not None and len(a.shape) == 1:
+                a = a.reshape(-1, 1)
+            if b is not None and len(b.shape) == 1:
+                b = b.reshape(-1, 1)
+
             value, log = empirical_bures_wasserstein_distance(
-                X_a, X_b, reg=reg, log=True
+                X_a, X_b, reg=reg, ws=a, wt=b, log=True
+            )
+            value = value**2  # return the value (squared bures distance)
+            value_linear = value  # return the value
+
+        elif method == "gaussian_hd":  # Gaussian BW for high-dimensional data
+            if metric.lower() not in ["sqeuclidean"]:
+                raise (
+                    NotImplementedError('Not implemented metric="{}"'.format(metric))
+                )
+
+            if reg is None:
+                reg = 1e-5
+
+            if a is not None and len(a.shape) == 1:
+                a = a.reshape(-1, 1)
+            if b is not None and len(b.shape) == 1:
+                b = b.reshape(-1, 1)
+
+            if rank > X_a.shape[1] or rank > X_b.shape[1]:
+                warn(
+                    "Rank is larger than the number of features. Using full rank for Gaussian Bures-Wasserstein distance."
+                )
+                rank = min(X_a.shape[1], X_b.shape[1])
+
+            value, log = empirical_bures_wasserstein_distance_hd(
+                X_a, X_b, d_intrinsic=rank, ws=a, wt=b, reg=reg, log=True
             )
             value = value**2  # return the value (squared bures distance)
             value_linear = value  # return the value
@@ -1257,6 +1608,7 @@ def solve_sample(
             value=value,
             lazy_plan=lazy_plan,
             value_linear=value_linear,
+            sparse_plan=sparse_plan,
             plan=plan,
             status=status,
             backend=nx,

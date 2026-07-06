@@ -957,3 +957,39 @@ def test_datascaler_backend_mismatch_raises():
     scaler._nx = object()
     with pytest.raises(ValueError, match="Backend mismatch"):
         scaler.transform(X)
+
+
+@pytest.skip_backend("tf")
+@pytest.mark.parametrize("ratio", [0.3, 0.5, 0.51, 0.7])
+@pytest.mark.parametrize("n", [10, 50, 100, 101])
+@pytest.mark.parametrize("random", [True, False])
+def test_split_sample_ratio(nx, ratio, n, random):
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, (100, 3))
+    a = rng.uniform(size=(100,))
+    a = a / np.sum(a)
+    X = nx.from_numpy(X)
+    a = nx.from_numpy(a)
+
+    seed = 42
+
+    # test uniform weights
+    X1, X2, a1, a2, id1, id2 = ot.utils.split_sample_ratio(
+        X, ratio=ratio, random_split=random, random_state=seed, nx=nx
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(a1).sum(), ratio, atol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(a2).sum(), 1 - ratio, atol=1e-5)
+
+    assert X1.shape[0] == a1.shape[0]
+    assert X2.shape[0] == a2.shape[0]
+
+    # test non uniform weights
+    X1, X2, a1, a2, id1, id2 = ot.utils.split_sample_ratio(
+        X, ratio=ratio, a=a, random_split=random, random_state=seed
+    )
+
+    with pytest.raises(ValueError):
+        ot.utils.split_sample_ratio(X, ratio=1.5, a=a, random_state=seed, nx=nx)
+
+    #

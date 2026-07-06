@@ -2047,3 +2047,104 @@ def fun_to_numpy(fun, arr, nx, warn=True):
             return nx.to_numpy(fun(nx.from_numpy(x)))
 
         return fun_numpy
+
+
+def split_sample_ratio(
+    X_a, a=None, ratio=0.5, random_split=False, random_state=None, nx=None
+):
+    """Split distribution according to a ratio of weights (using point ordering).
+
+
+    Parameters
+    ----------
+    X_a : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    a : array-like, shape (dim_a,), optional
+        Samples weights in the source domain (default is uniform)
+    nx : backend, optional
+        Backend for array operations, by default None (auto-detect)
+    ratio : float, optional
+        Ratio of the split, by default 0.5
+    random_split : bool, optional
+        Whether to split randomly, by default False
+    random_state : int, optional
+        Random state for reproducibility, by default None
+
+    Returns
+    -------
+
+    X_a1 : array-like, shape (n_samples_a1, dim)
+        First half of the samples in the source domain
+    X_a2 : array-like, shape (n_samples_a2, dim)
+        Second half of the samples in the source domain
+    a1 : array-like, shape (dim_a1,)
+        First half of the weights in the source domain
+    a2 : array-like, shape (dim_a2,)
+        Second half of the weights in the source domain
+    sel_a1 : slice, ndarray-like
+        Slice or indexes for the first half of the samples in the source domain
+    sel_a2 : slice, ndarray-like
+        Slice or indexes for the second half of the samples in the source domain
+    """
+
+    if ratio < 0 or ratio > 1:
+        raise ValueError("ratio should be in [0, 1]")
+
+    if nx is None:
+        nx = get_backend(X_a, a)
+
+    n_a = X_a.shape[0]
+
+    if a is None:
+        a = nx.ones(n_a, type_as=X_a) / n_a
+
+    if random_split:
+        if random_state is not None:
+            nx.seed(random_state)
+        perm = nx.randperm(n_a, type_as=X_a)
+        X_a = X_a[perm]
+        a = a[perm]
+
+    # find the split indices
+    acs = nx.cumsum(a)
+    thr_a = ratio * nx.sum(a)
+    idx_a = nx.searchsorted(acs, thr_a, side="right")
+
+    # split the samples and weights
+    X_a1, X_a2 = X_a[: idx_a + 1], X_a[idx_a:]
+
+    # compute weights for each half and adjust the last/first weight to sum to 0.5
+    a01, a02 = a[:idx_a], a[idx_a + 1 :]
+    v_idx = a[idx_a]
+    a1_1 = nx.maximum(v_idx * nx.detach((thr_a - nx.sum(a01)) / v_idx), 0)
+    a2_0 = nx.maximum(v_idx * nx.detach((nx.sum(a) - thr_a - nx.sum(a02)) / v_idx), 0)
+    # concat mass or remove samples if mass is 0
+    if a1_1 > 0:
+        a1 = nx.concatenate([a01, nx.reshape(a1_1, (1,))])
+        if random_split:
+            sel_a1 = perm[: idx_a + 1]
+        else:
+            sel_a1 = slice(0, idx_a + 1)
+    else:
+        X_a1 = X_a[:idx_a]
+        if random_split:
+            sel_a1 = perm[:idx_a]
+        else:
+            sel_a1 = slice(0, idx_a)
+        a1 = a01
+
+    if a2_0 > 0:
+        a2 = nx.concatenate([nx.reshape(a2_0, (1,)), a02])
+        if random_split:
+            sel_a2 = perm[idx_a:]
+        else:
+            sel_a2 = slice(idx_a, n_a)
+    else:
+        X_a2 = X_a[idx_a + 1 :]
+        if random_split:
+            sel_a2 = perm[idx_a + 1 :]
+        else:
+            sel_a2 = slice(idx_a + 1, n_a)
+        a2 = a02
+
+    return X_a1, X_a2, a1, a2, sel_a1, sel_a2
