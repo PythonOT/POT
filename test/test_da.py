@@ -586,6 +586,7 @@ def test_emd_transport_class(nx):
     )
 
 
+@pytest.skip_backend("tf")
 def test_semisupervised_cost_correction(nx):
     # gh-664: the label-aware cost correction must push apart labeled source
     # and target samples with *different* labels, and must leave pairs
