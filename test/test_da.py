@@ -166,7 +166,7 @@ def test_sinkhorn_lpl1_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert np.allclose(
+    assert not np.allclose(
         n_unsup, n_semisup, atol=1e-7
     ), "semisupervised mode is not working"
 
@@ -258,7 +258,7 @@ def test_sinkhorn_l1l2_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert np.allclose(
+    assert not np.allclose(
         n_unsup, n_semisup, atol=1e-7
     ), "semisupervised mode is not working"
 
@@ -356,7 +356,7 @@ def test_sinkhorn_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert np.allclose(
+    assert not np.allclose(
         n_unsup, n_semisup, atol=1e-7
     ), "semisupervised mode is not working"
 
@@ -472,7 +472,7 @@ def test_unbalanced_sinkhorn_transport_class(nx):
         n_semisup = nx.sum(otda_semi.cost_)
 
         # check that the cost matrix norms are indeed different
-        assert np.allclose(
+        assert not np.allclose(
             n_unsup, n_semisup, atol=1e-7
         ), "semisupervised mode is not working"
 
@@ -571,7 +571,7 @@ def test_emd_transport_class(nx):
     n_semisup = nx.sum(otda_semi.cost_)
 
     # check that the cost matrix norms are indeed different
-    assert np.allclose(
+    assert not np.allclose(
         n_unsup, n_semisup, atol=1e-7
     ), "semisupervised mode is not working"
 
@@ -584,6 +584,38 @@ def test_emd_transport_class(nx):
     assert_allclose(
         nx.to_numpy(mass_semi), np.zeros(list(mass_semi.shape)), rtol=1e-2, atol=1e-2
     )
+
+
+def test_semisupervised_cost_correction(nx):
+    # gh-664: the label-aware cost correction must push apart labeled source
+    # and target samples with *different* labels, and must leave pairs
+    # involving an unlabeled (-1) sample untouched.
+    rng = np.random.RandomState(0)
+    Xs = rng.randn(6, 2)
+    Xt = rng.randn(6, 2)
+    ys = np.array([0, 0, 0, 1, 1, 1])
+    yt = np.array([0, 1, 0, 1, 0, 1])
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+
+    # all labels known: different-label pairs get the (scaled) limit_max,
+    # same-label pairs keep their original, smaller cost
+    otda = ot.da.EMDTransport(limit_max=10)
+    otda.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+    cost = nx.to_numpy(otda.cost_)
+    limit = float(nx.to_numpy(otda.limit_max))
+    ys_np, yt_np = nx.to_numpy(ys), nx.to_numpy(yt)
+    mismatch = ys_np[:, None] != yt_np[None, :]
+    assert np.all(cost[mismatch] >= limit - 1e-9), "different labels not penalized"
+    assert np.all(cost[~mismatch] < limit), "same labels wrongly penalized"
+
+    # semi-supervised: unlabeled (-1) targets must never be forbidden
+    yt_semi = nx.from_numpy(np.array([0, -1, 0, -1, 0, -1]))
+    otda2 = ot.da.EMDTransport(limit_max=10)
+    otda2.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
+    cost2 = nx.to_numpy(otda2.cost_)
+    limit2 = float(nx.to_numpy(otda2.limit_max))
+    unlabeled = nx.to_numpy(yt_semi) == -1
+    assert np.all(cost2[:, unlabeled] < limit2), "unlabeled targets wrongly forbidden"
 
 
 @pytest.skip_backend("jax")

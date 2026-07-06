@@ -43,6 +43,7 @@ This new release adds support for sparse cost matrices and a new lazy exact OT s
 
 #### Closed issues
 
+- Fix label-aware cost correction in `ot.da` transport classes: the large cost was applied to unlabeled pairs instead of labeled pairs with different labels, so `ys`/`yt` had no effect when all labels were known (Issue #664)
 - Mitigate NaN regime of `entropic_partial_wasserstein` at small `reg` via a new log-domain solver, reachable with `entropic_partial_wasserstein(..., method='sinkhorn_log')` (Issue #723; the default `method='sinkhorn'` path is unchanged — callers opt into the log-domain variant)
 - Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
 - Fix MSVC Windows build by removing **restrict** keyword (PR #788)
