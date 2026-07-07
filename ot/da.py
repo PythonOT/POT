@@ -48,6 +48,9 @@ from .mapping import (
     joint_OT_mapping_kernel,
 )
 
+# value used in ys/yt to mark a sample whose label is unknown
+MISSING_LABEL = -1
+
 
 def sinkhorn_lpl1_mm(
     a,
@@ -600,9 +603,9 @@ class BaseTransport(BaseEstimator):
 
                 # present_labels is a (ns, nt) matrix of {0, 1} such that
                 # the cell (i, j) is 1 iff both ys[i] and yt[j] are labeled
-                # (i.e. neither is masked with -1)
-                present_ys = (ys != -1) + nx.zeros(ys.shape, type_as=ys)
-                present_yt = (yt != -1) + nx.zeros(yt.shape, type_as=yt)
+                # (i.e. neither is masked with MISSING_LABEL)
+                present_ys = (ys != MISSING_LABEL) + nx.zeros(ys.shape, type_as=ys)
+                present_yt = (yt != MISSING_LABEL) + nx.zeros(yt.shape, type_as=yt)
                 present_labels = present_ys[:, None] @ present_yt[None, :]
                 # label_mismatch is a (ns, nt) matrix of {True, False} such that
                 # the cell (i, j) is True if ys[i] != yt[j]
