@@ -30,7 +30,7 @@ This new release adds support for sparse cost matrices and a new lazy exact OT s
 - Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
 - Add cost functions between linear operators following  
   [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920),  
-  implemented in `ot.sgot` (PR #792)
+  implemented in `ot.sgot` (PR #792, PR #830)
 - Add batch FUGW loss to `ot.batch` and fix issues in some default parameters in the batch module (PR #775)
 - Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
 - Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
@@ -38,6 +38,7 @@ This new release adds support for sparse cost matrices and a new lazy exact OT s
 - Update the geomloss wrapper to the new version and API (PR #826)
 - Fix docstrings for `lowrank_gromov_wasserstein_samples` and `lowrank_sinkhorn` (PR #823)
 - Reorganize all tests per backend (PR #828)
+- Implemented batch proximal point solver for OT problems `ot.batch.proximal_bregman_log_plan_batch` function and updated wrapper functions `ot.batch.solve_batch` and `ot.batch.solve_sample_batch` (PR #832)
 - Implement debiased OT solvers in `ot.solve_sample`.
 
 

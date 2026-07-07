@@ -472,3 +472,7 @@ Artificial Intelligence.
 \[90] Genans, F., Godichon-Baggioni, A., Vialard, F. X., & Wintenberger, O. (2025). [Decreasing Entropic Regularization Averaged Gradient for Semi-Discrete Optimal Transport](https://proceedings.neurips.cc/paper_files/paper/2025/file/d7efa12e98f5e0dd8b4f48cd60b4e3aa-Paper-Conference.pdf). Advances in Neural Information Processing Systems, 38, 146913-146949.
 
 \[91] Fatras, K., Zine, Y., Majewski, S., Flamary, R., Gribonval, R., & Courty, N. (2021). [Minibatch optimal transport distances; analysis and applications](https://arxiv.org/pdf/2101.01792). arXiv preprint arXiv:2101.01792.
+
+\[92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August). 
+[A fast proximal point method for computing exact wasserstein distance.](https://proceedings.mlr.press/v115/xie20b/xie20b.pdf) In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
+

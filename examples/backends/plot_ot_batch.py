@@ -13,6 +13,7 @@ many problems in parallel on CPU or GPU (even more efficient on GPU).
 """
 
 # Author: Paul Krzakala <paul.krzakala@gmail.com>
+#         Thibaut Germain <thibaut.germain.pro@gmail.com>
 # License: MIT License
 
 # sphinx_gallery_thumbnail_number = 1
@@ -75,25 +76,52 @@ for i in range(n_problems):
 #    This is simple but inefficient for large batches.
 #
 # Instead, you can use :func:`ot.batch.solve_batch`, which solves all
-# problems in parallel.
+# problems in parallel. Several methods are available: ["sinkhorn", "log_sinkhorn"]
+# which solve regularized OT problems, and ["proximal"] which
+# solves regularized and unregularized OT problem using a proximal point scheme.
+# By default, the method is set to "auto" which automatically selects the appropriate
+# method based on the value of `reg`. If `reg` is None or 0, the proximal point method
+# is used. If `reg` is greater than 0, the Sinkhorn algorithm is used.
 
+max_iter = 10000
+tol = 1e-4
+
+# Classical OT problem
+## Naive approach
+results_values_list = []
+for i in range(n_problems):
+    res = ot.solve(M_list[i], max_iter=max_iter, tol=tol)
+    results_values_list.append(res.value_linear)
+
+## Batched approach
+results_batch = ot.solve_batch(M=M_batch, max_iter=max_iter, tol=tol)
+results_values_batch = results_batch.value_linear
+
+exact_validated = np.allclose(
+    np.array(results_values_list), results_values_batch, atol=tol * 10
+)
+
+# Entropic regularized OT problem
+## Naive approach
 reg = 1.0
-max_iter = 100
-tol = 1e-3
-
-# Naive approach
 results_values_list = []
 for i in range(n_problems):
     res = ot.solve(M_list[i], reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy")
     results_values_list.append(res.value_linear)
 
-# Batched approach
+## Batched approach
 results_batch = ot.solve_batch(
     M=M_batch, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy"
 )
 results_values_batch = results_batch.value_linear
 
-assert np.allclose(np.array(results_values_list), results_values_batch, atol=tol * 10)
+entropic_validated = np.allclose(
+    np.array(results_values_list), results_values_batch, atol=tol * 10
+)
+
+print(
+    f"Exact solve vs proximal batch close: {exact_validated} \nSinkhorn solve vs Sinkhorn solve_batch close: {entropic_validated}"
+)
 
 #############################################################################
 #

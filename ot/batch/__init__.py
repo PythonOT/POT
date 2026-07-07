@@ -5,6 +5,7 @@ Batch operations for optimal transport.
 
 # Author: Remi Flamary <remi.flamary@unice.fr>
 #         Paul Krzakala <paul.krzakala@gmail.com>
+#         Thibaut Germain <thibaut.germain.pro@gmail.com>
 #
 # License: MIT License
 
@@ -25,6 +26,7 @@ from ._utils import (
     bregman_log_projection_batch,
     bregman_projection_batch,
     entropy_batch,
+    proximal_bregman_log_plan_batch,
 )
 
 __all__ = [
@@ -40,4 +42,5 @@ __all__ = [
     "loss_quadratic_batch",
     "loss_quadratic_samples_batch",
     "tensor_batch",
+    "proximal_bregman_log_plan_batch",
 ]
