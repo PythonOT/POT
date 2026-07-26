@@ -64,6 +64,8 @@ def test_fixed_multiple_trees(nx):
 
 
 def test_free_reflexivity_symetry(nx):
+    torch = pytest.importorskip("torch")
+
     n = 10
     mu = np.array([0.0, 0.0])
     sigma = np.array([[1.0, 0.0], [0.0, 1.0]])
