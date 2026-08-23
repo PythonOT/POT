@@ -1,5 +1,12 @@
 # Releases
 
+## 0.9.8dev
+
+#### Closed issues
+
+- Fix mean centering in `ot.dr.fda` and `ot.dr.wda`: `np.mean(X)` returned a scalar instead of the per-feature mean, so `proj` did not center the data as documented. In `ot.dr.fda` the same pattern in the class means made the between-class scatter matrix independent of which features separate the classes, and FDA returned a non-discriminant direction (PR #838)
+- `ot.dr.fda` and `ot.dr.wda` no longer modify the input array `X` in place (PR #838)
+
 ## 0.9.7.post1
 
 This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).
