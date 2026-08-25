@@ -6,6 +6,10 @@
 #
 # License: MIT License
 
+import importlib.util
+import subprocess
+import sys
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal_nulp
@@ -914,3 +918,27 @@ def test_get_backend_none():
     assert str(nx) == "numpy"
     with pytest.raises(ValueError):
         get_backend(None, None)
+
+
+@pytest.mark.skipif(
+    not torch or not tf or importlib.util.find_spec("triton") is None,
+    reason="Requires torch, tensorflow and triton installed together",
+)
+def test_torch_optimizer_after_tensorflow_import():
+    """Non-regression test for issue #816.
+
+    Building a torch optimizer makes torch import triton lazily. If TensorFlow
+    was imported first, loading libtriton.so segfaults the interpreter, so this
+    has to run in a subprocess.
+    """
+    code = (
+        "import ot.backend\n"
+        "import torch\n"
+        "x = torch.zeros(3, requires_grad=True)\n"
+        "torch.optim.SGD([x], lr=0.1)\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True)
+    assert result.returncode == 0, (
+        f"interpreter died with returncode {result.returncode}: "
+        f"{result.stderr.decode(errors='replace')[-2000:]}"
+    )

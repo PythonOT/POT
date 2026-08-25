@@ -1,5 +1,11 @@
 # Releases
 
+## 0.9.8dev
+
+#### Closed issues
+
+- Load triton before TensorFlow in `ot.backend` so that building a torch optimizer no longer segfaults the interpreter, and remove the `torch<2.12` pin from the doctest and documentation requirements (PR #839, Issue #816)
+
 ## 0.9.7.post1
 
 This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).

@@ -86,6 +86,7 @@ Performance
 #
 # License: MIT License
 
+import importlib.util
 import os
 import time
 import warnings
@@ -108,6 +109,21 @@ if not os.environ.get(DISABLE_TORCH_KEY, False):
         import torch
 
         torch_type = torch.Tensor
+
+        # Load triton before TensorFlow is imported below. Both triton and
+        # TensorFlow ship a statically linked LLVM, and loading triton's
+        # libtriton.so into a process that has already imported TensorFlow
+        # segfaults inside dlopen. torch only imports triton lazily, on the
+        # first use of a feature that needs it (constructing an optimizer is
+        # enough), which would otherwise happen after TensorFlow is loaded.
+        # See https://github.com/PythonOT/POT/issues/816
+        if not os.environ.get(DISABLE_TF_KEY, False) and (
+            importlib.util.find_spec("tensorflow") is not None
+        ):
+            try:
+                import triton  # noqa: F401
+            except ImportError:
+                pass
     except ImportError:
         torch = False
         torch_type = float
