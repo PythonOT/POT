@@ -94,7 +94,7 @@ from .bsp import compute_bspot_bijection, merge_bijections
 from .utils import dist, unif, tic, toc, toq
 
 
-__version__ = "0.9.7.post1"
+__version__ = "0.9.8.dev"
 
 __all__ = [
     "emd",
