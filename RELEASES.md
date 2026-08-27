@@ -2,6 +2,10 @@
 
 ## 0.9.8dev
 
+#### New features
+
+- Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
+
 #### Closed issues
 
 - Load triton before TensorFlow in `ot.backend` so that building a torch optimizer no longer segfaults the interpreter, and remove the `torch<2.12` pin from the doctest and documentation requirements (PR #839, Issue #816)

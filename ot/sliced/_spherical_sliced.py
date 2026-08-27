@@ -5,15 +5,25 @@ Sliced Wasserstein distances on the Sphere solvers.
 
 # Author: Nicolas Courty <ncourty@irisa.fr>
 # Author: Clément Bonet <clement.bonet.mapp@polytechnique.edu>
+# Author: continuousml <continuousml@gmail.com>
 #
 # License: MIT License
 
+import numpy as np
+
 from ..backend import get_backend
-from ._utils import get_projections_sphere, projection_sphere_to_circle
+from ._utils import (
+    get_projections_sphere,
+    get_random_projections,
+    get_random_rotations,
+    projection_sphere_to_circle,
+    projection_sphere_to_ball,
+)
 from ..lp import (
     wasserstein_circle,
     semidiscrete_wasserstein2_unif_circle,
     linear_circular_ot,
+    wasserstein_1d,
 )
 
 
@@ -300,4 +310,170 @@ def linear_sliced_wasserstein_sphere(
 
     if log:
         return res, {"projections": projections, "projected_emds": projected_lcot}
+    return res
+
+
+def stereographic_sliced_wasserstein_sphere(
+    X_s,
+    X_t,
+    a=None,
+    b=None,
+    n_projections=50,
+    p=2,
+    projections=None,
+    n_rotations=0,
+    rotations=None,
+    eps=1e-6,
+    seed=None,
+    log=False,
+):
+    r"""Computes the stereographic spherical sliced Wasserstein distance from :ref:`[93] <references-s3w>`.
+
+    General loss returned:
+
+    .. math::
+        S3W_p(\mu,\nu) = \left(\int_{\mathbb{S}^{d-2}} W_p^p(\theta_\# (\tfrac{1}{\pi}h_1\circ\phi_\epsilon)_\#\mu, \theta_\# (\tfrac{1}{\pi}h_1\circ\phi_\epsilon)_\#\nu)\ \mathrm{d}\sigma(\theta)\right)^{\frac{1}{p}}
+
+    where :math:`\mu,\nu\in\mathcal{P}(S^{d-1})` are two probability measures on the
+    sphere, :math:`\theta_\# \mu` stands for the pushforwards of the projection
+    :math:`X \in \mathbb{R}^{d-1} \mapsto \langle \theta, X \rangle`,
+    :math:`\phi_\epsilon` is the stereographic projection
+    :math:`\phi(x) = \frac{2 x_{1:d-1}}{1-x_d}` restricted to the sphere without the
+    :math:`\epsilon`-cap around the north pole (points with :math:`x_d > 1-\epsilon`
+    are first mapped to the circle :math:`x_d = 1-\epsilon`), and
+    :math:`h_1(x) = \mathrm{arccos}\left(\frac{1-\|x\|^2}{1+\|x\|^2}\right)\frac{x}{\|x\|}`
+    is the injective defining function of :ref:`[93] <references-s3w>`, rescaled by
+    :math:`\frac{1}{\pi}` to map the sphere to the unit ball.
+
+    If ``n_rotations >= 1`` or ``rotations`` is provided, computes instead a
+    Monte-Carlo approximation of the rotationally invariant extension
+
+    .. math::
+        RI\text{-}S3W_p(\mu,\nu) = \int_{\mathrm{SO}(d)} S3W_p(R_\#\mu, R_\#\nu)\ \mathrm{d}\omega(R)
+
+    where :math:`\omega` is the normalized Haar measure on :math:`\mathrm{SO}(d)`.
+    The generation cost of the rotations can be amortized over several calls by
+    pregenerating a pool of rotations with
+    :any:`ot.sliced.get_random_rotations` and passing a random subset of it as
+    ``rotations`` at each call (ARI-S3W :ref:`[93] <references-s3w>`).
+
+    Parameters
+    ----------
+    X_s: ndarray, shape (n_samples_a, dim)
+        Samples in the source domain
+    X_t: ndarray, shape (n_samples_b, dim)
+        Samples in the target domain
+    a : ndarray, shape (n_samples_a,), optional
+        samples weights in the source domain
+    b : ndarray, shape (n_samples_b,), optional
+        samples weights in the target domain
+    n_projections : int, optional
+        Number of projections used for the Monte-Carlo approximation
+    p: float, optional (default=2)
+        Power p used for computing the stereographic spherical sliced Wasserstein
+    projections: shape (dim-1, n_projections), optional
+        Projection matrix (n_projections and seed are not used in this case)
+    n_rotations : int, optional (default=0)
+        Number of rotations used for the Monte-Carlo approximation of
+        :math:`RI\text{-}S3W_p`. If 0, no rotation is applied and
+        :math:`S3W_p` is computed.
+    rotations: shape (n_rotations, dim, dim), optional
+        Rotation matrices (n_rotations is not used in this case)
+    eps: float, optional (default=1e-6)
+        Size of the cap around the north pole excluded from the stereographic
+        projection to ensure numerical stability
+    seed: int or RandomState or None, optional
+        Seed used for random number generator
+    log: bool, optional
+        if True, stereographic_sliced_wasserstein_sphere returns the projections
+        and rotations used and the associated EMDs.
+
+    Returns
+    -------
+    cost: float
+        Stereographic Spherical Sliced Wasserstein Cost
+    log: dict, optional
+        log dictionary return only if log==True in parameters
+
+    Examples
+    --------
+    >>> import ot
+    >>> import numpy as np
+    >>> n_samples_a = 20
+    >>> X = np.random.normal(0., 1., (n_samples_a, 5))
+    >>> X = X / np.sqrt(np.sum(X**2, -1, keepdims=True))
+    >>> ot.stereographic_sliced_wasserstein_sphere(X, X, seed=0)  # doctest: +NORMALIZE_WHITESPACE
+    0.0
+
+
+    .. _references-s3w:
+    References
+    ----------
+    .. [93] Tran, H., Bai, Y., Kothapalli, A., Shahbazi, A., Liu, X.,
+       Diaz Martin, R., & Kolouri, S. (2024). Stereographic Spherical Sliced
+       Wasserstein Distances. International Conference on Machine Learning.
+    """
+    d = X_s.shape[-1]
+
+    nx = get_backend(X_s, X_t, a, b, projections, rotations)
+
+    if X_s.shape[1] != X_t.shape[1]:
+        raise ValueError(
+            "X_s and X_t must have the same number of dimensions {} and {} respectively given".format(
+                X_s.shape[1], X_t.shape[1]
+            )
+        )
+    if nx.any(nx.abs(nx.sum(X_s**2, axis=-1) - 1) > 10 ** (-4)):
+        raise ValueError("X_s is not on the sphere.")
+    if nx.any(nx.abs(nx.sum(X_t**2, axis=-1) - 1) > 10 ** (-4)):
+        raise ValueError("X_t is not on the sphere.")
+
+    if projections is None:
+        projections = get_random_projections(
+            d - 1, n_projections, seed=seed, backend=nx, type_as=X_s
+        )
+        if seed is not None and not isinstance(seed, np.random.RandomState):
+            # draw the rotations from the stream advanced by the projections
+            seed = None
+    else:
+        n_projections = projections.shape[1]
+
+    if rotations is None and n_rotations > 0:
+        rotations = get_random_rotations(
+            d, n_rotations, seed=seed, backend=nx, type_as=X_s
+        )
+    elif rotations is not None:
+        n_rotations = rotations.shape[0]
+
+    if rotations is not None:
+        Xps = nx.einsum("kij, nj -> kni", rotations, X_s)
+        Xpt = nx.einsum("kij, nj -> kni", rotations, X_t)
+    else:
+        n_rotations = 1
+        Xps = X_s[None, :, :]
+        Xpt = X_t[None, :, :]
+
+    Xps = projection_sphere_to_ball(Xps, eps=eps, backend=nx)
+    Xpt = projection_sphere_to_ball(Xpt, eps=eps, backend=nx)
+
+    Xps = nx.reshape(
+        nx.einsum("kni, il -> nkl", Xps, projections),
+        (X_s.shape[0], n_rotations * n_projections),
+    )
+    Xpt = nx.reshape(
+        nx.einsum("kni, il -> nkl", Xpt, projections),
+        (X_t.shape[0], n_rotations * n_projections),
+    )
+
+    projected_emd = nx.reshape(
+        wasserstein_1d(Xps, Xpt, a, b, p=p), (n_rotations, n_projections)
+    )
+    res = nx.mean(nx.mean(projected_emd, axis=-1) ** (1.0 / p))
+
+    if log:
+        return res, {
+            "projections": projections,
+            "rotations": rotations,
+            "projected_emds": projected_emd,
+        }
     return res

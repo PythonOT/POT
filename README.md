@@ -480,3 +480,7 @@ Artificial Intelligence.
 \[92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August). 
 [A fast proximal point method for computing exact wasserstein distance.](https://proceedings.mlr.press/v115/xie20b/xie20b.pdf) In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
 
+\[93] Tran, H., Bai, Y., Kothapalli, A., Shahbazi, A., Liu, X., Diaz Martin, R., & Kolouri, S. (2024). [Stereographic Spherical Sliced Wasserstein Distances](https://proceedings.mlr.press/v235/tran24a.html). International Conference on Machine Learning.
+
+\[94] Mezzadri, F. (2007). [How to generate random matrices from the classical compact groups](https://www.ams.org/notices/200705/fea-mezzadri-web.pdf). Notices of the American Mathematical Society, 54(5), 592-604.
+

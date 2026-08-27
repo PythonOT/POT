@@ -438,3 +438,246 @@ def test_linear_sliced_sphere_backend_type_devices(nx):
 
         nx.assert_same_dtype_device(xb, valb)
         np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
+
+
+def test_get_random_rotations():
+    rng = np.random.RandomState(0)
+
+    n_rotations = 100
+    rotations = ot.sliced.get_random_rotations(3, n_rotations, seed=rng)
+
+    np.testing.assert_almost_equal(
+        np.matmul(rotations, np.transpose(rotations, [0, 2, 1])),
+        np.array([np.eye(3) for k in range(n_rotations)]),
+    )
+    np.testing.assert_almost_equal(np.linalg.det(rotations), np.ones(n_rotations))
+
+    rotations = ot.sliced.get_random_rotations(3, 5, seed=42)
+    rotations2 = ot.sliced.get_random_rotations(3, 5, seed=42)
+    np.testing.assert_almost_equal(rotations, rotations2)
+
+
+def test_projection_sphere_to_ball():
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(100, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    x_projs = ot.sliced.projection_sphere_to_ball(x)
+    assert x_projs.shape == (100, 2)
+    assert np.all(np.sqrt(np.sum(x_projs**2, -1)) <= 1)
+
+
+def test_stereographic_sliced_sphere_same_dist():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+    u = ot.utils.unif(n)
+
+    res = ot.stereographic_sliced_wasserstein_sphere(x, x, u, u, 10, seed=rng)
+    np.testing.assert_almost_equal(res, 0.0)
+
+
+def test_stereographic_sliced_sphere_same_proj():
+    n_projections = 10
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    y = rng.randn(n, 3)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    seed = 42
+
+    cost1, log1 = ot.stereographic_sliced_wasserstein_sphere(
+        x, y, seed=seed, n_projections=n_projections, n_rotations=3, log=True
+    )
+    cost2, log2 = ot.stereographic_sliced_wasserstein_sphere(
+        x, y, seed=seed, n_projections=n_projections, n_rotations=3, log=True
+    )
+
+    assert np.allclose(log1["projections"], log2["projections"])
+    assert np.allclose(log1["rotations"], log2["rotations"])
+    assert np.isclose(cost1, cost2)
+
+
+def test_stereographic_sliced_sphere_bad_shapes():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    y = rng.randn(n, 4)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    u = ot.utils.unif(n)
+
+    with pytest.raises(ValueError):
+        _ = ot.stereographic_sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+
+def test_stereographic_sliced_sphere_values_on_the_sphere():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    u = ot.utils.unif(n)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    # not on the sphere
+    y = rng.randn(n, 3)
+
+    with pytest.raises(ValueError):
+        _ = ot.stereographic_sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+
+    with pytest.raises(ValueError):
+        _ = ot.stereographic_sliced_wasserstein_sphere(y, x, u, u, 10, seed=rng)
+
+
+def test_stereographic_sliced_sphere_log():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 4)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+    y = rng.randn(n, 4)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+    u = ot.utils.unif(n)
+
+    res, log = ot.stereographic_sliced_wasserstein_sphere(
+        x, y, u, u, 10, p=1, n_rotations=3, seed=rng, log=True
+    )
+    assert len(log) == 3
+    projections = log["projections"]
+    rotations = log["rotations"]
+    projected_emds = log["projected_emds"]
+
+    assert projections.shape[1] == projected_emds.shape[1] == 10
+    assert rotations.shape[0] == projected_emds.shape[0] == 3
+    assert np.all(projected_emds > 0)
+
+
+def test_stereographic_sliced_sphere_different_dists():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    u = ot.utils.unif(n)
+    y = rng.randn(n, 3)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    res = ot.stereographic_sliced_wasserstein_sphere(x, y, u, u, 10, seed=rng)
+    assert res > 0.0
+
+
+def test_stereographic_sliced_sphere_meridian():
+    # Diracs on a common meridian: h_1 o phi_eps projects them on a common line
+    # at radius arccos(-(3+5*x_d)/(5+3*x_d))/pi, so S3W_2 with the canonical
+    # basis as projections has a closed form
+    def radius(x_d):
+        return np.arccos(-(3 + 5 * x_d) / (5 + 3 * x_d)) / np.pi
+
+    d = 4
+    t1, t2 = 0.3, 1.9
+    x = np.array([[np.sin(t1), 0.0, 0.0, np.cos(t1)]])
+    y = np.array([[np.sin(t2), 0.0, 0.0, np.cos(t2)]])
+    projections = np.eye(d - 1)
+
+    res = ot.stereographic_sliced_wasserstein_sphere(x, y, projections=projections)
+    np.testing.assert_almost_equal(
+        res, np.abs(radius(np.cos(t1)) - radius(np.cos(t2))) / np.sqrt(d - 1)
+    )
+
+    # the poles are mapped without nan: the north pole on the boundary of the
+    # eps-cap, the south pole on the origin
+    north = np.zeros((1, d))
+    north[0, -1] = 1.0
+    south = np.zeros((1, d))
+    south[0, -1] = -1.0
+
+    res = ot.stereographic_sliced_wasserstein_sphere(
+        north, south, projections=projections
+    )
+    np.testing.assert_almost_equal(res, radius(1 - 1e-6) / np.sqrt(d - 1))
+
+
+def test_stereographic_sliced_sphere_rotations():
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    y = rng.randn(n, 3)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    rotations = ot.sliced.get_random_rotations(3, 5, seed=rng)
+    R0 = ot.sliced.get_random_rotations(3, 1, seed=rng)[0]
+
+    # rotating both measures amounts to composing the rotations
+    cost1 = ot.stereographic_sliced_wasserstein_sphere(
+        x @ R0.T, y @ R0.T, rotations=rotations, seed=42
+    )
+    cost2 = ot.stereographic_sliced_wasserstein_sphere(
+        x, y, rotations=rotations @ R0, seed=42
+    )
+    np.testing.assert_almost_equal(cost1, cost2)
+
+
+def test_stereographic_sliced_sphere_backend_type_devices(nx):
+    n = 100
+    rng = np.random.RandomState(0)
+
+    x = rng.randn(n, 3)
+    x = x / np.sqrt(np.sum(x**2, -1, keepdims=True))
+
+    y = rng.randn(2 * n, 3)
+    y = y / np.sqrt(np.sum(y**2, -1, keepdims=True))
+
+    sw_np, log = ot.stereographic_sliced_wasserstein_sphere(
+        x, y, n_rotations=3, log=True
+    )
+    P = log["projections"]
+    R = log["rotations"]
+
+    for tp in nx.__type_list__:
+        print(nx.dtype_device(tp))
+
+        xb, yb = nx.from_numpy(x, y, type_as=tp)
+
+        valb = ot.stereographic_sliced_wasserstein_sphere(
+            xb,
+            yb,
+            projections=nx.from_numpy(P, type_as=tp),
+            rotations=nx.from_numpy(R, type_as=tp),
+        )
+
+        nx.assert_same_dtype_device(xb, valb)
+        np.testing.assert_almost_equal(sw_np, nx.to_numpy(valb))
+
+
+def test_stereographic_sliced_sphere_gradient():
+    if torch:
+        import torch.nn.functional as F
+
+        X0 = torch.randn((20, 3))
+        X0 = F.normalize(X0, p=2, dim=-1)
+        X0.requires_grad_(True)
+
+        X1 = torch.randn((20, 3))
+        X1 = F.normalize(X1, p=2, dim=-1)
+
+        sw = ot.stereographic_sliced_wasserstein_sphere(
+            X1, X0, n_projections=100, n_rotations=3, p=2
+        )
+        grad_x0 = torch.autograd.grad(sw, X0)[0]
+
+        assert not torch.any(torch.isnan(grad_x0))

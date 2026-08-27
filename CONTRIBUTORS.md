@@ -61,6 +61,7 @@ The contributors to this library are:
 * [Nathan Neike](https://github.com/nathanneike) (Sparse EMD solver)
 * [Thibaut Germain](https://thibaut-germain.github.io) (SGOT)
 * Sienna O'Shea (SGOT)
+* [Huy Tran](https://github.com/huytransformer) (Stereographic Spherical Sliced-Wasserstein)
 
 
 ## Acknowledgments
