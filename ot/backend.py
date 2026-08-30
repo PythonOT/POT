@@ -2066,7 +2066,7 @@ class TorchBackend(Backend):
 
     __name__ = "torch"
     __type__ = torch_type
-    __type_list__ = None
+    # __type_list__ is a property below: its CUDA entries are built lazily.
 
     rng_ = None
 
@@ -2074,22 +2074,17 @@ class TorchBackend(Backend):
         self.rng_ = torch.Generator("cpu")
         self.rng_.seed()
 
-        self.__type_list__ = [
+        # The CUDA generator and the CUDA entries of the type list are built the
+        # first time something asks for them. Building either here initialises a
+        # CUDA context, which claims device memory and wakes the GPU even when
+        # the computation stays entirely on the CPU.
+        self._type_list_cpu = [
             torch.tensor(1, dtype=torch.float32),
             torch.tensor(1, dtype=torch.float64),
         ]
-
-        if torch.cuda.is_available():
-            self.rng_cuda_ = torch.Generator("cuda")
-            self.rng_cuda_.seed()
-            self.__type_list__.append(
-                torch.tensor(1, dtype=torch.float32, device="cuda")
-            )
-            self.__type_list__.append(
-                torch.tensor(1, dtype=torch.float64, device="cuda")
-            )
-        else:
-            self.rng_cuda_ = torch.Generator("cpu")
+        self._type_list_cuda = None
+        self._rng_cuda = None
+        self._cuda_seed = None
 
         from torch.autograd import Function
         from torch.autograd.function import once_differentiable
@@ -2132,6 +2127,35 @@ class TorchBackend(Backend):
 
         self.ValFunction = ValFunction
         self.MatrixSqrtFunction = MatrixSqrtFunction
+
+    @property
+    def __type_list__(self):
+        if self._type_list_cuda is None:
+            if torch.cuda.is_available():
+                self._type_list_cuda = [
+                    torch.tensor(1, dtype=torch.float32, device="cuda"),
+                    torch.tensor(1, dtype=torch.float64, device="cuda"),
+                ]
+            else:
+                self._type_list_cuda = []
+        return self._type_list_cpu + self._type_list_cuda
+
+    @property
+    def rng_cuda_(self):
+        if self._rng_cuda is None:
+            if torch.cuda.is_available():
+                self._rng_cuda = torch.Generator("cuda")
+                if self._cuda_seed is None:
+                    self._rng_cuda.seed()
+                else:
+                    self._rng_cuda.manual_seed(self._cuda_seed)
+            else:
+                self._rng_cuda = torch.Generator("cpu")
+        return self._rng_cuda
+
+    @rng_cuda_.setter
+    def rng_cuda_(self, generator):
+        self._rng_cuda = generator
 
     def _to_numpy(self, a):
         if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
@@ -2412,7 +2436,11 @@ class TorchBackend(Backend):
             pass
         elif isinstance(seed, int):
             self.rng_.manual_seed(seed)
-            self.rng_cuda_.manual_seed(seed)
+            # Remember the seed rather than forcing the CUDA generator into
+            # existence; it is applied when that generator is first needed.
+            self._cuda_seed = seed
+            if self._rng_cuda is not None:
+                self._rng_cuda.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
             if self.device_type(seed) == "GPU":
                 self.rng_cuda_ = seed
