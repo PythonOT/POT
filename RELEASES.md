@@ -8,6 +8,7 @@
 
 #### Closed issues
 
+- Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (Issue #848)
 - Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
 - Fix the sign issue in updates of the previous transport plan in `ot.batch.proximal_bregman_log_plan_batch` (Issue #842)
 - Load triton before TensorFlow in `ot.backend` so that building a torch optimizer no longer segfaults the interpreter, and remove the `torch<2.12` pin from the doctest and documentation requirements (PR #839, Issue #816)

@@ -54,12 +54,9 @@ def get_random_projections(d, n_projections, seed=None, backend=None, type_as=No
     else:
         nx = backend
 
-    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
-        projections = seed.randn(d, n_projections)
-    else:
-        if seed is not None:
-            nx.seed(seed)
-        projections = nx.randn(d, n_projections, type_as=type_as)
+    if seed is not None:
+        nx.seed(seed)
+    projections = nx.randn(d, n_projections, type_as=type_as)
 
     projections = projections / nx.sqrt(nx.sum(projections**2, 0, keepdims=True))
     return projections
@@ -99,12 +96,9 @@ def get_projections_sphere(d, n_projections, seed=None, backend=None, type_as=No
     else:
         nx = backend
 
-    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
-        Z = seed.randn(n_projections, d, 2)
-    else:
-        if seed is not None:
-            nx.seed(seed)
-        Z = nx.randn(n_projections, d, 2, type_as=type_as)
+    if seed is not None:
+        nx.seed(seed)
+    Z = nx.randn(n_projections, d, 2, type_as=type_as)
 
     projections, _ = nx.qr(Z)
     return projections
@@ -159,12 +153,9 @@ def get_random_rotations(d, n_rotations, seed=None, backend=None, type_as=None):
     else:
         nx = backend
 
-    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
-        Z = seed.randn(n_rotations, d, d)
-    else:
-        if seed is not None:
-            nx.seed(seed)
-        Z = nx.randn(n_rotations, d, d, type_as=type_as)
+    if seed is not None:
+        nx.seed(seed)
+    Z = nx.randn(n_rotations, d, d, type_as=type_as)
 
     Q, R = nx.qr(Z)
     diagonal = nx.sum(R * nx.eye(d, type_as=R)[None, :, :], axis=-1)

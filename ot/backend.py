@@ -1430,7 +1430,9 @@ class NumpyBackend(Backend):
         return np.reshape(a, shape)
 
     def seed(self, seed=None):
-        if seed is not None:
+        if isinstance(seed, np.random.RandomState):
+            self.rng_ = seed
+        elif seed is not None:
             self.rng_.seed(seed)
 
     def rand(self, *size, type_as=None):
