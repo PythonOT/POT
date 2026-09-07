@@ -8,6 +8,7 @@
 
 #### Closed issues
 
+- Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
 - Fix the sign issue in updates of the previous transport plan in `ot.batch.proximal_bregman_log_plan_batch` (Issue #842)
 - Load triton before TensorFlow in `ot.backend` so that building a torch optimizer no longer segfaults the interpreter, and remove the `torch<2.12` pin from the doctest and documentation requirements (PR #839, Issue #816)
 - Fix mean centering in `ot.dr.fda` and `ot.dr.wda`: `np.mean(X)` returned a scalar instead of the per-feature mean, so `proj` did not center the data as documented. In `ot.dr.fda` the same pattern in the class means made the between-class scatter matrix independent of which features separate the classes, and FDA returned a non-discriminant direction (PR #840)
