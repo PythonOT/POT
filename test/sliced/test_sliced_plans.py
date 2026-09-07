@@ -223,6 +223,40 @@ def test_expected_sliced():
     ot.sliced.expected_sliced_plan(x, y, a, b, projections=projections, batch_size=2)
 
 
+@pytest.mark.skipif(not torch, reason="PyTorch not installed")
+@pytest.mark.parametrize("dense", [True, False])
+@pytest.mark.parametrize("use_weights", [False, True])
+def test_expected_sliced_torch_preserves_device(dense, use_weights):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    dtype = torch.float64
+    x = torch.tensor(
+        [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        dtype=dtype,
+        device=device,
+    )
+    y = torch.tensor(
+        [[0.5, 0.0], [1.5, 0.0], [0.5, 1.0], [1.5, 1.0]],
+        dtype=dtype,
+        device=device,
+    )
+    projections = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=dtype, device=device)
+    if use_weights:
+        a = torch.tensor([0.1, 0.2, 0.3, 0.4], dtype=dtype, device=device)
+        b = torch.tensor([0.4, 0.3, 0.2, 0.1], dtype=dtype, device=device)
+    else:
+        a = b = None
+
+    plan, cost = ot.sliced.expected_sliced_plan(
+        x, y, a, b, projections=projections, dense=dense
+    )
+
+    assert plan.device == x.device
+    assert cost.device == x.device
+    dense_plan = plan if dense else plan.to_dense()
+    expected_cost = torch.sum(dense_plan * ot.dist(x, y))
+    torch.testing.assert_close(cost, expected_cost)
+
+
 def test_sliced_plans_backends(nx):
     n = 10
     m = 24
