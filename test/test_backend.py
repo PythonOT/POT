@@ -178,6 +178,10 @@ def test_empty_backend():
     with pytest.raises(NotImplementedError):
         nx.abs(M)
     with pytest.raises(NotImplementedError):
+        nx.sin(M)
+    with pytest.raises(NotImplementedError):
+        nx.cos(M)
+    with pytest.raises(NotImplementedError):
         nx.log(M)
     with pytest.raises(NotImplementedError):
         nx.exp(M)
@@ -444,6 +448,14 @@ def test_func_backends(nx):
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("abs")
+
+        A = nx.sin(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("sin")
+
+        A = nx.cos(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("cos")
 
         A = nx.log(A)
         lst_b.append(nx.to_numpy(A))

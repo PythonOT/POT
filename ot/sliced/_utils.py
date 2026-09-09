@@ -226,6 +226,89 @@ def projection_sphere_to_circle(
     return Xp_coords, projections
 
 
+def get_projections_spiral(
+    d, n_projections, randomized=True, seed=None, backend=None, type_as=None
+):
+    r"""
+    Generates n_projections points on the sphere via generalized
+    spiral points (Rakhmanov, Saff & Zhou, 1994) [96].
+
+    Only implemented for d=3 (the 2-sphere :math:`S^2`).
+
+    Parameters
+    ----------
+    d : int
+        dimension of the space. Only d=3 is currently supported.
+    n_projections : int
+        number of samples requested
+    randomized : bool, optional
+        If True (default), applies a random (d, d) rotation to the
+        deterministic spiral point set (RQSW), giving an unbiased estimator
+        suitable for stochastic optimization. If False, returns the plain
+        deterministic point set (QSW).
+    seed: int or RandomState, optional
+        Seed used for the random rotation. Ignored if randomized=False.
+    backend:
+        Backend to use for random generation
+    type_as: type, optional
+        Type of the returned array
+
+    Returns
+    -------
+    out: ndarray, shape (d, n_projections)
+        The (optionally rotated) spiral points on the sphere
+
+    Examples
+    --------
+    >>> n_projections = 100
+    >>> d = 3
+    >>> projs = get_projections_spiral(d, n_projections, randomized=False)
+    >>> np.allclose(np.sum(np.square(projs), 0), 1.)  # doctest: +NORMALIZE_WHITESPACE
+    True
+    >>> rprojs = get_projections_spiral(d, n_projections, randomized=True, seed=0)
+    >>> np.allclose(np.sum(np.square(rprojs), 0), 1.)  # doctest: +NORMALIZE_WHITESPACE
+    True
+
+    References
+    ----------
+
+    .. [95] Nguyen, K., Bariletto, N., & Ho, N. (2024). "Quasi-Monte Carlo for 3D Sliced Wasserstein." International Conference on Learning Representations (ICLR).
+    .. [96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). "Minimal Discrete Energy on the Sphere." Mathematical Research Letters, 1(6), 647-662.
+    """
+    if d != 3:
+        raise ValueError(
+            f"Generalized spiral points are only defined for d=3, got d={d}."
+        )
+
+    if backend is None:
+        nx = NumpyBackend()
+    else:
+        nx = backend
+
+    i = np.arange(1, n_projections + 1)
+    z = 1 - (2 * i - 1) / n_projections
+    phi1 = np.arccos(z)
+    phi2 = (1.8 * np.sqrt(n_projections) * phi1) % (2 * np.pi)
+    theta_np = np.stack(
+        [np.sin(phi1) * np.cos(phi2), np.sin(phi1) * np.sin(phi2), z], axis=0
+    )  # shape (d, n_projections)
+    theta = nx.from_numpy(theta_np, type_as=type_as)
+
+    if not randomized:
+        return theta
+
+    if isinstance(seed, np.random.RandomState) and str(nx) == "numpy":
+        Z = seed.randn(d, d)
+    else:
+        if seed is not None:
+            nx.seed(seed)
+        Z = nx.randn(d, d, type_as=type_as)
+
+    Q, R = nx.qr(Z)
+    Q = Q * nx.sign(nx.diag(R))[None, :]
+    return nx.matmul(Q, theta)
+
+
 def projection_sphere_to_ball(x, eps=1e-6, backend=None):
     r"""
     Projection of :math:`x\in S^{d-1}` on the unit ball of :math:`\mathbb{R}^{d-1}` with :math:`\frac{1}{\pi}h_1\circ\phi_\epsilon`.

@@ -1225,6 +1225,26 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def sin(self, a):
+        r"""
+        Trigonometric sine, element-wise.
+
+        This function follows the api from :any:`numpy.sin`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sin.html
+        """
+        raise NotImplementedError()
+
+    def cos(self, a):
+        r"""
+        Trigonometric cosine, element-wise.
+
+        This function follows the api from :any:`numpy.cos`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.cos.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1380,6 +1400,12 @@ class NumpyBackend(Backend):
 
     def arccos(self, a):
         return np.arccos(a)
+
+    def sin(self, a):
+        return np.sin(a)
+
+    def cos(self, a):
+        return np.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return np.repeat(a, repeats, axis)
@@ -1811,6 +1837,12 @@ class JaxBackend(Backend):
 
     def arccos(self, a):
         return jnp.arccos(a)
+
+    def sin(self, a):
+        return jnp.sin(a)
+
+    def cos(self, a):
+        return jnp.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return jnp.repeat(a, repeats, axis)
@@ -2320,6 +2352,12 @@ class TorchBackend(Backend):
 
     def arccos(self, a):
         return torch.acos(a)
+
+    def sin(self, a):
+        return torch.sin(a)
+
+    def cos(self, a):
+        return torch.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return torch.repeat_interleave(a, repeats, dim=axis)
@@ -2833,6 +2871,12 @@ class CupyBackend(Backend):  # pragma: no cover
     def arccos(self, a):
         return cp.arccos(a)
 
+    def sin(self, a):
+        return cp.sin(a)
+
+    def cos(self, a):
+        return cp.cos(a)
+
     def repeat(self, a, repeats, axis=None):
         return cp.repeat(a, repeats, axis)
 
@@ -3278,6 +3322,12 @@ class TensorflowBackend(Backend):
 
     def arccos(self, a):
         return tnp.arccos(a)
+
+    def sin(self, a):
+        return tnp.sin(a)
+
+    def cos(self, a):
+        return tnp.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return tnp.repeat(a, repeats, axis)
