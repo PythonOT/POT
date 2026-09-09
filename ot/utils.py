@@ -2148,3 +2148,77 @@ def split_sample_ratio(
         a2 = a02
 
     return X_a1, X_a2, a1, a2, sel_a1, sel_a2
+
+
+def random_tree(points, seed=None):
+    """Generate a random tree structured from a set of geometric points.
+
+    The tree is constructed by iteratively connecting each new node to a
+    randomly chosen existing node among the previous ones.
+    Edge lengths represent the Euclidean distance between connected points.
+
+    Parameters
+    ----------
+    points : array_like, shape (n, d)
+        Coordinates of the nodes in a d-dimensional space. The backend type
+        of this array (NumPy, PyTorch, etc.) determines the backend of the
+        output lengths.
+
+    seed : int, optional
+        Seed for the random number generator to ensure reproducibility.
+        Default is None.
+
+    Returns
+    -------
+    tree : ndarray, shape (n,)
+        An integer array where each element represents the parent of that node.
+        By construction, tree[0] = 0 (the root is its own parent).
+    length : array_like, shape (n,)
+        Length of the edge above each node (distance to its parent).
+        The root has a length of 0. Match the backend type of `points`.
+    """
+    nx = get_backend(points)
+
+    if seed is not None:
+        nx.seed(seed)
+        np.random.seed(seed)
+
+    nb_points = points.shape[0]
+
+    tree = np.zeros(nb_points, dtype=int)
+    length = nx.full(nb_points, 0, type_as=points)
+
+    for i in range(1, nb_points):
+        tree[i] = np.random.randint(0, i)
+        length[i] = nx.norm(points[i] - points[tree[i]])
+
+    tree = nx.from_numpy(tree)
+
+    return tree, length
+
+
+def random_tree_fixed_leaves(n, k, nx, seed=None):
+    """Generates a random tree with n nodes and k leaves, the leaves being the first nodes
+    in the tree, and nx is the specified backend
+    """
+
+    trash = nx.zeros(1)
+
+    nx = get_backend(trash)
+
+    if seed is not None:
+        np.random.seed(seed)
+        nx.seed(seed)
+
+    tree = np.zeros(n, dtype=int)
+    length = nx.rand(n)
+
+    length[n - 1] = 0
+
+    for i in range(n - 1):
+        tree[i] = np.random.randint(max(i + 1, n - k + 1), n)
+    tree[n - 1] = n - 1
+
+    tree = nx.from_numpy(tree)
+
+    return tree, length
