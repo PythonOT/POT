@@ -62,6 +62,7 @@ The contributors to this library are:
 * [Thibaut Germain](https://thibaut-germain.github.io) (SGOT)
 * Sienna O'Shea (SGOT)
 * [Huy Tran](https://github.com/huytransformer) (Stereographic Spherical Sliced-Wasserstein)
+* [Samuel Vangu](https://github.com/Samuel-Vangu) (Quasi-Monte Carlo Sliced-Wasserstein)
 
 
 ## Acknowledgments
