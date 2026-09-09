@@ -236,27 +236,71 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
         return projection_sparse_simplex(V, max_nz, z, axis=1).ravel()
 
 
-def unif(n, type_as=None):
+def unif(shape, type_as=None):
     r"""
-    Return a uniform histogram of length `n` (simplex).
+    Return a uniform histogram normalized over its last dimension (simplex).
 
     Parameters
     ----------
-    n : int
-        number of bins in the histogram
+    shape : int or tuple of int
+        Number of bins in the histogram, or the full output shape. An integer
+        ``n`` is equivalent to ``(n,)``. For a shape ``(..., n)`` the output is
+        normalized over the last dimension, e.g. ``(B, n)`` returns ``B``
+        uniform histograms of length ``n``.
     type_as : array-like
         array of the same type of the expected output (numpy/pytorch/jax)
 
     Returns
     -------
-    h : array-like, shape (n,)
-        histogram of length `n` such that :math:`\forall i, \mathbf{h}_i = \frac{1}{n}`
+    h : array-like, shape ``shape``
+        uniform histogram(s) such that each slice along the last dimension sums
+        to one, i.e. every entry equals :math:`\frac{1}{n}` with ``n`` the last
+        dimension.
     """
+    size = (int(shape),) if isinstance(shape, (int, np.integer)) else tuple(shape)
+    n = size[-1]
     if type_as is None:
-        return np.ones((n,)) / n
+        return np.ones(size) / n
     else:
         nx = get_backend(type_as)
-        return nx.ones((n,), type_as=type_as) / n
+        return nx.ones(size, type_as=type_as) / n
+
+
+def check_marginal(a, shape, type_as=None, nx=None):
+    r"""Validate or fill a marginal :math:`\mathbf{a}` against an expected shape.
+
+    When ``a`` is ``None`` it is filled with the uniform marginal of the given
+    ``shape`` on the backend, device and dtype of ``type_as`` (via :func:`unif`).
+    When provided, its shape is checked against ``shape`` and, if ``type_as`` is
+    given, it must share ``type_as``'s dtype and device -- otherwise an explicit
+    error is raised instead of a deep error later in the solver.
+
+    Parameters
+    ----------
+    a : array-like, shape ``shape``, or None
+        The marginal to validate, or None to fill with a uniform marginal.
+    shape : int or tuple of int
+        Expected shape of the marginal (see :func:`unif`).
+    type_as : array-like, optional
+        Array fixing the backend, device and dtype of the filled/validated marginal.
+    nx : backend object, optional
+        Numerical backend to use. If None, it is inferred from ``type_as``.
+
+    Returns
+    -------
+    a : array-like, shape ``shape``
+        The validated marginal.
+    """
+    size = (int(shape),) if isinstance(shape, (int, np.integer)) else tuple(shape)
+    if a is None:
+        return unif(size, type_as=type_as)
+    if tuple(a.shape) != size:
+        raise ValueError(f"marginal has shape {tuple(a.shape)}, expected {size}")
+    if type_as is not None:
+        if nx is None:
+            nx = get_backend(type_as)
+        nx.assert_same_dtype_device(type_as, a)
+    return a
 
 
 def clean_zeros(a, b, M):
