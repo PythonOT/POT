@@ -12,7 +12,7 @@ from ..utils import OTResult
 from ot.backend import get_backend
 from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
-from ot.utils import deprecated, list_to_array
+from ot.utils import check_marginal, deprecated, list_to_array
 
 
 def tensor_batch(
@@ -621,10 +621,8 @@ def solve_gromov_batch(
     nx = get_backend(a, b, M, Ca, Cb, T_init)
     B, n, m = (Ca.shape[0], Ca.shape[1], Cb.shape[1])
 
-    if a is None:
-        a = nx.ones((B, n), type_as=Ca) / n
-    if b is None:
-        b = nx.ones((B, m), type_as=Cb) / m
+    a = check_marginal(a, (B, n), type_as=Ca, nx=nx)
+    b = check_marginal(b, (B, m), type_as=Cb, nx=nx)
 
     if symmetric is None:
         symmetric = nx.allclose(Ca, transpose(Ca, nx=nx), atol=1e-10) and nx.allclose(

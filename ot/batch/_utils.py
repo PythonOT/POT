@@ -10,6 +10,7 @@ Utility functions for batch operations in optimal transport.
 # License: MIT License
 
 from ot.backend import get_backend
+from ot.utils import check_marginal
 
 
 def entropy_batch(T, nx=None, eps=1e-16):
@@ -136,10 +137,8 @@ def bregman_projection_batch(
 
     B, n, m = K.shape
 
-    if a is None:
-        a = nx.ones((B, n), type_as=K) / n
-    if b is None:
-        b = nx.ones((B, m), type_as=K) / m
+    a = check_marginal(a, (B, n), type_as=K, nx=nx)
+    b = check_marginal(b, (B, m), type_as=K, nx=nx)
 
     if grad == "detach":
         K = nx.detach(K)
@@ -260,10 +259,8 @@ def bregman_log_projection_batch(
 
     B, n, m = K.shape
 
-    if a is None:
-        a = nx.ones((B, n), type_as=K) / n
-    if b is None:
-        b = nx.ones((B, m), type_as=K) / m
+    a = check_marginal(a, (B, n), type_as=K, nx=nx)
+    b = check_marginal(b, (B, m), type_as=K, nx=nx)
 
     u = nx.zeros((B, n), type_as=K)  # u = nx.log(a) - nx.logsumexp(K, axis=2).squeeze()
     v = nx.zeros((B, m), type_as=K)  # v = nx.log(b) - nx.logsumexp(K, axis=1).squeeze()
@@ -397,10 +394,8 @@ def proximal_bregman_log_plan_batch(
 
     B, n, m = C.shape
 
-    if a is None:
-        a = nx.ones((B, n), type_as=C) / n
-    if b is None:
-        b = nx.ones((B, m), type_as=C) / m
+    a = check_marginal(a, (B, n), type_as=C, nx=nx)
+    b = check_marginal(b, (B, m), type_as=C, nx=nx)
 
     if reg is None:
         reg = 0.0
