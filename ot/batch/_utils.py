@@ -331,7 +331,7 @@ def proximal_bregman_log_plan_batch(
     .. math::
         \mathbf{T}^{(k+1)} = \mathop{\arg \min}_\mathbf{T} \quad  \langle \mathbf{C} - \textit{inner\_reg} \cdot \log \mathbf{T}^{(k)}, \mathbf{T} \rangle + (\textit{reg} + \textit{inner\_reg}) \cdot \sum_{i,j} \mathbf{T}_{i,j} \log \mathbf{T}_{i,j}
     
-    Denoting :math:`\mathbf{K}^{(k)} =  - (\mathbf{C} + \textit{inner\_reg} \cdot \log \mathbf{T}^{(k)})/(\textit{reg} + \textit{inner\_reg})`, the affinity matrix at iteration :math:`k`, the Bregman projection problem is solved in the log-domain with a finite number of inner iterations :math:`\text{inner\_iter}`, i.e., the dual variables :math:`\mathbf{u}` and :math:`\mathbf{v}` are updated as follows:
+    Denoting :math:`\mathbf{K}^{(k)} =  - (\mathbf{C} - \textit{inner\_reg} \cdot \log \mathbf{T}^{(k)})/(\textit{reg} + \textit{inner\_reg})`, the affinity matrix at iteration :math:`k`, the Bregman projection problem is solved in the log-domain with a finite number of inner iterations :math:`\text{inner\_iter}`, i.e., the dual variables :math:`\mathbf{u}` and :math:`\mathbf{v}` are updated as follows:
 
     .. math::
         \mathbf{u}^{(i+1)} = \log(\mathbf{a}) - \text{LSE}(\mathbf{K}^{(k)} + \mathbf{v}^{(i)})
@@ -418,7 +418,7 @@ def proximal_bregman_log_plan_batch(
 
     log_T = nx.zeros(C.shape, type_as=C)
     for n_iters in range(max_iter):
-        K_proj = -(C + inner_reg * log_T) / (reg + inner_reg)
+        K_proj = -(C - inner_reg * log_T) / (reg + inner_reg)
         for _ in range(inner_iter):
             u = loga - nx.logsumexp(K_proj + v[:, None, :], axis=2)
             v = logb - nx.logsumexp(K_proj + u[:, :, None], axis=1)
@@ -433,7 +433,7 @@ def proximal_bregman_log_plan_batch(
                 break
 
     if grad == "last_step":
-        K_proj = -(C_ + inner_reg * log_T) / (reg + inner_reg)
+        K_proj = -(C_ - inner_reg * log_T) / (reg + inner_reg)
         for _ in range(inner_iter):
             u = loga - nx.logsumexp(K_proj + v[:, None, :], axis=2)
             v = logb - nx.logsumexp(K_proj + u[:, :, None], axis=1)

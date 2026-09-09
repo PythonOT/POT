@@ -391,7 +391,7 @@ def sparse_ot_dist(
     for b in range(0, len(i), batch_size):
         d += nx.sum(
             dist_idxs(i[b : b + batch_size], j[b : b + batch_size])
-            * w[i[b : b + batch_size]]
+            * w[b : b + batch_size]
         )
 
     return d

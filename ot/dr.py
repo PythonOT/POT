@@ -101,8 +101,8 @@ def fda(X, y, p=2, reg=1e-16):
         projection function including mean centering
     """
 
-    mx = np.mean(X)
-    X -= mx.reshape((1, -1))
+    mx = np.mean(X, axis=0)
+    X = X - mx.reshape((1, -1))
 
     # data split between classes
     d = X.shape[1]
@@ -119,7 +119,7 @@ def fda(X, y, p=2, reg=1e-16):
     mxc = np.zeros((d, nc))
 
     for i in range(nc):
-        mxc[:, i] = np.mean(xc[i])
+        mxc[:, i] = np.mean(xc[i], axis=0)
 
     mx0 = np.mean(mxc, 1)
     Cb = 0
@@ -218,8 +218,8 @@ def wda(
     else:
         raise ValueError("Unknown Sinkhorn method '%s'." % sinkhorn_method)
 
-    mx = np.mean(X)
-    X -= mx.reshape((1, -1))
+    mx = np.mean(X, axis=0)
+    X = X - mx.reshape((1, -1))
 
     # data split between classes
     d = X.shape[1]

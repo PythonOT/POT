@@ -281,6 +281,20 @@ def test_dist():
         ot.dist(x, x, metric="fakeone")
 
 
+def test_sparse_ot_dist_uses_pair_weights():
+    x1 = np.array([[0.0], [1.0]])
+    x2 = np.array([[0.0], [5.0]])
+    rows = np.array([1, 0])
+    cols = np.array([0, 1])
+    weights = np.array([0.25, 0.75])
+
+    cost = ot.utils.sparse_ot_dist(
+        x1, x2, rows, cols, weights, metric="sqeuclidean", batch_size=1
+    )
+
+    np.testing.assert_allclose(cost, 0.25 * 1.0 + 0.75 * 25.0)
+
+
 @pytest.mark.parametrize("metric", lst_metrics)
 def test_dist_backends(nx, metric):
     n = 100

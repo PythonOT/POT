@@ -40,6 +40,51 @@ def test_fda():
 
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+def test_fda_recovers_discriminant_direction():
+    # classes are separated along the first feature only, all others are noise,
+    # so FDA must return a direction aligned with e_0
+    rng = np.random.RandomState(1)
+    n_features = 5
+    xs = np.concatenate(
+        [
+            rng.randn(60, n_features) * 0.3 + shift * np.eye(1, n_features, 0)
+            for shift in [-6.0, 0.0, 6.0]
+        ]
+    )
+    ys = np.repeat([0, 1, 2], 60)
+
+    Pfda, _ = ot.dr.fda(xs, ys, p=1)
+
+    direction = Pfda[:, 0] / np.linalg.norm(Pfda[:, 0])
+    np.testing.assert_array_less(0.95, np.abs(direction[0]))
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+def test_fda_projection_is_centered():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    xs = xs + 10.0  # off-centered data makes an absent centering visible
+
+    _, projfda = ot.dr.fda(xs, ys, p=1)
+
+    np.testing.assert_allclose(projfda(xs).mean(axis=0), 0.0, atol=1e-10)
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+def test_fda_wda_do_not_modify_input():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    xs = xs + 10.0
+
+    xs_copy = xs.copy()
+    ot.dr.fda(xs, ys, p=1)
+    np.testing.assert_allclose(xs, xs_copy)
+
+    ot.dr.wda(xs, ys, p=1, reg=1.0, k=5, maxiter=5)
+    np.testing.assert_allclose(xs, xs_copy)
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
 def test_wda():
     n_samples = 100  # nb samples in source and target datasets
     rng = np.random.RandomState(0)

@@ -86,6 +86,7 @@ Performance
 #
 # License: MIT License
 
+import importlib.util
 import os
 import time
 import warnings
@@ -108,6 +109,21 @@ if not os.environ.get(DISABLE_TORCH_KEY, False):
         import torch
 
         torch_type = torch.Tensor
+
+        # Load triton before TensorFlow is imported below. Both triton and
+        # TensorFlow ship a statically linked LLVM, and loading triton's
+        # libtriton.so into a process that has already imported TensorFlow
+        # segfaults inside dlopen. torch only imports triton lazily, on the
+        # first use of a feature that needs it (constructing an optimizer is
+        # enough), which would otherwise happen after TensorFlow is loaded.
+        # See https://github.com/PythonOT/POT/issues/816
+        if not os.environ.get(DISABLE_TF_KEY, False) and (
+            importlib.util.find_spec("tensorflow") is not None
+        ):
+            try:
+                import triton  # noqa: F401
+            except ImportError:
+                pass
     except ImportError:
         torch = False
         torch_type = float
@@ -1209,6 +1225,26 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def sin(self, a):
+        r"""
+        Trigonometric sine, element-wise.
+
+        This function follows the api from :any:`numpy.sin`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.sin.html
+        """
+        raise NotImplementedError()
+
+    def cos(self, a):
+        r"""
+        Trigonometric cosine, element-wise.
+
+        This function follows the api from :any:`numpy.cos`
+
+        See: https://numpy.org/doc/stable/reference/generated/numpy.cos.html
+        """
+        raise NotImplementedError()
+
 
 class NumpyBackend(Backend):
     """
@@ -1364,6 +1400,12 @@ class NumpyBackend(Backend):
 
     def arccos(self, a):
         return np.arccos(a)
+
+    def sin(self, a):
+        return np.sin(a)
+
+    def cos(self, a):
+        return np.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return np.repeat(a, repeats, axis)
@@ -1794,6 +1836,12 @@ class JaxBackend(Backend):
     def arccos(self, a):
         return jnp.arccos(a)
 
+    def sin(self, a):
+        return jnp.sin(a)
+
+    def cos(self, a):
+        return jnp.cos(a)
+
     def repeat(self, a, repeats, axis=None):
         return jnp.repeat(a, repeats, axis)
 
@@ -2050,7 +2098,7 @@ class TorchBackend(Backend):
 
     __name__ = "torch"
     __type__ = torch_type
-    __type_list__ = None
+    # __type_list__ is a property below: its CUDA entries are built lazily.
 
     rng_ = None
 
@@ -2058,22 +2106,17 @@ class TorchBackend(Backend):
         self.rng_ = torch.Generator("cpu")
         self.rng_.seed()
 
-        self.__type_list__ = [
+        # The CUDA generator and the CUDA entries of the type list are built the
+        # first time something asks for them. Building either here initialises a
+        # CUDA context, which claims device memory and wakes the GPU even when
+        # the computation stays entirely on the CPU.
+        self._type_list_cpu = [
             torch.tensor(1, dtype=torch.float32),
             torch.tensor(1, dtype=torch.float64),
         ]
-
-        if torch.cuda.is_available():
-            self.rng_cuda_ = torch.Generator("cuda")
-            self.rng_cuda_.seed()
-            self.__type_list__.append(
-                torch.tensor(1, dtype=torch.float32, device="cuda")
-            )
-            self.__type_list__.append(
-                torch.tensor(1, dtype=torch.float64, device="cuda")
-            )
-        else:
-            self.rng_cuda_ = torch.Generator("cpu")
+        self._type_list_cuda = None
+        self._rng_cuda = None
+        self._cuda_seed = None
 
         from torch.autograd import Function
         from torch.autograd.function import once_differentiable
@@ -2116,6 +2159,35 @@ class TorchBackend(Backend):
 
         self.ValFunction = ValFunction
         self.MatrixSqrtFunction = MatrixSqrtFunction
+
+    @property
+    def __type_list__(self):
+        if self._type_list_cuda is None:
+            if torch.cuda.is_available():
+                self._type_list_cuda = [
+                    torch.tensor(1, dtype=torch.float32, device="cuda"),
+                    torch.tensor(1, dtype=torch.float64, device="cuda"),
+                ]
+            else:
+                self._type_list_cuda = []
+        return self._type_list_cpu + self._type_list_cuda
+
+    @property
+    def rng_cuda_(self):
+        if self._rng_cuda is None:
+            if torch.cuda.is_available():
+                self._rng_cuda = torch.Generator("cuda")
+                if self._cuda_seed is None:
+                    self._rng_cuda.seed()
+                else:
+                    self._rng_cuda.manual_seed(self._cuda_seed)
+            else:
+                self._rng_cuda = torch.Generator("cpu")
+        return self._rng_cuda
+
+    @rng_cuda_.setter
+    def rng_cuda_(self, generator):
+        self._rng_cuda = generator
 
     def _to_numpy(self, a):
         if isinstance(a, float) or isinstance(a, int) or isinstance(a, np.ndarray):
@@ -2303,6 +2375,12 @@ class TorchBackend(Backend):
     def arccos(self, a):
         return torch.acos(a)
 
+    def sin(self, a):
+        return torch.sin(a)
+
+    def cos(self, a):
+        return torch.cos(a)
+
     def repeat(self, a, repeats, axis=None):
         return torch.repeat_interleave(a, repeats, dim=axis)
 
@@ -2396,7 +2474,11 @@ class TorchBackend(Backend):
             pass
         elif isinstance(seed, int):
             self.rng_.manual_seed(seed)
-            self.rng_cuda_.manual_seed(seed)
+            # Remember the seed rather than forcing the CUDA generator into
+            # existence; it is applied when that generator is first needed.
+            self._cuda_seed = seed
+            if self._rng_cuda is not None:
+                self._rng_cuda.manual_seed(seed)
         elif isinstance(seed, torch.Generator):
             if self.device_type(seed) == "GPU":
                 self.rng_cuda_ = seed
@@ -2814,6 +2896,12 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def arccos(self, a):
         return cp.arccos(a)
+
+    def sin(self, a):
+        return cp.sin(a)
+
+    def cos(self, a):
+        return cp.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return cp.repeat(a, repeats, axis)
@@ -3260,6 +3348,12 @@ class TensorflowBackend(Backend):
 
     def arccos(self, a):
         return tnp.arccos(a)
+
+    def sin(self, a):
+        return tnp.sin(a)
+
+    def cos(self, a):
+        return tnp.cos(a)
 
     def repeat(self, a, repeats, axis=None):
         return tnp.repeat(a, repeats, axis)

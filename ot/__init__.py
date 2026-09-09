@@ -70,6 +70,7 @@ from .sliced import (
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
     linear_sliced_wasserstein_sphere,
+    stereographic_sliced_wasserstein_sphere,
     min_sliced_transport_plan,
     expected_sliced_plan,
 )
@@ -94,7 +95,7 @@ from .bsp import compute_bspot_bijection, merge_bijections
 from .utils import dist, unif, tic, toc, toq
 
 
-__version__ = "0.9.7"
+__version__ = "0.9.8.dev"
 
 __all__ = [
     "emd",
@@ -133,6 +134,7 @@ __all__ = [
     "unbalanced_sliced_ot",
     "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
+    "stereographic_sliced_wasserstein_sphere",
     "min_sliced_transport_plan",
     "expected_sliced_plan",
     "gromov_wasserstein",
