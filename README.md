@@ -484,3 +484,7 @@ Artificial Intelligence.
 
 \[94] Mezzadri, F. (2007). [How to generate random matrices from the classical compact groups](https://www.ams.org/notices/200705/fea-mezzadri-web.pdf). Notices of the American Mathematical Society, 54(5), 592-604.
 
+\[95] Nguyen, K., Bariletto, N., & Ho, N. (2024). [Quasi-Monte Carlo for 3D Sliced Wasserstein](https://arxiv.org/abs/2309.11713). International Conference on Learning Representations (ICLR).
+
+\[96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). [Minimal Discrete Energy on the Sphere](https://www.math.vanderbilt.edu/~esaff/texts/155.pdf). Mathematical Research Letters, 1(6), 647-662.
+
