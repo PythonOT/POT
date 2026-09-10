@@ -11,6 +11,7 @@
 
 #### Closed issues
 
+- Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
 - Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
 - Build the CUDA generator and the CUDA entries of `TorchBackend.__type_list__` lazily, so that using POT with CPU-only torch tensors no longer initialises a CUDA context and claims device memory (PR #847, Issue #612)
 - Fix the sign issue in updates of the previous transport plan in `ot.batch.proximal_bregman_log_plan_batch` (Issue #842)

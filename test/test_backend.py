@@ -852,6 +852,17 @@ def test_random_backends(nx):
         res = nx.randperm(size=[5, 12])
 
 
+def test_numpy_backend_seed_random_state():
+    nx = ot.backend.NumpyBackend()
+    rng = np.random.RandomState(42)
+    expected_rng = np.random.RandomState(42)
+
+    nx.seed(rng)
+
+    assert nx.rng_ is rng
+    np.testing.assert_array_equal(nx.randn(5, 2), expected_rng.randn(5, 2))
+
+
 def test_gradients_backends():
     rnd = np.random.RandomState(0)
     v = rnd.randn(10)
