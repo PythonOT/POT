@@ -72,10 +72,33 @@ authors:
     family-names: Fernandes Montesuma
     affiliation: Université Paris-Saclay & CEA-List
     orcid: 'https://orcid.org/0000-0003-3850-4602'
+  - given-names: Nathan
+    family-names: Neike
+    affiliation: Hi! PARIS
+  - given-names: Baptiste
+    family-names: Genest
+    affiliation: CNRS, LIRIS
+  - given-names: David
+    family-names: Coeurjolly
+    affiliation: CNRS, LIRIS
+  - given-names: Thibaut
+    family-names: Germain
+    affiliation: Ecole Polytechnique
+  - given-names: Sienna
+    family-names: O'Shea
+    affiliation: Ecole Polytechnique
+  - given-names: Marco
+    family-names: Corneli
+    affiliation: Université Côte d'Azur
+  - given-names: Ferdinand
+    family-names: Genans
+    affiliation: Sorbonne Université, LPSM, CNRS
 identifiers:
   - type: url
     value: 'https://github.com/PythonOT/POT'
     description: Code
+  - type: doi
+    value: 10.5281/zenodo.17161062
 repository-code: 'https://github.com/PythonOT/POT'
 url: 'https://pythonot.github.io/'
 keywords:
@@ -85,4 +108,5 @@ keywords:
   - wasserstein
   - gromov-wasserstein
 license: MIT
-version: 0.9.5
+version: 0.9.7
+date-released: 2026-07-10

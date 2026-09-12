@@ -6,6 +6,10 @@
 #
 # License: MIT License
 
+import importlib.util
+import subprocess
+import sys
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal_nulp
@@ -75,6 +79,48 @@ def test_get_backend(nx):
         assert effective_nx.__name__ == nx.__name__
 
 
+def test_get_backend_sparse_matrix():
+    """Test that get_backend correctly handles sparse matrices and rejects mixed backends."""
+    from scipy.sparse import coo_matrix
+
+    a_np = np.array([0.5, 0.5])
+    b_np = np.array([0.5, 0.5])
+    M_scipy = coo_matrix(([1.0, 2.0], ([0, 1], [0, 1])), shape=(2, 2))
+
+    nx = get_backend(a_np, b_np, M_scipy)
+    assert nx.__name__ == "numpy", "NumPy backend should accept scipy.sparse matrices"
+
+    nx = get_backend(M_scipy)
+    assert nx.__name__ == "numpy", "scipy.sparse should use NumPy backend"
+
+    if torch:
+        a_torch = torch.tensor([0.5, 0.5])
+        b_torch = torch.tensor([0.5, 0.5])
+        M_torch_sparse = torch.sparse_coo_tensor(
+            torch.tensor([[0, 1], [0, 1]]), torch.tensor([1.0, 2.0]), (2, 2)
+        )
+
+        nx = get_backend(a_torch, b_torch, M_torch_sparse)
+        assert (
+            nx.__name__ == "torch"
+        ), "PyTorch backend should accept torch.sparse tensors"
+
+        nx = get_backend(M_torch_sparse)
+        assert nx.__name__ == "torch", "torch.sparse should use PyTorch backend"
+
+        # Case 1: PyTorch dense + scipy.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(a_torch, b_torch, M_scipy)
+
+        # Case 2: NumPy dense + torch.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(a_np, b_np, M_torch_sparse)
+
+        # Case 3: scipy.sparse + torch.sparse (incompatible)
+        with pytest.raises(ValueError):
+            get_backend(M_scipy, M_torch_sparse)
+
+
 def test_convert_between_backends(nx):
     A = np.zeros((3, 2))
     B = np.zeros((3, 1))
@@ -97,6 +143,7 @@ def test_empty_backend():
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
+    inds = rnd.randint(10)
 
     nx = ot.backend.Backend()
 
@@ -130,6 +177,10 @@ def test_empty_backend():
         nx.minimum(v, v)
     with pytest.raises(NotImplementedError):
         nx.abs(M)
+    with pytest.raises(NotImplementedError):
+        nx.sin(M)
+    with pytest.raises(NotImplementedError):
+        nx.cos(M)
     with pytest.raises(NotImplementedError):
         nx.log(M)
     with pytest.raises(NotImplementedError):
@@ -296,6 +347,9 @@ def test_func_backends(nx):
     sp_col = np.array([0, 3, 1, 2, 2])
     sp_data = np.array([4, 5, 7, 9, 0], dtype=np.float64)
 
+    M_complex = M + 1j * rnd.randn(10, 3)
+    v_acos = np.clip(v, -0.99, 0.99)
+
     lst_tot = []
 
     for nx in [ot.backend.NumpyBackend(), nx]:
@@ -394,6 +448,14 @@ def test_func_backends(nx):
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("abs")
+
+        A = nx.sin(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("sin")
+
+        A = nx.cos(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("cos")
 
         A = nx.log(A)
         lst_b.append(nx.to_numpy(A))
@@ -680,6 +742,24 @@ def test_func_backends(nx):
         lst_b.append(nx.to_numpy(A))
         lst_name.append("atan2")
 
+        M_complex_b = nx.from_numpy(M_complex)
+        A = nx.real(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("real")
+
+        A = nx.imag(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("imag")
+
+        A = nx.conj(M_complex_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("conj")
+
+        v_acos_b = nx.from_numpy(v_acos)
+        A = nx.arccos(v_acos_b)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("arccos")
+
         A = nx.transpose(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("transpose")
@@ -807,6 +887,15 @@ def test_gradients_backends():
         np.testing.assert_allclose(grad_val[0], v, atol=1e-4)
         np.testing.assert_allclose(grad_val[2], 2 * e, atol=1e-4)
 
+        with jax.checking_leaks():
+
+            def f(x):
+                return nx.sum(nx.abs(x))
+
+            grad_val = jax.grad(f)(nx.zeros((3,)))
+
+        np.testing.assert_allclose(grad_val, nx.zeros((3,)))
+
     if tf:
         nx = ot.backend.TensorflowBackend()
         w = tf.Variable(tf.random.normal((3, 2)), name="w")
@@ -822,9 +911,74 @@ def test_gradients_backends():
             assert nx.allclose(dl_db, b)
 
 
+def test_sqrtm_backward_torch():
+    if not torch:
+        pytest.skip("Torch not available")
+    nx = ot.backend.TorchBackend()
+    torch.manual_seed(42)
+    d = 5
+    A = torch.randn(d, d, dtype=torch.float64, device="cpu")
+    A = A @ A.T
+    A.requires_grad_(True)
+    func = lambda x: nx.sqrtm(x).sum()
+    assert torch.autograd.gradcheck(func, (A,), atol=1e-4, rtol=1e-4)
+
+
 def test_get_backend_none():
     a, b = np.zeros((2, 3)), None
     nx = get_backend(a, b)
     assert str(nx) == "numpy"
     with pytest.raises(ValueError):
         get_backend(None, None)
+
+
+@pytest.mark.skipif(
+    not torch or not tf or importlib.util.find_spec("triton") is None,
+    reason="Requires torch, tensorflow and triton installed together",
+)
+def test_torch_optimizer_after_tensorflow_import():
+    """Non-regression test for issue #816.
+
+    Building a torch optimizer makes torch import triton lazily. If TensorFlow
+    was imported first, loading libtriton.so segfaults the interpreter, so this
+    has to run in a subprocess.
+    """
+    code = (
+        "import ot.backend\n"
+        "import torch\n"
+        "x = torch.zeros(3, requires_grad=True)\n"
+        "torch.optim.SGD([x], lr=0.1)\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True)
+    assert result.returncode == 0, (
+        f"interpreter died with returncode {result.returncode}: "
+        f"{result.stderr.decode(errors='replace')[-2000:]}"
+    )
+
+
+@pytest.mark.skipif(
+    not torch or not torch.cuda.is_available(),
+    reason="Requires torch with CUDA available",
+)
+def test_no_cuda_context_for_cpu_only_work():
+    """Non-regression test for issue #612.
+
+    Building the torch backend used to create a CUDA generator and the CUDA
+    entries of the type list straight away. That initialises a CUDA context, so
+    device memory is claimed and the GPU wakes up for a computation that stays
+    entirely on the CPU. The check needs an interpreter that has not touched
+    CUDA yet, so it runs in a subprocess.
+    """
+    code = (
+        "import torch\n"
+        "import ot\n"
+        "x = torch.randn(64, 2)\n"
+        "ot.dist(x, x)\n"
+        "assert not torch.cuda.is_initialized(), 'a CUDA context was created'\n"
+        "assert torch.cuda.memory_allocated() == 0, 'device memory was claimed'\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True)
+    assert result.returncode == 0, (
+        f"interpreter exited with returncode {result.returncode}: "
+        f"{result.stderr.decode(errors='replace')[-2000:]}"
+    )

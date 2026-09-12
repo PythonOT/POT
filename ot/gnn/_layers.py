@@ -7,14 +7,16 @@ Template Fused Gromov Wasserstein
 #         Rémi Flamary <remi.flamary@unice.fr>
 #
 # License: MIT License
-
-import torch
-import torch.nn as nn
-from ._utils import (
-    TFGW_template_initialization,
-    FGW_distance_to_templates,
-    wasserstein_distance_to_templates,
-)
+try:
+    import torch
+    import torch.nn as nn
+    from ._utils import (
+        TFGW_template_initialization,
+        FGW_distance_to_templates,
+        wasserstein_distance_to_templates,
+    )
+except ImportError:
+    pass
 
 
 class TFGWPooling(nn.Module):

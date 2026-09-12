@@ -12,10 +12,11 @@ from ..utils import OTResult
 from ot.backend import get_backend
 from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
+from ot.utils import deprecated, list_to_array
 
 
 def tensor_batch(
-    a, b, C1, C2, symmetric=True, nx=None, loss="sqeuclidean", logits=None
+    a, b, Ca, Cb, symmetric=True, nx=None, loss="sqeuclidean", logits=None
 ):
     r"""
     Compute the Gromov-Wasserstein cost tensor for a batch of problems.
@@ -38,9 +39,9 @@ def tensor_batch(
         Source distributions for each problem in the batch.
     b : array-like, shape (B, m)
         Target distributions for each problem in the batch.
-    C1 : array-like, shape (B, n, n) or (B, n, n, d)
+    Ca : array-like, shape (B, n, n) or (B, n, n, d)
         Source cost matrices for each problem. Can be a 3D array for scalar costs or a 4D array for vector-valued costs (edge features).
-    C2 : array-like, shape (B, m, m) or (B, n, n, d)
+    Cb : array-like, shape (B, m, m) or (B, n, n, d)
         Target cost matrices for each problem. Can be a 3D array for scalar costs or a 4D array for vector-valued costs (edge features).
     symmetric : bool, optional
         Whether the cost matrices are symmetric. Default is True.
@@ -59,10 +60,10 @@ def tensor_batch(
         Dictionary containing:
         - constC : array-like, shape (B, n, m)
             Constant term in the tensor product.
-        - hC1 : array-like, shape (B, n, n, d) or (B, n, n)
-        - hC2 : array-like, shape (B, m, m, d) or (B, m, m)
-        - fC1 : array-like, shape (B, n, n)
-        - fC2 : array-like, shape (B, m, m)
+        - hCa : array-like, shape (B, n, n, d) or (B, n, n)
+        - hCb : array-like, shape (B, m, m, d) or (B, m, m)
+        - fCa : array-like, shape (B, n, n)
+        - fCb : array-like, shape (B, m, m)
 
 
     Supported loss functions:
@@ -78,7 +79,7 @@ def tensor_batch(
     .. math::
         \ell(a, b) = \sum_i a_i \log\left(\frac{a_i}{b_i}\right)
 
-    If ``logits=True``, the entries of C1 are treated as logits (unnormalized log probabilities)
+    If ``logits=True``, the entries of Ca are treated as logits (unnormalized log probabilities)
     and the loss becomes:
 
     .. math::
@@ -89,11 +90,11 @@ def tensor_batch(
     >>> import numpy as np
     >>> from ot.batch import tensor_batch
     >>> # Create batch of cost matrices
-    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
-    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> Ca = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> Cb = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
     >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
     >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
-    >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
+    >>> L = tensor_batch(a, b, Ca, Cb, loss='sqeuclidean')
 
     References
     ----------
@@ -103,31 +104,33 @@ def tensor_batch(
     """
 
     if nx is None:
-        nx = get_backend(C1)
+        nx = get_backend(Ca)
 
-    if loss == "sqeuclidean":
+    loss = loss.lower()
 
-        def f1(C1):
-            if C1.ndim == 4:
-                return nx.sum(C1**2, axis=-1)
+    if loss == "sqeuclidean" or loss == "l2":
+
+        def f1(Ca):
+            if Ca.ndim == 4:
+                return nx.sum(Ca**2, axis=-1)
             else:
-                return C1**2
+                return Ca**2
 
-        def f2(C2):
-            if C2.ndim == 4:
-                return nx.sum(C2**2, axis=-1)
+        def f2(Cb):
+            if Cb.ndim == 4:
+                return nx.sum(Cb**2, axis=-1)
             else:
-                return C2**2
+                return Cb**2
 
-        def h1(C1):
-            if C1.ndim == 3:
-                C1 = nx.unsqueeze(C1, -1)
-            return 2 * C1
+        def h1(Ca):
+            if Ca.ndim == 3:
+                Ca = nx.unsqueeze(Ca, -1)
+            return 2 * Ca
 
-        def h2(C2):
-            if C2.ndim == 3:
-                C2 = nx.unsqueeze(C2, -1)
-            return C2
+        def h2(Cb):
+            if Cb.ndim == 3:
+                Cb = nx.unsqueeze(Cb, -1)
+            return Cb
 
     elif loss == "kl":
         assert logits in [
@@ -135,24 +138,96 @@ def tensor_batch(
             False,
         ], "logits must be either True or False for KL loss"
 
-        def f1(C1):
-            return nx.zeros((C1.shape[0], C1.shape[1], C1.shape[2]), type_as=C1)
+        def f1(Ca):
+            return nx.zeros((Ca.shape[0], Ca.shape[1], Ca.shape[2]), type_as=Ca)
 
-        def f2(C2):
-            assert C2.ndim == 4, "C2 must be a bxnxnxd tensor"
-            fC2 = C2 * nx.log(C2 + 1e-15)  # Avoid log(0)
-            return nx.sum(fC2, axis=-1)
+        def f2(Cb):
+            assert Cb.ndim == 4, "Cb must be a bxnxnxd tensor"
+            fCb = Cb * nx.log(Cb + 1e-15)  # Avoid log(0)
+            return nx.sum(fCb, axis=-1)
 
-        def h1(C1):
-            return C1 if logits else nx.log(C1 + 1e-15)
+        def h1(Ca):
+            return Ca if logits else nx.log(Ca + 1e-15)
 
-        def h2(C2):
-            return C2
+        def h2(Cb):
+            return Cb
 
-    return compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=symmetric)
+    return compute_tensor_batch(f1, f2, h1, h2, a, b, Ca, Cb, symmetric=symmetric)
 
 
-def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
+def div_between_product_batch(mu, nu, alpha, beta, divergence, nx=None):
+    r"""Fast computation of the Bregman divergence between batches of product measures.
+    Only support for Kullback-Leibler and half-squared L2 divergences.
+
+    For half-squared L2 divergence:
+
+    .. math::
+        \frac{1}{2} || \mu \otimes \nu, \alpha \otimes \beta ||^2
+        = \frac{1}{2} \Big[ ||\alpha||^2 ||\beta||^2 + ||\mu||^2 ||\nu||^2 - 2 \langle \alpha, \mu \rangle \langle \beta, \nu \rangle \Big]
+
+    For Kullback-Leibler divergence:
+
+    .. math::
+        KL(\mu \otimes \nu, \alpha \otimes \beta)
+        = m(\mu) * KL(\nu, \beta) + m(\nu) * KL(\mu, \alpha) + (m(\mu) - m(\alpha)) * (m(\nu) - m(\beta))
+
+    where:
+
+    - :math:`\mu` and :math:`\alpha` are two measures having the same shape.
+    - :math:`\nu` and :math:`\beta` are two measures having the same shape.
+    - :math:`m` denotes the mass of the measure
+
+    Parameters
+    ----------
+    mu : array-like, shape (B, ...)
+        First factor of each product measure in the batch.
+    nu : array-like, shape (B, ...)
+        Second factor of each product measure in the batch.
+    alpha : array-like, shape (B, ...)
+        Reference factor with the same shape as `mu`.
+    beta : array-like, shape (B, ...)
+        Reference factor with the same shape as `nu`.
+    divergence : string, default = "kl"
+        Bregman divergence, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
+    nx : backend, optional
+        If let to its default value None, a backend test will be conducted.
+
+    Returns
+    ----------
+    Bregman divergence between two product measures for each problem in the batch.
+    """
+
+    if nx is None:
+        nx = get_backend(mu, nu, alpha, beta)
+
+    axis_mu = tuple(range(1, mu.ndim)) if mu.ndim > 1 else 0
+    axis_nu = tuple(range(1, nu.ndim)) if nu.ndim > 1 else 0
+    axis_alpha = tuple(range(1, alpha.ndim)) if alpha.ndim > 1 else 0
+    axis_beta = tuple(range(1, beta.ndim)) if beta.ndim > 1 else 0
+
+    if divergence == "kl":
+        m_mu = nx.sum(mu, axis=axis_mu)
+        m_nu = nx.sum(nu, axis=axis_nu)
+        m_alpha = nx.sum(alpha, axis=axis_alpha)
+        m_beta = nx.sum(beta, axis=axis_beta)
+        const = (m_mu - m_alpha) * (m_nu - m_beta)
+        res = (
+            m_nu * nx.kl_div(mu, alpha, mass=True, axis=axis_mu)
+            + m_mu * nx.kl_div(nu, beta, mass=True, axis=axis_nu)
+            + const
+        )
+
+    elif divergence == "l2":
+        res = (
+            nx.sum(alpha**2, axis=axis_alpha) * nx.sum(beta**2, axis=axis_beta)
+            - 2 * nx.sum(alpha * mu, axis=axis_mu) * nx.sum(beta * nu, axis=axis_nu)
+            + nx.sum(mu**2, axis=axis_mu) * nx.sum(nu**2, axis=axis_nu)
+        ) / 2
+
+    return res
+
+
+def loss_quadratic_tensor_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     r"""
     Computes the gromov-wasserstein cost given a cost tensor and transport plan. Batched version.
 
@@ -174,14 +249,14 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     >>> import numpy as np
     >>> from ot.batch import tensor_batch, loss_quadratic_batch
     >>> # Create batch of cost matrices
-    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
-    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> Ca = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> Cb = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
     >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
     >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
-    >>> L = tensor_batch(a, b, C1, C2, loss='sqeuclidean')
+    >>> L = tensor_batch(a, b, Ca, Cb, loss='sqeuclidean')
     >>> # Use the uniform transport plan for testing
     >>> T = np.ones((3, 5, 4)) / (5 * 4)
-    >>> loss = loss_quadratic_batch(L, T, recompute_const=True)
+    >>> loss = loss_quadratic_tensor_batch(L, T, recompute_const=True)
     >>> loss.shape
     (3,)
 
@@ -198,20 +273,54 @@ def loss_quadratic_batch(L, T, recompute_const=False, symmetric=True, nx=None):
     return nx.sum(LT * T, axis=(1, 2))
 
 
+@deprecated("Use ot.batch.loss_quadratic_batch instead.")
 def loss_quadratic_samples_batch(
     a,
     b,
-    C1,
-    C2,
+    Ca,
+    Cb,
     T,
     loss="sqeuclidean",
     symmetric=None,
     nx=None,
     logits=None,
     recompute_const=False,
+    log=False,
+):
+    return loss_quadratic_batch(
+        a,
+        b,
+        Ca,
+        Cb,
+        T,
+        loss=loss,
+        symmetric=symmetric,
+        nx=nx,
+        logits=logits,
+        recompute_const=recompute_const,
+        log=log,
+    )
+
+
+def loss_quadratic_batch(
+    a,
+    b,
+    Ca,
+    Cb,
+    T,
+    M=None,
+    alpha=None,
+    unbalanced=None,
+    unbalanced_type="kl",
+    loss="sqeuclidean",
+    symmetric=True,
+    nx=None,
+    logits=None,
+    recompute_const=False,
+    log=False,
 ):
     r"""
-    Computes the gromov-wasserstein for samples C1, C2 and transport plan. Batched version.
+    Computes the gromov-wasserstein for samples Ca, Cb and transport plan. Batched version.
 
     Parameters
     ----------
@@ -219,34 +328,55 @@ def loss_quadratic_samples_batch(
         Source distributions.
     b : array-like, shape (B, m)
         Target distributions.
-    C1 : array-like, shape (B, n, n) or (B, n, n, d)
+    Ca : array-like, shape (B, n, n) or (B, n, n, d)
         Source cost matrices.
-    C2 : array-like, shape (B, m, m) or (B, n, n, d)
+    Cb : array-like, shape (B, m, m) or (B, n, n, d)
         Target cost matrices.
     T : array-like, shape (B, n, m)
         Transport plan.
+    M : array-like, shape (B, n, m)
+        Cost matrix between features across domains (default is None).
+    alpha : float, array-like or list (B,) optional
+        Weight the quadratic term (alpha*Gromov) and the linear term
+        ((1-alpha)*Wass) in the Fused Gromov-Wasserstein problem. Not used for
+        Gromov problem (when M is not provided). By default ``alpha=None``
+        corresponds to ``alpha=1`` for Gromov problem (``M==None``) and
+        ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``).
+        If alpha is a scalar, it is used for all problems in the batch.
+    unbalanced : float array-like or list(B,) optional
+        Unbalanced penalization weight :math:`\lambda_u`. If unbalanced is a scalar, it is used for all problems in the batch.
+    unbalanced_type : string, optional
+        Type of unbalanced penalization function, either "kl" (Kullback-Leibler divergence) or "l2" (half-squared L2 divergence)
     loss : str, optional
         Loss function to use. Supported values: 'sqeuclidean', 'kl'.
         Default is 'sqeuclidean'.
-    recompute_const : bool, optional
-        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
     symmetric : bool, optional
         Whether to use symmetric version. Default is True.
     nx : module, optional
         Backend to use. Default is None.
+    logits : bool, optional
+        For KL divergence, whether inputs are logits (unnormalized log probabilities).
+        If True, inputs are treated as logits. Default is None.
+    recompute_const : bool, optional
+        Whether to recompute the constant term. Default is False. This should be set to True if T does not satisfy the marginal constraints.
+        Will be set to True if unbalanced is not None.
+    log : bool, optional
+        If True, also returns a dictionary containing the different terms of
+        the loss.
+
 
     Examples
     --------
     >>> import numpy as np
     >>> from ot.batch import loss_quadratic_samples_batch
     >>> # Create batch of cost matrices
-    >>> C1 = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
-    >>> C2 = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
+    >>> Ca = np.random.rand(3, 5, 5)  # 3 problems, 5x5 source matrices
+    >>> Cb = np.random.rand(3, 4, 4)  # 3 problems, 4x4 target matrices
     >>> a = np.ones((3, 5)) / 5  # Uniform source distributions
     >>> b = np.ones((3, 4)) / 4  # Uniform target distributions
     >>> # Use the uniform transport plan for testing
     >>> T = np.ones((3, 5, 4)) / (5 * 4)
-    >>> loss = loss_quadratic_samples_batch(a, b, C1, C2, T, recompute_const=True)
+    >>> loss = loss_quadratic_samples_batch(a, b, Ca, Cb, T, recompute_const=True)
     >>> loss.shape
     (3,)
 
@@ -255,20 +385,108 @@ def loss_quadratic_samples_batch(
     ot.batch.tensor_batch : From computing the cost tensor L.
     ot.batch.solve_gromov_batch : For finding the optimal transport plan T.
     """
-    if isinstance(loss, str):
+    if nx is None:
+        nx = get_backend(T)
+
+    if log:
+        log_dict = {}
+        log_dict["value_quadratic"] = None
+        log_dict["value_linear"] = None
+        log_dict["value_unbalanced"] = None
+    else:
+        log_dict = None
+
+    if isinstance(loss, str) and loss in ["sqeuclidean", "kl", "l2"]:
         L = tensor_batch(
-            a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
+            a, b, Ca, Cb, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )
     else:
         raise ValueError(f"Unknown loss function: {loss}")
-    return loss_quadratic_batch(
+
+    if unbalanced is not None:
+        recompute_const = True
+
+    quadratic = loss_quadratic_tensor_batch(
         L, T, recompute_const=recompute_const, symmetric=symmetric, nx=nx
     )
+    if log:
+        log_dict["value_quadratic"] = quadratic
+
+    if unbalanced is None and M is None:
+        if log:
+            log_dict["value"] = quadratic
+            return quadratic, log_dict
+        return quadratic
+
+    B = T.shape[0]
+
+    if unbalanced is not None:
+        if unbalanced_type is None:
+            raise ValueError(
+                "unbalanced_type must be specified if unbalanced is not None"
+            )
+
+        unbalanced_type = unbalanced_type.lower()
+
+        if unbalanced_type not in ["kl", "l2"]:
+            raise ValueError(
+                f"Unknown unbalanced_type: {unbalanced_type}, expected 'kl' or 'l2'"
+            )
+
+        if isinstance(unbalanced, list):
+            unbalanced = list_to_array(unbalanced, nx=nx)
+
+        if hasattr(unbalanced, "ndim") and unbalanced.ndim > 0:
+            if unbalanced.ndim != 1 or unbalanced.shape[0] != B:
+                raise ValueError(
+                    f"If reg_marginals is not a scalar, it must have shape ({B},), got {unbalanced.shape}"
+                )
+
+        T1 = nx.sum(T, 2)
+        T2 = nx.sum(T, 1)
+        unbalanced_term = div_between_product_batch(
+            T1,
+            T2,
+            a,
+            b,
+            divergence=unbalanced_type,
+            nx=nx,
+        )
+        if log:
+            log_dict["value_unbalanced"] = unbalanced_term
+
+    if M is not None:
+        if alpha is None:
+            alpha = 0.5
+        if isinstance(alpha, list):
+            alpha = list_to_array(alpha, nx=nx)
+        if hasattr(alpha, "ndim") and alpha.ndim > 0:
+            if alpha.ndim != 1 or alpha.shape[0] != B:
+                raise ValueError(
+                    f"If alpha is not a scalar, it must have shape ({B},), got {alpha.shape}"
+                )
+        linear = loss_linear_batch(M, T, nx=nx)
+        if log:
+            log_dict["value_linear"] = linear
+
+    if M is not None and unbalanced is not None:
+        value = (1 - alpha) * linear + alpha * quadratic + unbalanced * unbalanced_term
+
+    elif M is not None and unbalanced is None:
+        value = (1 - alpha) * linear + alpha * quadratic
+
+    else:
+        value = quadratic + unbalanced * unbalanced_term
+
+    if log:
+        log_dict["value"] = value
+        return value, log_dict
+    return value
 
 
 def solve_gromov_batch(
-    C1,
-    C2,
+    Ca,
+    Cb,
     reg=1e-2,
     a=None,
     b=None,
@@ -328,9 +546,9 @@ def solve_gromov_batch(
 
     Parameters
     ----------
-    C1 : array-like, shape (B, n, n, d) or (B, n, n)
+    Ca : array-like, shape (B, n, n, d) or (B, n, n)
         Samples affinity matrices from source distribution
-    C2 : array-like, shape (B, n, n, d) or (B, n, n)
+    Cb : array-like, shape (B, n, n, d) or (B, n, n)
         Samples affinity matrices from target distribution
     a : array-like, shape (B, n), optional
         Marginal distribution of the source samples. If None, uniform distribution is used.
@@ -339,9 +557,9 @@ def solve_gromov_batch(
     loss : str, optional
         Type of loss function, can be 'sqeuclidean' or 'kl' or a QuadraticMetric instance.
     symmetric : bool, optional
-        Either C1 and C2 are to be assumed symmetric or not.
+        Either Ca and Cb are to be assumed symmetric or not.
         If let to its default None value, a symmetry test will be conducted.
-        Else if set to True (resp. False), C1 and C2 will be assumed symmetric (resp. asymmetric).
+        Else if set to True (resp. False), Ca and Cb will be assumed symmetric (resp. asymmetric).
     M : array-like, shape (dim_a, dim_b), optional
         Linear cost matrix for Fused Gromov-Wasserstein (default is None).
     alpha : float, optional
@@ -400,24 +618,24 @@ def solve_gromov_batch(
 
     # -------------- Setup -------------- #
 
-    nx = get_backend(a, b, M, C1, C2, T_init)
-    B, n, m = (C1.shape[0], C1.shape[1], C2.shape[1])
+    nx = get_backend(a, b, M, Ca, Cb, T_init)
+    B, n, m = (Ca.shape[0], Ca.shape[1], Cb.shape[1])
 
     if a is None:
-        a = nx.ones((B, n), type_as=C1) / n
+        a = nx.ones((B, n), type_as=Ca) / n
     if b is None:
-        b = nx.ones((B, m), type_as=C2) / m
+        b = nx.ones((B, m), type_as=Cb) / m
 
     if symmetric is None:
-        symmetric = nx.allclose(C1, transpose(C1, nx=nx), atol=1e-10) and nx.allclose(
-            C2, transpose(C2, nx=nx), atol=1e-10
+        symmetric = nx.allclose(Ca, transpose(Ca, nx=nx), atol=1e-10) and nx.allclose(
+            Cb, transpose(Cb, nx=nx), atol=1e-10
         )
 
     # -------------- Get cost_tensor (quadratic part) -------------- #
 
     if isinstance(loss, str):
         L = tensor_batch(
-            a, b, C1, C2, symmetric=symmetric, nx=nx, loss=loss, logits=logits
+            a, b, Ca, Cb, symmetric=symmetric, nx=nx, loss=loss, logits=logits
         )
     else:
         raise ValueError(f"Unknown loss function: {loss}")
@@ -425,7 +643,7 @@ def solve_gromov_batch(
     # -------------- Get cost_matrix (linear part) -------------- #
 
     if M is None and alpha is None:
-        M = nx.zeros((B, n, m), type_as=C1)
+        M = nx.zeros((B, n, m), type_as=Ca)
         alpha = 1.0  # Gromov problem
     elif M is not None and alpha is None:
         raise ValueError(
@@ -478,7 +696,7 @@ def solve_gromov_batch(
         T = nx.detach(T)
 
     value_linear = loss_linear_batch(M, T, nx=nx)
-    value_quadratic = loss_quadratic_batch(
+    value_quadratic = loss_quadratic_tensor_batch(
         L, T, nx=nx, recompute_const=True, symmetric=symmetric
     )  # Always recompute const for accurate value
     value = (1 - alpha) * value_linear + alpha * value_quadratic
@@ -501,11 +719,11 @@ def solve_gromov_batch(
 ### --------------------- Utility functions for quadratic OT --------------------- ###
 
 
-def compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=True):
+def compute_tensor_batch(f1, f2, h1, h2, a, b, Ca, Cb, symmetric=True):
     """
     Gromov-Wasserstein writes as:
-        GW(T,C1,C2) = sum_ijkl T_ik T_jl l(C1_ij, C2_kl) = < LxT, T >
-    Where L is a cost tensor L[i,j,k,l] = l(C1_ij, C2_kl).
+        GW(T,Ca,Cb) = sum_ijkl T_ik T_jl l(Ca_ij, Cb_kl) = < LxT, T >
+    Where L is a cost tensor L[i,j,k,l] = l(Ca_ij, Cb_kl).
 
     For loss function of form l(a,b) = f1(a) + f2(b) - < h1(a), h2(b) >
     The tensor product LxT can be computed fast using tensor_product [12].
@@ -517,17 +735,17 @@ def compute_tensor_batch(f1, f2, h1, h2, a, b, C1, C2, symmetric=True):
         International Conference on Machine Learning (ICML). 2016.
     """
 
-    fC1 = f1(C1)
-    fC2 = f2(C2)
+    fCa = f1(Ca)
+    fCb = f2(Cb)
     if not symmetric:
-        fC1 = 0.5 * (fC1 + transpose(fC1))
-        fC2 = 0.5 * (fC2 + transpose(fC2))
-    hC1 = h1(C1)
-    hC2 = h2(C2)
+        fCa = 0.5 * (fCa + transpose(fCa))
+        fCb = 0.5 * (fCb + transpose(fCb))
+    hCa = h1(Ca)
+    hCb = h2(Cb)
 
-    constC = compute_const_from_marginals(fC1, fC2, a, b)
+    constC = compute_const_from_marginals(fCa, fCb, a, b)
 
-    L = {"constC": constC, "hC1": hC1, "hC2": hC2, "fC1": fC1, "fC2": fC2}
+    L = {"constC": constC, "hCa": hCa, "hCb": hCb, "fCa": fCa, "fCb": fCb}
 
     return L
 
@@ -536,8 +754,8 @@ def tensor_product_batch(L, T, nx=None, recompute_const=False, symmetric=True):
     """
     Compute the tensor product LxT for the cost tensor L and transport plan T.
     The formula is:
-        LxT = const - hC1 T hC2^T
-        const = < fC1 a 1^T + 1 (fC2 b)^T
+        LxT = const - hCa T hCb^T
+        const = < fCa a 1^T + 1 (fCb b)^T
 
     References
     ----------
@@ -551,21 +769,21 @@ def tensor_product_batch(L, T, nx=None, recompute_const=False, symmetric=True):
 
     if recompute_const:
         const = compute_const_from_marginals(
-            L["fC1"], L["fC2"], nx.sum(T, axis=2), nx.sum(T, axis=1), nx=nx
+            L["fCa"], L["fCb"], nx.sum(T, axis=2), nx.sum(T, axis=1), nx=nx
         )
     else:
         const = L["constC"]
 
-    hC1 = L["hC1"]
-    hC2 = L["hC2"]
+    hCa = L["hCa"]
+    hCb = L["hCb"]
 
-    dot = nx.einsum("bijd,bjk->bikd", hC1, T)
-    dot = nx.einsum("bikd,bjkd->bijd", dot, hC2)
+    dot = nx.einsum("bijd,bjk->bikd", hCa, T)
+    dot = nx.einsum("bikd,bjkd->bijd", dot, hCb)
     dot = nx.sum(dot, axis=-1)
 
     if not symmetric:
-        dot_t = nx.einsum("bijd,bjk->bikd", transpose(hC1), T)
-        dot_t = nx.einsum("bikd,bjkd->bijd", dot_t, transpose(hC2))
+        dot_t = nx.einsum("bijd,bjk->bikd", transpose(hCa), T)
+        dot_t = nx.einsum("bikd,bjkd->bijd", dot_t, transpose(hCb))
         dot_t = nx.sum(dot_t, axis=-1)
         dot = (dot + dot_t) / 2  # Average the two symmetric terms
 
@@ -578,15 +796,15 @@ def transpose(C, nx=None):
     return nx.transpose(C, (0, 2, 1)) if C.ndim == 3 else nx.transpose(C, (0, 2, 1, 3))
 
 
-def compute_const_from_marginals(fC1, fC2, a, b, nx=None):
+def compute_const_from_marginals(fCa, fCb, a, b, nx=None):
     """
-    Compute the constant term f1(C1) a 1^T + 1 b^T f2(C2)^T
+    Compute the constant term f1(Ca) a 1^T + 1 b^T f2(Cb)^T
     """
     if nx is None:
-        nx = get_backend(fC1, fC2, a, b)
-    fC1a = bmv(fC1, a, nx=nx)
-    fC2b = bmv(fC2, b, nx=nx)
-    constC = fC1a[:, :, None] + fC2b[:, None, :]
+        nx = get_backend(fCa, fCb, a, b)
+    fCaa = bmv(fCa, a, nx=nx)
+    fCbb = bmv(fCb, b, nx=nx)
+    constC = fCaa[:, :, None] + fCbb[:, None, :]
     return constC
 
 
@@ -595,7 +813,7 @@ def detach_cost_tensor(L, nx=None):
     Detach the cost tensor L to avoid gradients.
     """
     if nx is None:
-        nx = get_backend(L["constC"], L["hC1"], L["hC2"])
+        nx = get_backend(L["constC"], L["hCa"], L["hCb"])
     L_detached = {}
     for key, value in L.items():
         L_detached[key] = nx.detach(value)

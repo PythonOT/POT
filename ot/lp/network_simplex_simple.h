@@ -27,18 +27,10 @@
 
 #pragma once
 #undef DEBUG_LVL
-#define DEBUG_LVL 0
-
-#if DEBUG_LVL>0
-#include <iomanip>
-#endif
-
 #undef EPSILON
 #undef _EPSILON
-#undef MAX_DEBUG_ITER
 #define EPSILON 2.2204460492503131e-15
 #define _EPSILON 1e-8
-#define MAX_DEBUG_ITER 100000
 
 
 /// \ingroup min_cost_flow_algs
@@ -54,12 +46,16 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdio>
+#include <queue>
+#include <stack>
+#include <cstdint>
 #ifdef HASHMAP
 #include <hash_map>
 #else
 #include <map>
 #endif
 #include <cmath>
+#include <cstring>
 //#include "core.h"
 //#include "lmath.h"
 
@@ -233,12 +229,64 @@ namespace lemon {
         /// mixed order in the internal data structure.
         /// In special cases, it could lead to better overall performance,
         /// but it is usually slower. Therefore it is disabled by default.
-        NetworkSimplexSimple(const GR& graph, bool arc_mixing, int nbnodes, ArcsType nb_arcs, uint64_t maxiters) :
+        enum class CostMode {
+            StoredArray,
+            DenseMatrix,
+            LazyGeometry
+        };
+
+        enum class CostStorageMode {
+            AllArcCosts,
+            ArtificialArcCosts
+        };
+
+        enum class FlowStorageMode {
+            Dense,
+            SparseArcFlows
+        };
+
+        enum class EndpointStorageMode {
+            Dense,
+            ArcEndpoints
+        };
+
+        enum class StateStorageMode {
+            Dense,
+            PackedArcStates
+        };
+
+        struct SimplexOptions {
+            bool arc_mixing;
+            CostStorageMode cost_storage_mode;
+            FlowStorageMode flow_storage_mode;
+            EndpointStorageMode endpoint_storage_mode;
+            StateStorageMode state_storage_mode;
+
+            explicit SimplexOptions(bool arc_mixing_ = false)
+                : arc_mixing(arc_mixing_),
+                  cost_storage_mode(CostStorageMode::AllArcCosts),
+                  flow_storage_mode(FlowStorageMode::Dense),
+                  endpoint_storage_mode(EndpointStorageMode::Dense),
+                  state_storage_mode(StateStorageMode::Dense) {}
+        };
+
+        NetworkSimplexSimple(
+            const GR& graph, SimplexOptions options, int nbnodes,
+            ArcsType nb_arcs, uint64_t maxiters) :
         _graph(graph),  //_arc_id(graph),
-        _arc_mixing(arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
+        _arc_mixing(options.arc_mixing), _init_nb_nodes(nbnodes), _init_nb_arcs(nb_arcs),
         MAX(std::numeric_limits<Value>::max()),
         INF(std::numeric_limits<Value>::has_infinity ?
-            std::numeric_limits<Value>::infinity() : MAX)
+            std::numeric_limits<Value>::infinity() : MAX),
+        _cost_mode(CostMode::StoredArray),
+        _cost_storage_mode(options.cost_storage_mode),
+        _flow_storage_mode(options.flow_storage_mode),
+        _endpoint_storage_mode(options.endpoint_storage_mode),
+        _state_storage_mode(options.state_storage_mode),
+        _coords_a(nullptr), _coords_b(nullptr), _dim(0), _metric(0), _n1(0), _n2(0),
+        _D_ptr(nullptr), _D_n2(0),
+        _warmstart_provided(false), _warmstart_tree_built(false),
+        _max_cost(0), _has_max_cost(false)
         {
             // Reset data structures
             reset();
@@ -311,6 +359,52 @@ namespace lemon {
             STATE_LOWER =  1
         };
 
+        class PackedStateVector {
+        public:
+            void resize(ArcsType n) {
+                _size = n;
+                _data.assign((static_cast<size_t>(n) + 3) / 4, 0);
+            }
+
+            void clear() {
+                _size = 0;
+                _data.clear();
+            }
+
+            void fill(ArcsType count, signed char state) {
+                for (ArcsType i = 0; i < count; ++i) {
+                    set(i, state);
+                }
+            }
+
+            signed char get(ArcsType index) const {
+                const uint8_t bits = (_data[static_cast<size_t>(index) / 4] >>
+                    (2 * (static_cast<size_t>(index) % 4))) & 0x03;
+                if (bits == 0) return STATE_LOWER;
+                if (bits == 1) return STATE_TREE;
+                return STATE_UPPER;
+            }
+
+            void set(ArcsType index, signed char state) {
+                const size_t byte_index = static_cast<size_t>(index) / 4;
+                const size_t shift = 2 * (static_cast<size_t>(index) % 4);
+                _data[byte_index] = static_cast<uint8_t>(
+                    (_data[byte_index] & ~(uint8_t(0x03) << shift)) |
+                    (encode(state) << shift)
+                );
+            }
+
+        private:
+            static uint8_t encode(signed char state) {
+                if (state == STATE_LOWER) return 0;
+                if (state == STATE_TREE) return 1;
+                return 2;
+            }
+
+            ArcsType _size;
+            std::vector<uint8_t> _data;
+        };
+
         typedef std::vector<signed char> StateVector;
         // Note: vector<signed char> is used instead of vector<ArcState> for
         // efficiency reasons
@@ -320,6 +414,8 @@ namespace lemon {
         // Data related to the underlying digraph
         const GR &_graph;
         int _node_num;
+        int _n1;  // Number of source nodes (for lazy cost computation)
+        int _n2;  // Number of target nodes (for lazy cost computation)
         ArcsType _arc_num;
         ArcsType _all_arc_num;
         ArcsType _search_arc_num;
@@ -327,23 +423,50 @@ namespace lemon {
         // Parameters of the problem
         SupplyType _stype;
         Value _sum_supply;
+        Cost _max_cost;
+        bool _has_max_cost;
 
         inline int _node_id(int n) const {return _node_num-n-1;} ;
 
 // 	    IntArcMap _arc_id;
         IntVector _source;  // keep nodes as integers
         IntVector _target;
+        IntVector _artificial_source;
+        IntVector _artificial_target;
         bool _arc_mixing;
     public:
         // Node and arc data
         CostVector _cost;
         ValueVector _supply;
         ValueVector _flow;
-        //SparseValueVector<Value> _flow;
+        ValueVector _artificial_flow;
         CostVector _pi;
 
+        // Cost access support
+        CostMode _cost_mode;
+        CostStorageMode _cost_storage_mode;
+        FlowStorageMode _flow_storage_mode;
+        EndpointStorageMode _endpoint_storage_mode;
+        StateStorageMode _state_storage_mode;
+        const double* _coords_a;
+        const double* _coords_b;
+        int _dim;
+        int _metric; // 0: sqeuclidean, 1: euclidean, 2: cityblock
+
+        // Dense cost matrix pointer (lazy access, no copy)
+        const double* _D_ptr;  // pointer to row-major cost matrix
+        int _D_n2;             // number of columns in D (original n2)
 
     private:
+        // Sparse real-flow mode is used by lazy full-bipartite solves:
+        // real arcs use _real_flow, artificial arcs use _artificial_flow.
+        // Dense mode keeps the original all-arc _flow vector.
+        std::map<ArcsType, Value> _real_flow;
+
+        // Warmstart data
+        bool _warmstart_provided;  // Flag indicating warmstart is available
+        bool _warmstart_tree_built;  // Flag: tree was built by warmstartInit()
+
         // Data for storing the spanning tree structure
         IntVector _parent;
         ArcVector _pred;
@@ -354,6 +477,7 @@ namespace lemon {
         IntVector _dirty_revs;
         BoolVector _forward;
         StateVector _state;
+        PackedStateVector _packed_state;
         ArcsType _root;
 
         // Temporary data used in the current pivot iteration
@@ -405,6 +529,199 @@ namespace lemon {
                 return n;
         }
 
+        inline bool usesStoredCost() const {
+            return _cost_mode == CostMode::StoredArray;
+        }
+
+        inline bool usesDenseCost() const {
+            return _cost_mode == CostMode::DenseMatrix;
+        }
+
+        inline bool usesLazyCost() const {
+            return _cost_mode == CostMode::LazyGeometry;
+        }
+
+        inline bool storesArtificialArcCosts() const {
+            return _cost_storage_mode == CostStorageMode::ArtificialArcCosts;
+        }
+
+        inline bool storesSparseArcFlows() const {
+            return _flow_storage_mode == FlowStorageMode::SparseArcFlows;
+        }
+
+        inline bool usesArcEndpoints() const {
+            return _endpoint_storage_mode == EndpointStorageMode::ArcEndpoints;
+        }
+
+        inline bool usesPackedArcStates() const {
+            return _state_storage_mode == StateStorageMode::PackedArcStates;
+        }
+
+        Cost computeLazyCostUpperBound() const {
+            Cost squared_range_sum = 0;
+            Cost l1_range_sum = 0;
+
+            for (int d = 0; d < _dim; ++d) {
+                Cost min_value = _coords_a[d];
+                Cost max_value = _coords_a[d];
+
+                for (int i = 0; i < _n1; ++i) {
+                    const Cost value = _coords_a[i * _dim + d];
+                    if (value < min_value) min_value = value;
+                    if (value > max_value) max_value = value;
+                }
+                for (int j = 0; j < _n2; ++j) {
+                    const Cost value = _coords_b[j * _dim + d];
+                    if (value < min_value) min_value = value;
+                    if (value > max_value) max_value = value;
+                }
+
+                const Cost range = max_value - min_value;
+                squared_range_sum += range * range;
+                l1_range_sum += range;
+            }
+
+            if (_metric == 0) return squared_range_sum;
+            if (_metric == 1) return std::sqrt(squared_range_sum);
+            return l1_range_sum;
+        }
+
+        Cost maxRealArcCost() {
+            if (_has_max_cost) {
+                return _max_cost;
+            }
+
+            Cost max_cost = 0;
+            for (ArcsType i = 0; i != _arc_num; ++i) {
+                Cost cost = getCostForArc(i);
+                if (i == 0 || cost > max_cost) {
+                    max_cost = cost;
+                }
+            }
+            _max_cost = max_cost;
+            _has_max_cost = true;
+            return max_cost;
+        }
+
+        inline int arcSource(ArcsType arc_id) const {
+            if (usesArcEndpoints()) {
+                if (arc_id < _arc_num) {
+                    const ArcsType graph_arc = _arc_num - arc_id - 1;
+                    return _node_id(static_cast<int>(graph_arc / _n2));
+                }
+                return _artificial_source[arc_id - _arc_num];
+            }
+            return _source[arc_id];
+        }
+
+        inline int arcTarget(ArcsType arc_id) const {
+            if (usesArcEndpoints()) {
+                if (arc_id < _arc_num) {
+                    const ArcsType graph_arc = _arc_num - arc_id - 1;
+                    return _node_id(static_cast<int>(graph_arc % _n2) + _n1);
+                }
+                return _artificial_target[arc_id - _arc_num];
+            }
+            return _target[arc_id];
+        }
+
+        inline void setArcEndpoints(ArcsType arc_id, int source, int target) {
+            if (usesArcEndpoints()) {
+                if (arc_id >= _arc_num) {
+                    _artificial_source[arc_id - _arc_num] = source;
+                    _artificial_target[arc_id - _arc_num] = target;
+                }
+                return;
+            }
+            _source[arc_id] = source;
+            _target[arc_id] = target;
+        }
+
+        inline void setArcCost(ArcsType arc_id, Cost cost) {
+            if (storesArtificialArcCosts()) {
+                if (arc_id >= _arc_num) {
+                    _cost[arc_id - _arc_num] = cost;
+                }
+            } else {
+                _cost[arc_id] = cost;
+            }
+            if (arc_id < _arc_num && (!_has_max_cost || cost > _max_cost)) {
+                _max_cost = cost;
+                _has_max_cost = true;
+            }
+        }
+
+        inline signed char arcState(ArcsType arc_id) const {
+            if (usesPackedArcStates()) {
+                return _packed_state.get(arc_id);
+            }
+            return _state[arc_id];
+        }
+
+        inline void setArcState(ArcsType arc_id, signed char state) {
+            if (usesPackedArcStates()) {
+                _packed_state.set(arc_id, state);
+                return;
+            }
+            _state[arc_id] = state;
+        }
+
+        inline void flipArcState(ArcsType arc_id) {
+            setArcState(arc_id, -arcState(arc_id));
+        }
+
+        inline void fillArcStates(ArcsType count, signed char state) {
+            if (usesPackedArcStates()) {
+                _packed_state.fill(count, state);
+            } else {
+                std::fill_n(_state.begin(), count, state);
+            }
+        }
+
+        inline ArcsType flowArcCount() const {
+            return storesSparseArcFlows() ? _all_arc_num : static_cast<ArcsType>(_flow.size());
+        }
+
+        inline Value arcFlow(ArcsType arc_id) const {
+            if (storesSparseArcFlows()) {
+                if (arc_id < _arc_num) {
+                    typename std::map<ArcsType, Value>::const_iterator it =
+                        _real_flow.find(arc_id);
+                    return it == _real_flow.end() ? Value(0) : it->second;
+                }
+                return _artificial_flow[arc_id - _arc_num];
+            }
+            return _flow[arc_id];
+        }
+
+        inline void setArcFlow(ArcsType arc_id, Value flow) {
+            if (storesSparseArcFlows()) {
+                if (arc_id < _arc_num) {
+                    if (flow == 0) {
+                        _real_flow.erase(arc_id);
+                    } else {
+                        _real_flow[arc_id] = flow;
+                    }
+                } else {
+                    _artificial_flow[arc_id - _arc_num] = flow;
+                }
+                return;
+            }
+            _flow[arc_id] = flow;
+        }
+
+        inline void addArcFlow(ArcsType arc_id, Value delta) {
+            if (storesSparseArcFlows()) {
+                if (arc_id < _arc_num) {
+                    setArcFlow(arc_id, arcFlow(arc_id) + delta);
+                } else {
+                    _artificial_flow[arc_id - _arc_num] += delta;
+                }
+                return;
+            }
+            _flow[arc_id] += delta;
+        }
+
         // finally unused because too slow
         inline ArcsType getSource(const ArcsType arc) const
         {
@@ -441,10 +758,6 @@ namespace lemon {
         private:
 
             // References to the NetworkSimplexSimple class
-            const IntVector  &_source;
-            const IntVector  &_target;
-            const CostVector &_cost;
-            const StateVector &_state;
             const CostVector &_pi;
             ArcsType &_in_arc;
             ArcsType _search_arc_num;
@@ -458,8 +771,7 @@ namespace lemon {
 
             // Constructor
             BlockSearchPivotRule(NetworkSimplexSimple &ns) :
-            _source(ns._source), _target(ns._target),
-            _cost(ns._cost), _state(ns._state), _pi(ns._pi),
+            _pi(ns._pi),
             _in_arc(ns.in_arc), _search_arc_num(ns._search_arc_num),
             _next_arc(0),_ns(ns)
             {
@@ -470,6 +782,11 @@ namespace lemon {
                 _block_size = std::max(ArcsType(BLOCK_SIZE_FACTOR * std::sqrt(double(_search_arc_num))), MIN_BLOCK_SIZE);
             }
 
+            // Get cost for an arc (either from pre-computed array or compute lazily)
+            inline Cost getCost(ArcsType e) const {
+                return _ns.getCostForArc(e);
+            }
+
             // Find next entering arc
             bool findEnteringArc() {
                 Cost c, min = 0;
@@ -477,33 +794,33 @@ namespace lemon {
                 ArcsType cnt = _block_size;
                 double a;
                     for (e = _next_arc; e != _search_arc_num; ++e) {
-                        c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _ns.arcState(e) * (getCost(e) + _pi[_ns.arcSource(e)] - _pi[_ns.arcTarget(e)]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
-                            a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                            a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                            a=fabs(_pi[_ns.arcSource(_in_arc)])>fabs(_pi[_ns.arcTarget(_in_arc)]) ? fabs(_pi[_ns.arcSource(_in_arc)]):fabs(_pi[_ns.arcTarget(_in_arc)]);
+                            a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
                     for (e = 0; e != _next_arc; ++e) {
-                        c = _state[e] * (_cost[e] + _pi[_source[e]] - _pi[_target[e]]);
+                        c = _ns.arcState(e) * (getCost(e) + _pi[_ns.arcSource(e)] - _pi[_ns.arcTarget(e)]);
                         if (c < min) {
                             min = c;
                             _in_arc = e;
                         }
                         if (--cnt == 0) {
-                            a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                            a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                            a=fabs(_pi[_ns.arcSource(_in_arc)])>fabs(_pi[_ns.arcTarget(_in_arc)]) ? fabs(_pi[_ns.arcSource(_in_arc)]):fabs(_pi[_ns.arcTarget(_in_arc)]);
+                            a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                             if (min <  -EPSILON*a) goto search_end;
                             cnt = _block_size;
                         }
                     }
-                    a=fabs(_pi[_source[_in_arc]])>fabs(_pi[_target[_in_arc]]) ? fabs(_pi[_source[_in_arc]]):fabs(_pi[_target[_in_arc]]);
-                    a=a>fabs(_cost[_in_arc])?a:fabs(_cost[_in_arc]);
+                    a=fabs(_pi[_ns.arcSource(_in_arc)])>fabs(_pi[_ns.arcTarget(_in_arc)]) ? fabs(_pi[_ns.arcSource(_in_arc)]):fabs(_pi[_ns.arcTarget(_in_arc)]);
+                    a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                     if (min >=  -EPSILON*a) return false;
 
             search_end:
@@ -517,7 +834,12 @@ namespace lemon {
 
     public:
 
-
+        // Public accessors for efficient result extraction
+        ArcsType arcNum() const { return _arc_num; }
+        int nodeNum() const { return _node_num; }
+        int n1() const { return _n1; }
+        int n2() const { return _n2; }
+        Cost pi(int internal_node) const { return _pi[internal_node]; }
 
         int _init_nb_nodes;
         ArcsType _init_nb_arcs;
@@ -544,7 +866,7 @@ namespace lemon {
         NetworkSimplexSimple& costMap(const CostMap& map) {
             Arc a; _graph.first(a);
             for (; a != INVALID; _graph.next(a)) {
-                _cost[getArcID(a)] = map[a];
+                setArcCost(getArcID(a), map[a]);
             }
             return *this;
         }
@@ -561,10 +883,133 @@ namespace lemon {
         /// \return <tt>(*this)</tt>
         template<typename Value>
         NetworkSimplexSimple& setCost(const Arc& arc, const Value cost) {
-            _cost[getArcID(arc)] = cost;
+            setArcCost(getArcID(arc), cost);
             return *this;
         }
 
+        /// \brief Enable lazy cost computation from coordinates.
+        ///
+        /// This function enables lazy cost computation where distances are
+        /// computed on-the-fly from point coordinates instead of using a
+        /// pre-computed cost matrix.
+        ///
+        /// \param coords_a Pointer to source coordinates (n1 x dim array)
+        /// \param coords_b Pointer to target coordinates (n2 x dim array)
+        /// \param dim Dimension of the coordinates
+        /// \param metric Distance metric: 0=sqeuclidean, 1=euclidean, 2=cityblock
+        ///
+        /// \return <tt>(*this)</tt>
+        NetworkSimplexSimple& setLazyCost(const double* coords_a, const double* coords_b, 
+                                           int dim, int metric, int n1, int n2) {
+            _cost_mode = CostMode::LazyGeometry;
+            _coords_a = coords_a;
+            _coords_b = coords_b;
+            _dim = dim;
+            _metric = metric;
+            _n1 = n1;
+            _n2 = n2;
+            _max_cost = computeLazyCostUpperBound();
+            _has_max_cost = true;
+            return *this;
+        }
+
+        /// \brief Set a dense cost matrix pointer for lazy access.
+        ///
+        /// This function stores a pointer to the cost matrix D (row-major)
+        /// so that costs can be read directly without copying.
+        /// Requires arc_mixing=false and n==n1, m==n2 (no zero-mass filtering).
+        ///
+        /// \param D Pointer to the n1 x n2 cost matrix (row-major)
+        /// \param n2 Number of columns in D
+        ///
+        /// \return <tt>(*this)</tt>
+        NetworkSimplexSimple& setDenseCostMatrix(const double* D, int n2) {
+            _cost_mode = CostMode::DenseMatrix;
+            _D_ptr = D;
+            _D_n2 = n2;
+            // Precompute max cost once for reuse in init()
+            _has_max_cost = true;
+            _max_cost = D[0];
+            for (ArcsType i = 1; i != _arc_num; ++i) {
+                if (D[i] > _max_cost) _max_cost = D[i];
+            }
+            return *this;
+        }
+
+        /// \brief Compute cost lazily from coordinates.
+        ///
+        /// Computes the distance between source node i and target node j
+        /// based on the specified metric.
+        ///
+        /// \param i Source node index
+        /// \param j Target node index (adjusted by subtracting n1)
+        ///
+        /// \return Cost (distance) between the two points
+        inline Cost computeLazyCost(int i, int j_adjusted) const {
+            const double* xa = _coords_a + i * _dim;
+            const double* xb = _coords_b + j_adjusted * _dim;
+            Cost cost = 0;
+            
+            if (_metric == 0) {  // sqeuclidean
+                for (int d = 0; d < _dim; ++d) {
+                    Cost diff = xa[d] - xb[d];
+                    cost += diff * diff;
+                }
+                return cost;
+            } else if (_metric == 1) {  // euclidean
+                for (int d = 0; d < _dim; ++d) {
+                    Cost diff = xa[d] - xb[d];
+                    cost += diff * diff;
+                }
+                return std::sqrt(cost);
+            } else {  // cityblock (L1)
+                for (int d = 0; d < _dim; ++d) {
+                    cost += std::abs(xa[d] - xb[d]);
+                }
+                return cost;
+            }
+        }
+
+
+        /// \brief Get cost for an arc (either from array or compute lazily).
+        ///
+        /// This is the main cost accessor that works from anywhere in the class.
+        /// In lazy mode, real arc costs are computed on-the-fly from coordinates.
+        /// Artificial root arcs still use stored costs because simplex
+        /// initialization assigns them either 0 or ART_COST.
+        /// In normal mode, returns pre-computed cost from array.
+        ///
+        /// \param arc_id The arc ID
+        /// \return Cost of the arc
+        inline Cost getCostForArc(ArcsType arc_id) const {
+            if (usesDenseCost()) {
+                // Dense matrix mode: read directly from D pointer
+                // For artificial arcs (>= _arc_num), read from _cost array
+                if (arc_id >= _arc_num) {
+                    return storesArtificialArcCosts() ?
+                        _cost[arc_id - _arc_num] : _cost[arc_id];
+                }
+                // Without arc mixing: internal arc_id maps to graph arc = _arc_num - arc_id - 1
+                // graph arc g encodes source i = g / m, target j = g % m
+                // cost = D[i * _D_n2 + j] = D[g] (since m == _D_n2)
+                return _D_ptr[_arc_num - arc_id - 1];
+            } else if (usesStoredCost()) {
+                return storesArtificialArcCosts() ?
+                    _cost[arc_id - _arc_num] : _cost[arc_id];
+            } else {
+                // Artificial root arcs are not coordinate pairs, so even in
+                // lazy mode their costs are stored explicitly.
+                if (arc_id >= _arc_num) {
+                    return storesArtificialArcCosts() ?
+                        _cost[arc_id - _arc_num] : _cost[arc_id];
+                }
+                // Real arc: compute from coordinates.
+                // Convert internal node IDs back to graph node IDs, then to coordinate indices
+                int i = _node_num - arcSource(arc_id) - 1;  // graph source in [0, _n1-1]
+                int j = _node_num - arcTarget(arc_id) - 1 - _n1;  // graph target in [_n1, _node_num-1] -> [0, _n2-1]
+                return computeLazyCost(i, j);
+            }
+        }
 
         /// \brief Set the supply values of the nodes.
         ///
@@ -648,6 +1093,32 @@ namespace lemon {
             return *this;
         }
 
+        /// \brief Set initial dual potentials for warmstart.
+        ///
+        /// This function sets warmstart dual potentials that will be used
+        /// to guide the initial pivots in the network simplex algorithm.
+        /// The potentials should come from a previous solution (e.g., Sinkhorn or EMD).
+        ///
+        /// \param alpha Source node potentials (size n), where alpha[i] = -pi[source_i]
+        /// \param beta Target node potentials (size m), where beta[j] = +pi[target_j]
+        /// \param n Number of source nodes (compressed, non-zero supply)
+        /// \param m Number of target nodes (compressed, non-zero supply)
+        ///
+        void setWarmstartPotentials(const Cost* alpha, const Cost* beta, int n, int m) {
+            // Graph source nodes: 0..n-1, stored at internal index _node_id(i)
+            // Graph target nodes: n..n+m-1, stored at internal index _node_id(n+j)
+            // _node_id(k) = _node_num - k - 1 (reversal mapping)
+            // Note: warmstartInit() will refine these by recomputing from the tree structure.
+
+            for (int i = 0; i < n; ++i) {
+                _pi[_node_id(i)] = -alpha[i];  // pi[source] = -alpha
+            }
+            for (int j = 0; j < m; ++j) {
+                _pi[_node_id(n + j)] = beta[j];  // pi[target] = +beta
+            }
+            _warmstart_provided = true;
+        }
+
         /// @}
 
         /// \name Execution Control
@@ -689,14 +1160,15 @@ namespace lemon {
         /// \see ProblemType, PivotRule
         /// \see resetParams(), reset()
         ProblemType run() {
-#if DEBUG_LVL>0
-            std::cout << "OPTIMAL = " << OPTIMAL << "\nINFEASIBLE = " << INFEASIBLE << "\nUNBOUNDED = " << UNBOUNDED << "\nMAX_ITER_REACHED" << MAX_ITER_REACHED << "\n" ;
-#endif
 
-            if (!init()) return INFEASIBLE;
-#if DEBUG_LVL>0
-            std::cout << "Init done, starting iterations\n";
-#endif
+            if (_warmstart_provided) {
+                if (!warmstartInit()) return INFEASIBLE;
+                _warmstart_tree_built = true;
+            } else {
+                if (!init()) return INFEASIBLE;
+                _warmstart_tree_built = false;
+            }
+
             return start();
         }
 
@@ -737,13 +1209,17 @@ namespace lemon {
         ///
         /// \see reset(), run()
         NetworkSimplexSimple& resetParams() {
-            for (int i = 0; i != _node_num; ++i) {
-                _supply[i] = 0;
-            }
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                _cost[i] = 1;
+            // Fast fills over contiguous storage
+            std::fill_n(_supply.begin(), _node_num, Value(0));
+            // In dense/lazy modes, real-arc costs are not read from _cost.
+            // Keep the default fill for the regular explicit-cost mode only.
+            if (usesStoredCost() && !storesArtificialArcCosts()) {
+                std::fill_n(_cost.begin(), _arc_num, Cost(1));
             }
             _stype = GEQ;
+            _has_max_cost = false;
+            _warmstart_provided = false;
+            _warmstart_tree_built = false;  // Reset warmstart flag
             return *this;
         }
 
@@ -780,13 +1256,35 @@ namespace lemon {
             _arc_num = _init_nb_arcs;
             int all_node_num = _node_num + 1;
             ArcsType max_arc_num = _arc_num + 2 * _node_num;
+            _all_arc_num = max_arc_num;
 
-            _source.resize(max_arc_num);
-            _target.resize(max_arc_num);
+            if (usesArcEndpoints()) {
+                _source.clear();
+                _target.clear();
+                _artificial_source.resize(2 * _node_num);
+                _artificial_target.resize(2 * _node_num);
+            } else {
+                _source.resize(max_arc_num);
+                _target.resize(max_arc_num);
+                _artificial_source.clear();
+                _artificial_target.clear();
+            }
 
-            _cost.resize(max_arc_num);
+            if (storesArtificialArcCosts()) {
+                _cost.resize(2 * _node_num);
+            } else {
+                _cost.resize(max_arc_num);
+            }
             _supply.resize(all_node_num);
-            _flow.resize(max_arc_num);
+            if (storesSparseArcFlows()) {
+                _flow.clear();
+                _artificial_flow.assign(2 * _node_num, Value(0));
+                _real_flow.clear();
+            } else {
+                _flow.resize(max_arc_num);
+                _artificial_flow.clear();
+                _real_flow.clear();
+            }
             _pi.resize(all_node_num);
 
             _parent.resize(all_node_num);
@@ -796,11 +1294,18 @@ namespace lemon {
             _rev_thread.resize(all_node_num);
             _succ_num.resize(all_node_num);
             _last_succ.resize(all_node_num);
-            _state.resize(max_arc_num);
+            if (usesPackedArcStates()) {
+                _state.clear();
+                _packed_state.resize(max_arc_num);
+            } else {
+                _state.resize(max_arc_num);
+                _packed_state.clear();
+            }
 
 
-            //_arc_mixing=false;
-            if (_arc_mixing) {
+            if (usesArcEndpoints()) {
+                // Real full-bipartite arc endpoints are computed from arc ids.
+            } else if (_arc_mixing) {
                 // Store the arcs in a mixed order
                 const ArcsType k = std::max(ArcsType(std::sqrt(double(_arc_num))), ArcsType(10));
                 mixingCoeff = k;
@@ -811,18 +1316,24 @@ namespace lemon {
                 ArcsType i = 0, j = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a)) {
-                    _source[i] = _node_id(_graph.source(a));
-                    _target[i] = _node_id(_graph.target(a));
+                    setArcEndpoints(
+                        i,
+                        _node_id(_graph.source(a)),
+                        _node_id(_graph.target(a))
+                    );
                     //_arc_id[a] = i;
                     if ((i += k) >= _arc_num) i = ++j;
                 }
             } else {
-                // Store the arcs in the original order
+                // Store the arcs in the original order without extra permutation work
                 ArcsType i = 0;
                 Arc a; _graph.first(a);
                 for (; a != INVALID; _graph.next(a), ++i) {
-                    _source[i] = _node_id(_graph.source(a));
-                    _target[i] = _node_id(_graph.target(a));
+                    setArcEndpoints(
+                        i,
+                        _node_id(_graph.source(a)),
+                        _node_id(_graph.target(a))
+                    );
                     //_arc_id[a] = i;
                 }
             }
@@ -879,8 +1390,11 @@ namespace lemon {
              c += Number(it->second) * Number(_cost[it->first]);
              return c;*/
 
-            for (ArcsType i=0; i<_flow.size(); i++)
-                c += _flow[i] * Number(_cost[i]);
+            for (ArcsType i=0; i<flowArcCount(); i++) {
+                if (arcFlow(i) != 0) {
+                    c += arcFlow(i) * Number(getCostForArc(i));
+                }
+            }
             return c;
 
         }
@@ -897,7 +1411,7 @@ namespace lemon {
         ///
         /// \pre \ref run() must be called before using this function.
         Value flow(const Arc& a) const {
-            return _flow[getArcID(a)];
+            return arcFlow(getArcID(a));
         }
 
         /// \brief Return the flow map (the primal solution).
@@ -911,7 +1425,7 @@ namespace lemon {
         void flowMap(FlowMap &map) const {
             Arc a; _graph.first(a);
             for (; a != INVALID; _graph.next(a)) {
-                map.set(a, _flow[getArcID(a)]);
+                map.set(a, arcFlow(getArcID(a)));
             }
         }
 
@@ -945,6 +1459,344 @@ namespace lemon {
 
     private:
 
+        // WARMSTART: Build spanning tree from dual potentials
+        bool warmstartInit() {
+            if (_node_num == 0) return false;
+
+            // Check supply balance
+            _sum_supply = 0;
+            for (int i = 0; i != _node_num; ++i) {
+                _sum_supply += _supply[i];
+            }
+            if (fabs(_sum_supply) > _EPSILON) return false;
+            _sum_supply = 0;
+            int tree_edges = 0;
+            std::vector<ArcsType> tree_arcs;
+            tree_arcs.reserve(_node_num);
+            Cost ART_COST = 0;
+
+            {
+                ArcsType K = std::min((ArcsType)(4 * _node_num), _arc_num);
+
+                // Max-heap: (|reduced_cost|, arc_index).  We keep the K smallest.
+
+                typedef std::pair<Cost, ArcsType> HeapEntry;
+                std::priority_queue<HeapEntry> maxheap;
+
+                for (ArcsType e = 0; e < _arc_num; ++e) {
+                    setArcState(e, STATE_LOWER);
+                    Cost c = getCostForArc(e);
+                    if (c > ART_COST) ART_COST = c;
+                    Cost rc = fabs(c + _pi[arcSource(e)] - _pi[arcTarget(e)]);
+                    if ((ArcsType)maxheap.size() < K) {
+                        maxheap.push({rc, e});
+                    } else if (rc < maxheap.top().first) {
+                        maxheap.pop();
+                        maxheap.push({rc, e});
+                    }
+                }
+                if (std::numeric_limits<Cost>::is_exact) {
+                    ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
+                } else {
+                    ART_COST = (ART_COST + 1) * _node_num;
+                }
+
+                std::vector<HeapEntry> candidates;
+                candidates.reserve(maxheap.size());
+                while (!maxheap.empty()) {
+                    candidates.push_back(maxheap.top());
+                    maxheap.pop();
+                }
+                
+                std::sort(candidates.begin(), candidates.end(),
+                    [](const HeapEntry& a, const HeapEntry& b) {
+                        return a.first < b.first;
+                    });
+
+                // Kruskal's MST with union-find
+                std::vector<int> uf_parent(_node_num);
+                std::vector<int> uf_rank(_node_num, 0);
+                for (int i = 0; i < _node_num; ++i) uf_parent[i] = i;
+
+                for (ArcsType idx = 0; idx < (ArcsType)candidates.size() && tree_edges < _node_num - 1; ++idx) {
+                    ArcsType e = candidates[idx].second;
+                    int s = arcSource(e);
+                    int t = arcTarget(e);
+                    int rs = s, rt = t;
+                    while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
+                    while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
+                    if (rs == rt) continue;
+                    if (uf_rank[rs] < uf_rank[rt]) std::swap(rs, rt);
+                    uf_parent[rt] = rs;
+                    if (uf_rank[rs] == uf_rank[rt]) uf_rank[rs]++;
+                    tree_arcs.push_back(e);
+                    tree_edges++;
+                }
+
+                // Fallback: if K best weren't enough to span, scan remaining arcs
+                if (tree_edges < _node_num - 1) {
+                    std::vector<bool> considered(_arc_num, false);
+                    for (auto& c : candidates) considered[c.second] = true;
+
+                    for (ArcsType e = 0; e < _arc_num && tree_edges < _node_num - 1; ++e) {
+                        if (considered[e]) continue;
+                        int s = arcSource(e);
+                        int t = arcTarget(e);
+                        int rs = s, rt = t;
+                        while (uf_parent[rs] != rs) { uf_parent[rs] = uf_parent[uf_parent[rs]]; rs = uf_parent[rs]; }
+                        while (uf_parent[rt] != rt) { uf_parent[rt] = uf_parent[uf_parent[rt]]; rt = uf_parent[rt]; }
+                        if (rs == rt) continue;
+                        if (uf_rank[rs] < uf_rank[rt]) std::swap(rs, rt);
+                        uf_parent[rt] = rs;
+                        if (uf_rank[rs] == uf_rank[rt]) uf_rank[rs]++;
+                        tree_arcs.push_back(e);
+                        tree_edges++;
+                    }
+                }
+            }
+
+            std::vector<int> tree_adj_deg(_node_num, 0);
+            for (int k = 0; k < tree_edges; ++k) {
+                ArcsType e = tree_arcs[k];
+                tree_adj_deg[arcSource(e)]++;
+                tree_adj_deg[arcTarget(e)]++;
+            }
+            std::vector<int> tree_adj_start(_node_num + 1, 0);
+            for (int i = 0; i < _node_num; ++i) {
+                tree_adj_start[i + 1] = tree_adj_start[i] + tree_adj_deg[i];
+            }
+            int total_adj = tree_adj_start[_node_num];
+            std::vector<int> tree_adj_node(total_adj);
+            std::vector<ArcsType> tree_adj_arc(total_adj);
+            std::vector<int> tree_adj_pos(_node_num, 0);
+            for (int k = 0; k < tree_edges; ++k) {
+                ArcsType e = tree_arcs[k];
+                int s = arcSource(e), t = arcTarget(e);
+                int ps = tree_adj_start[s] + tree_adj_pos[s]++;
+                tree_adj_node[ps] = t;
+                tree_adj_arc[ps] = e;
+                int pt = tree_adj_start[t] + tree_adj_pos[t]++;
+                tree_adj_node[pt] = s;
+                tree_adj_arc[pt] = e;
+            }
+
+            // STEP 2: Set up artificial arcs
+            _search_arc_num = _arc_num;
+            _all_arc_num = _arc_num + _node_num;
+            _root = _node_num;
+
+            for (ArcsType u = 0, e = _arc_num; u != _node_num; ++u, ++e) {
+                setArcState(e, STATE_TREE);
+                if (_supply[u] >= 0) {
+                    setArcEndpoints(e, u, _root);
+                    setArcCost(e, 0);
+                    setArcFlow(e, _supply[u]);
+                } else {
+                    setArcEndpoints(e, _root, u);
+                    setArcCost(e, ART_COST);
+                    setArcFlow(e, -_supply[u]);
+                }
+            }
+
+            // Root node setup
+            _parent[_root] = -1;
+            _pred[_root] = -1;
+            _supply[_root] = -_sum_supply;
+            _pi[_root] = 0;
+
+            // STEP 3: BFS from root to build tree structure
+            std::vector<bool> is_rep(_node_num, false);
+            std::vector<bool> visited(_node_num, false);
+
+            for (int u = 0; u < _node_num; ++u) {
+                if (visited[u]) continue;
+                is_rep[u] = true;
+                
+                _parent[u] = _root;
+                _pred[u] = _arc_num + u;
+                _forward[u] = (_supply[u] >= 0);  // same as init()
+                setArcState(_arc_num + u, STATE_TREE);
+                visited[u] = true;
+
+                std::queue<int> bfs_queue;
+                bfs_queue.push(u);
+                while (!bfs_queue.empty()) {
+                    int v = bfs_queue.front();
+                    bfs_queue.pop();
+                    for (int k = tree_adj_start[v]; k < tree_adj_start[v + 1]; ++k) {
+                        int w = tree_adj_node[k];
+                        ArcsType arc_e = tree_adj_arc[k];
+                        if (visited[w]) continue;
+                        visited[w] = true;
+                        
+                        _parent[w] = v;
+                        _pred[w] = arc_e;
+                        setArcState(arc_e, STATE_TREE);
+                        _forward[w] = (arcSource(arc_e) == w);
+                        
+                        setArcState(_arc_num + w, STATE_LOWER);
+                        setArcFlow(_arc_num + w, 0);
+                        
+                        bfs_queue.push(w);
+                    }
+                }
+            }
+
+            // STEP 4: Build thread (preorder traversal)
+            {
+                std::vector<std::vector<int>> children(_node_num + 1);
+                for (int u = 0; u < _node_num; ++u) {
+                    children[_parent[u]].push_back(u);
+                }
+
+                std::vector<int> preorder;
+                preorder.reserve(_node_num + 1);
+                std::stack<int> dfs_stack;
+                dfs_stack.push(_root);
+                while (!dfs_stack.empty()) {
+                    int v = dfs_stack.top();
+                    dfs_stack.pop();
+                    preorder.push_back(v);
+                    for (int i = (int)children[v].size() - 1; i >= 0; --i) {
+                        dfs_stack.push(children[v][i]);
+                    }
+                }
+
+                for (int i = 0; i < (int)preorder.size() - 1; ++i) {
+                    _thread[preorder[i]] = preorder[i + 1];
+                }
+                _thread[preorder.back()] = preorder[0];
+
+                for (int u = 0; u <= _node_num; ++u) {
+                    _rev_thread[_thread[u]] = u;
+                }
+
+                for (int u = 0; u <= _node_num; ++u) {
+                    _succ_num[u] = 1;
+                }
+                for (int i = (int)preorder.size() - 1; i > 0; --i) {
+                    int u = preorder[i];
+                    _succ_num[_parent[u]] += _succ_num[u];
+                }
+
+                std::vector<int> pos(_node_num + 1);
+                for (int i = 0; i < (int)preorder.size(); ++i) {
+                    pos[preorder[i]] = i;
+                }
+                for (int i = 0; i < (int)preorder.size(); ++i) {
+                    int u = preorder[i];
+                    _last_succ[u] = preorder[pos[u] + _succ_num[u] - 1];
+                }
+            }
+
+            // STEP 5: Compute flows on tree arcs
+            {
+                std::vector<Value> net(_node_num + 1);
+                for (int u = 0; u <= _node_num; ++u) {
+                    net[u] = _supply[u];
+                }
+                
+                std::vector<int> preorder;
+                preorder.reserve(_node_num + 1);
+                int cur = _root;
+                for (int i = 0; i <= _node_num; ++i) {
+                    preorder.push_back(cur);
+                    cur = _thread[cur];
+                }
+                
+                int ejected = 0;
+                for (int i = (int)preorder.size() - 1; i > 0; --i) {
+                    int u = preorder[i];
+                    ArcsType e = _pred[u];
+                    
+                    Value f = _forward[u] ? net[u] : -net[u];
+                    
+                    if (f >= 0) {
+                        setArcFlow(e, f);
+                        net[_parent[u]] += net[u];
+                    } else {
+                        if (e < _arc_num) {
+                            setArcState(e, STATE_LOWER);
+                            setArcFlow(e, 0);
+                        }
+                        // Reconnect u to root via artificial arc
+                        ArcsType art_e = _arc_num + u;
+                        _parent[u] = _root;
+                        _pred[u] = art_e;
+                        _forward[u] = (arcSource(art_e) == u);
+                        setArcState(art_e, STATE_TREE);
+                        
+                        Value art_f = _forward[u] ? net[u] : -net[u];
+                        setArcFlow(art_e, art_f >= 0 ? art_f : -art_f);
+                        if (art_f < 0) {
+                            _forward[u] = !_forward[u];
+                            setArcFlow(art_e, -art_f);
+                        }
+                        
+                        net[_root] += net[u];
+                        ejected++;
+                    }
+                }
+                if (ejected > 0) {
+                    std::vector<std::vector<int>> children2(_node_num + 1);
+                    for (int u = 0; u < _node_num; ++u) {
+                        children2[_parent[u]].push_back(u);
+                    }
+                    // DFS preorder
+                    std::vector<int> preorder2;
+                    preorder2.reserve(_node_num + 1);
+                    std::stack<int> dfs2;
+                    dfs2.push(_root);
+                    while (!dfs2.empty()) {
+                        int v = dfs2.top(); dfs2.pop();
+                        preorder2.push_back(v);
+                        for (int j = (int)children2[v].size() - 1; j >= 0; --j) {
+                            dfs2.push(children2[v][j]);
+                        }
+                    }
+                    for (int i = 0; i < (int)preorder2.size() - 1; ++i) {
+                        _thread[preorder2[i]] = preorder2[i + 1];
+                    }
+                    _thread[preorder2.back()] = preorder2[0];
+                    for (int u = 0; u <= _node_num; ++u) {
+                        _rev_thread[_thread[u]] = u;
+                    }
+                    for (int u = 0; u <= _node_num; ++u) _succ_num[u] = 1;
+                    for (int i = (int)preorder2.size() - 1; i > 0; --i) {
+                        _succ_num[_parent[preorder2[i]]] += _succ_num[preorder2[i]];
+                    }
+                    std::vector<int> pos2(_node_num + 1);
+                    for (int i = 0; i < (int)preorder2.size(); ++i) pos2[preorder2[i]] = i;
+                    for (int i = 0; i < (int)preorder2.size(); ++i) {
+                        int u = preorder2[i];
+                        _last_succ[u] = preorder2[pos2[u] + _succ_num[u] - 1];
+                    }
+                }
+            }
+
+            // STEP 6: Compute potentials from the final tree
+            {
+                _pi[_root] = 0;
+                int u = _thread[_root];
+                while (u != _root) {
+                    ArcsType e = _pred[u];
+                    int v = _parent[u];
+                    Cost c = getCostForArc(e);
+                    if (_forward[u]) {
+                        _pi[u] = _pi[v] - c;
+                    } else {
+                        _pi[u] = _pi[v] + c;
+                    }
+                    u = _thread[u];
+                }
+            }
+
+            // Initialize in_arc to a valid value
+            in_arc = 0;
+
+            return true;
+        }
+
         // Initialize internal data structures
         bool init() {
             if (_node_num == 0) return false;
@@ -963,18 +1815,11 @@ namespace lemon {
             if (std::numeric_limits<Cost>::is_exact) {
                 ART_COST = std::numeric_limits<Cost>::max() / 2 + 1;
             } else {
-                ART_COST = 0;
-                for (ArcsType i = 0; i != _arc_num; ++i) {
-                    if (_cost[i] > ART_COST) ART_COST = _cost[i];
-                }
-                ART_COST = (ART_COST + 1) * _node_num;
+                Cost max_cost = maxRealArcCost();
+                ART_COST = (max_cost + 1) * _node_num;
             }
 
-            // Initialize arc maps
-            for (ArcsType i = 0; i != _arc_num; ++i) {
-                //_flow[i] = 0; //by default, the sparse matrix is empty
-                _state[i] = STATE_LOWER;
-            }
+            fillArcStates(_arc_num, STATE_LOWER);
 
             // Set data for the artificial root node
             _root = _node_num;
@@ -999,21 +1844,19 @@ namespace lemon {
                     _rev_thread[u + 1] = u;
                     _succ_num[u] = 1;
                     _last_succ[u] = u;
-                    _state[e] = STATE_TREE;
+                    setArcState(e, STATE_TREE);
                     if (_supply[u] >= 0) {
                         _forward[u] = true;
                         _pi[u] = 0;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        _flow[e] = _supply[u];
-                        _cost[e] = 0;
+                        setArcEndpoints(e, u, _root);
+                        setArcFlow(e, _supply[u]);
+                        setArcCost(e, 0);
                     } else {
                         _forward[u] = false;
                         _pi[u] = ART_COST;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        _flow[e] = -_supply[u];
-                        _cost[e] = ART_COST;
+                        setArcEndpoints(e, _root, u);
+                        setArcFlow(e, -_supply[u]);
+                        setArcCost(e, ART_COST);
                     }
                 }
             }
@@ -1031,25 +1874,22 @@ namespace lemon {
                         _forward[u] = true;
                         _pi[u] = 0;
                         _pred[u] = e;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        _flow[e] = _supply[u];
-                        _cost[e] = 0;
-                        _state[e] = STATE_TREE;
+                        setArcEndpoints(e, u, _root);
+                        setArcFlow(e, _supply[u]);
+                        setArcCost(e, 0);
+                        setArcState(e, STATE_TREE);
                     } else {
                         _forward[u] = false;
                         _pi[u] = ART_COST;
                         _pred[u] = f;
-                        _source[f] = _root;
-                        _target[f] = u;
-                        _flow[f] = -_supply[u];
-                        _cost[f] = ART_COST;
-                        _state[f] = STATE_TREE;
-                        _source[e] = u;
-                        _target[e] = _root;
-                        //_flow[e] = 0;  //by default, the sparse matrix is empty
-                        _cost[e] = 0;
-                        _state[e] = STATE_LOWER;
+                        setArcEndpoints(f, _root, u);
+                        setArcFlow(f, -_supply[u]);
+                        setArcCost(f, ART_COST);
+                        setArcState(f, STATE_TREE);
+                        setArcEndpoints(e, u, _root);
+                        // Flow is zero by default.
+                        setArcCost(e, 0);
+                        setArcState(e, STATE_LOWER);
                         ++f;
                     }
                 }
@@ -1069,25 +1909,22 @@ namespace lemon {
                         _forward[u] = false;
                         _pi[u] = 0;
                         _pred[u] = e;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        _flow[e] = -_supply[u];
-                        _cost[e] = 0;
-                        _state[e] = STATE_TREE;
+                        setArcEndpoints(e, _root, u);
+                        setArcFlow(e, -_supply[u]);
+                        setArcCost(e, 0);
+                        setArcState(e, STATE_TREE);
                     } else {
                         _forward[u] = true;
                         _pi[u] = -ART_COST;
                         _pred[u] = f;
-                        _source[f] = u;
-                        _target[f] = _root;
-                        _flow[f] = _supply[u];
-                        _state[f] = STATE_TREE;
-                        _cost[f] = ART_COST;
-                        _source[e] = _root;
-                        _target[e] = u;
-                        //_flow[e] = 0; //by default, the sparse matrix is empty
-                        _cost[e] = 0;
-                        _state[e] = STATE_LOWER;
+                        setArcEndpoints(f, u, _root);
+                        setArcFlow(f, _supply[u]);
+                        setArcState(f, STATE_TREE);
+                        setArcCost(f, ART_COST);
+                        setArcEndpoints(e, _root, u);
+                        // Flow is zero by default.
+                        setArcCost(e, 0);
+                        setArcState(e, STATE_LOWER);
                         ++f;
                     }
                 }
@@ -1099,8 +1936,8 @@ namespace lemon {
 
         // Find the join node
         void findJoinNode() {
-            int u = _source[in_arc];
-            int v = _target[in_arc];
+            int u = arcSource(in_arc);
+            int v = arcTarget(in_arc);
             while (u != v) {
                 if (_succ_num[u] < _succ_num[v]) {
                     u = _parent[u];
@@ -1116,12 +1953,12 @@ namespace lemon {
         bool findLeavingArc() {
             // Initialize first and second nodes according to the direction
             // of the cycle
-            if (_state[in_arc] == STATE_LOWER) {
-                first  = _source[in_arc];
-                second = _target[in_arc];
+            if (arcState(in_arc) == STATE_LOWER) {
+                first  = arcSource(in_arc);
+                second = arcTarget(in_arc);
             } else {
-                first  = _target[in_arc];
-                second = _source[in_arc];
+                first  = arcTarget(in_arc);
+                second = arcSource(in_arc);
             }
             delta = INF;
             char result = 0;
@@ -1131,7 +1968,7 @@ namespace lemon {
             // Search the cycle along the path form the first node to the root
             for (int u = first; u != join; u = _parent[u]) {
                 e = _pred[u];
-                d = _forward[u] ? _flow[e] : INF ;
+                d = _forward[u] ? arcFlow(e) : INF ;
                 if (d < delta) {
                     delta = d;
                     u_out = u;
@@ -1141,7 +1978,7 @@ namespace lemon {
             // Search the cycle along the path form the second node to the root
             for (int u = second; u != join; u = _parent[u]) {
                 e = _pred[u];
-                d = _forward[u] ? INF  : _flow[e];
+                d = _forward[u] ? INF  : arcFlow(e);
                 if (d <= delta) {
                     delta = d;
                     u_out = u;
@@ -1159,26 +1996,28 @@ namespace lemon {
             return result != 0;
         }
 
-        // Change _flow and _state vectors
+        // Change flow and state vectors
         void changeFlow(bool change) {
             // Augment along the cycle
             if (delta > 0) {
-                Value val = _state[in_arc] * delta;
-                _flow[in_arc] += val;
-                for (int u = _source[in_arc]; u != join; u = _parent[u]) {
-                    _flow[_pred[u]] += _forward[u] ? -val : val;
+                Value val = arcState(in_arc) * delta;
+                addArcFlow(in_arc, val);
+                for (int u = arcSource(in_arc); u != join; u = _parent[u]) {
+                    addArcFlow(_pred[u], _forward[u] ? -val : val);
                 }
-                for (int u = _target[in_arc]; u != join; u = _parent[u]) {
-                    _flow[_pred[u]] += _forward[u] ? val : -val;
+                for (int u = arcTarget(in_arc); u != join; u = _parent[u]) {
+                    addArcFlow(_pred[u], _forward[u] ? val : -val);
                 }
             }
             // Update the state of the entering and leaving arcs
             if (change) {
-                _state[in_arc] = STATE_TREE;
-                _state[_pred[u_out]] =
-                (_flow[_pred[u_out]] == 0) ? STATE_LOWER : STATE_UPPER;
+                setArcState(in_arc, STATE_TREE);
+                setArcState(
+                    _pred[u_out],
+                    (arcFlow(_pred[u_out]) == 0) ? STATE_LOWER : STATE_UPPER
+                );
             } else {
-                _state[in_arc] = -_state[in_arc];
+                flipArcState(in_arc);
             }
         }
 
@@ -1261,7 +2100,7 @@ namespace lemon {
                 u = w;
             }
             _pred[u_in] = in_arc;
-            _forward[u_in] = (u_in == _source[in_arc]);
+            _forward[u_in] = (u_in == arcSource(in_arc));
             _succ_num[u_in] = old_succ_num;
 
             // Set limits for updating _last_succ form v_in and v_out
@@ -1305,8 +2144,8 @@ namespace lemon {
         // Update potentials
         void updatePotential() {
             Cost sigma = _forward[u_in] ?
-            _pi[v_in] - _pi[u_in] - _cost[_pred[u_in]] :
-            _pi[v_in] - _pi[u_in] + _cost[_pred[u_in]];
+            _pi[v_in] - _pi[u_in] - getCostForArc(_pred[u_in]) :
+            _pi[v_in] - _pi[u_in] + getCostForArc(_pred[u_in]);
             // Update potentials in the subtree, which has been moved
             int end = _thread[_last_succ[u_in]];
             for (int u = u_in; u != end; u = _thread[u]) {
@@ -1336,7 +2175,6 @@ namespace lemon {
             if (_sum_supply >= 0) {
                 if (supply_nodes.size() == 1 && demand_nodes.size() == 1) {
                     // Perform a reverse graph search from the sink to the source
-                    //typename GR::template NodeMap<bool> reached(_graph, false);
                     BoolVector reached(_node_num, false);
                     Node s = supply_nodes[0], t = demand_nodes[0];
                     std::vector<Node> stack;
@@ -1365,7 +2203,7 @@ namespace lemon {
                         Arc min_arc = INVALID;
                         Arc a; _graph.firstIn(a, v);
                         for (; a != INVALID; _graph.nextIn(a)) {
-                            c = _cost[getArcID(a)];
+                            c = getCostForArc(getArcID(a));
                             if (c < min_cost) {
                                 min_cost = c;
                                 min_arc = a;
@@ -1384,7 +2222,7 @@ namespace lemon {
                     Arc min_arc = INVALID;
                     Arc a; _graph.firstOut(a, u);
                     for (; a != INVALID; _graph.nextOut(a)) {
-                        c = _cost[getArcID(a)];
+                        c = getCostForArc(getArcID(a));
                         if (c < min_cost) {
                             min_cost = c;
                             min_arc = a;
@@ -1400,8 +2238,8 @@ namespace lemon {
             for (ArcsType i = 0; i != arc_vector.size(); ++i) {
                 in_arc = arc_vector[i];
                 // l'erreur est probablement ici...
-                if (_state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -
-                                      _pi[_target[in_arc]]) >= 0) continue;
+                if (arcState(in_arc) * (getCostForArc(in_arc) + _pi[arcSource(in_arc)] -
+                                      _pi[arcTarget(in_arc)]) >= 0) continue;
                 findJoinNode();
                 bool change = findLeavingArc();
                 if (delta >= MAX) return false;
@@ -1424,8 +2262,10 @@ namespace lemon {
             PivotRuleImpl pivot(*this);
 			ProblemType retVal = OPTIMAL;
 
-            // Perform heuristic initial pivots
-            if (!initialPivots()) return UNBOUNDED;
+            // Perform heuristic initial pivots (skip if warmstart tree was built)
+            if (!_warmstart_tree_built) {
+                if (!initialPivots()) return UNBOUNDED;
+            }
 
             uint64_t iter_number = 0;
             //pivot.setDantzig(true);
@@ -1436,27 +2276,6 @@ namespace lemon {
 					retVal = MAX_ITER_REACHED;
                     break;
                 }
-#if DEBUG_LVL>0
-                if(iter_number>MAX_DEBUG_ITER)
-                    break;
-                if(iter_number%1000==0||iter_number%1000==1){
-                    double curCost=totalCost();
-                    double sumFlow=0;
-                    double a;
-                    a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
-                    a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                    for (int64_t i=0; i<_flow.size(); i++) {
-                        sumFlow+=_state[i]*_flow[i];
-                    }
-                    std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << iter_number << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
-                    std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
-                    std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
-                    std::cout << _cost[in_arc] << "\n";
-                    std::cout << _pi[_source[in_arc]] << "\n";
-                    std::cout << _pi[_target[in_arc]] << "\n";
-                    std::cout << a << "\n";
-                }
-#endif
 
                 findJoinNode();
                 bool change = findLeavingArc();
@@ -1466,53 +2285,17 @@ namespace lemon {
                     updateTreeStructure();
                     updatePotential();
                 }
-#if DEBUG_LVL>0
-                else{
-                    std::cout << "No change\n";
-                }
-#endif
-#if DEBUG_LVL>1
-                std::cout << "Arc in = (" << _source[in_arc] << ", " << _target[in_arc] << ")\n";
-#endif
 
             }
 
-
-#if DEBUG_LVL>0
-                double curCost=totalCost();
-                double sumFlow=0;
-                double a;
-                a= (fabs(_pi[_source[in_arc]])>=fabs(_pi[_target[in_arc]])) ? fabs(_pi[_source[in_arc]]) : fabs(_pi[_target[in_arc]]);
-                a=a>=fabs(_cost[in_arc])?a:fabs(_cost[in_arc]);
-                for (int64_t i=0; i<_flow.size(); i++) {
-                    sumFlow+=_state[i]*_flow[i];
-                }
-
-                std::cout << "Sum of the flow " << std::setprecision(20) << sumFlow << "\n" << niter << " iterations, current cost=" << curCost << "\nReduced cost=" << _state[in_arc] * (_cost[in_arc] + _pi[_source[in_arc]] -_pi[_target[in_arc]]) << "\nPrecision = "<< -EPSILON*(a) << "\n";
-
-                std::cout << "Arc in = (" << _node_id(_source[in_arc]) << ", " << _node_id(_target[in_arc]) <<")\n";
-                std::cout << "Supplies = (" << _supply[_source[in_arc]] << ", " << _supply[_target[in_arc]] << ")\n";
-
-#endif
-
-#if DEBUG_LVL>1
-            sumFlow=0;
-            for (int i=0; i<_flow.size(); i++) {
-                sumFlow+=_state[i]*_flow[i];
-                if (_state[i]==STATE_TREE) {
-                    std::cout << "Non zero value at (" << _node_num+1-_source[i] << ", " << _node_num+1-_target[i] << ")\n";
-                }
-            }
-            std::cout << "Sum of the flow " << sumFlow << "\n"<< niter <<" iterations, current cost=" << totalCost() << "\n";
-#endif
             // Check feasibility
 			if( retVal == OPTIMAL){
                 for (ArcsType e = _search_arc_num; e != _all_arc_num; ++e) {
-                    if (_flow[e] != 0){
-                        if (fabs(_flow[e]) > _EPSILON) // change of the original code following issue #126
+                    if (arcFlow(e) != 0){
+                        if (fabs(arcFlow(e)) > _EPSILON) // change of the original code following issue #126
                             return INFEASIBLE;
                         else
-                            _flow[e]=0;
+                            setArcFlow(e, 0);
 
                     }
                 }

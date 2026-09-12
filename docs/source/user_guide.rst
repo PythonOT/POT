@@ -244,7 +244,7 @@ b is defined as
 
     .. math::
 
-        W_p(a,b)=(\min_{\gamma \in \mathbb{R}_+^{m\times n}} \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|_p)^\frac{1}{p}
+        W_p(a,b)=\left(\min_{\gamma \in \mathbb{R}_+^{m\times n}} \sum_{i,j}\gamma_{i,j}\|x_i-y_j\|^p\right)^{\frac{1}{p}}
 
         s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
@@ -791,8 +791,13 @@ Interestingly the problem can be casted into a regular OT problem by adding rese
 in which the surplus mass is sent [29]_. We provide a solver for partial OT
 in :any:`ot.partial`. The exact resolution of the problem is computed in :any:`ot.partial.partial_wasserstein`
 and :any:`ot.partial.partial_wasserstein2` that return respectively the OT matrix and the value of the
-linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein` 
-(see [3]_).
+linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein`
+(see [3]_). Following the convention of :any:`ot.sinkhorn`, this solver takes a ``method`` parameter:
+``method='sinkhorn'`` (default) runs the classical multiplicative-domain iterations, while
+``method='sinkhorn_log'`` switches to a numerically stable log-domain solver
+(:any:`ot.partial.entropic_partial_wasserstein_logscale`) for small regularisation values where the
+standard solver returns NaN. Both solve exactly the same problem; the log-domain variant is slower
+because it computes everything in log-space.
 
 The partial Gromov-Wasserstein formulation of the problem 
 
@@ -832,7 +837,7 @@ alignment between two distributions can be expressed as the one minimizing:
 
     s.t. \gamma 1 = a; \gamma^T 1= b; \gamma\geq 0
 
-where ::math:`C1` is the distance matrix between samples in the source
+where :math:`C1` is the distance matrix between samples in the source
 distribution and :math:`C2` the one between samples in the target,
 :math:`L(C1_{i,k},C2_{j,l})` is a measure of similarity between
 :math:`C1_{i,k}` and :math:`C2_{j,l}` often chosen as

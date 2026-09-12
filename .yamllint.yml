@@ -1,7 +1,6 @@
 extends: default
 
 ignore: |
-  .github/workflows/*.yml
   .circleci/config.yml
   codecov.yml
   .github/labeler.yml
@@ -9,3 +8,4 @@ ignore: |
 rules:
   line-length: disable
   document-start: disable
+  indentation: disable

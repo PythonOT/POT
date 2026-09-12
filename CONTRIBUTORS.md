@@ -58,6 +58,11 @@ The contributors to this library are:
 * [Laurène David](https://github.com/laudavid) (Low rank sinkhorn, Low rank Gromov-Wasserstein samples)
 * [Julie Delon](https://judelo.github.io/) (GMM OT)
 * [Samuel Boïté](https://samuelbx.github.io/) (GMM OT)
+* [Nathan Neike](https://github.com/nathanneike) (Sparse EMD solver)
+* [Thibaut Germain](https://thibaut-germain.github.io) (SGOT)
+* Sienna O'Shea (SGOT)
+* [Huy Tran](https://github.com/huytransformer) (Stereographic Spherical Sliced-Wasserstein)
+* [Samuel Vangu](https://github.com/Samuel-Vangu) (Quasi-Monte Carlo Sliced-Wasserstein)
 
 
 ## Acknowledgments

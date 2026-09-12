@@ -17,6 +17,7 @@ API and modules
    backend
    batch
    bregman
+   bsp
    coot
    da
    datasets
@@ -34,6 +35,7 @@ API and modules
    plot
    regpath
    sliced
+   sgot
    smooth
    stochastic
    unbalanced

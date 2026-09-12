@@ -376,7 +376,9 @@ def nearest_brenier_potential_predict_bounds(
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=solver)
-        phi_lu[0, y_idx] = phi_l_y.value
+        phi_lu[0, y_idx] = (
+            phi_l_y.value if np.isscalar(phi_l_y.value) else phi_l_y.value.item()
+        )
         G_lu[0, y_idx] = G_l_y.value
         if log:
             log_item["l"] = {
@@ -403,7 +405,9 @@ def nearest_brenier_potential_predict_bounds(
             ]
         problem = cvx.Problem(objective, constraints)
         problem.solve(solver=solver)
-        phi_lu[1, y_idx] = phi_u_y.value
+        phi_lu[1, y_idx] = (
+            phi_u_y.value if np.isscalar(phi_u_y.value) else phi_u_y.value.item()
+        )
         G_lu[1, y_idx] = G_u_y.value
         if log:
             log_item["u"] = {

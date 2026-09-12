@@ -4,10 +4,14 @@ version: 2
 jobs:
     build_docs:
       docker:
-        - image: cimg/python:3.10
-      resource_class: medium
+        - image: cimg/python:3.12
+      resource_class: large
       steps:
         - checkout
+        - run:
+            name: Update submodules
+            command: |
+              git submodule update --init --recursive
         - run:
             name: Set BASH_ENV
             command: |
@@ -27,6 +31,7 @@ jobs:
                 git remote add upstream https://github.com/PythonOT/POT.git;
                 git pull --ff-only upstream "refs/pull/$(cat merge.txt)/merge";
                 git fetch upstream master;
+                git submodule update --init --recursive
               fi
 
         # Load our data
@@ -46,7 +51,6 @@ jobs:
             command: |
               python -m pip install --user --upgrade --progress-bar off pip
               python -m pip install --user -e .
-              python -m pip install --user --upgrade --no-cache-dir --progress-bar off -r requirements_all.txt 
               python -m pip install --user --upgrade --progress-bar off -r docs/requirements.txt
               python -m pip install --user --upgrade --progress-bar off ipython sphinx-gallery memory_profiler              
           # python -m pip install --user --upgrade --progress-bar off ipython "https://api.github.com/repos/sphinx-gallery/sphinx-gallery/zipball/master" memory_profiler

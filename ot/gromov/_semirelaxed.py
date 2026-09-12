@@ -64,7 +64,6 @@ def semirelaxed_gromov_wasserstein(
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
-
     - `L`: loss function to account for the misfit between the similarity matrices
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -883,7 +882,6 @@ def entropic_semirelaxed_gromov_wasserstein(
     - :math:`\mathbf{C_1}`: Metric cost matrix in the source space
     - :math:`\mathbf{C_2}`: Metric cost matrix in the target space
     - :math:`\mathbf{p}`: distribution in the source space
-
     - `L`: loss function to account for the misfit between the similarity matrices
 
     .. note:: This function is backend-compatible and will work on arrays
@@ -1070,6 +1068,7 @@ def entropic_semirelaxed_gromov_wasserstein2(
 
     Note that when using backends, this loss function is differentiable wrt the
     matrices (C1, C2) but not yet for the weights p.
+
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends. However all the steps in the conditional
         gradient are not differentiable.

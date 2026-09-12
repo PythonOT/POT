@@ -12,7 +12,15 @@ import torch
 from ..utils import dist
 from ..gromov import fused_gromov_wasserstein2
 from ..lp import emd2
-from torch_geometric.utils import subgraph
+import warnings
+
+try:
+    from torch_geometric.utils import subgraph
+except ImportError:
+    warnings.warn(
+        "torch_geometric is not installed. The ot.gnn module requires torch_geometric to be installed."
+    )
+    pass
 
 
 def TFGW_template_initialization(

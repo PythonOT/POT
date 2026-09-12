@@ -87,6 +87,7 @@ pl.title("Source and Target distribution")
 n_seed = 20
 n_projections_arr = np.logspace(0, 3, 10, dtype=int)
 res = np.empty((n_seed, 10))
+res_s3w = np.empty((n_seed, 10))
 
 # %% Compute statistics
 for seed in range(n_seed):
@@ -94,9 +95,15 @@ for seed in range(n_seed):
         res[seed, i] = ot.sliced_wasserstein_sphere(
             xs, xt, a, b, n_projections, seed=seed, p=1
         )
+        res_s3w[seed, i] = ot.stereographic_sliced_wasserstein_sphere(
+            xs, xt, a, b, n_projections, seed=seed, p=1
+        )
 
 res_mean = np.mean(res, axis=0)
 res_std = np.std(res, axis=0)
+
+res_s3w_mean = np.mean(res_s3w, axis=0)
+res_s3w_std = np.std(res_s3w, axis=0)
 
 ###############################################################################
 # Plot Spherical Sliced Wasserstein
@@ -106,6 +113,13 @@ pl.figure(2)
 pl.plot(n_projections_arr, res_mean, label=r"$SSW_1$")
 pl.fill_between(
     n_projections_arr, res_mean - 2 * res_std, res_mean + 2 * res_std, alpha=0.5
+)
+pl.plot(n_projections_arr, res_s3w_mean, label=r"$S3W_1$")
+pl.fill_between(
+    n_projections_arr,
+    res_s3w_mean - 2 * res_s3w_std,
+    res_s3w_mean + 2 * res_s3w_std,
+    alpha=0.5,
 )
 
 pl.legend()

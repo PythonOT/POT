@@ -58,7 +58,18 @@ def laplacian(x):
 
 def list_to_array(*lst, nx=None):
     r"""Convert a list if in numpy format"""
-    lst_not_empty = [a for a in lst if len(a) > 0 and not isinstance(a, list)]
+    # Filter to non-empty, non-list items (handle sparse matrices gracefully)
+    lst_not_empty = []
+    for a in lst:
+        if isinstance(a, list):
+            continue
+        try:
+            if len(a) > 0:
+                lst_not_empty.append(a)
+        except TypeError:
+            # Sparse matrices don't support len(), but they're not empty
+            lst_not_empty.append(a)
+
     if nx is None:  # find backend
         if len(lst_not_empty) == 0:
             type_as = np.zeros(0)
@@ -296,6 +307,96 @@ def euclidean_distances(X, Y, squared=False, nx=None):
     return c
 
 
+def sparse_ot_dist(
+    x1,
+    x2,
+    i,
+    j,
+    w=None,
+    metric="sqeuclidean",
+    p=2,
+    batch_size=None,
+):
+    r"""Compute ot distance between samples in :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`
+    with sparse weights given by `w` for the pairs of samples with indices `i` and `j`.
+
+    .. note:: This function is backend-compatible and will work on arrays
+        from all compatible backends for the following metrics:
+        'sqeuclidean', 'euclidean', 'cityblock', 'minkowski'.
+
+    Parameters
+    ----------
+
+    x1 : array-like, shape (n1,d)
+        matrix with `n1` samples of size `d`
+    x2 : array-like, shape (n2,d), optional
+        matrix with `n2` samples of size `d` (if None then :math:`\mathbf{x_2} = \mathbf{x_1}`)
+    i : array-like, shape (k,)
+        indices of samples in `x1` to compute distance from
+    j : array-like, shape (k,)
+        indices of samples in `x2` to compute distance to
+    w : array-like, shape (k,), optional
+        weights for each pair of samples to compute distance between.
+        If None, all pairs are weighted equally (=1/k).
+    metric : str | callable, optional
+        'sqeuclidean', 'euclidean', 'cityblock' or 'minkowski'.
+    p : float, optional
+        p-norm for the Minkowski metric. Default value is 2.
+    batch_size : int, optional
+        If specified, compute the distance in batches of size `batch_size` to avoid memory issues for large datasets. Default is None (no batching).
+    Returns
+    -------
+    dist : float
+        sum of the distance between :math:`\mathbf{x_1}_i` and :math:`\mathbf{x_2}_j` computed with given metric and weighted by `w`
+    """
+    nx = get_backend(x1, x2)
+
+    assert x1.ndim == 2, f"x1 must be a 2d array, got {x1.ndim}d array instead"
+    assert x2.ndim == 2, f"x2 must be a 2d array, got {x2.ndim}d array instead"
+
+    assert len(i) == len(
+        j
+    ), f"i and j must have the same length, got {len(i)} and {len(j)}"
+    if w is not None:
+        assert len(w) == len(
+            i
+        ), f"w must have the same length as i and j, got {len(w)} and {len(i)}"
+
+    assert metric in ("minkowski", "euclidean", "cityblock", "sqeuclidean"), (
+        "sparse_dist work only with metrics from the following list: "
+        + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
+    )
+
+    assert (
+        x1.shape[1] == x2.shape[1]
+    ), f"x1 ({x1.shape}) and x2 ({x2.shape}) must have the same number of columns"
+
+    if metric == "euclidean":
+        p = 2
+    elif metric == "cityblock":
+        p = 1
+
+    def dist_idxs(idx_x1, idx_x2):
+        if metric == "sqeuclidean":
+            return nx.sum((x1[idx_x1] - x2[idx_x2]) ** 2, axis=1)
+        else:
+            return nx.sum(nx.abs(x1[idx_x1] - x2[idx_x2]) ** p, axis=1) ** (1 / p)
+
+    if w is None:
+        w = nx.ones(len(i), type_as=x1) / len(i)
+
+    d = 0
+    if batch_size is None:
+        batch_size = len(i)
+    for b in range(0, len(i), batch_size):
+        d += nx.sum(
+            dist_idxs(i[b : b + batch_size], j[b : b + batch_size])
+            * w[b : b + batch_size]
+        )
+
+    return d
+
+
 def dist(
     x1,
     x2=None,
@@ -418,7 +519,9 @@ def dist(
         else:
             if isinstance(metric, str) and metric.endswith("minkowski"):
                 return cdist(x1, x2, metric=metric, p=p, w=w)
-            if w is not None:
+            # Only pass w parameter for metrics that support it
+            # According to SciPy docs, only 'minkowski' and 'wminkowski' support w
+            if w is not None and metric in ["minkowski", "wminkowski"]:
                 return cdist(x1, x2, metric=metric, w=w)
             return cdist(x1, x2, metric=metric)
 
@@ -1179,8 +1282,12 @@ class OTResult:
         """Transport plan, encoded as a dense array."""
         # N.B.: We may catch out-of-memory errors and suggest
         # the use of lazy_plan or sparse_plan when appropriate.
-
-        return self._plan
+        if self._plan is not None:
+            return self._plan
+        elif self._sparse_plan is not None:
+            return self._backend.todense(self._sparse_plan)
+        else:
+            return None
 
     @property
     def sparse_plan(self):
@@ -1286,6 +1393,184 @@ class OTResult:
     # def samples(self):
     #     """Sample locations for the Wasserstein barycenter."""
     #     raise NotImplementedError()
+
+    # Miscellaneous --------------------------------
+
+    @property
+    def citation(self):
+        """Appropriate citation(s) for this result, in plain text and BibTex formats."""
+
+        # The string below refers to the POT library:
+        # successor methods may concatenate the relevant references
+        # to the original definitions, solvers and underlying numerical backends.
+        return """POT library:
+
+            POT Python Optimal Transport library, Journal of Machine Learning Research, 22(78):1−8, 2021.
+            Website: https://pythonot.github.io/
+            Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z. Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, Léo Gautheron, Nathalie T.H. Gayraud, Hicham Janati, Alain Rakotomamonjy, Ievgen Redko, Antoine Rolet, Antony Schutz, Vivien Seguy, Danica J. Sutherland, Romain Tavenard, Alexander Tong, Titouan Vayer;
+
+            @article{flamary2021pot,
+              author  = {R{\'e}mi Flamary and Nicolas Courty and Alexandre Gramfort and Mokhtar Z. Alaya and Aur{\'e}lie Boisbunon and Stanislas Chambon and Laetitia Chapel and Adrien Corenflos and Kilian Fatras and Nemo Fournier and L{\'e}o Gautheron and Nathalie T.H. Gayraud and Hicham Janati and Alain Rakotomamonjy and Ievgen Redko and Antoine Rolet and Antony Schutz and Vivien Seguy and Danica J. Sutherland and Romain Tavenard and Alexander Tong and Titouan Vayer},
+              title   = {{POT}: {Python} {Optimal} {Transport}},
+              journal = {Journal of Machine Learning Research},
+              year    = {2021},
+              volume  = {22},
+              number  = {78},
+              pages   = {1-8},
+              url     = {http://jmlr.org/papers/v22/20-451.html}
+            }
+        """
+
+
+class BaryResult:
+    """Base class for OT barycenter results.
+
+    Parameters
+    ----------
+    X : array-like, shape (`n`, `d`)
+        Barycenter features.
+    C: array-like, shape (`n`, `n`)
+        Barycenter structure for Gromov Wasserstein solutions.
+    b : array-like, shape (`n`,)
+        Barycenter weights.
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    log : dict
+        Dictionary containing potential information about the solver.
+    list_res: list of OTResult
+        List of results for the individual OT matching with input distributions considered as
+        sources and the learned barycenter distribution as target.
+    status : int or str
+        Status of the solver.
+
+    Attributes
+    ----------
+
+    X : array-like, shape (`n`, `d`)
+        Barycenter features.
+    C: array-like, shape (`n`, `n`)
+        Barycenter structure for Gromov Wasserstein solutions.
+    b : array-like, shape (`n`,)
+        Barycenter weights.
+    value : float, array-like
+        Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions.
+    value_linear : float, array-like
+        The linear part of the transport cost, i.e. the product between the
+        transport plan and the cost.
+    value_quad : float, array-like
+        The quadratic part of the transport cost for Gromov-Wasserstein
+        solutions.
+    log : dict
+        Dictionary containing potential information about the solver.
+    list_res: list of OTResult
+        List of results for the individual OT matching.
+    status : int or str
+        Status of the solver.
+    backend : Backend
+        Backend used to compute the results.
+    """
+
+    def __init__(
+        self,
+        X=None,
+        C=None,
+        b=None,
+        value=None,
+        value_linear=None,
+        value_quad=None,
+        log=None,
+        list_res=None,
+        status=None,
+        backend=None,
+    ):
+        self._X = X
+        self._C = C
+        self._b = b
+        self._value = value
+        self._value_linear = value_linear
+        self._value_quad = value_quad
+        self._log = log
+        self._list_res = list_res
+        self._status = status
+        self._backend = backend if backend is not None else NumpyBackend()
+
+    def __repr__(self):
+        s = "BaryResult("
+        if self._value is not None:
+            s += "value={},".format(self._value)
+        if self._value_linear is not None:
+            s += "value_linear={},".format(self._value_linear)
+        if self._X is not None:
+            s += "X={}(shape={}),".format(self._X.__class__.__name__, self._X.shape)
+        if self._C is not None:
+            s += "C={}(shape={}),".format(self._C.__class__.__name__, self._C.shape)
+        if self._b is not None:
+            s += "b={}(shape={}),".format(self._b.__class__.__name__, self._b.shape)
+        if s[-1] != "(":
+            s = s[:-1] + ")"
+        else:
+            s = s + ")"
+        return s
+
+    # Barycerters --------------------------------
+
+    @property
+    def X(self):
+        """Barycenter features."""
+        return self._X
+
+    @property
+    def C(self):
+        """Barycenter structure for Gromov Wasserstein solutions."""
+        return self._C
+
+    @property
+    def b(self):
+        """Barycenter weights."""
+        return self._b
+
+    # Loss values --------------------------------
+
+    @property
+    def value(self):
+        """Full transport cost, including possible regularization terms and
+        quadratic term for Gromov Wasserstein solutions."""
+        return self._value
+
+    @property
+    def value_linear(self):
+        """The "minimal" transport cost, i.e. the product between the transport plan and the cost."""
+        return self._value_linear
+
+    @property
+    def value_quad(self):
+        """The quadratic part of the transport cost for Gromov-Wasserstein solutions."""
+        return self._value_quad
+
+    # List of OTResult objects -------------------------
+
+    @property
+    def list_res(self):
+        """List of results for the individual OT matching."""
+        return self._list_res
+
+    @property
+    def status(self):
+        """Optimization status of the solver."""
+        return self._status
+
+    @property
+    def log(self):
+        """Dictionary containing potential information about the solver."""
+        return self._log
 
     # Miscellaneous --------------------------------
 
@@ -1480,6 +1765,250 @@ def check_number_threads(numThreads):
     return numThreads
 
 
+class DataScaler:
+    r"""Backend-aware data scaler with sklearn-compatible API.
+
+    Fit normalization statistics on a single array or on the concatenation
+    of multiple arrays (joint fitting), then apply the same fixed transform
+    to any array. Supports NumPy, PyTorch, JAX, and TensorFlow backends via
+    POT's backend abstraction.
+
+    Parameters
+    ----------
+    norm : str, optional
+        Normalization method. One of:
+
+        - ``'standard'`` (default) : zero mean, unit variance per feature
+        - ``'minmax'`` : scale each feature to [0, 1]
+        - ``'l2'`` : unit L2-norm per sample (row-wise, stateless)
+
+    Attributes
+    ----------
+    norm : str
+        The normalization method.
+    mean_ : array-like
+        Per-feature means (only for ``norm='standard'``).
+    std_ : array-like
+        Per-feature standard deviations (only for ``norm='standard'``).
+    min_ : array-like
+        Per-feature minimums (only for ``norm='minmax'``).
+    max_ : array-like
+        Per-feature maximums (only for ``norm='minmax'``).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from ot.utils import DataScaler
+    >>> X_s = np.array([[1.0, 100.0], [2.0, 200.0]])
+    >>> X_t = np.array([[3.0, 300.0], [4.0, 400.0]])
+    >>> scaler = DataScaler(norm='standard').fit([X_s, X_t])
+    >>> X_s_scaled = scaler.transform(X_s)
+    """
+
+    _VALID_NORMS = ("standard", "minmax", "l2")
+
+    def __init__(self, norm="standard"):
+        if norm not in self._VALID_NORMS:
+            raise ValueError(
+                "Invalid norm '{}'. Expected one of: {}".format(norm, self._VALID_NORMS)
+            )
+        self.norm = norm
+        self.mean_ = None
+        self.std_ = None
+        self.min_ = None
+        self.max_ = None
+        self._nx = None
+        self._fitted = False
+
+    def fit(self, X):
+        r"""Compute normalization statistics from one array or a list of arrays.
+
+        When given a list, arrays are concatenated along axis 0 before
+        computing statistics (joint fitting).
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to fit on. If a list, arrays must have the same number of
+            features (columns).
+
+        Returns
+        -------
+        self : DataScaler
+        """
+        if isinstance(X, (list, tuple)):
+            if len(X) == 0:
+                raise ValueError("Cannot fit on empty list.")
+            nx = get_backend(*X)
+            X_concat = nx.concatenate(list(X), axis=0)
+        else:
+            nx = get_backend(X)
+            X_concat = X
+
+        self._nx = nx
+
+        if self.norm == "l2":
+            self._fitted = True
+            return self
+
+        if self.norm == "standard":
+            self.mean_ = nx.mean(X_concat, axis=0)
+            self.std_ = nx.std(X_concat, axis=0)
+            zero_var = self.std_ == 0
+            if nx.any(zero_var):
+                warnings.warn(
+                    "Zero variance detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.std_ = nx.where(
+                    zero_var,
+                    nx.ones(self.std_.shape, type_as=self.std_),
+                    self.std_,
+                )
+
+        elif self.norm == "minmax":
+            self.min_ = nx.min(X_concat, axis=0)
+            self.max_ = nx.max(X_concat, axis=0)
+            zero_range = self.max_ == self.min_
+            if nx.any(zero_range):
+                warnings.warn(
+                    "Zero range detected in one or more feature(s). "
+                    "Those columns will not be scaled.",
+                    RuntimeWarning,
+                )
+                self.max_ = nx.where(
+                    zero_range,
+                    self.min_ + 1.0,
+                    self.max_,
+                )
+
+        self._fitted = True
+        return self
+
+    def _apply_transform(self, X):
+        r"""Apply the fitted transform to one array or a list of arrays.
+
+        Internal helper shared by :meth:`transform` and :meth:`fit_transform`.
+        Validates that the input's backend matches the one used at fit time.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        array-like or list of array-like
+            Transformed data; a list is returned when ``X`` is a list.
+        """
+        if isinstance(X, (list, tuple)):
+            return [self._apply_transform(x) for x in X]
+
+        nx = get_backend(X)
+
+        if self._nx is not None and nx is not self._nx:
+            raise ValueError(
+                "Backend mismatch: DataScaler was fitted with backend '{}' "
+                "but received input with backend '{}'.".format(
+                    type(self._nx).__name__, type(nx).__name__
+                )
+            )
+
+        if self.norm == "standard":
+            return (X - self.mean_) / self.std_
+        elif self.norm == "minmax":
+            return (X - self.min_) / (self.max_ - self.min_)
+        elif self.norm == "l2":
+            norms = nx.sqrt(nx.sum(X**2, axis=1, keepdims=True))
+            zero_norm = norms == 0
+            if nx.any(zero_norm):
+                warnings.warn(
+                    "Zero-norm row(s) detected. These will be left unchanged.",
+                    RuntimeWarning,
+                )
+                norms = nx.where(
+                    zero_norm,
+                    nx.ones(norms.shape, type_as=norms),
+                    norms,
+                )
+            return X / norms
+
+    def transform(self, X):
+        r"""Apply the fitted transformation to X.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+            Data to transform. If a list, each element is transformed and
+            returned as a list.
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            Transformed data, same shape and backend as X. If X was a list,
+            returns a list of transformed arrays.
+        """
+        if self.norm != "l2" and not self._fitted:
+            raise RuntimeError(
+                "DataScaler must be fitted before calling transform() "
+                "for norm='{}'.".format(self.norm)
+            )
+        return self._apply_transform(X)
+
+    def fit_transform(self, X):
+        r"""Fit then transform.
+
+        Parameters
+        ----------
+        X : array-like or list of array-like
+
+        Returns
+        -------
+        X_scaled : array-like or list of array-like
+            If X was a list, returns a list of transformed arrays.
+        """
+        self.fit(X)
+        return self._apply_transform(X)
+
+
+def apply_scaler(X_s, X_t, scaler=None):
+    r"""Apply a scaler to two arrays.
+
+    Dispatches based on the type of ``scaler``:
+
+    - ``None`` : returns inputs unchanged.
+    - Object with a ``.transform()`` method : calls ``scaler.transform()`` on each.
+    - Callable : calls ``scaler()`` on each (covers functions, lambdas,
+      PyTorch transforms, neural network encoders, etc.).
+
+    Parameters
+    ----------
+    X_s : array-like
+        Source samples.
+    X_t : array-like
+        Target samples.
+    scaler : None, object with .transform(), or callable, optional
+        Preprocessing to apply.
+
+    Returns
+    -------
+    X_s_out : array-like
+        Possibly transformed source samples.
+    X_t_out : array-like
+        Possibly transformed target samples.
+    """
+    if scaler is None:
+        return X_s, X_t
+    if hasattr(scaler, "transform") and callable(scaler.transform):
+        return scaler.transform(X_s), scaler.transform(X_t)
+    if callable(scaler):
+        return scaler(X_s), scaler(X_t)
+    raise ValueError(
+        "scaler must be None, an object with a .transform() method, "
+        "or a callable. Got type: {}".format(type(scaler).__name__)
+    )
+
+
 def fun_to_numpy(fun, arr, nx, warn=True):
     """Convert a function to a numpy function.
 
@@ -1518,3 +2047,104 @@ def fun_to_numpy(fun, arr, nx, warn=True):
             return nx.to_numpy(fun(nx.from_numpy(x)))
 
         return fun_numpy
+
+
+def split_sample_ratio(
+    X_a, a=None, ratio=0.5, random_split=False, random_state=None, nx=None
+):
+    """Split distribution according to a ratio of weights (using point ordering).
+
+
+    Parameters
+    ----------
+    X_a : array-like, shape (n_samples_a, dim)
+        samples in the source domain
+    a : array-like, shape (dim_a,), optional
+        Samples weights in the source domain (default is uniform)
+    nx : backend, optional
+        Backend for array operations, by default None (auto-detect)
+    ratio : float, optional
+        Ratio of the split, by default 0.5
+    random_split : bool, optional
+        Whether to split randomly, by default False
+    random_state : int, optional
+        Random state for reproducibility, by default None
+
+    Returns
+    -------
+
+    X_a1 : array-like, shape (n_samples_a1, dim)
+        First half of the samples in the source domain
+    X_a2 : array-like, shape (n_samples_a2, dim)
+        Second half of the samples in the source domain
+    a1 : array-like, shape (dim_a1,)
+        First half of the weights in the source domain
+    a2 : array-like, shape (dim_a2,)
+        Second half of the weights in the source domain
+    sel_a1 : slice, ndarray-like
+        Slice or indexes for the first half of the samples in the source domain
+    sel_a2 : slice, ndarray-like
+        Slice or indexes for the second half of the samples in the source domain
+    """
+
+    if ratio < 0 or ratio > 1:
+        raise ValueError("ratio should be in [0, 1]")
+
+    if nx is None:
+        nx = get_backend(X_a, a)
+
+    n_a = X_a.shape[0]
+
+    if a is None:
+        a = nx.ones(n_a, type_as=X_a) / n_a
+
+    if random_split:
+        if random_state is not None:
+            nx.seed(random_state)
+        perm = nx.randperm(n_a, type_as=X_a)
+        X_a = X_a[perm]
+        a = a[perm]
+
+    # find the split indices
+    acs = nx.cumsum(a)
+    thr_a = ratio * nx.sum(a)
+    idx_a = nx.searchsorted(acs, thr_a, side="right")
+
+    # split the samples and weights
+    X_a1, X_a2 = X_a[: idx_a + 1], X_a[idx_a:]
+
+    # compute weights for each half and adjust the last/first weight to sum to 0.5
+    a01, a02 = a[:idx_a], a[idx_a + 1 :]
+    v_idx = a[idx_a]
+    a1_1 = nx.maximum(v_idx * nx.detach((thr_a - nx.sum(a01)) / v_idx), 0)
+    a2_0 = nx.maximum(v_idx * nx.detach((nx.sum(a) - thr_a - nx.sum(a02)) / v_idx), 0)
+    # concat mass or remove samples if mass is 0
+    if a1_1 > 0:
+        a1 = nx.concatenate([a01, nx.reshape(a1_1, (1,))])
+        if random_split:
+            sel_a1 = perm[: idx_a + 1]
+        else:
+            sel_a1 = slice(0, idx_a + 1)
+    else:
+        X_a1 = X_a[:idx_a]
+        if random_split:
+            sel_a1 = perm[:idx_a]
+        else:
+            sel_a1 = slice(0, idx_a)
+        a1 = a01
+
+    if a2_0 > 0:
+        a2 = nx.concatenate([nx.reshape(a2_0, (1,)), a02])
+        if random_split:
+            sel_a2 = perm[idx_a:]
+        else:
+            sel_a2 = slice(idx_a, n_a)
+    else:
+        X_a2 = X_a[idx_a + 1 :]
+        if random_split:
+            sel_a2 = perm[idx_a + 1 :]
+        else:
+            sel_a2 = slice(idx_a + 1, n_a)
+        a2 = a02
+
+    return X_a1, X_a2, a1, a2, sel_a1, sel_a2

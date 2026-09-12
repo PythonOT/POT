@@ -462,7 +462,8 @@ def format_partitioned_graph(
     with structure matrix :math:`(\mathbf{C} \in R^{n \times n}`, feature matrix
     :math:`(\mathbf{F} \in R^{n \times d}` and node relative importance
     :math:`(\mathbf{p} \in \Sigma_n`, into a partitioned attributed graph
-    taking into account partitions and representants :math:`\mathcal{P} = \left{(\mathbf{P_{i}}, \mathbf{r_{i}})\right}_i`.
+    taking into account partitions and representants
+    :math:`\mathcal{P} = \left\{(\mathbf{P_{i}}, \mathbf{r_{i}})\right\}_i`.
 
     Parameters
     ----------
@@ -966,7 +967,8 @@ def format_partitioned_samples(X, p, part, rep_indices, F=None, alpha=1.0, nx=No
     with euclidean structure matrix :math:`(\mathbf{D}(\mathbf{X}) \in R^{n \times n}`,
     feature matrix :math:`(\mathbf{F} \in R^{n \times d}` and node relative importance
     :math:`(\mathbf{p} \in \Sigma_n`, into a partitioned attributed graph
-    taking into account partitions and representants :math:`\mathcal{P} = \left{(\mathbf{P_{i}}, \mathbf{r_{i}})\right}_i`.
+    taking into account partitions and representants
+    :math:`\mathcal{P} = \left\{(\mathbf{P_{i}}, \mathbf{r_{i}})\right\}_i`.
 
     Parameters
     ----------

@@ -75,6 +75,9 @@ OT in 1D and Sliced Wasserstein
 .. minigallery:: 
     ../../examples/sliced-wasserstein/plot_*.py 
     ../../examples/plot_compute_emd.py
+    ../../examples/unbalanced-partial/plot_partial_1d.py
+    ../../examples/unbalanced-partial/plot_UOT_1D.py
+    ../../examples/unbalanced-partial/plot_UOT_sliced.py
 
 
 OT on Gaussian and Gaussian Mixture Models

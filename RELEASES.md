@@ -1,5 +1,125 @@
 # Releases
 
+## 0.9.8dev
+
+#### New features
+
+- Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
+- Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
+  spiral points, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
+  as described in [95] (PR #838)
+
+#### Closed issues
+
+- Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
+- Build the CUDA generator and the CUDA entries of `TorchBackend.__type_list__` lazily, so that using POT with CPU-only torch tensors no longer initialises a CUDA context and claims device memory (PR #847, Issue #612)
+- Fix the sign issue in updates of the previous transport plan in `ot.batch.proximal_bregman_log_plan_batch` (Issue #842)
+- Load triton before TensorFlow in `ot.backend` so that building a torch optimizer no longer segfaults the interpreter, and remove the `torch<2.12` pin from the doctest and documentation requirements (PR #839, Issue #816)
+- Fix mean centering in `ot.dr.fda` and `ot.dr.wda`: `np.mean(X)` returned a scalar instead of the per-feature mean, so `proj` did not center the data as documented. In `ot.dr.fda` the same pattern in the class means made the between-class scatter matrix independent of which features separate the classes, and FDA returned a non-discriminant direction (PR #840)
+- `ot.dr.fda` and `ot.dr.wda` no longer modify the input array `X` in place (PR #840)
+- Fix `UnbalancedSinkhornTransport` `transform` failing with `AttributeError: 'NoneType' object has no attribute 'array_equal'` when `fit` was called with missing parameters (PR #837, Issue #650)
+
+## 0.9.7.post1
+
+This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).
+
+
+## 0.9.7
+
+This release contains several bug fixes and performance improvements, as well as updates to the documentation and examples and tests. We provide below a summary of the main new features and closed issues.
+
+
+**New exact OT solvers.** This new release adds many new variants and updates for the exact OT solver. First a new lazy exact OT solver that re-computes distances on-the-fly from coordinates, reducing memory usage from O(n×m) to O(n+m) ( available in [`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample) with `lazy=True)`).  Another major feature is the addition of a warmstart feature for the EMD solver, allowing users to provide initial potentials to speed up convergence (with `init_potentials` in [`ot.solve`](https://pythonot.github.io/all.html#ot.solve) and  [`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample)). Finally the release also include a sparse solver  and [`ot.solve`](https://pythonot.github.io/all.html#ot.solve) now accept sparse cost matrices and provides an OT plan whose support is included in the support of the cost matrix. All implementations are backend-agnostic and preserve gradient computation for automatic differentiation (but are solved on CPU).
+
+The computational time for different solvers (on a laptop CPU) are shown below:
+
+|                         n|                       100|                       500|                      1000|                      5000|
+|--------------------------|:------------------------:|:------------------------:|:------------------------:|:------------------------:|
+|                    Solve |                 7.259e-04|                 1.501e-02|                 1.055e-01|                 2.343e+00|
+|         Solve Warm Start |                 6.970e-04|                 5.413e-03|                 2.291e-02|                 6.036e-01|
+|               Solve Lazy |                 1.280e-03|                 3.098e-02|                 1.421e-01|                 3.377e+00|
+|         Solve Sparse 10% |                 3.453e-04|                 6.716e-04|                 1.535e-03|                 3.534e-02|
+
+
+**BSPOT solver.** A new solver relying on [Binary Space Partitioning (BSP)](https://pythonot.github.io/master/auto_examples/plot_bsp_ot.html) has been added to compute sparse transport plans between discrete measures in loglinear time which allows for very large problems to be solved. The release also includes a new [`ot.unbalanced.uot_1d`](https://pythonot.github.io/master/gen_modules/ot.unbalanced.html#ot.unbalanced.uot_1d) solver with a Frank-Wolfe solver for unbalanced optimal transport in 1D. 
+
+**Sliced OT pans** Finally we now have a sliced OT plan solver that can be used to compute sliced transport plans ([min-pivot sliced](https://pythonot.github.io/master/gen_modules/ot.sliced.html#ot.sliced.min_sliced_transport_plan) and [expected sliced](https://pythonot.github.io/master/gen_modules/ot.sliced.html#ot.sliced.expected_sliced_plan)) between two measures. 
+
+**OT between dynamical systems.** A novel [Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://pythonot.github.io/master/auto_examples/others/plot_sgot.html) has been implemented in `ot.sgot`. 
+
+**Unified API for barycenter solvers in `ot.solve_bary_sample`.** A new free support solver for barycenter solvers has been added in [`ot.solve_bary_sample`](https://pythonot.github.io/master/all.html#ot.solve_bary_sample). You can see [examples of how to use it here](https://pythonot.github.io/master/auto_examples/barycenters/plot_solve_barycenter_variants.html).
+
+**OT between high dimensional Gaussian distributions.** New methods to compute the linear transport map and the related 2-Wasserstein distance between high-dimensional (HD) Gaussian distributions have been added in [`ot.gaussian.bures_wasserstein_mapping_hd`](https://pythonot.github.io/master/gen_modules/ot.gaussian.html#id56) and [`ot.gaussian.bures_wasserstein_distance_hd`](https://pythonot.github.io/master/gen_modules/ot.gaussian.html#ot.gaussian.bures_wasserstein_distance_hd), respectively with empirical versions that estimate the distance from sample.
+
+**Batched solver for exact OT.** The batch implementations have also been improved and you can now solve exact OT problems in parallel on CPU or GPU using the new proximal point solver in functions [`ot.solve_batch`](https://pythonot.github.io/master/gen_modules/ot.batch.html#ot.batch.solve_batch) and [`ot.solve_sample_batch`](https://pythonot.github.io/master/gen_modules/ot.batch.html#ot.batch.solve_sample_batch) when `reg=0` or no provided. A new batch [loss for Fused unbalanced Gromov-Wasserstein](https://pythonot.github.io/master/gen_modules/ot.batch.html#ot.batch.loss_quadratic_batch) is also now available in `ot.batch`.
+
+
+**New methods in unified API [`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample).** The unified API function 
+[`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample) has also been updated to allows solving of specific problems such as BSP-OT, distance between high-dimensional (HD) Gaussian distributions and  sliced and max-sliced distances. 
+
+
+**Data normalization for sliced and [`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample) solvers.** The release also includes tools for data normalization and scaling which can not be used in sliced Wasserstein distance computations. A simple normalization class [`ot.utils.DataScaler`](https://pythonot.github.io/master/gen_modules/ot.utils.html#id46) has been added and supports all backends for `'standard'`, `'minmax'`, and `'l2'` methods. Finally an optional `scaler` parameter has been added to [`ot.sliced_wasserstein_distance`](https://pythonot.github.io/master/all.html#ot.sliced_wasserstein_distance),  [`ot.max_sliced_wasserstein_distance`](https://pythonot.github.io/master/all.html#ot.max_sliced_wasserstein_distance) and [`ot.solve_sample`](https://pythonot.github.io/all.html#ot.solve_sample).
+
+
+#### New features 
+
+- Refactor lazy EMD network simplex storage to avoid dense per-arc cost,
+  endpoint, flow, and state storage where possible, and return sparse lazy
+  transport plans instead of materializing dense plans internally (PR #813)
+- Removed OpenMP implementation in Simplex since no time gains are observed #820
+- Add sliced transport plans (min-pivot sliced and expected sliced) solvers (PR #767)
+- Add lazy EMD solver with on-the-fly distance computation from coordinates (PR #788)
+- Add Warmstart feature to the EMD solver for existing potentials (PR #793)
+- Add Warmstart potentials feature to the EMD solver for lazy and sparse solver (PR #795)
+- Faster init and result retrieval for EMD solver (PR #796)
+- Migrate backend from deprecated `scipy.sparse.coo_matrix` to modern `scipy.sparse.coo_array` (PR #782)
+- Geomloss function now handles both scalar and slice indices for i and j (PR #785)
+- Add support for sparse cost matrices in EMD solver (PR #778, Issue #397)
+- Add "BSP-OT: Sparse transport plans between discrete measures in loglinear time" (PR #768)
+- Added UOT1D with Frank-Wolfe in `ot.unbalanced.uot_1d` (PR #765)
+- Add Sliced UOT and Unbalanced Sliced OT in `ot/unbalanced/_sliced.py` (PR #765)
+- Add `ot.utils.DataScaler` class for backend-aware joint normalization of input distributions, with sklearn-compatible `fit`/`transform`/`fit_transform` API and   support for `'standard'`, `'minmax'`, and `'l2'` methods (PR #808)
+- Add `ot.utils.apply_scaler` helper that dispatches preprocessing to a scaler object,
+  a callable, or a no-op (PR #808)
+- Add optional `scaler` parameter to `sliced_wasserstein_distance` and  `max_sliced_wasserstein_distance` (PR #808)
+- Add SGD based semi-discrete OT solver in `ot.semidiscrete` and a gallery example. (PR #812)
+- Add a numerically stable log-domain solver for entropic partial Wasserstein, selectable via the new `method` parameter of `entropic_partial_wasserstein` (`method='sinkhorn_log'`) or directly through `entropic_partial_wasserstein_logscale` (Issue #723)
+- Add cost functions between linear operators following    [A Spectral-Grassmann Wasserstein metric for operator representations of dynamical systems](https://arxiv.org/pdf/2509.24920), implemented in `ot.sgot` (PR #792, PR #830)
+- Add batch FUGW loss to `ot.batch` and fix issues in some default parameters in the batch module (PR #775)
+- Wrapper for barycenter solvers with free support `ot.solvers.bary_free_support` (PR #730)
+- Build wheels on ubuntu ARM to avoid QEMU emulation (PR #818)
+- Add new methods to compute the linear transport map and the related 2-Wasserstein distance betweeen high-dimensional (HD) Gaussian distributions as described in [88], implemented in  `ot.gaussian.bures_wasserstein_mapping_hd` and `ot.gaussian.bures_wasserstein_distance_hd`, respectively. Two additional methods estimate the same quantities from the source and destination observed data and are implemented in `ot.gaussian.empirical_bures_wasserstein_mapping_hd` and `ot.gaussian.empirical_bures_wasserstein_distance_hd`, respectively (PR #814)
+- Update the geomloss wrapper to the new version and API (PR #826)
+- Fix docstrings for `lowrank_gromov_wasserstein_samples` and `lowrank_sinkhorn` (PR #823)
+- Reorganize all tests per backend (PR #828)
+- Implemented batch proximal point solver for OT problems `ot.batch.proximal_bregman_log_plan_batch` function and updated wrapper functions `ot.batch.solve_batch` and `ot.batch.solve_sample_batch` (PR #832)
+- Implement debiased OT solvers in `ot.solve_sample`.
+
+
+#### Closed issues
+
+- Fix label-aware cost correction in `ot.da` transport classes: the large cost was applied to unlabeled pairs instead of labeled pairs with different labels, so `ys`/`yt` had no effect when all labels were known (PR #833, Issue #664)
+- Mitigate NaN regime of `entropic_partial_wasserstein` at small `reg` via a new log-domain solver, reachable with `entropic_partial_wasserstein(..., method='sinkhorn_log')` (Issue #723; the default `method='sinkhorn'` path is unchanged — callers opt into the log-domain variant)
+- Fix NumPy 2.x compatibility in Brenier potential bounds (PR #788)
+- Fix MSVC Windows build by removing **restrict** keyword (PR #788)
+- Fix O(n³) performance bottleneck in sparse bipartite graph arc iteration (PR #785)
+- Fix deprecated JAX function in `ot.backend.JaxBackend` (PR #771, Issue #770)
+- Add test for build from source (PR #772, Issue #764)
+- Fix device for batch Ot solver in `ot.batch` (PR #784, Issue #783)
+- Fix openmp flags on macOS (PR #789)
+- Clean documentation (PR #787)
+- Fix code coverage (PR #791)
+- Fix test of the version of jax in `ot.backend` (PR #794)
+- Reverting the openmp fix on macOS (PR #789) for macOS (PR #797)
+- Align documentation build dependencies and doc extras (PR #801)
+- Debug Debug linux test core dump (PR #815)
+- Fix entropic regularization in `gcg`(PR #817, Issue #758)
+- Fix documentation build on master with submodules (PR #818)
+- Fix failing test for unbalanced solver with generic regularization (PR #824)
+- Fix reference number error introduced in PR #767 (PR #819)
+- Fix docstrings for `lowrank_gromov_wasserstein_samples` and `lowrank_sinkhorn` (PR #823)   
+- Update sgot cost function and example (PR #830)
+
 ## 0.9.6.post1
 
 *September 2025*

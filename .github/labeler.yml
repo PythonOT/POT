@@ -18,7 +18,7 @@ CI:
 
 ot.bregman:
 - changed-files:
-  - any-glob-to-any-file: ot/bergman/**
+  - any-glob-to-any-file: ot/bregman/**
 
 ot.gromov:
 - changed-files:
@@ -31,6 +31,10 @@ ot.unbalanced:
 ot.lp:
 - changed-files:
   - any-glob-to-any-file: ot/lp/**
+
+ot.bsp:
+- changed-files:
+  - any-glob-to-any-file: ot/bsp/**
 
 ot.utils:
 - changed-files:
@@ -68,17 +72,21 @@ ot.lowrank:
 - changed-files:
   - any-glob-to-any-file: ot/lowrank.py
 
+ot.sliced:
+- changed-files:
+  - any-glob-to-any-file: ot/sliced/**
+
 ot.solvers:
 - changed-files:
-  - any-glob-to-any-file: ot/solvers.py
+  - any-glob-to-any-file: ot/solvers/**
+
+ot.batch:
+- changed-files:
+  - any-glob-to-any-file: ot/batch/**
 
 ot.partial:
 - changed-files:
   - any-glob-to-any-file: ot/partial/**
-
-ot.sliced:
-- changed-files:
-  - any-glob-to-any-file: ot/sliced.py
 
 ot.smooth:
 - changed-files:
@@ -95,3 +103,7 @@ ot.dr:
 ot.gnn:
 - changed-files:
   - any-glob-to-any-file: ot/gnn/**
+
+ot.sgot:
+- changed-files:
+  - any-glob-to-any-file: ot/sgot.py

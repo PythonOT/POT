@@ -374,7 +374,7 @@ def lowrank_sinkhorn(
         Nonnegative rank of the OT plan. If None, min(ns, nt) is considered.
     alpha : int, optional. Default is 1e-10. (>0 and <1/r)
         Lower bound for the weight vector g.
-    rescale_cost : bool, optional. Default is False
+    rescale_cost : bool, optional. Default is True
         Rescale the low rank factorization of the sqeuclidean cost matrix
     init : str, optional. Default is 'random'.
         Initialization strategy for the low rank couplings. 'random', 'deterministic' or 'kmeans'

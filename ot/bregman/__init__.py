@@ -46,7 +46,7 @@ from ._screenkhorn import screenkhorn
 
 from ._dictionary import unmix
 
-from ._geomloss import empirical_sinkhorn2_geomloss, geomloss
+from ._geomloss import empirical_sinkhorn2_geomloss, geomloss, old_geomloss
 
 
 __all__ = [
@@ -76,6 +76,7 @@ __all__ = [
     "empirical_sinkhorn_nystroem",
     "empirical_sinkhorn_nystroem2",
     "geomloss",
+    "old_geomloss",
     "screenkhorn",
     "unmix",
 ]

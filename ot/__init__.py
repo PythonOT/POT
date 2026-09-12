@@ -5,7 +5,7 @@
     :py:mod:`ot.utils`, :py:mod:`ot.datasets`,
     :py:mod:`ot.gromov`, :py:mod:`ot.smooth`
     :py:mod:`ot.stochastic`, :py:mod:`ot.partial`, :py:mod:`ot.regpath`
-    , :py:mod:`ot.unbalanced`, :py:mod:`ot.mapping` .
+    , :py:mod:`ot.unbalanced`, :py:mod:`ot.sliced`, :py:mod:`ot.mapping` .
     The following sub-modules are not imported due to additional dependencies:
     - :any:`ot.dr` : depends on :code:`pymanopt` and :code:`autograd`.
     - :any:`ot.plot` : depends on :code:`matplotlib`
@@ -27,6 +27,7 @@ from . import gromov
 from . import smooth
 from . import stochastic
 from . import unbalanced
+from . import sliced
 from . import partial
 from . import backend
 from . import regpath
@@ -36,13 +37,17 @@ from . import solvers
 from . import gaussian
 from . import lowrank
 from . import gmm
+from . import semidiscrete
+from . import sgot
 
 # OT functions
 from .lp import (
     emd,
     emd2,
+    emd2_lazy,
     emd_1d,
     emd2_1d,
+    emd_1d_dual_backprop,
     wasserstein_1d,
     binary_search_circle,
     wasserstein_circle,
@@ -50,7 +55,14 @@ from .lp import (
     linear_circular_ot,
 )
 from .bregman import sinkhorn, sinkhorn2, barycenter
-from .unbalanced import sinkhorn_unbalanced, barycenter_unbalanced, sinkhorn_unbalanced2
+from .unbalanced import (
+    sinkhorn_unbalanced,
+    barycenter_unbalanced,
+    sinkhorn_unbalanced2,
+    uot_1d,
+    unbalanced_sliced_ot,
+    sliced_unbalanced_ot,
+)
 from .da import sinkhorn_lpl1_mm
 from .sliced import (
     sliced_wasserstein_distance,
@@ -58,6 +70,9 @@ from .sliced import (
     sliced_wasserstein_sphere,
     sliced_wasserstein_sphere_unif,
     linear_sliced_wasserstein_sphere,
+    stereographic_sliced_wasserstein_sphere,
+    min_sliced_transport_plan,
+    expected_sliced_plan,
 )
 from .gromov import (
     gromov_wasserstein,
@@ -69,19 +84,23 @@ from .gromov import (
 )
 from .weak import weak_optimal_transport
 from .factored import factored_optimal_transport
-from .solvers import solve, solve_gromov, solve_sample
+from .solvers import solve, solve_gromov, solve_sample, solve_bary_sample
 from .lowrank import lowrank_sinkhorn
 
 from .batch import solve_batch, solve_sample_batch, solve_gromov_batch, dist_batch
+from .bsp import compute_bspot_bijection, merge_bijections
+
 
 # utils functions
 from .utils import dist, unif, tic, toc, toq
 
-__version__ = "0.9.6.post1"
+
+__version__ = "0.9.8.dev"
 
 __all__ = [
     "emd",
     "emd2",
+    "emd2_lazy",
     "emd_1d",
     "sinkhorn",
     "sinkhorn2",
@@ -89,11 +108,14 @@ __all__ = [
     "datasets",
     "bregman",
     "lp",
+    "sliced",
     "tic",
     "toc",
     "toq",
     "gromov",
     "emd2_1d",
+    "emd_1d_dual",
+    "emd_1d_dual_backprop",
     "wasserstein_1d",
     "backend",
     "gaussian",
@@ -108,7 +130,13 @@ __all__ = [
     "sinkhorn_unbalanced2",
     "sliced_wasserstein_distance",
     "sliced_wasserstein_sphere",
+    "uot_1d",
+    "unbalanced_sliced_ot",
+    "sliced_unbalanced_ot",
     "linear_sliced_wasserstein_sphere",
+    "stereographic_sliced_wasserstein_sphere",
+    "min_sliced_transport_plan",
+    "expected_sliced_plan",
     "gromov_wasserstein",
     "gromov_wasserstein2",
     "gromov_barycenters",
@@ -120,6 +148,7 @@ __all__ = [
     "solve",
     "solve_gromov",
     "solve_sample",
+    "solve_bary_sample",
     "smooth",
     "stochastic",
     "unbalanced",
@@ -130,15 +159,20 @@ __all__ = [
     "factored",
     "lowrank",
     "gmm",
+    "semidiscrete",
+    "sgot",
     "binary_search_circle",
     "wasserstein_circle",
     "semidiscrete_wasserstein2_unif_circle",
     "linear_circular_ot",
     "sliced_wasserstein_sphere_unif",
+    "sliced_wasserstein_sphere",
     "lowrank_sinkhorn",
     "lowrank_gromov_wasserstein_samples",
     "solve_batch",
     "solve_gromov_batch",
     "solve_sample_batch",
     "dist_batch",
+    "compute_bspot_bijection",
+    "merge_bijections",
 ]

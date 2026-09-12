@@ -213,9 +213,9 @@ def free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter forwarded to EMD. The network
+        simplex solver no longer uses OpenMP, so this parameter is ignored.
 
     Returns
     -------
@@ -349,9 +349,9 @@ def generalized_free_support_barycenter(
         Print information along iterations
     log : bool, optional
         record log if True
-    numThreads: int or "max", optional (default=1, i.e. OpenMP is not used)
-        If compiled with OpenMP, chooses the number of threads to parallelize.
-        "max" selects the highest number possible.
+    numThreads: int or "max", optional (default=1)
+        Deprecated compatibility parameter forwarded to EMD. The network
+        simplex solver no longer uses OpenMP, so this parameter is ignored.
     eps: Stability coefficient for the change of variable matrix inversion
         If the :math:`\mathbf{P}_i^T` matrices don't span :math:`\mathbb{R}^d`, the problem is ill-defined and a matrix
         inversion will fail. In this case one may set eps=1e-8 and get a solution anyway (which may make little sense)
@@ -427,16 +427,20 @@ def generalized_free_support_barycenter(
 def ot_barycenter_energy(measure_locations, measure_weights, X, a, cost_list, nx=None):
     r"""
     Computes the energy of the OT barycenter functional for a given barycenter
-    support `X` and weights `a`: .. math::
+    support `X` and weights `a`:
+
+    .. math::
         V(X, a) = \sum_{k=1}^K w_k \mathcal{T}_{c_k}(X, a, Y_k, b_k),
 
-    where: - :math:`X` (n, d) is the barycenter support, - :math:`a` (n) is the
-    barycenter weights, - :math:`Y_k` (m_k, d_k) is the k-th measure support
-      (`measure_locations[k]`),
+    where:
+
+    - :math:`X` (n, d) is the barycenter support,
+    - :math:`a` (n) is the barycenter weights,
+    - :math:`Y_k` (m_k, d_k) is the k-th measure support (`measure_locations[k]`),
     - :math:`b_k` (m_k) is the k-th measure weights (`measure_weights[k]`),
     - :math:`c_k: \mathbb{R}^{n\times d}\times\mathbb{R}^{m_k\times d_k}
-         \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
-         (which computes the pairwise cost matrix)
+      \rightarrow \mathbb{R}_+^{n\times m_k}` is the k-th cost function
+      (which computes the pairwise cost matrix)
     - :math:`\mathcal{T}_{c_k}(X, a, Y_k, b)` is the OT cost between the
       barycenter measure and the k-th measure with respect to the cost
       :math:`c_k`.
@@ -586,7 +590,7 @@ def free_support_barycenter_generic_costs(
         of shape :math:`(n\times d_K)`, computing the ground barycenters
         (broadcasted over n). If not provided, done with Adam on PyTorch
         (requires PyTorch backend), inefficiently using the cost functions in
-        `cost_list`.
+        `cost_list`. This function must be provided if `method="true_fixed_point"` is used.
     a : array-like, optional
         Array of shape (n,) representing weights of the barycenter
         measure.Defaults to uniform.
@@ -669,8 +673,11 @@ def free_support_barycenter_generic_costs(
 
     if ground_bary is None:
         auto_ground_bary = True
+        assert (
+            method == "L2_barycentric_proj"
+        ), "ground_bary must be provided if method is 'true_fixed_point'"
         assert str(nx) == "torch", (
-            f"Backend {str(nx)} is not compatible with ground_bary=None, it"
+            f"Backend {str(nx)} is not compatible with ground_bary=None, it "
             "must be provided if not using PyTorch backend"
         )
         try:

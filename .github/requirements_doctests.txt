@@ -2,15 +2,15 @@ numpy>=1.20
 scipy>=1.6
 matplotlib
 autograd
-pymanopt @ git+https://github.com/pymanopt/pymanopt.git@master
+pymanopt
 cvxopt
 scikit-learn
 torch
 jax
 jaxlib
-tensorflow
+tensorflow; python_version < '3.14'
 pytest
 torch_geometric
 cvxpy
-geomloss
+geomloss>=0.3.1
 pykeops

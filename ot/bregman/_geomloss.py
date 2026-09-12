@@ -15,8 +15,15 @@ try:
     import torch
     from torch.autograd import grad
     from ..utils import get_backend, LazyTensor, dist
+
+    if geomloss.__version__ < "0.3.1":
+        old_geomloss = True
+    else:
+        old_geomloss = False
+
 except ImportError:
     geomloss = False
+    old_geomloss = False
 
 
 def get_sinkhorn_geomloss_lazytensor(
@@ -54,13 +61,32 @@ def get_sinkhorn_geomloss_lazytensor(
     shape = (X_a.shape[0], X_b.shape[0])
 
     def func(i, j, X_a, X_b, f, g, a, b, metric, blur):
+        X_a_i = X_a[i]
+        X_b_j = X_b[j]
+
+        if X_a_i.ndim == 1:
+            X_a_i = X_a_i[None, :]
+        if X_b_j.ndim == 1:
+            X_b_j = X_b_j[None, :]
+
         if metric == "sqeuclidean":
-            C = dist(X_a[i], X_b[j], metric=metric) / 2
+            C = dist(X_a_i, X_b_j, metric=metric) / 2
         else:
-            C = dist(X_a[i], X_b[j], metric=metric)
-        return nx.exp((f[i, None] + g[None, j] - C) / (blur**2)) * (
-            a[i, None] * b[None, j]
-        )
+            C = dist(X_a_i, X_b_j, metric=metric)
+
+        # Robust broadcasting using nx backend (handles both numpy and torch)
+        # For scalars, slice to keep 1D; for arrays, index directly
+        f_i = f[i : i + 1] if isinstance(i, int) else f[i]
+        g_j = g[j : j + 1] if isinstance(j, int) else g[j]
+        a_i = a[i : i + 1] if isinstance(i, int) else a[i]
+        b_j = b[j : j + 1] if isinstance(j, int) else b[j]
+
+        f_i = nx.reshape(f_i, (-1, 1))
+        g_j = nx.reshape(g_j, (1, -1))
+        a_i = nx.reshape(a_i, (-1, 1))
+        b_j = nx.reshape(b_j, (1, -1))
+
+        return nx.squeeze(nx.exp((f_i + g_j - C) / (blur**2)) * a_i * b_j)
 
     T = LazyTensor(
         shape, func, X_a=X_a, X_b=X_b, f=f, g=g, a=a, b=b, metric=metric, blur=blur
@@ -106,7 +132,13 @@ def empirical_sinkhorn2_geomloss(
     The algorithm used for solving the problem is the Sinkhorn-Knopp matrix
     scaling algorithm as proposed in and computed in log space for
     better stability and epsilon-scaling. The solution is computed in a lazy way
-    using the Geomloss [60] and the KeOps library [61].
+    using the Geomloss [60]_ and the KeOps library [61]_.
+
+    .. warning::
+        The Geomloss library is required for this function to work. Also
+        when setting `log=True`, the dual potentials are computed using autograd and
+        may be slow for large problems and prevent computing backward gradients. Use
+        the fynction  :func:`ot.solve_sample` with `method='geomloss'` for better performance and gradient computation.
 
     Parameters
     ----------
@@ -159,63 +191,66 @@ def empirical_sinkhorn2_geomloss(
 
     """
 
-    if geomloss:
-        nx = get_backend(X_s, X_t, a, b)
+    if not geomloss:
+        raise ImportError("geomloss not installed")
 
-        if nx.__name__ not in ["torch", "numpy"]:
-            raise ValueError("geomloss only support torch or numpy backend")
+    nx = get_backend(X_s, X_t, a, b)
 
-        if a is None:
-            a = nx.ones(X_s.shape[0], type_as=X_s) / X_s.shape[0]
-        if b is None:
-            b = nx.ones(X_t.shape[0], type_as=X_t) / X_t.shape[0]
+    if nx.__name__ not in ["torch", "numpy"]:
+        raise ValueError("geomloss only support torch or numpy backend")
 
-        if nx.__name__ == "numpy":
-            X_s_torch = torch.tensor(X_s)
-            X_t_torch = torch.tensor(X_t)
+    if a is None:
+        a = nx.ones(X_s.shape[0], type_as=X_s) / X_s.shape[0]
+    if b is None:
+        b = nx.ones(X_t.shape[0], type_as=X_t) / X_t.shape[0]
 
-            a_torch = torch.tensor(a)
-            b_torch = torch.tensor(b)
+    if nx.__name__ == "numpy":
+        X_s_torch = torch.tensor(X_s)
+        X_t_torch = torch.tensor(X_t)
 
-        else:
-            X_s_torch = X_s
-            X_t_torch = X_t
+        a_torch = torch.tensor(a)
+        b_torch = torch.tensor(b)
 
-            a_torch = a
-            b_torch = b
+    else:
+        X_s_torch = X_s
+        X_t_torch = X_t
 
-        # after that we are all in torch
+        a_torch = a
+        b_torch = b
 
-        # set blur value and p
-        if metric == "sqeuclidean":
-            p = 2
-            blur = np.sqrt(reg / 2)  # because geomloss divides cost by two
-        elif metric == "euclidean":
-            p = 1
-            blur = np.sqrt(reg)
-        else:
-            raise ValueError("geomloss only supports sqeuclidean and euclidean metrics")
+    # after that we are all in torch
 
+    # set blur value and p
+    if metric == "sqeuclidean":
+        p = 2
+        blur = np.sqrt(reg / 2)  # because geomloss divides cost by two
+    elif metric == "euclidean":
+        p = 1
+        blur = np.sqrt(reg)
+    else:
+        raise ValueError("geomloss only supports sqeuclidean and euclidean metrics")
+
+    if log:
         # force gradients for computing dual
         a_torch.requires_grad = True
         b_torch.requires_grad = True
 
-        loss = SamplesLoss(
-            loss="sinkhorn",
-            p=p,
-            blur=blur,
-            backend=backend,
-            debias=debias,
-            scaling=scaling,
-            verbose=verbose,
-        )
+    loss = SamplesLoss(
+        loss="sinkhorn",
+        p=p,
+        blur=blur,
+        backend=backend,
+        debias=debias,
+        scaling=scaling,
+        verbose=verbose,
+    )
 
-        # compute value
-        value = loss(
-            a_torch, X_s_torch, b_torch, X_t_torch
-        )  # linear + entropic/KL reg?
+    # compute value
+    value = loss(a_torch, X_s_torch, b_torch, X_t_torch)  # linear + entropic/KL reg?
 
-        # get dual potentials
+    # get dual potentials
+
+    if log:  # recover dual potentials
         f, g = grad(value, [a_torch, b_torch])
 
         if metric == "sqeuclidean":
@@ -226,20 +261,18 @@ def empirical_sinkhorn2_geomloss(
             g = g.cpu().detach().numpy()
             value = value.cpu().detach().numpy()
 
-        if log:
-            log = {}
-            log["f"] = f
-            log["g"] = g
-            log["value"] = value
+        log = {}
+        log["f"] = f
+        log["g"] = g
+        log["value"] = value
 
-            log["lazy_plan"] = get_sinkhorn_geomloss_lazytensor(
-                X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx
-            )
+        log["lazy_plan"] = get_sinkhorn_geomloss_lazytensor(
+            X_s, X_t, f, g, a, b, metric=metric, blur=blur, nx=nx
+        )
 
-            return value, log
-
-        else:
-            return value
+        return value, log
 
     else:
-        raise ImportError("geomloss not installed")
+        if nx.__name__ == "numpy":
+            value = value.cpu().detach().numpy()
+        return value
