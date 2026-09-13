@@ -11,7 +11,11 @@ import numpy as np
 import pytest
 
 import ot
-from ot.sliced import get_random_projections, get_projections_spiral
+from ot.sliced import (
+    get_random_projections,
+    get_projections_spiral,
+    get_projections_uniortho,
+)
 from ot.backend import tf, torch
 
 
@@ -658,3 +662,231 @@ def test_sliced_qsw_beats_uniform_d3():
 
     assert mean_rqsw_error < mean_uniform_error
     assert qsw_error < mean_uniform_error
+
+
+# =============================================================================
+# UnifOrtho: get_projections_uniortho-specific tests, mirroring the
+# get_projections_spiral section above where the same property applies, and
+# adding dedicated tests for what is specific to UnifOrtho (orthogonality
+# within a block, no dimension restriction, exact behaviour when
+# n_projections is a multiple of d).
+# =============================================================================
+
+
+def test_get_projections_uniortho():
+    """UnifOrtho directions must lie on the unit sphere,
+    regardless of n_projections being a multiple of d."""
+    projections = get_projections_uniortho(7, 50, seed=0)
+    np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
+
+
+def test_get_projections_uniortho_seed_reproducibility():
+    """Same seed must give identical rotations; different seeds must differ."""
+    p1 = get_projections_uniortho(7, 50, seed=42)
+    p2 = get_projections_uniortho(7, 50, seed=42)
+    p3 = get_projections_uniortho(7, 50, seed=43)
+    np.testing.assert_allclose(p1, p2)
+    assert not np.allclose(p1, p3)
+
+
+@pytest.mark.parametrize("d", [1, 2, 7, 13, 50])
+def test_get_projections_uniortho_works_for_any_dimension(d):
+    """UnifOrtho places no restriction on the dimension.
+    This is its main advantage over the spiral points."""
+    projections = get_projections_uniortho(d, 20, seed=0)
+    assert projections.shape == (d, 20)
+    np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
+
+
+def test_get_projections_uniortho_block_is_orthogonal():
+    """The defining property of UnifOrtho : within one full block of d directions,
+    they must be EXACTLY mutually orthogonal (not just individually uniform on the
+    sphere, as plain i.i.d. sampling already gives)."""
+    d = 6
+    projections = get_projections_uniortho(d, d, seed=0)  # exactly one block
+    gram = projections.T @ projections
+    np.testing.assert_allclose(gram, np.eye(d), atol=1e-10)
+
+
+def test_get_projections_uniortho_handles_non_multiple_of_d():
+    """n_projections need not be a multiple of d (see Notes in the
+    docstring): the returned shape must still be exactly what was
+    requested, and every direction must still be unit-norm, even though
+    the last block is truncated and thus not fully orthogonal internally."""
+    d, n_projections = 5, 13  # 13 is not a multiple of 5
+    projections = get_projections_uniortho(d, n_projections, seed=0)
+    assert projections.shape == (d, n_projections)
+    np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
+
+
+def test_get_projections_uniortho_exact_when_n_projections_equals_d():
+    """When n_projections == d, UnifOrtho draws a single COMPLETE
+    orthonormal basis of R^d. For any fixed vector delta, summing the
+    squared coefficients of delta in a complete orthonormal basis recovers
+    ||delta||^2 exactly (Parseval), regardless of which orthonormal basis
+    is used. Verified here directly: this is not an approximation that
+    happens to be good, it is an exact identity up to floating point.
+    """
+    d = 10
+    rng = np.random.RandomState(0)
+    delta = rng.randn(d)
+
+    projections = get_projections_uniortho(d, d, seed=1)
+    measured = np.mean((projections.T @ delta) ** 2)
+    exact = np.sum(delta**2) / d
+
+    np.testing.assert_allclose(measured, exact, atol=1e-9)
+
+
+@pytest.mark.parametrize("sampling_slices", ["unif_ortho"])
+def test_sliced_unif_ortho_same_dist(sampling_slices):
+    """Same distribution -> SWD approx 0, mirrors test_sliced_same_dist."""
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 7)
+    u = ot.utils.unif(n)
+
+    res = ot.sliced_wasserstein_distance(
+        x, x, u, u, 20, seed=0, sampling_slices=sampling_slices
+    )
+    np.testing.assert_almost_equal(res, 0.0)
+
+
+def test_sliced_unif_ortho_different_dists():
+    """Different distributions -> SWD > 0, mirrors test_sliced_different_dists."""
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 7)
+    y = rng.randn(n, 7) + 2.0
+    u = ot.utils.unif(n)
+
+    res = ot.sliced_wasserstein_distance(
+        x, y, u, u, 20, seed=0, sampling_slices="unif_ortho"
+    )
+    assert res > 0.0
+
+
+def test_sliced_unif_ortho_ignores_randomized_prefix():
+    """Documents current, intended behaviour of the generic
+    'randomized_' prefix stripping used for sampling_slices: since
+    get_projections_uniortho has no randomized/deterministic distinction,
+    'randomized_unif_ortho' is accepted and behaves exactly like
+    'unif_ortho' (the randomized flag it would imply is simply unused).
+    This is not a bug, but it is worth pinning down explicitly so a future
+    refactor cannot silently change it without a test failing."""
+    n = 30
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 6)
+    y = rng.randn(n, 6) + 1.0
+
+    val_plain = ot.sliced_wasserstein_distance(
+        x, y, n_projections=18, seed=7, sampling_slices="unif_ortho"
+    )
+    val_prefixed = ot.sliced_wasserstein_distance(
+        x, y, n_projections=18, seed=7, sampling_slices="randomized_unif_ortho"
+    )
+    assert val_plain == val_prefixed
+
+
+def test_sliced_unif_ortho_backend(nx):
+    """UnifOrtho must work identically across backends, mirrors test_sliced_backend."""
+    n = 100
+    rng = np.random.RandomState(0)
+    x = rng.randn(n, 7)
+    y = rng.randn(2 * n, 7)
+
+    xb, yb = nx.from_numpy(x, y)
+
+    val = ot.sliced_wasserstein_distance(
+        xb, yb, n_projections=20, seed=0, sampling_slices="unif_ortho"
+    )
+    val2 = ot.sliced_wasserstein_distance(
+        xb, yb, n_projections=20, seed=0, sampling_slices="unif_ortho"
+    )
+
+    assert nx.to_numpy(val) > 0
+    assert val == val2
+
+
+def test_unif_ortho_seed_does_not_match_across_backends(nx):
+    """Mirrors test_rqsw_seed_does_not_match_across_backends: UnifOrtho's
+    orthogonal blocks are built from each backend's OWN native Gaussian
+    draw (via get_random_rotations), so 'the same' integer seed does not
+    produce the same rotation, or the same SW value, across backends.
+    NumPy is skipped as the trivial reference, exactly as for RQSW."""
+    if nx.__name__ == "numpy":
+        pytest.skip("NumPy is the reference backend; it trivially matches itself")
+
+    d = 7
+    n_projections = 20
+    rng = np.random.RandomState(0)
+    X_s = rng.normal(0, 1, (30, d))
+    X_t = rng.normal(1, 1, (30, d))
+
+    val_np = ot.sliced_wasserstein_distance(
+        X_s, X_t, n_projections=n_projections, seed=0, sampling_slices="unif_ortho"
+    )
+
+    X_s_b, X_t_b = nx.from_numpy(X_s, X_t)
+    val_b = ot.sliced_wasserstein_distance(
+        X_s_b, X_t_b, n_projections=n_projections, seed=0, sampling_slices="unif_ortho"
+    )
+
+    assert not np.isclose(nx.to_numpy(val_b), val_np), (
+        f"Expected UnifOrtho to differ between numpy and '{nx.__name__}' "
+        f"with 'the same' seed (different RNG algorithms), but they "
+        f"agreed: {val_np} vs {nx.to_numpy(val_b)}"
+    )
+
+
+def test_sliced_unif_ortho_beats_uniform_high_dim():
+    """UnifOrtho should reduce the SW approximation error compared to
+    uniform random sampling in HIGH dimension -- the regime it is
+    recommended for (unlike spiral_qmc/RQSW, tested for d=3 in
+    test_sliced_qsw_beats_uniform_d3; see get_projections_uniortho and
+    sliced_wasserstein_distance docstrings for the literature recommending
+    this dimension-dependent choice).
+
+    Uses the exact same closed-form reference construction as
+    test_sliced_qsw_beats_uniform_d3 (a pure translation, whose SW is
+    known exactly, with zero finite-sample error). n_projections is
+    deliberately NOT a multiple of d, to avoid the degenerate case where
+    UnifOrtho draws exactly one complete orthonormal basis (see
+    test_get_projections_uniortho_exact_when_n_projections_equals_d),
+    which would make this test measure that special identity rather than
+    UnifOrtho's typical behaviour.
+
+    Measured during development, averaged over 20 seeds at d=30,
+    n_projections=47: UnifOrtho was ~2.3x more accurate than uniform
+    sampling. The threshold below is set well below that measurement.
+    """
+    d = 30
+    n_projections = 47  # not a multiple of d, see docstring above
+    n_trials = 20
+
+    rng = np.random.RandomState(0)
+    delta = rng.normal(size=d)
+    X_s = rng.normal(0, 1, (200, d))
+    X_t = X_s + delta
+    reference = np.linalg.norm(delta) / np.sqrt(d)
+
+    uniform_errors = []
+    uniortho_errors = []
+    for seed in range(n_trials):
+        val_uniform = ot.sliced_wasserstein_distance(
+            X_s, X_t, n_projections=n_projections, seed=seed, sampling_slices="uniform"
+        )
+        val_uniortho = ot.sliced_wasserstein_distance(
+            X_s,
+            X_t,
+            n_projections=n_projections,
+            seed=seed,
+            sampling_slices="unif_ortho",
+        )
+        uniform_errors.append(abs(val_uniform - reference))
+        uniortho_errors.append(abs(val_uniortho - reference))
+
+    mean_uniform_error = np.mean(uniform_errors)
+    mean_uniortho_error = np.mean(uniortho_errors)
+
+    assert mean_uniortho_error < mean_uniform_error

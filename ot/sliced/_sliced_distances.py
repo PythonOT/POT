@@ -11,7 +11,11 @@ Sliced Wasserstein distances solvers: sliced and max-sliced.
 
 from ..backend import get_backend
 from ..utils import list_to_array, apply_scaler
-from ._utils import get_random_projections, get_projections_spiral
+from ._utils import (
+    get_random_projections,
+    get_projections_spiral,
+    get_projections_uniortho,
+)
 from ..lp import wasserstein_1d
 
 
@@ -40,11 +44,18 @@ def sliced_wasserstein_distance(
     - :math:`\theta_\# \mu` stands for the pushforwards of the projection :math:`X \in \mathbb{R}^d \mapsto \langle \theta, X \rangle`
 
     By default, the projection directions :math:`\theta` are sampled uniformly
-    at random. Setting ``sampling_slices`` to ``"spiral_qmc"`` or ``"randomized_spiral_qmc"`` instead
-    uses Quasi-Monte Carlo point sets on the sphere (generalized spiral
-    points), which can reduce the approximation error for a given
-    ``n_projections`` [95]. These two options are
-    only implemented for ``dim == 3``.
+    at random. Two families of alternatives are available through
+    ``sampling_slices``, each better suited to a different regime:
+
+    - ``"spiral_qmc"`` / ``"randomized_spiral_qmc"`` use a deterministic,
+      low-discrepancy point set on the sphere (generalized spiral points),
+      only defined for ``dim == 3`` [95].
+    - ``"unif_ortho"`` uses independent blocks of mutually orthogonal
+      directions (UnifOrtho), defined for any dimension.
+
+    A recent numerical and theoretical study [98] recommends
+    ``"randomized_spiral_qmc"`` in low dimensions and
+    ``"unif_ortho"`` for large ``dim``, with no clear winner in between.
 
     Parameters
     ----------
@@ -95,6 +106,12 @@ def sliced_wasserstein_distance(
           point set as ``"spiral_qmc"``, with a random rotation applied, giving an
           unbiased estimator suitable for stochastic optimization. Only
           implemented for ``dim == 3``.
+        - ``"unif_ortho"``: UnifOrtho [97] -- independent blocks of
+          mutually orthogonal directions, each block drawn from the Haar
+          measure on :math:`O(\mathrm{dim})`. Defined for any ``dim``, and
+          recommended in particular for large ``dim`` [98]. See
+          :any:`get_projections_uniortho` for details, including how
+          ``n_projections`` not being a multiple of ``dim`` is handled.
 
     Returns
     -------
@@ -117,7 +134,8 @@ def sliced_wasserstein_distance(
 
     .. [31] Bonneel, Nicolas, et al. "Sliced and radon wasserstein barycenters of measures." Journal of Mathematical Imaging and Vision 51.1 (2015): 22-45
     .. [95] Nguyen, K., Bariletto, N., & Ho, N. (2024). "Quasi-Monte Carlo for 3D Sliced Wasserstein." International Conference on Learning Representations (ICLR).
-    .. [96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). "Minimal Discrete Energy on the Sphere." Mathematical Research Letters, 1(6), 647-662.
+    .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). "Orthogonal Estimation of Wasserstein Distances." Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89.
+    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." arXiv:2509.10166.
     """
 
     X_s, X_t = list_to_array(X_s, X_t)
@@ -160,10 +178,18 @@ def sliced_wasserstein_distance(
                 backend=nx,
                 type_as=X_s,
             )
+        elif method == "unif_ortho":
+            projections = get_projections_uniortho(
+                d,
+                n_projections,
+                seed=seed,
+                backend=nx,
+                type_as=X_s,
+            )
         else:
             raise ValueError(
                 f"Unknown sampling_slices method '{sampling_slices}', "
-                "must be one of 'uniform', 'spiral_qmc', 'randomized_spiral_qmc'"
+                "must be one of 'uniform', 'spiral_qmc', 'randomized_spiral_qmc', 'unif_ortho' "
             )
     else:
         n_projections = projections.shape[1]

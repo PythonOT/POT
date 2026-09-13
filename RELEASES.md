@@ -8,6 +8,9 @@
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
   spiral points, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [95] (PR #838)
+- Add UnifOrtho sliced Wasserstein sampling via independent orthogonal
+  blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
+  as described in [97] (PR #XXX)
 
 #### Closed issues
 
