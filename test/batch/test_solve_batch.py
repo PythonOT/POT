@@ -190,3 +190,22 @@ def test_backend(nx, method):
     M = dist_batch(X, X)
     solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, method=method)
     solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5, method=method)
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("method", ["proximal", "sinkhorn", "log_sinkhorn"])
+def test_solve_batch_device(method):
+    """Solve on each available device without internal CPU/GPU mismatch."""
+    batchsize = 2
+    n = 4
+    d = 2
+    X = np.random.randn(batchsize, n, d)
+
+    devices = [torch.device("cpu")]
+    if torch.cuda.is_available():
+        devices.append(torch.device("cuda"))
+    for device in devices:
+        Xd = torch.tensor(X, device=device)
+        M = dist_batch(Xd, Xd)
+        res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, method=method)
+        assert res.plan.device == Xd.device
