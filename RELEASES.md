@@ -4,6 +4,13 @@
 
 #### New features
 
+- `ot.dr.wda` gains `solver='torch'`, a PyTorch autodiff solver with Riemannian gradient descent, usable on installations without autograd or pymanopt, and accepting torch tensors directly (PR #853, Issue #806)
+- `ot.dr` dependencies (autograd, pymanopt, scikit-learn, torch) are now imported optionally, so importing `ot.dr` no longer requires all of them; each function raises an explicit `ImportError` naming what it needs (PR #853)
+
+## 0.9.8dev
+
+#### New features
+
 - Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
   spiral points, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
