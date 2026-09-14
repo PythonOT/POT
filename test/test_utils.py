@@ -204,6 +204,32 @@ def test_unif_backend(nx):
         np.testing.assert_allclose(1, np.sum(nx.to_numpy(u)), atol=1e-6)
 
 
+def test_unif_shape():
+    # int form is unchanged
+    np.testing.assert_allclose(1, np.sum(ot.unif(10)))
+    # shape-tuple form normalizes over the last dimension
+    u = ot.unif((3, 5))
+    assert u.shape == (3, 5)
+    np.testing.assert_allclose(1, np.sum(u, axis=-1))
+
+
+def test_check_marginal(nx):
+    from ot.utils import check_marginal
+
+    M = nx.from_numpy(np.random.rand(2, 4, 5))
+    # None -> uniform on the reference backend/device, normalized over last dim
+    a = check_marginal(None, (2, 4), type_as=M)
+    b = check_marginal(None, (2, 5), type_as=M)
+    assert tuple(a.shape) == (2, 4) and tuple(b.shape) == (2, 5)
+    np.testing.assert_allclose(1, nx.to_numpy(nx.sum(a, axis=-1)), atol=1e-6)
+    # a valid provided marginal is returned unchanged
+    a2 = nx.from_numpy(np.full((2, 4), 1 / 4))
+    assert check_marginal(a2, (2, 4), type_as=M) is a2
+    # wrong shape raises a clear error
+    with pytest.raises(ValueError):
+        check_marginal(a2, (2, 5), type_as=M)
+
+
 def test_dist():
     n = 10
 
