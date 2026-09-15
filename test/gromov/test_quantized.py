@@ -22,8 +22,10 @@ def test_quantized_gw(nx):
     C2 = rng.uniform(low=10.0, high=20.0, size=(n_samples, n_samples))
     C2 = (C2 + C2.T) / 2.0
 
-    p = ot.unif(n_samples)
-    q = ot.unif(n_samples)
+    p = np.arange(n_samples).astype(float)
+    p /= p.sum()
+    q = np.arange(n_samples).astype(float)
+    q /= q.sum()
 
     npart2 = 3
 
@@ -50,7 +52,7 @@ def test_quantized_gw(nx):
                 npart1,
                 npart2,
                 p,
-                None,
+                q,
                 C1,
                 None,
                 part_method=part_method,
@@ -63,7 +65,7 @@ def test_quantized_gw(nx):
                 C2b,
                 npart1,
                 npart2,
-                None,
+                pb,
                 qb,
                 None,
                 C2b,
@@ -80,6 +82,12 @@ def test_quantized_gw(nx):
                 T_globalb, Ts_localb, Tb = resb
 
             Tb = nx.to_numpy(Tb)
+            print("T.sum(0):", T.sum(0))
+            print("Tb.sum(0):", Tb.sum(0))
+            print("T.sum(1):", T.sum(1))
+            print("Tb.sum(1):", Tb.sum(1))
+            print("p:", p)
+            print("q:", q)
             # check constraints
             np.testing.assert_allclose(T, Tb, atol=1e-06)
             np.testing.assert_allclose(
@@ -114,7 +122,6 @@ def test_quantized_fgw(nx):
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
-
     npart1 = 2
     npart2 = 3
 
@@ -226,7 +233,17 @@ def test_quantized_fgw(nx):
     MRb = ot.dist(FR1b, FR2b)
 
     T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-        CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, alpha, build_OT=False
+        CR1b,
+        CR2b,
+        list_R1b,
+        list_R2b,
+        list_p1b,
+        list_p2b,
+        None,
+        None,  # part useless when build_OT=False
+        MRb,
+        alpha,
+        build_OT=False,
     )
 
     T_globalb = nx.to_numpy(T_globalb)
@@ -264,7 +281,17 @@ def test_quantized_fgw(nx):
     # for non admissible values of alpha
     with pytest.raises(ValueError):
         ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-            CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, 0, build_OT=False
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b,
+            None,
+            None,  # part useless when build_OT=False
+            MRb,
+            0,
+            build_OT=False,
         )
 
     # for non-consistent feature information provided
@@ -364,8 +391,8 @@ def test_quantized_fgw_samples(nx):
     F1 = rng.uniform(low=0.0, high=10, size=(n_samples_1, 3))
     F2 = rng.uniform(low=0.0, high=10, size=(n_samples_2, 3))
 
-    p = ot.unif(n_samples_1)
-    q = ot.unif(n_samples_2)
+    p = np.random.dirichlet(np.ones(n_samples_1))
+    q = np.random.dirichlet(np.ones(n_samples_2))
 
     npart1 = 2
     npart2 = 3
@@ -382,17 +409,18 @@ def test_quantized_fgw_samples(nx):
     for npart1 in [1, n_samples_1 + 1, 2]:
         log_tests = [True, False, True]
         count_mode = 0
-
+        print("--- npart:", npart1, "---")
         for method in methods:
+            print("method:", method, " nx:", nx.__name__)
             log_ = log_tests[count_mode]
             count_mode += 1
 
             res = ot.gromov.quantized_fused_gromov_wasserstein_samples(
-                X1, X2, npart1, npart2, p, None, F1, F2, alpha, method, log_
+                X1, X2, npart1, npart2, p, q, F1, F2, alpha, method, log_
             )
 
             resb = ot.gromov.quantized_fused_gromov_wasserstein_samples(
-                X1b, X2b, npart1, npart2, None, qb, F1b, F2b, alpha, method, log_
+                X1b, X2b, npart1, npart2, pb, qb, F1b, F2b, alpha, method, log_
             )
 
             if log_:
@@ -437,8 +465,25 @@ def test_quantized_fgw_samples(nx):
 
     MRb = ot.dist(FR1b, FR2b)
 
+    print("CR1b:", type(CR1b), CR1b.dtype)
+    print("CR2b", type(CR2b), CR2b.dtype)
+    print("list_R1b:", type(list_R1b), type(list_R1b[0]), list_R1b[0].dtype)
+    print("list_R2b:", type(list_R2b), type(list_R2b[0]), list_R2b[0].dtype)
+    print("list_p1b:", type(list_p1b), type(list_p1b[0]), list_p1b[0].dtype)
+    print("list_p2b:", type(list_p2b), type(list_p2b[0]), list_p2b[0].dtype)
+    print("MRb:", type(MRb), MRb.dtype)
     T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-        CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, alpha, build_OT=False
+        CR1b,
+        CR2b,
+        list_R1b,
+        list_R2b,
+        list_p1b,
+        list_p2b,
+        None,
+        None,  # part useless when build_OT=False
+        MRb,
+        alpha,
+        build_OT=False,
     )
 
     T_globalb = nx.to_numpy(T_globalb)
