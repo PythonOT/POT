@@ -9,7 +9,7 @@ OT Barycenter Solvers
 # License: MIT License
 
 from ..backend import get_backend
-from ..utils import dist
+from ..utils import dist, check_marginal
 from ._network_simplex import emd, emd2
 
 import numpy as np
@@ -240,8 +240,7 @@ def free_support_barycenter(
     N = len(measures_locations)
     k = X_init.shape[0]
     d = X_init.shape[1]
-    if b is None:
-        b = nx.ones((k,), type_as=X_init) / k
+    b = check_marginal(b, k, type_as=X_init)
     if weights is None:
         weights = nx.ones((N,), type_as=X_init) / N
 
@@ -396,8 +395,7 @@ def generalized_free_support_barycenter(
     if Y_init is None:
         Y_init = nx.randn(n_samples_bary, d, type_as=X_list[0])
 
-    if b is None:
-        b = nx.ones(n_samples_bary, type_as=X_list[0]) / n_samples_bary  # not optimized
+    b = check_marginal(b, n_samples_bary, type_as=X_list[0])  # not optimized
 
     out = free_support_barycenter(
         Z_list,
