@@ -298,7 +298,7 @@ def check_marginal(a, shape, type_as=None, nx=None):
         raise ValueError(f"marginal has shape {tuple(a.shape)}, expected {size}")
     if type_as is not None:
         if nx is None:
-            nx = get_backend(type_as)
+            nx = get_backend(type_as, a)
         nx.assert_same_dtype_device(type_as, a)
     return a
 
@@ -2139,8 +2139,7 @@ def split_sample_ratio(
 
     n_a = X_a.shape[0]
 
-    if a is None:
-        a = nx.ones(n_a, type_as=X_a) / n_a
+    a = check_marginal(a, n_a, type_as=X_a)
 
     if random_split:
         if random_state is not None:
