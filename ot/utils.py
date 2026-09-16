@@ -201,7 +201,6 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
 
         row_indices = nx.arange(V.shape[0])
         row_indices = row_indices.reshape(-1, 1)
-        print(row_indices.shape)
         # Extract the top max_nz values for each row
         # and then project to simplex.
         U = V[row_indices, max_nz_indices]
