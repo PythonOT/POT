@@ -12,7 +12,7 @@
 
 #### Closed issues
 
-- Fix `ot.solve_sample` with `reg` and `lazy=True` returning `value=None`, which also made the debiased lazy Sinkhorn divergence (`debias=True` or `"split"`) fail with a `TypeError` (PR #PRNUM)
+- Fix `ot.solve_sample` with `reg` and `lazy=True` returning `value=None`, which also made the debiased lazy Sinkhorn divergence (`debias=True` or `"split"`) fail with a `TypeError` (PR #861)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)
 - Fix device placement in `ot.batch.bregman_projection_batch` so `ot.solve_batch(..., method="sinkhorn")` no longer crashes on GPU when the torch default device is CPU (PR #851)
 - Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
