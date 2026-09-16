@@ -4,6 +4,7 @@
 
 #### New features
 
+- Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
 - Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
   spiral points, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
@@ -14,6 +15,7 @@
 
 #### Closed issues
 
+- Fix device placement in `ot.batch.bregman_projection_batch` so `ot.solve_batch(..., method="sinkhorn")` no longer crashes on GPU when the torch default device is CPU (PR #851)
 - Preserve input dtype and device for expected sliced plans, avoid materializing dense distance matrices for sparse plans, and fix weighted sparse-distance ordering (PR #846, Issue #845)
 - Build the CUDA generator and the CUDA entries of `TorchBackend.__type_list__` lazily, so that using POT with CPU-only torch tensors no longer initialises a CUDA context and claims device memory (PR #847, Issue #612)
 - Fix the sign issue in updates of the previous transport plan in `ot.batch.proximal_bregman_log_plan_batch` (Issue #842)
