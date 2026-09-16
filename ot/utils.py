@@ -398,22 +398,22 @@ def sparse_ot_dist(
     assert x1.ndim == 2, f"x1 must be a 2d array, got {x1.ndim}d array instead"
     assert x2.ndim == 2, f"x2 must be a 2d array, got {x2.ndim}d array instead"
 
-    assert len(i) == len(j), (
-        f"i and j must have the same length, got {len(i)} and {len(j)}"
-    )
+    assert len(i) == len(
+        j
+    ), f"i and j must have the same length, got {len(i)} and {len(j)}"
     if w is not None:
-        assert len(w) == len(i), (
-            f"w must have the same length as i and j, got {len(w)} and {len(i)}"
-        )
+        assert len(w) == len(
+            i
+        ), f"w must have the same length as i and j, got {len(w)} and {len(i)}"
 
     assert metric in ("minkowski", "euclidean", "cityblock", "sqeuclidean"), (
         "sparse_dist work only with metrics from the following list: "
         + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
     )
 
-    assert x1.shape[1] == x2.shape[1], (
-        f"x1 ({x1.shape}) and x2 ({x2.shape}) must have the same number of columns"
-    )
+    assert (
+        x1.shape[1] == x2.shape[1]
+    ), f"x1 ({x1.shape}) and x2 ({x2.shape}) must have the same number of columns"
 
     if metric == "euclidean":
         p = 2
