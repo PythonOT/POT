@@ -203,7 +203,8 @@ def test_quantized_fgw(nx):
                 if key in logb.keys():
                     np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
 
-    # complementary tests for utils functions
+    ### Complementary tests for utils functions
+    # checking consistency between wrapper and utils functions
     DF1b = ot.dist(F1b, F1b)
     DF2b = ot.dist(F2b, F2b)
     C1b_new = alpha * C1b + (1 - alpha) * DF1b
@@ -239,11 +240,11 @@ def test_quantized_fgw(nx):
         list_R2b,
         list_p1b,
         list_p2b,
-        None,
-        None,  # part useless when build_OT=False
+        part1b,
+        part2b,
         MRb,
         alpha,
-        build_OT=False,
+        build_OT=True,
     )
 
     T_globalb = nx.to_numpy(T_globalb)
@@ -311,6 +312,41 @@ def test_quantized_fgw(nx):
             "spectral_fused",
             "random",
             log_,
+        )
+    ### Tests for non-consistent dimensions of inputs
+    # when build_OT = False, errors can come from inconsistent dimensions
+    # between list_R1b and list_p1b or list_R2b and list_p2b
+    with pytest.raises(ValueError):
+        ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b[:-2],
+            None,
+            None,  # part useless when build_OT=False
+            MRb,
+            alpha,
+            build_OT=False,
+        )
+
+    # when build_OT = True, errors can also come from inconsistent dimensions
+    # between list_R1b and part1 or list_R2b and part2
+
+    with pytest.raises(ValueError):
+        ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b,
+            part1b,
+            part2b[:-2],
+            MRb,
+            alpha,
+            build_OT=True,
         )
 
 
