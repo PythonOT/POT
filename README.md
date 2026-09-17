@@ -490,6 +490,6 @@ Artificial Intelligence.
 
 \[97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). [Orthogonal Estimation of Wasserstein Distances](https://proceedings.mlr.press/v89/rowland19a.html). Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89:186-195.
 
-\[98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). [Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance](https://arxiv.org/abs/2509.10166). Transactions on Machine Learning Research.
+\[98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). [Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance](https://openreview.net/forum?id=JSiTmB6Ehu). Transactions on Machine Learning Research.
 
 \[99] Sisouk, K., Delon, J., & Tierny, J. (2025). [A User's Guide to Sampling Strategies for Sliced Optimal Transport](https://openreview.net/forum?id=ECBepTWAFG). Transactions on Machine Learning Research.

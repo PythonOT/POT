@@ -366,7 +366,9 @@ def projection_sphere_to_ball(x, eps=1e-6, backend=None):
     return radius * x_azimuth / nx.sqrt(norm2)
 
 
-def get_random_orthogonal(d, n_projections, seed=None, backend=None, type_as=None):
+def get_random_orthogonal_directions(
+    d, n_projections, seed=None, backend=None, type_as=None
+):
     r"""
     Generates n_projections directions on the sphere via UnifOrtho
     (Rowland et al., 2019) [97]: independent blocks of d mutually
@@ -376,7 +378,7 @@ def get_random_orthogonal(d, n_projections, seed=None, backend=None, type_as=Non
     Unlike the generalized spiral points (:any:`get_projections_spiral`),
     which only cover :math:`d=3`, UnifOrtho is defined for any dimension
     d, and is recommended specifically for large d: Petrovic, Bardenet &
-    Desolneux (2025) [98] show both empirically and theoretically that it
+    Desolneux (2026) [98] show both empirically and theoretically that it
     reduces the variance of the Sliced Wasserstein estimator in high
     dimension, while quasi-Monte Carlo methods such as the spiral points
     remain preferable in low dimension (:math:`d \in \{2, 3\}`).
@@ -413,7 +415,7 @@ def get_random_orthogonal(d, n_projections, seed=None, backend=None, type_as=Non
     --------
     >>> n_projections = 100
     >>> d = 5
-    >>> projs = get_random_orthogonal(d, n_projections, seed=0)
+    >>> projs = get_random_orthogonal_directions(d, n_projections, seed=0)
     >>> np.allclose(np.sum(np.square(projs), 0), 1.)  # doctest: +NORMALIZE_WHITESPACE
     True
     >>> first_block = projs[:, :d]
@@ -424,7 +426,7 @@ def get_random_orthogonal(d, n_projections, seed=None, backend=None, type_as=Non
     ----------
 
     .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). "Orthogonal Estimation of Wasserstein Distances." Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89.
-    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." Transactions on Machine Learning Research.
+    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." Transactions on Machine Learning Research.
     """
     if backend is None:
         nx = NumpyBackend()

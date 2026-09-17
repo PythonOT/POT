@@ -33,7 +33,7 @@ where UnifOrtho is the recommended choice.
     Weller, A. (2019). Orthogonal Estimation of Wasserstein Distances.
     Proceedings of the 22nd International Conference on Artificial
     Intelligence and Statistics (AISTATS), PMLR 89.
-.. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). Repulsive
+.. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). Repulsive
     Monte Carlo on the sphere for the sliced Wasserstein distance.
     Transactions on Machine Learning Research.
 .. [99] Sisouk, K., Delon, J., & Tierny, J. (2025). A User's Guide to
@@ -52,7 +52,7 @@ import matplotlib.pylab as pl
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (registers the 3D projection)
 
 import ot
-from ot.sliced import get_random_projections, get_random_orthogonal
+from ot.sliced import get_random_projections, get_random_orthogonal_directions
 
 ##############################################################################
 # Visualize the block structure on the sphere (d=3, for intuition only)
@@ -80,7 +80,7 @@ n_projections = n_blocks * d
 seed = 42
 
 theta_uniform = get_random_projections(d, n_projections, seed=seed)
-theta_uniortho = get_random_orthogonal(d, n_projections, seed=seed)
+theta_uniortho = get_random_orthogonal_directions(d, n_projections, seed=seed)
 
 # A plain unit sphere surface, drawn behind the scattered points below.
 u_sphere = np.linspace(0, 2 * np.pi, 40)

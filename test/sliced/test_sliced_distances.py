@@ -14,7 +14,7 @@ import ot
 from ot.sliced import (
     get_random_projections,
     get_projections_spiral,
-    get_random_orthogonal,
+    get_random_orthogonal_directions,
 )
 from ot.backend import tf, torch
 
@@ -665,7 +665,7 @@ def test_sliced_qsw_beats_uniform_d3():
 
 
 # =============================================================================
-# UnifOrtho: get_random_orthogonal-specific tests, mirroring the
+# UnifOrtho: get_random_orthogonal_directions-specific tests, mirroring the
 # get_projections_spiral section above where the same property applies, and
 # adding dedicated tests for what is specific to UnifOrtho (orthogonality
 # within a block, no dimension restriction, exact behaviour when
@@ -673,53 +673,53 @@ def test_sliced_qsw_beats_uniform_d3():
 # =============================================================================
 
 
-def test_get_random_orthogonal():
+def test_get_random_orthogonal_directions():
     """UnifOrtho directions must lie on the unit sphere,
     regardless of n_projections being a multiple of d."""
-    projections = get_random_orthogonal(7, 50, seed=0)
+    projections = get_random_orthogonal_directions(7, 50, seed=0)
     np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
 
 
-def test_get_random_orthogonal_seed_reproducibility():
+def test_get_random_orthogonal_directions_seed_reproducibility():
     """Same seed must give identical rotations; different seeds must differ."""
-    p1 = get_random_orthogonal(7, 50, seed=42)
-    p2 = get_random_orthogonal(7, 50, seed=42)
-    p3 = get_random_orthogonal(7, 50, seed=43)
+    p1 = get_random_orthogonal_directions(7, 50, seed=42)
+    p2 = get_random_orthogonal_directions(7, 50, seed=42)
+    p3 = get_random_orthogonal_directions(7, 50, seed=43)
     np.testing.assert_allclose(p1, p2)
     assert not np.allclose(p1, p3)
 
 
 @pytest.mark.parametrize("d", [1, 2, 7, 13, 50])
-def test_get_random_orthogonal_works_for_any_dimension(d):
+def test_get_random_orthogonal_directions_works_for_any_dimension(d):
     """UnifOrtho places no restriction on the dimension.
     This is its main advantage over the spiral points."""
-    projections = get_random_orthogonal(d, 20, seed=0)
+    projections = get_random_orthogonal_directions(d, 20, seed=0)
     assert projections.shape == (d, 20)
     np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
 
 
-def test_get_random_orthogonal_block_is_orthogonal():
+def test_get_random_orthogonal_directions_block_is_orthogonal():
     """The defining property of UnifOrtho : within one full block of d directions,
     they must be EXACTLY mutually orthogonal (not just individually uniform on the
     sphere, as plain i.i.d. sampling already gives)."""
     d = 6
-    projections = get_random_orthogonal(d, d, seed=0)  # exactly one block
+    projections = get_random_orthogonal_directions(d, d, seed=0)  # exactly one block
     gram = projections.T @ projections
     np.testing.assert_allclose(gram, np.eye(d), atol=1e-10)
 
 
-def test_get_random_orthogonal_handles_non_multiple_of_d():
+def test_get_random_orthogonal_directions_handles_non_multiple_of_d():
     """n_projections need not be a multiple of d (see Notes in the
     docstring): the returned shape must still be exactly what was
     requested, and every direction must still be unit-norm, even though
     the last block is truncated and thus not fully orthogonal internally."""
     d, n_projections = 5, 13  # 13 is not a multiple of 5
-    projections = get_random_orthogonal(d, n_projections, seed=0)
+    projections = get_random_orthogonal_directions(d, n_projections, seed=0)
     assert projections.shape == (d, n_projections)
     np.testing.assert_almost_equal(np.sum(projections**2, 0), 1.0)
 
 
-def test_get_random_orthogonal_exact_when_n_projections_equals_d():
+def test_get_random_orthogonal_directions_exact_when_n_projections_equals_d():
     """When n_projections == d, UnifOrtho draws a single COMPLETE
     orthonormal basis of R^d. For any fixed vector delta, summing the
     squared coefficients of delta in a complete orthonormal basis recovers
@@ -731,7 +731,7 @@ def test_get_random_orthogonal_exact_when_n_projections_equals_d():
     rng = np.random.RandomState(0)
     delta = rng.randn(d)
 
-    projections = get_random_orthogonal(d, d, seed=1)
+    projections = get_random_orthogonal_directions(d, d, seed=1)
     measured = np.mean((projections.T @ delta) ** 2)
     exact = np.sum(delta**2) / d
 
@@ -769,11 +769,11 @@ def test_sliced_unif_ortho_different_dists():
 def test_sliced_unif_ortho_ignores_randomized_prefix():
     """Documents current, intended behaviour of the generic
     'randomized_' prefix stripping used for sampling_slices: since
-    get_random_orthogonal has no randomized/deterministic distinction,
-    'randomized_unif_ortho' is accepted and behaves exactly like
-    'unif_ortho' (the randomized flag it would imply is simply unused).
-    This is not a bug, but it is worth pinning down explicitly so a future
-    refactor cannot silently change it without a test failing."""
+    get_random_orthogonal_directions has no randomized/deterministic
+    distinction, 'randomized_unif_ortho' is accepted and behaves exactly
+    like 'unif_ortho' (the randomized flag it would imply is simply
+    unused). This is not a bug, but it is worth pinning down explicitly so
+    a future refactor cannot silently change it without a test failing."""
     n = 30
     rng = np.random.RandomState(0)
     x = rng.randn(n, 6)
@@ -843,16 +843,16 @@ def test_sliced_unif_ortho_beats_uniform_high_dim():
     """UnifOrtho should reduce the SW approximation error compared to
     uniform random sampling in HIGH dimension -- the regime it is
     recommended for (unlike spiral_qmc/RQSW, tested for d=3 in
-    test_sliced_qsw_beats_uniform_d3; see get_random_orthogonal and
-    sliced_wasserstein_distance docstrings for the literature recommending
-    this dimension-dependent choice).
+    test_sliced_qsw_beats_uniform_d3; see get_random_orthogonal_directions
+    and sliced_wasserstein_distance docstrings for the literature
+    recommending this dimension-dependent choice).
 
     Uses the exact same closed-form reference construction as
     test_sliced_qsw_beats_uniform_d3 (a pure translation, whose SW is
     known exactly, with zero finite-sample error). n_projections is
     deliberately NOT a multiple of d, to avoid the degenerate case where
     UnifOrtho draws exactly one complete orthonormal basis (see
-    test_get_random_orthogonal_exact_when_n_projections_equals_d),
+    test_get_random_orthogonal_directions_exact_when_n_projections_equals_d),
     which would make this test measure that special identity rather than
     UnifOrtho's typical behaviour.
 
