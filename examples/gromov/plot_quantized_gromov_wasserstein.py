@@ -259,6 +259,8 @@ OT_global_, OTs_local_, OT_, log_ = quantized_fused_gromov_wasserstein_partition
     list_R2,
     list_h1,
     list_h2,
+    part1,
+    part2,
     MR=None,
     alpha=1.0,
     build_OT=True,
