@@ -510,13 +510,24 @@ def dist(
     elif metric == "euclidean":
         return euclidean_distances(x1, x2, squared=False, nx=nx)
     elif metric == "cityblock":
-        if use_tensor:
-            return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
+        if w is None:
+            if use_tensor:
+                return nx.sum(nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2)
+            else:
+                M = 0.0
+                for i in range(x1.shape[1]):
+                    M += nx.abs(x1[:, i][:, None] - x2[:, i][None, :])
+                return M
         else:
-            M = 0.0
-            for i in range(x1.shape[1]):
-                M += nx.abs(x1[:, i][:, None] - x2[:, i][None, :])
-            return M
+            if use_tensor:
+                return nx.sum(
+                    w[None, None, :] * nx.abs(x1[:, None, :] - x2[None, :, :]), axis=2
+                )
+            else:
+                M = 0.0
+                for i in range(x1.shape[1]):
+                    M += w[i] * nx.abs(x1[:, i][:, None] - x2[:, i][None, :])
+                return M
     elif metric == "minkowski":
         if w is None:
             if use_tensor:
