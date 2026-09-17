@@ -307,6 +307,19 @@ def test_dist():
         ot.dist(x, x, metric="fakeone")
 
 
+@pytest.mark.parametrize("use_tensor", [True, False])
+def test_dist_weighted_cityblock(use_tensor):
+    rng = np.random.RandomState(0)
+    x1 = rng.randn(5, 3)
+    x2 = rng.randn(4, 3)
+    w = rng.rand(3)
+
+    expected = scipy.spatial.distance.cdist(x1, x2, metric="cityblock", w=w)
+    D = ot.dist(x1, x2, metric="cityblock", w=w, use_tensor=use_tensor)
+
+    np.testing.assert_allclose(D, expected, atol=1e-12)
+
+
 def test_sparse_ot_dist_uses_pair_weights():
     x1 = np.array([[0.0], [1.0]])
     x2 = np.array([[0.0], [5.0]])
