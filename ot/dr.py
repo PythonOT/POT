@@ -196,6 +196,9 @@ def _wda_torch(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize
     d = X.shape[1]
     nc = len(xc)
 
+    if not 1 <= p <= d:
+        raise ValueError(f"Need d >= p >= 1. Values supplied were d = {d} and p = {p}")
+
     if P0 is None:
         P = torch.linalg.qr(torch.randn(d, p, dtype=dtype, device=device))[0]
     else:
@@ -258,10 +261,17 @@ def _wda_torch_entry(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, nor
     numpy in gives numpy out; a torch tensor in keeps its device and dtype.
     """
     was_numpy = not torch.is_tensor(X)
-    Xt = torch.as_tensor(X) if was_numpy else X
-    if not torch.is_floating_point(Xt):
-        Xt = Xt.to(torch.float64)
-    yt = y if torch.is_tensor(y) else torch.as_tensor(np.asarray(y))
+    if was_numpy:
+        # match the autograd path, which promotes to float64 via P
+        Xt = torch.as_tensor(np.asarray(X, dtype=np.float64))
+    else:
+        Xt = X if torch.is_floating_point(X) else X.to(torch.float64)
+    # labels may be strings or any hashable, which torch cannot hold, so index
+    # them by position the way numpy's split_classes does
+    if torch.is_tensor(y):
+        yt = y
+    else:
+        yt = torch.as_tensor(np.unique(np.asarray(y), return_inverse=True)[1])
     if P0 is None:
         P0t = None
     else:

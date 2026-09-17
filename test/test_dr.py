@@ -396,3 +396,35 @@ def test_wda_torch_unknown_sinkhorn_method():
 
     with pytest.raises(ValueError):
         ot.dr.wda(xs, ys, 2, maxiter=2, solver="torch", sinkhorn_method="nope")
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_non_numeric_labels():
+    """Labels need not be numeric: numpy indexes by value, torch cannot."""
+    rng = np.random.RandomState(0)
+    xs = np.vstack([rng.randn(40, 5) + 3 * rng.randn(1, 5) for _ in range(2)])
+    ys = np.array(["cat"] * 40 + ["dog"] * 40)
+
+    P, _ = ot.dr.wda(xs, ys, 2, maxiter=3, solver="torch")
+
+    assert P.shape == (5, 2)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_rejects_p_larger_than_d():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+
+    with pytest.raises(ValueError):
+        ot.dr.wda(xs, ys, xs.shape[1] + 1, maxiter=3, solver="torch")
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_numpy_input_returns_float64():
+    """numpy in gives float64 out, matching the autograd solver."""
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+
+    P, _ = ot.dr.wda(xs.astype(np.float32), ys, 2, maxiter=3, solver="torch")
+
+    assert P.dtype == np.float64
