@@ -10,7 +10,7 @@ Batch operations for linear optimal transport.
 # License: MIT License
 
 from ..backend import get_backend
-from ..utils import OTResult
+from ..utils import OTResult, check_marginal
 from ._utils import (
     bregman_log_projection_batch,
     bregman_projection_batch,
@@ -375,10 +375,8 @@ def solve_batch(
 
     B, n, m = M.shape
 
-    if a is None:
-        a = nx.ones((B, n), type_as=M) / n
-    if b is None:
-        b = nx.ones((B, m), type_as=M) / m
+    a = check_marginal(a, (B, n), type_as=M, nx=nx)
+    b = check_marginal(b, (B, m), type_as=M, nx=nx)
 
     if method == "log_sinkhorn":
         K = -M / reg
