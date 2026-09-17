@@ -18,15 +18,16 @@ in the estimate for a given number of projections.
 UnifOrtho takes a different route that works in *any* dimension:
 instead of drawing directions independently, it draws them in blocks of ``dim`` directions,
 each block is a random orthonormal basis (a draw from the Haar measure on the
-orthogonal group :math:`O(\\mathrm{dim})`). Directions within a block are
+special orthogonal group :math:`\\mathrm{SO}(\\mathrm{dim})`). Directions within a block are
 therefore exactly mutually orthogonal, spreading them out much more evenly
 than independent draws would.
 
 We first visualize this block structure on the ordinary 3D sphere, purely
 for intuition -- dimension 3 is precisely where QSW/RQSW should be
-preferred in practice, not UnifOrtho. We then measure convergence to the
-true Sliced Wasserstein distance in a genuinely high dimension, where
-UnifOrtho is the recommended choice.
+preferred in practice, not UnifOrtho, as the convergence comparison right
+after the visualization confirms numerically. We then measure convergence
+to the true Sliced Wasserstein distance in a genuinely high dimension,
+where UnifOrtho is the recommended choice.
 
 .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., &
     Weller, A. (2019). Orthogonal Estimation of Wasserstein Distances.
@@ -34,7 +35,10 @@ UnifOrtho is the recommended choice.
     Intelligence and Statistics (AISTATS), PMLR 89.
 .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). Repulsive
     Monte Carlo on the sphere for the sliced Wasserstein distance.
-    arXiv:2509.10166.
+    Transactions on Machine Learning Research.
+.. [99] Sisouk, K., Delon, J., & Tierny, J. (2025). A User's Guide to
+    Sampling Strategies for Sliced Optimal Transport. Transactions on
+    Machine Learning Research.
 """
 
 # Author: Samuel Vangu <samuelvangu0@gmail.com>
@@ -48,7 +52,7 @@ import matplotlib.pylab as pl
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (registers the 3D projection)
 
 import ot
-from ot.sliced import get_random_projections, get_projections_uniortho
+from ot.sliced import get_random_projections, get_random_orthogonal
 
 ##############################################################################
 # Visualize the block structure on the sphere (d=3, for intuition only)
@@ -63,6 +67,9 @@ from ot.sliced import get_random_projections, get_projections_uniortho
 #   same-colored points are exactly orthogonal to one another -- this is
 #   the structure that is not visible in the uniform sample.
 #
+# A translucent sphere is drawn behind the points purely to make the
+# geometry easier to read.
+#
 # Dimension 3 is used here only because it is the one human beings can
 # actually look at. It is *not* the dimension UnifOrtho is recommended
 # for -- see the convergence experiment below.
@@ -73,7 +80,14 @@ n_projections = n_blocks * d
 seed = 42
 
 theta_uniform = get_random_projections(d, n_projections, seed=seed)
-theta_uniortho = get_projections_uniortho(d, n_projections, seed=seed)
+theta_uniortho = get_random_orthogonal(d, n_projections, seed=seed)
+
+# A plain unit sphere surface, drawn behind the scattered points below.
+u_sphere = np.linspace(0, 2 * np.pi, 40)
+v_sphere = np.linspace(0, np.pi, 20)
+sphere_x = np.outer(np.cos(u_sphere), np.sin(v_sphere))
+sphere_y = np.outer(np.sin(u_sphere), np.sin(v_sphere))
+sphere_z = np.outer(np.ones_like(u_sphere), np.cos(v_sphere))
 
 fig = pl.figure(1, figsize=(10, 5))
 
@@ -97,6 +111,9 @@ ax2.scatter(
 ax2.set_title("UnifOrtho (one color per orthogonal block)")
 
 for ax in (ax1, ax2):
+    ax.plot_surface(
+        sphere_x, sphere_y, sphere_z, color="lightgray", alpha=0.15, linewidth=0
+    )
     ax.set_box_aspect([1, 1, 1])
     ax.view_init(elev=20, azim=45)
     ax.set_xticks([])
@@ -110,6 +127,59 @@ pl.show()
 # basis of R^3 -- three mutually perpendicular directions. The uniform
 # sample on the left has no such guarantee: any two of its points can end
 # up arbitrarily close to each other.
+
+##############################################################################
+# Convergence at d=3: UnifOrtho is not the right tool here
+# ------------------------------------------------------------
+# Before moving to high dimension, it is worth checking numerically that
+# UnifOrtho is indeed NOT the best choice at d=3 -- randomized spiral
+# points (RQSW, see the companion example "Quasi-Monte Carlo Sliced
+# Wasserstein in 3D") are. We use the same exact closed-form reference as
+# below (a pure translation).
+
+from ot.sliced import get_projections_spiral  # noqa: E402 (kept local to this section)
+
+d3 = 3
+rng3 = np.random.RandomState(1)
+delta3 = rng3.normal(size=d3) * 1.2
+Xs3 = rng3.uniform(-2, 2, (100, d3))
+Xt3 = Xs3 + delta3
+sw_true3 = np.linalg.norm(delta3) / np.sqrt(d3)
+
+n_proj_list3 = [10, 20, 50, 100]
+n_trials3 = 10
+
+errors3 = {"uniform": [], "unif_ortho": [], "randomized_spiral_qmc": []}
+for n_proj in n_proj_list3:
+    row = {k: [] for k in errors3}
+    for t in range(n_trials3):
+        for method in errors3:
+            val = ot.sliced_wasserstein_distance(
+                Xs3, Xt3, n_projections=n_proj, sampling_slices=method, seed=t
+            )
+            row[method].append(abs(val - sw_true3))
+    for method in errors3:
+        errors3[method].append(np.mean(row[method]))
+
+pl.figure(2, figsize=(6, 5))
+for method, marker, label in [
+    ("uniform", "o-", "Uniform (MC)"),
+    ("unif_ortho", "s-", "UnifOrtho"),
+    ("randomized_spiral_qmc", "^-", "RQSW"),
+]:
+    pl.plot(n_proj_list3, errors3[method], marker, label=label)
+pl.xscale("log")
+pl.yscale("log")
+pl.xlabel("Number of projections")
+pl.ylabel("Absolute error to the true SWD")
+pl.title("Convergence of the Sliced Wasserstein estimate (d=3)")
+pl.legend()
+pl.show()
+
+# RQSW is consistently the most accurate here, UnifOrtho a clear second
+# (still better than plain uniform sampling, but not the recommended
+# choice), and uniform sampling the least accurate -- exactly the
+# low-dimensional ordering the literature [99] describes.
 
 ##############################################################################
 # Convergence to the true Sliced Wasserstein distance, in high dimension
@@ -164,7 +234,7 @@ std_err_uniform = errors_uniform.std(axis=0)
 mean_err_uniortho = errors_uniortho.mean(axis=0)
 std_err_uniortho = errors_uniortho.std(axis=0)
 
-pl.figure(2, figsize=(6, 5))
+pl.figure(3, figsize=(6, 5))
 pl.plot(n_proj_list, mean_err_uniform, "o-", label="Uniform (MC)")
 pl.fill_between(
     n_proj_list,
@@ -189,10 +259,11 @@ pl.show()
 
 # UnifOrtho consistently reaches a given accuracy with markedly fewer
 # projections than uniform sampling in this high-dimensional setting --
-# the opposite of the low-dimensional case, where QSW/RQSW are the better choice.
-# As a rule of thumb from the literature [98]: prefer RQSW in low dimension, UnifOrtho in high dimension, and
-# either may do in between. Since UnifOrtho remains an unbiased,
-# stochastic estimator (like RQSW), it is also a drop-in replacement for
-# uniform sampling in stochastic optimization settings.
+# the opposite of the low-dimensional case above, where RQSW is the
+# better choice. As a rule of thumb from the literature [98, 99]: prefer
+# RQSW in low dimension, UnifOrtho in high dimension, and either may do
+# in between. Since UnifOrtho remains an unbiased, stochastic estimator
+# (like RQSW), it is also a drop-in replacement for uniform sampling in
+# stochastic optimization settings.
 
 # %%

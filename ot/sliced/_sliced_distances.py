@@ -14,7 +14,7 @@ from ..utils import list_to_array, apply_scaler
 from ._utils import (
     get_random_projections,
     get_projections_spiral,
-    get_projections_uniortho,
+    get_random_orthogonal,
 )
 from ..lp import wasserstein_1d
 
@@ -53,7 +53,7 @@ def sliced_wasserstein_distance(
     - ``"unif_ortho"`` uses independent blocks of mutually orthogonal
       directions (UnifOrtho), defined for any dimension.
 
-    A recent numerical and theoretical study [98] recommends
+    Recent numerical and theoretical studies [98, 99] recommend
     ``"randomized_spiral_qmc"`` in low dimensions and
     ``"unif_ortho"`` for large ``dim``, with no clear winner in between.
 
@@ -108,9 +108,9 @@ def sliced_wasserstein_distance(
           implemented for ``dim == 3``.
         - ``"unif_ortho"``: UnifOrtho [97] -- independent blocks of
           mutually orthogonal directions, each block drawn from the Haar
-          measure on :math:`O(\mathrm{dim})`. Defined for any ``dim``, and
-          recommended in particular for large ``dim`` [98]. See
-          :any:`get_projections_uniortho` for details, including how
+          measure on :math:`\mathrm{SO}(\mathrm{dim})`. Defined for any
+          ``dim``, and recommended in particular for large ``dim`` [98, 99].
+          See :any:`get_random_orthogonal` for details, including how
           ``n_projections`` not being a multiple of ``dim`` is handled.
 
     Returns
@@ -136,7 +136,8 @@ def sliced_wasserstein_distance(
     .. [95] Nguyen, K., Bariletto, N., & Ho, N. (2024). "Quasi-Monte Carlo for 3D Sliced Wasserstein." International Conference on Learning Representations (ICLR).
     .. [96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). "Minimal Discrete Energy on the Sphere." Mathematical Research Letters, 1(6), 647-662.
     .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). "Orthogonal Estimation of Wasserstein Distances." Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89.
-    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." arXiv:2509.10166.
+    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." Transactions on Machine Learning Research.
+    .. [99] Sisouk, K., Delon, J., & Tierny, J. (2025). "A User's Guide to Sampling Strategies for Sliced Optimal Transport." Transactions on Machine Learning Research.
     """
 
     X_s, X_t = list_to_array(X_s, X_t)
@@ -180,7 +181,7 @@ def sliced_wasserstein_distance(
                 type_as=X_s,
             )
         elif method == "unif_ortho":
-            projections = get_projections_uniortho(
+            projections = get_random_orthogonal(
                 d,
                 n_projections,
                 seed=seed,

@@ -366,12 +366,12 @@ def projection_sphere_to_ball(x, eps=1e-6, backend=None):
     return radius * x_azimuth / nx.sqrt(norm2)
 
 
-def get_projections_uniortho(d, n_projections, seed=None, backend=None, type_as=None):
+def get_random_orthogonal(d, n_projections, seed=None, backend=None, type_as=None):
     r"""
     Generates n_projections directions on the sphere via UnifOrtho
     (Rowland et al., 2019) [97]: independent blocks of d mutually
     orthogonal, unit-norm directions, each block drawn from the Haar
-    measure on the orthogonal group :math:`O(d)`.
+    measure on the special orthogonal group :math:`\mathrm{SO}(d)`.
 
     Unlike the generalized spiral points (:any:`get_projections_spiral`),
     which only cover :math:`d=3`, UnifOrtho is defined for any dimension
@@ -413,7 +413,7 @@ def get_projections_uniortho(d, n_projections, seed=None, backend=None, type_as=
     --------
     >>> n_projections = 100
     >>> d = 5
-    >>> projs = get_projections_uniortho(d, n_projections, seed=0)
+    >>> projs = get_random_orthogonal(d, n_projections, seed=0)
     >>> np.allclose(np.sum(np.square(projs), 0), 1.)  # doctest: +NORMALIZE_WHITESPACE
     True
     >>> first_block = projs[:, :d]
@@ -424,7 +424,7 @@ def get_projections_uniortho(d, n_projections, seed=None, backend=None, type_as=
     ----------
 
     .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). "Orthogonal Estimation of Wasserstein Distances." Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89.
-    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." arXiv:2509.10166.
+    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2025). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." Transactions on Machine Learning Research.
     """
     if backend is None:
         nx = NumpyBackend()

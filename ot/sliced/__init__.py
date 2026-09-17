@@ -17,7 +17,7 @@ from ._utils import (
     projection_sphere_to_circle,
     get_projections_spiral,
     projection_sphere_to_ball,
-    get_projections_uniortho,
+    get_random_orthogonal,
 )
 from ._sliced_distances import (
     sliced_wasserstein_distance,
@@ -47,5 +47,5 @@ __all__ = [
     "linear_sliced_wasserstein_sphere",
     "get_projections_spiral",
     "stereographic_sliced_wasserstein_sphere",
-    "get_projections_uniortho",
+    "get_random_orthogonal",
 ]
