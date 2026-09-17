@@ -7,7 +7,7 @@ Factored OT solvers (low rank, cost or OT plan)
 # License: MIT License
 
 from .backend import get_backend
-from .utils import dist, get_lowrank_lazytensor
+from .utils import dist, get_lowrank_lazytensor, check_marginal
 from .lp import emd
 from .bregman import sinkhorn
 
@@ -104,10 +104,8 @@ def factored_optimal_transport(
     n_b = Xb.shape[0]
     d = Xa.shape[1]
 
-    if a is None:
-        a = nx.ones((n_a), type_as=Xa) / n_a
-    if b is None:
-        b = nx.ones((n_b), type_as=Xb) / n_b
+    a = check_marginal(a, n_a, type_as=Xa)
+    b = check_marginal(b, n_b, type_as=Xb)
 
     if X0 is None:
         X = nx.randn(r, d, type_as=Xa)
