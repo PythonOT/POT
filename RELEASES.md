@@ -4,7 +4,7 @@
 
 #### New features
 
-- Add `ot.lp.emd_grid_l1`, an exact EMD-L1 solver for histograms sharing a multi-dimensional Cartesian grid support. It solves a min-cost flow on the grid's adjacency graph rather than the full bipartite graph (Ling & Okada, 2007), which is one to two orders of magnitude faster for this case (PR #TODO)
+- Add `ot.lp.emd_grid_l1`, an exact EMD-L1 solver for histograms sharing a multi-dimensional Cartesian grid support. It solves a min-cost flow on the grid's adjacency graph rather than the full bipartite graph (Ling & Okada, 2007), which is one to two orders of magnitude faster for this case (PR #863)
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
 - Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
