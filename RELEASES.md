@@ -4,7 +4,7 @@
 
 #### Closed issues
 
-- Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #860, Issue #264)
+- Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 
 ## 0.9.8dev
 
@@ -21,7 +21,7 @@
 
 #### Closed issues
 
-- Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
+- Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #866)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)
 - Fix device placement in `ot.batch.bregman_projection_batch` so `ot.solve_batch(..., method="sinkhorn")` no longer crashes on GPU when the torch default device is CPU (PR #851)
