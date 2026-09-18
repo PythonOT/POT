@@ -2,6 +2,12 @@
 
 ## 0.9.8dev
 
+#### Closed issues
+
+- Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #860, Issue #264)
+
+## 0.9.8dev
+
 #### New features
 
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
