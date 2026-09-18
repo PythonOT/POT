@@ -355,3 +355,93 @@ def projection_sphere_to_ball(x, eps=1e-6, backend=None):
     norm2 = nx.sum(x_azimuth**2, axis=-1, keepdims=True)
     radius = nx.arccos(-(3.0 + 5.0 * x_d) / (5.0 + 3.0 * x_d)) / np.pi
     return radius * x_azimuth / nx.sqrt(norm2)
+
+
+def get_random_orthogonal_directions(
+    d, n_projections, seed=None, backend=None, type_as=None
+):
+    r"""
+    Generates n_projections directions on the sphere via UnifOrtho
+    (Rowland et al., 2019) [97]: independent blocks of d mutually
+    orthogonal, unit-norm directions, each block drawn from the Haar
+    measure on the special orthogonal group :math:`\mathrm{SO}(d)`.
+
+    Unlike the generalized spiral points (:any:`get_projections_spiral`),
+    which only cover :math:`d=3`, UnifOrtho is defined for any dimension
+    d, and is recommended specifically for large d: Petrovic, Bardenet &
+    Desolneux (2026) [98] show both empirically and theoretically that it
+    reduces the variance of the Sliced Wasserstein estimator in high
+    dimension, while quasi-Monte Carlo methods such as the spiral points
+    remain preferable in low dimension (:math:`d \in \{2, 3\}`).
+
+    Parameters
+    ----------
+    d : int
+        dimension of the space. Any d >= 1 is supported.
+    n_projections : int
+        number of samples requested
+    seed: int or RandomState, optional
+        Seed used for the underlying random rotations
+    backend:
+        Backend to use for random generation
+    type_as: type, optional
+        Type of the returned array
+
+    Returns
+    -------
+    out: ndarray, shape (d, n_projections)
+        The UnifOrtho directions on the sphere
+
+    Notes
+    -----
+    ``n_projections`` need not be a multiple of ``d``: internally,
+    ``ceil(n_projections / d)`` independent orthogonal blocks are drawn
+    and concatenated, then truncated to the requested length. Every
+    individual direction is still marginally uniform on the sphere, but
+    if the last block is truncated, the directions coming from that
+    specific block are no longer guaranteed to be mutually orthogonal
+    with each other.
+
+    Examples
+    --------
+    >>> n_projections = 100
+    >>> d = 5
+    >>> projs = get_random_orthogonal_directions(d, n_projections, seed=0)
+    >>> np.allclose(np.sum(np.square(projs), 0), 1.)  # doctest: +NORMALIZE_WHITESPACE
+    True
+    >>> first_block = projs[:, :d]
+    >>> np.allclose(first_block.T @ first_block, np.eye(d))  # doctest: +NORMALIZE_WHITESPACE
+    True
+
+    References
+    ----------
+
+    .. [97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). "Orthogonal Estimation of Wasserstein Distances." Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89.
+    .. [98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). "Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance." Transactions on Machine Learning Research.
+    """
+    if backend is None:
+        nx = NumpyBackend()
+    else:
+        nx = backend
+
+    # Number of independent orthogonal blocks needed so that k * d covers
+    # at least n_projections directions (integer ceiling of n_projections / d).
+    k = -(-n_projections // d)
+
+    # k independent Haar-uniform (d, d) orthogonal matrices. Within each
+    # (d, d) slice, the ROWS form d mutually orthogonal, unit-norm
+    # directions (see get_random_rotations for the QR-based construction
+    # and its Mezzadri (2007) sign correction, which is what makes the
+    # rotation genuinely Haar-uniform rather than merely orthogonal).
+    rotations = get_random_rotations(d, k, seed=seed, backend=nx, type_as=type_as)
+
+    # Flatten the k blocks into a single list of k * d directions, one per row.
+    directions = nx.reshape(rotations, (k * d, d))
+
+    # (d, k * d): match the (dim, n_projections) convention.
+    directions = nx.transpose(directions)
+
+    # Trim down to exactly n_projections when n_projections is not a
+    # multiple of d (see Notes above for what this means for the last,
+    # possibly incomplete, orthogonal block).
+    return directions[:, :n_projections]
