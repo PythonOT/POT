@@ -18,20 +18,52 @@ Dimension reduction with OT
 
 from scipy import linalg
 
+# ot.dr offers solvers with different dependencies. Each is imported optionally
+# so that, for instance, the PyTorch WDA solver works on an installation with no
+# autograd or pymanopt. Functions raise an ImportError naming what they need.
 try:
     import autograd.numpy as np
-    from sklearn.decomposition import PCA
 
+    HAS_AUTOGRAD = True
+except ImportError:  # pragma: no cover - depends on the installation
+    import numpy as np
+
+    HAS_AUTOGRAD = False
+
+try:
     import pymanopt
     import pymanopt.manifolds
     import pymanopt.optimizers
-except ImportError:
-    raise ImportError(
-        "Missing dependency for ot.dr. Requires autograd, pymanopt, scikit-learn. You can install with install with 'pip install POT[dr]', or 'conda install autograd pymanopt scikit-learn'"
-    )
+
+    HAS_PYMANOPT = True
+except ImportError:  # pragma: no cover - depends on the installation
+    HAS_PYMANOPT = False
+
+try:
+    import torch
+
+    HAS_TORCH = True
+except ImportError:  # pragma: no cover - depends on the installation
+    HAS_TORCH = False
+
+try:
+    from sklearn.decomposition import PCA
+
+    HAS_SKLEARN = True
+except ImportError:  # pragma: no cover - depends on the installation
+    HAS_SKLEARN = False
 
 from .bregman import sinkhorn as sinkhorn_bregman
 from .utils import dist as dist_utils, check_random_state
+
+
+def _require(condition, function, dependencies):
+    if not condition:
+        raise ImportError(
+            f"Missing dependency for ot.dr.{function}. Requires {dependencies}. "
+            "You can install with 'pip install POT[dr]', or "
+            "'conda install autograd pymanopt scikit-learn'"
+        )
 
 
 def dist(x1, x2):
@@ -77,6 +109,194 @@ def split_classes(X, y):
     r"""split samples in :math:`\mathbf{X}` by classes in :math:`\mathbf{y}`"""
     lstsclass = np.unique(y)
     return [X[y == i, :].astype(np.float32) for i in lstsclass]
+
+
+def _dist_torch(x1, x2):
+    r"""Squared euclidean distance between samples (torch)."""
+    return (
+        torch.sum(x1**2, 1).reshape((-1, 1))
+        + torch.sum(x2**2, 1).reshape((1, -1))
+        - 2 * (x1 @ x2.T)
+    )
+
+
+def _sinkhorn_torch(w1, w2, M, reg, k):
+    r"""Sinkhorn algorithm with fixed number of iterations (torch)."""
+    K = torch.exp(-M / reg)
+    ui = torch.ones(M.shape[0], dtype=M.dtype, device=M.device)
+    vi = torch.ones(M.shape[1], dtype=M.dtype, device=M.device)
+    for _ in range(k):
+        vi = w2 / (K.T @ ui + 1e-50)
+        ui = w1 / (K @ vi + 1e-50)
+    return ui.reshape((-1, 1)) * K * vi.reshape((1, -1))
+
+
+def _sinkhorn_log_torch(w1, w2, M, reg, k):
+    r"""Sinkhorn algorithm in log-domain with fixed iterations (torch)."""
+    Mr = -M / reg
+    ui = torch.zeros(M.shape[0], dtype=M.dtype, device=M.device)
+    vi = torch.zeros(M.shape[1], dtype=M.dtype, device=M.device)
+    log_w1, log_w2 = torch.log(w1), torch.log(w2)
+    for _ in range(k):
+        vi = log_w2 - torch.logsumexp(Mr + ui[:, None], 0)
+        ui = log_w1 - torch.logsumexp(Mr + vi[None, :], 1)
+    return torch.exp(ui[:, None] + Mr + vi[None, :])
+
+
+def _stiefel_retract(P, X):
+    r"""QR retraction onto the Stiefel manifold, with a sign convention."""
+    Q, R = torch.linalg.qr(P + X)
+    return Q * torch.sign(torch.sign(torch.diagonal(R)) + 0.5)
+
+
+def _stiefel_project(P, G):
+    r"""Project a euclidean gradient onto the tangent space of Stiefel."""
+    W = P.T @ G
+    return G - P @ (0.5 * (W + W.T))
+
+
+def _wda_cost_torch(P, xc, wc, regmean, reg, k, sinkhorn_solver):
+    r"""WDA objective: within-class transport cost over between-class."""
+    loss_b, loss_w = 0.0, 0.0
+    for i, xi in enumerate(xc):
+        xi = xi @ P
+        for j, xj in enumerate(xc[i:]):
+            xj = xj @ P
+            M = _dist_torch(xi, xj)
+            G = sinkhorn_solver(wc[i], wc[j + i], M, reg * regmean[i, j], k)
+            term = torch.sum(G * M)
+            if j == 0:
+                loss_w = loss_w + term
+            else:
+                loss_b = loss_b + term
+    if float(loss_b.detach() if torch.is_tensor(loss_b) else loss_b) == 0.0:
+        raise ValueError(
+            "The between-class transport cost underflowed to zero, so the WDA "
+            "objective is undefined. reg is too small for the scale of the "
+            "data: exp(-M/reg) underflows. Increase reg, or use "
+            "sinkhorn_method='sinkhorn_log'."
+        )
+    return loss_w / loss_b
+
+
+def _wda_torch(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize):
+    r"""WDA solved with PyTorch autodiff and Riemannian gradient descent.
+
+    Mirrors the pymanopt ``SteepestDescent`` path: projected gradient, QR
+    retraction and backtracking, so both solvers target the same optimum.
+    """
+    dtype = X.dtype
+    device = X.device
+    labels = torch.unique(y)
+    xc = [X[y == c] for c in labels]
+    wc = [
+        torch.full((x.shape[0],), 1.0 / x.shape[0], dtype=dtype, device=device)
+        for x in xc
+    ]
+    d = X.shape[1]
+    nc = len(xc)
+
+    if not 1 <= p <= d:
+        raise ValueError(f"Need d >= p >= 1. Values supplied were d = {d} and p = {p}")
+
+    if P0 is None:
+        P = torch.linalg.qr(torch.randn(d, p, dtype=dtype, device=device))[0]
+    else:
+        P = P0.clone().to(dtype)
+
+    regmean = torch.ones((nc, nc), dtype=dtype, device=device)
+    if P0 is not None and normalize:
+        with torch.no_grad():
+            for i, xi in enumerate(xc):
+                xi = xi @ P
+                for j, xj in enumerate(xc[i:]):
+                    xj = xj @ P
+                    regmean[i, j] = torch.sum(_dist_torch(xi, xj)) / (
+                        xi.shape[0] * xj.shape[0]
+                    )
+
+    if sinkhorn_method.lower() == "sinkhorn":
+        solver_fn = _sinkhorn_torch
+    elif sinkhorn_method.lower() == "sinkhorn_log":
+        solver_fn = _sinkhorn_log_torch
+    else:
+        raise ValueError("Unknown Sinkhorn method '%s'." % sinkhorn_method)
+
+    def value(Q):
+        with torch.no_grad():
+            return _wda_cost_torch(Q, xc, wc, regmean, reg, k, solver_fn)
+
+    f = value(P)
+    step = 1.0
+    for it in range(maxiter):
+        Q = P.detach().requires_grad_(True)
+        v = _wda_cost_torch(Q, xc, wc, regmean, reg, k, solver_fn)
+        (g,) = torch.autograd.grad(v, Q)
+        direction = -_stiefel_project(P, g)
+        gnorm = float(torch.linalg.norm(direction))
+        if verbose:
+            print(f"{it + 1:<6d} {float(v.detach()):+.16e} {gnorm:.8e}")
+        if gnorm <= 1e-12:
+            break
+        # start from twice the last accepted step, as pymanopt's backtracking
+        # line search does, so progress is not throttled by a fixed unit step
+        step = min(2.0 * step, 1e4 / (gnorm + 1e-12))
+        improved = False
+        for _ in range(40):
+            Pn = _stiefel_retract(P, step * direction)
+            fn = value(Pn)
+            if fn < f:
+                improved = True
+                break
+            step *= 0.5
+        if not improved:
+            break
+        P, f = Pn, fn
+    return P.detach()
+
+
+def _wda_torch_entry(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize):
+    r"""Convert inputs, centre, run the torch solver, return ``(P, proj)``.
+
+    numpy in gives numpy out; a torch tensor in keeps its device and dtype.
+    """
+    was_numpy = not torch.is_tensor(X)
+    if was_numpy:
+        # match the autograd path, which promotes to float64 via P
+        Xt = torch.as_tensor(np.asarray(X, dtype=np.float64))
+    else:
+        Xt = X if torch.is_floating_point(X) else X.to(torch.float64)
+    # labels may be strings or any hashable, which torch cannot hold, so index
+    # them by position the way numpy's split_classes does
+    if torch.is_tensor(y):
+        yt = y
+    else:
+        yt = torch.as_tensor(np.unique(np.asarray(y), return_inverse=True)[1])
+    if P0 is None:
+        P0t = None
+    else:
+        P0t = (P0 if torch.is_tensor(P0) else torch.as_tensor(P0)).to(Xt.dtype)
+
+    mx = Xt.mean(dim=0)
+    Xc = Xt - mx.reshape((1, -1))
+
+    Popt = _wda_torch(
+        Xc, yt, p, reg, k, sinkhorn_method, maxiter, verbose, P0t, normalize
+    )
+
+    if was_numpy:
+        Pn = Popt.detach().cpu().numpy()
+        mxn = mx.detach().cpu().numpy()
+
+        def proj(Z):
+            return (Z - mxn.reshape((1, -1))).dot(Pn)
+
+        return Pn, proj
+
+    def proj(Z):
+        return (Z - mx.reshape((1, -1))) @ Popt
+
+    return Popt, proj
 
 
 def fda(X, y, p=2, reg=1e-16):
@@ -184,9 +404,17 @@ def wda(
         Size of dimensionality reduction.
     reg : float, optional
         Regularization term >0 (entropic regularization)
-    solver : None | str, optional
-        None for steepest descent or 'TrustRegions' for trust regions algorithm
-        else should be a pymanopt.solvers
+    solver : None | str | pymanopt.optimizers, optional
+        Chooses both the autodiff framework and the optimizer.
+
+        - `None` or `'autograd'` (default): autograd and pymanopt
+          `SteepestDescent`.
+        - `'TrustRegions'` (or `'tr'`): autograd and pymanopt `TrustRegions`.
+        - a `pymanopt.optimizers` instance: autograd with that optimizer.
+        - `'torch'`: PyTorch autodiff with Riemannian gradient descent and a QR
+          retraction. Requires only `torch`, so it works on installations
+          without autograd or pymanopt, and accepts torch tensors directly,
+          keeping their device and dtype.
     sinkhorn_method : str
         method used for the Sinkhorn solver, either 'sinkhorn' or 'sinkhorn_log'
     P0 : ndarray, shape (d, p)
@@ -210,6 +438,20 @@ def wda(
     .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
         Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
     """  # noqa
+
+    if solver == "torch":
+        _require(HAS_TORCH, "wda(solver='torch')", "torch")
+        return _wda_torch_entry(
+            X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize
+        )
+
+    _require(
+        HAS_AUTOGRAD and HAS_PYMANOPT,
+        "wda(solver='autograd')",
+        "autograd and pymanopt",
+    )
+    if solver == "autograd":
+        solver = None
 
     if sinkhorn_method.lower() == "sinkhorn":
         sinkhorn_solver = sinkhorn
@@ -495,6 +737,7 @@ def ewca(
     X = X - X.mean(0)
 
     if U0 is None:
+        _require(HAS_SKLEARN, "ewca", "scikit-learn")
         pca_fitted = PCA(n_components=k).fit(X)
         U = pca_fitted.components_.T
         if method == "MM":
