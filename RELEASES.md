@@ -2,6 +2,12 @@
 
 ## 0.9.8dev
 
+#### Closed issues
+
+- Probing for triton in `ot.backend` no longer propagates errors other than `ImportError`, so a broken native triton install can no longer stop `import ot` or silently disable the torch backend (PR #859, follow-up to PR #839 and Issue #816)
+
+## 0.9.8dev
+
 #### New features
 
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
