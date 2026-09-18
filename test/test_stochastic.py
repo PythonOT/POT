@@ -13,6 +13,8 @@ for descrete and semicontinous measures from the POT library.
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 import ot
 
@@ -85,6 +87,49 @@ def test_stochastic_asgd():
 # --------------------------------------------------------
 # 2 identical discrete measures u defined on the same space with a
 # regularization term, a learning rate and a number of iteration
+
+
+def test_coordinate_grad_semi_dual_large_beta():
+    """Non-regression test for issue #264.
+
+    The semi-dual gradient exponentiates -(M[i] - beta) / reg. Once beta grows
+    that overflows and the normalised khi becomes all-NaN, so the shift by the
+    minimum is what keeps the solver usable at large scale.
+    """
+    rng = np.random.RandomState(0)
+    n_source, n_target, reg = 500, 60, 1
+    M = ot.dist(rng.randn(n_source, 2), rng.randn(n_target, 2))
+    b = ot.utils.unif(n_target)
+
+    with warnings.catch_warnings():
+        # narrow: unrelated warnings elsewhere must not make this brittle
+        warnings.simplefilter("error", RuntimeWarning)
+        grad = ot.stochastic.coordinate_grad_semi_dual(
+            b, M, reg, np.full(n_target, 800.0), 0
+        )
+
+    assert not np.any(np.isnan(grad))
+    # khi lives on the simplex, so the gradient b - khi sums to zero
+    np.testing.assert_allclose(np.sum(grad), 0.0, atol=1e-12)
+
+
+def test_coordinate_grad_semi_dual_unchanged_without_overflow():
+    """The shift cancels in the ratio, so benign inputs must be unaffected."""
+    rng = np.random.RandomState(0)
+    n_source, n_target, reg = 200, 40, 1
+    M = ot.dist(rng.randn(n_source, 2), rng.randn(n_target, 2))
+    b = ot.utils.unif(n_target)
+
+    for scale in (0.0, 0.5, 2.0):
+        beta = rng.randn(n_target) * scale
+        r = M[0, :] - beta
+        expected = b - (np.exp(-r / reg) * b) / np.sum(np.exp(-r / reg) * b)
+        np.testing.assert_allclose(
+            ot.stochastic.coordinate_grad_semi_dual(b, M, reg, beta, 0),
+            expected,
+            rtol=1e-12,
+            atol=1e-14,
+        )
 
 
 def test_sag_asgd_sinkhorn():
