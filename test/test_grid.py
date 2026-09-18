@@ -307,6 +307,15 @@ def test_emd_grid_l1_1d_direct_plan_helper_negative_values():
     assert cost == 0.0
 
 
+def test_emd_grid_l1_1d_direct_plan_helper_mass_mismatch():
+    a = np.array([1.0, 0.0, 0.0, 0.0])
+    b = np.array([0.0, 0.0, 0.0, 0.5])
+    nx = ot.backend.NumpyBackend()
+    _sources, _targets, _values, cost, result_code = _emd_grid_l1_1d_plan(a, b, nx)
+    assert result_code != 1  # not OPTIMAL: infeasible
+    assert cost == 0.0
+
+
 def test_emd_grid_l1_backends(nx):
     """Non-numpy inputs (e.g. torch, jax) must be accepted and the outputs
     returned in the same backend/dtype/device as the inputs, including a
