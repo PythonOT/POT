@@ -7,6 +7,7 @@
 # License: MIT License
 
 import importlib.util
+import os
 import subprocess
 import sys
 
@@ -982,3 +983,38 @@ def test_no_cuda_context_for_cpu_only_work():
         f"interpreter exited with returncode {result.returncode}: "
         f"{result.stderr.decode(errors='replace')[-2000:]}"
     )
+
+
+@pytest.mark.skipif(not torch, reason="Requires torch")
+def test_broken_triton_does_not_break_import(tmp_path):
+    """Probing for triton must never be fatal (see issue #816).
+
+    ot.backend imports triton eagerly so that it loads before TensorFlow. A
+    broken native install raises something other than ImportError, which must
+    not stop `import ot` nor disable the torch backend.
+    """
+    (tmp_path / "triton.py").write_text(
+        'raise OSError("libtriton.so: cannot open shared object file")\n'
+    )
+    # a stub is enough: the probe only needs find_spec("tensorflow") to succeed
+    tf_stub = tmp_path / "tensorflow"
+    tf_stub.mkdir()
+    (tf_stub / "__init__.py").write_text("class Tensor:\n    pass\n")
+    (tf_stub / "experimental").mkdir()
+    (tf_stub / "experimental" / "__init__.py").write_text('raise ImportError("stub")\n')
+
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(tmp_path) + os.pathsep + env.get("PYTHONPATH", "")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import ot.backend as b\n"
+            "assert b.torch is not False, 'torch backend was disabled by the probe'\n"
+            "print('ok')\n",
+        ],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stderr.decode(errors="replace")[-2000:]
+    assert b"ok" in result.stdout
