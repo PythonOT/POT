@@ -52,6 +52,27 @@ int EMD_wrap_sparse(
     double *beta_init            // Initial dual variables for targets (warmstart)
 );
 
+int EMD_wrap_grid_l1(
+    int ndim,                    // Number of grid dimensions
+    int64_t *shape,              // Grid shape (ndim entries)
+    double *X,                   // Source histogram, flattened C-order (prod(shape))
+    double *Y,                   // Target histogram, flattened C-order (prod(shape))
+    bool return_plan,            // If false, skip decomposing the flow into a
+                                  // transportation plan and only compute cost
+    uint64_t *plan_sources_out,  // Output: source bin index of each plan entry
+    uint64_t *plan_targets_out,  // Output: target bin index of each plan entry
+    double *plan_values_out,     // Output: mass moved by each plan entry
+    uint64_t *n_plan_entries_out,
+    uint64_t max_plan_entries,
+    double *alpha,               // Output: node potentials / dual variables
+                                  // (n_nodes = prod(shape)); the Beckmann
+                                  // formulation uses a single graph (not
+                                  // bipartite), so there is one potential
+                                  // array, not alpha/beta; beta = -alpha
+    double *cost,                // Output: total transportation cost
+    uint64_t maxIter             // Maximum iterations for solver
+);
+
 int EMD_wrap_lazy(
     int n1,                      // Number of source points
     int n2,                      // Number of target points

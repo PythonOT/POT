@@ -22,6 +22,7 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
+    int EMD_wrap_grid_l1(int ndim, int64_t *shape, double *X, double *Y, bint return_plan, uint64_t *plan_sources_out, uint64_t *plan_targets_out, double *plan_values_out, uint64_t *n_plan_entries_out, uint64_t max_plan_entries, double *alpha, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
@@ -367,3 +368,95 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     flow_values = flow_values[:n_flows_out]
 
     return flow_sources, flow_targets, flow_values, cost, alpha, beta, result_code
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def emd_c_grid_l1(np.ndarray[double, ndim=1, mode="c"] a,
+                   np.ndarray[double, ndim=1, mode="c"] b,
+                   np.ndarray[int64_t, ndim=1, mode="c"] shape,
+                   uint64_t max_iter,
+                   bint return_plan=False):
+    """
+    Grid EMD-L1 solver.
+
+    Solves the Earth Mover's Distance with the cityblock ground metric between
+    two histograms sharing the same Cartesian grid support, by running a
+    min-cost flow on the grid's adjacency graph instead of the full bipartite
+    graph, using the graph formulation of Ling & Okada (2007). Unlike that
+    paper's bespoke tree-based solver, this reuses the off-the-shelf
+    NetworkSimplexSimple LP solver on the reduced graph. This is exact and
+    typically one to two orders of magnitude faster than the dense or lazy
+    solvers for this case.
+
+    The min-cost flow itself is a Beckmann-style flow on the grid's adjacency
+    graph: it does not directly say which source bin each unit of mass came
+    from. When `return_plan` is True, that arc flow is decomposed (at some
+    extra cost) into an explicit transportation plan, i.e. a coupling given as
+    sparse `(source_bin, target_bin, mass)` entries. When only the transport
+    cost is needed, leave `return_plan` False to skip this decomposition.
+
+    Parameters
+    ----------
+    a : (n,) array, float64
+        Source histogram, flattened in C order, with n = prod(shape)
+    b : (n,) array, float64
+        Target histogram, flattened in C order, with n = prod(shape)
+    shape : (ndim,) array, int64
+        Grid shape
+    max_iter : uint64_t
+        Maximum number of iterations
+    return_plan : bool, optional (default=False)
+        If True, also decompose the solver's arc flow into a sparse
+        transportation plan. If False, only the cost is computed.
+
+    Returns
+    -------
+    plan_sources : (n_plan_entries,) array, uint64
+        Flattened source bin index of each transportation plan entry (empty
+        if `return_plan` is False)
+    plan_targets : (n_plan_entries,) array, uint64
+        Flattened target bin index of each transportation plan entry (empty
+        if `return_plan` is False)
+    plan_values : (n_plan_entries,) array, float64
+        Mass moved by each transportation plan entry (empty if `return_plan`
+        is False)
+    alpha : (n,) array, float64
+        Raw (uncentred) node potentials, i.e. d(cost)/d(a) up to the additive
+        constant LEMON's network simplex happens to settle on; d(cost)/d(b)
+        is -alpha, since this is a single graph, not a bipartite source/
+        target split. Centre before use: `alpha -= alpha.mean()`.
+    cost : float
+        Total transportation cost
+    result_code : int
+        Result status
+    """
+    cdef int ndim = shape.shape[0]
+    cdef uint64_t n_plan_entries_out = 0
+    cdef int result_code = 0
+    cdef double cost = 0
+    # Up to one same-bin plan entry per node for the overlapping ("self")
+    # mass, plus a path decomposition of the residual flow, which uses at
+    # most one plan entry per node plus one per (bidirectional) grid arc
+    # that ends up carrying flow.
+    cdef uint64_t max_plan_entries = <uint64_t> a.shape[0] * (2 * ndim + 2) if return_plan else 0
+
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] plan_sources = np.zeros(max_plan_entries, dtype=np.uint64)
+    cdef np.ndarray[uint64_t, ndim=1, mode="c"] plan_targets = np.zeros(max_plan_entries, dtype=np.uint64)
+    cdef np.ndarray[double, ndim=1, mode="c"] plan_values = np.zeros(max_plan_entries, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(a.shape[0], dtype=np.float64)
+
+    with nogil:
+        result_code = EMD_wrap_grid_l1(
+            ndim, <int64_t*> shape.data,
+            <double*> a.data, <double*> b.data,
+            return_plan,
+            <uint64_t*> plan_sources.data, <uint64_t*> plan_targets.data, <double*> plan_values.data,
+            &n_plan_entries_out, max_plan_entries, <double*> alpha.data, &cost, max_iter
+        )
+
+    plan_sources = plan_sources[:n_plan_entries_out]
+    plan_targets = plan_targets[:n_plan_entries_out]
+    plan_values = plan_values[:n_plan_entries_out]
+
+    return plan_sources, plan_targets, plan_values, alpha, cost, result_code
