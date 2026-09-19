@@ -813,6 +813,19 @@ def test_func_backends(nx):
         )
 
 
+def test_arange_type_as(nx):
+    # `arange` used to silently ignore `type_as` for dtype (and device, in
+    # some backends), unlike `zeros`/`ones`/`full`, which do respect it.
+    for tp in nx.__type_list__:
+        a = nx.arange(5, type_as=tp)
+        nx.assert_same_dtype_device(tp, a)
+        np.testing.assert_allclose(nx.to_numpy(a), np.arange(5))
+
+        b = nx.arange(8, 2, 2, type_as=tp)
+        nx.assert_same_dtype_device(tp, b)
+        np.testing.assert_allclose(nx.to_numpy(b), np.arange(2, 8, 2))
+
+
 def test_random_backends(nx):
     tmp_u = nx.rand()
 
