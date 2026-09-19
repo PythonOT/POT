@@ -10,15 +10,12 @@ import numpy as np
 
 from ..backend import get_backend
 from ..utils import list_to_array
-from .emd_wrap import check_result, emd_1d_sorted, emd_c_grid_l1
+from .emd_wrap import check_result, emd_c_grid_l1
 
 # Mirrors ot::ProblemType in ot/lp/EMD.h (INFEASIBLE=0, OPTIMAL=1, ...). Not
 # otherwise exposed to Python, since it is a Cython ``cdef enum``.
 _RESULT_INFEASIBLE = 0
 _RESULT_OPTIMAL = 1
-
-_EMPTY_U64 = np.empty(0, dtype=np.uint64)
-_EMPTY_F64 = np.empty(0, dtype=np.float64)
 
 
 def _finalize_native_cost(cost, nx):
@@ -33,78 +30,155 @@ def _finalize_native_cost(cost, nx):
     return nx.detach(cost)
 
 
-def _emd_grid_l1_1d_cost(A, B, nx):
-    r"""Closed-form, fully backend-native cost for a 1D grid.
+def _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx):
+    r"""Fully backend-native cost, gradient, and (optionally) transportation
+    plan for a 1D grid.
 
     A 1D grid with a shared, sorted, unit-spaced support has a classic
-    :math:`\mathcal{O}(n)` closed form for the L1 (cityblock) Wasserstein
-    cost: the L1 norm of the difference of cumulative sums. Every step is a
-    generic backend reduction (``nx.cumsum``, ``nx.abs``, ``nx.sum``), so
-    this never leaves the device `A`/`B` are already on -- unlike every
-    other path in :any:`emd_grid_l1`, which needs a CPU round-trip.
+    closed form for both the L1 (cityblock) Wasserstein cost and its
+    gradient: with :math:`\text{CumA}(k) = \sum_{i \leq k} A_i` (and
+    likewise for `B`),
 
-    Returns ``(cost, result_code)``; `cost` is already a backend-native
-    scalar with `A`'s dtype and device, detached from any autodiff graph
-    (see :any:`_finalize_native_cost`).
+    .. math::
+        \text{cost} = \sum_{k=0}^{n-2} |\text{CumA}(k) - \text{CumB}(k)|,
+        \quad
+        \alpha_i = \frac{\partial \text{cost}}{\partial A_i} =
+        \sum_{k=i}^{n-2} \text{sign}(\text{CumA}(k) - \text{CumB}(k))
+
+    (the gradient is a reverse/suffix cumulative sum of the sign of the CDF
+    difference, an application of the envelope theorem to this LP). Both
+    share the same ``nx.cumsum(A) - nx.cumsum(B)``, so are computed together
+    here in :math:`\mathcal{O}(n)`, with no CPU round-trip: every step is a
+    generic backend reduction (``nx.cumsum``, ``nx.sign``, ``nx.flip``, ...).
+    Unlike the cost, `alpha` is not otherwise needed, so it is only computed
+    when `return_alpha` is True.
+
+    When `return_plan` is True, :any:`_emd_grid_l1_1d_monotone_plan` recovers
+    the actual transportation plan too, via a fully vectorized merge of the
+    two CDFs (also backend-native, :math:`\mathcal{O}(n \log n)` for the
+    sort it needs); left `None` otherwise, since it is not needed for the
+    cost or the gradient.
+
+    Returns ``(cost, alpha, plan_sources, plan_targets, plan_values,
+    result_code)``, all backend-native, matching `A`'s dtype and device
+    (`alpha`, `plan_*` are `None` when not requested/not needed, see below).
+    `alpha` (raw, uncentred; the caller centres it) is `None` if
+    `return_alpha` is False. `plan_*` are `None` if `return_plan` is False.
     """
-    if A.shape[0] == 0 or nx.any(A < 0) or nx.any(B < 0):
-        return _finalize_native_cost(0.0 * nx.sum(A), nx), _RESULT_INFEASIBLE
+    n = A.shape[0]
+
+    if n == 0 or nx.any(A < 0) or nx.any(B < 0):
+        zero_cost = _finalize_native_cost(0.0 * nx.sum(A), nx)
+        zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
+        return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
 
     total_a = nx.sum(A)
     total_b = nx.sum(B)
     if abs(float(nx.to_numpy(total_a)) - float(nx.to_numpy(total_b))) > 1e-8 * max(
         1.0, float(nx.to_numpy(total_a))
     ):
-        return _finalize_native_cost(0.0 * total_a, nx), _RESULT_INFEASIBLE
+        zero_cost = _finalize_native_cost(0.0 * total_a, nx)
+        zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
+        return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
 
-    cum_diff = nx.cumsum(A, 0) - nx.cumsum(B, 0)
-    cost = nx.sum(nx.abs(cum_diff[:-1]))
-    return _finalize_native_cost(cost, nx), _RESULT_OPTIMAL
+    cum_a = nx.cumsum(A, 0)
+    cum_b = nx.cumsum(B, 0)
+    cum_diff = cum_a - cum_b
+    cost = _finalize_native_cost(nx.sum(nx.abs(cum_diff[:-1])), nx)
+
+    if return_alpha:
+        sign = nx.sign(cum_diff[:-1])
+        suffix = nx.flip(nx.cumsum(nx.flip(sign, 0), 0), 0)
+        alpha = nx.concatenate([suffix, nx.zeros((1,), type_as=A)], axis=0)
+    else:
+        alpha = None
+
+    if not return_plan:
+        return cost, alpha, None, None, None, _RESULT_OPTIMAL
+
+    # cum_a, cum_b are reused as is (the plan needs the raw, unpinned CDFs
+    # too), avoiding a second nx.cumsum(A) / nx.cumsum(B).
+    plan_sources, plan_targets, plan_values = _emd_grid_l1_1d_monotone_plan(
+        cum_a, cum_b, nx
+    )
+    return cost, alpha, plan_sources, plan_targets, plan_values, _RESULT_OPTIMAL
 
 
-def _emd_grid_l1_1d_plan(A, B, nx):
-    r"""Cost and sparse transportation plan for a 1D grid.
+def _emd_grid_l1_1d_monotone_plan(cum_a, cum_b, nx):
+    r"""Exact monotone 1D transportation plan on a shared grid support, in
+    sparse COO form.
 
-    A 1D grid is just a sorted, shared support, for which POT already has an
-    exact :math:`\mathcal{O}(n)` solver (:any:`ot.lp.emd_1d_sorted`, the same
-    routine backing :any:`ot.lp.emd_1d`). Calling it directly here, with the
-    grid's integer positions passed in as already sorted, skips both the
-    network simplex setup of the general grid solver and the argsort/pairwise
-    distance overhead that the generic, arbitrary-support :any:`ot.lp.emd_1d`
-    would otherwise pay.
+    Works by merging the two CDFs: sorting their :math:`2n` combined
+    breakpoints together, the cumulative count of A-breakpoints and
+    B-breakpoints seen so far at each step of the merge gives that step's
+    (source bin, target bin) pair, and the gap to the previous breakpoint
+    gives the mass moved. A source bin can touch more than two target bins
+    in general (and vice versa), which is why this has to be indexed by
+    merge step rather than by bin -- the same reason the classic sequential
+    merge algorithm behind :any:`ot.lp.emd_1d_sorted` needs to walk source
+    and target pointers independently.
 
-    Unlike :any:`_emd_grid_l1_1d_cost`, recovering the actual coupling needs
-    the compiled O(n) merge behind :any:`ot.lp.emd_1d_sorted`, which requires
-    plain CPU numpy arrays -- so, backend-compatible via `nx`, this converts
-    `A`/`B` right here, immediately before that one call.
+    Takes the raw (unpinned) CDFs `cum_a`, `cum_b` (``nx.cumsum(A, 0)``,
+    ``nx.cumsum(B, 0)``) rather than `A`, `B` themselves, since the caller
+    (:any:`_emd_grid_l1_1d`) already needs them for the cost and can pass
+    them along here, avoiding computing them twice. Assumes `A`, `B` are
+    feasible (nonnegative, matching total mass); the caller is responsible
+    for checking this first.
+
+    Returns backend-native ``(plan_sources, plan_targets, plan_values)``,
+    matching `cum_a`'s dtype and device, with exactly :math:`2n-1` entries.
+    Some entries may carry zero flow (e.g. at ties between the two CDFs,
+    such as when `A` and `B` are identical): these are harmless, explicit
+    zeros in the sparse coupling built from them, and filtering them out
+    would need a backend-native "keep the nonzero entries" op that does not
+    exist as a generic, shape-static reduction, so it is not worth it for
+    what is already a tiny, fixed-size result.
     """
-    a = np.ascontiguousarray(nx.to_numpy(A), dtype=np.float64)
-    b = np.ascontiguousarray(nx.to_numpy(B), dtype=np.float64)
-    n = a.shape[0]
+    n = cum_a.shape[0]
 
-    if n == 0 or np.any(a < 0) or np.any(b < 0):
-        return _EMPTY_U64, _EMPTY_U64, _EMPTY_F64, 0.0, _RESULT_INFEASIBLE
+    # Pin the last entry of each CDF to exactly 1: avoids floating-point
+    # drift making the tie at the very end (both CDFs must reach the same
+    # total mass) not an exact tie, which would otherwise show up as a
+    # spurious tiny "flow" entry below.
+    one = nx.reshape(0.0 * cum_a[-1] + 1.0, (1,))
+    cum_a = nx.concatenate([cum_a[:-1], one], axis=0)
+    cum_b = nx.concatenate([cum_b[:-1], one], axis=0)
+    all_cum = nx.concatenate([cum_a, cum_b], axis=0)  # length 2n
 
-    total_a = a.sum()
-    total_b = b.sum()
-    if abs(total_a - total_b) > 1e-8 * max(1.0, total_a):
-        return _EMPTY_U64, _EMPTY_U64, _EMPTY_F64, 0.0, _RESULT_INFEASIBLE
+    # One-hot markers of where each of the 2n merged breakpoints came from,
+    # carried through the sort below to recover, at each step, how many of
+    # each type preceded it.
+    ones_n = nx.ones((n,), type_as=cum_a)
+    zeros_n = nx.zeros((n,), type_as=cum_a)
+    origin_source = nx.concatenate([ones_n, zeros_n], axis=0)
+    origin_target = nx.concatenate([zeros_n, ones_n], axis=0)
 
-    x = np.arange(n, dtype=np.float64)
-    plan_values, indices, cost = emd_1d_sorted(a, b, x, x, metric="cityblock")
+    perm = nx.argsort(all_cum, axis=-1)
+    sort_val = nx.take_along_axis(all_cum, perm, axis=-1)
+    sort_source = nx.take_along_axis(origin_source, perm, axis=-1)
+    sort_target = nx.take_along_axis(origin_target, perm, axis=-1)
 
-    # The merge algorithm behind emd_1d_sorted can emit exact-zero-mass
-    # entries at ties (e.g. two identical histograms); drop them so the plan
-    # only lists actual mass movements, matching the general grid solver.
-    nonzero = plan_values > 0
-    plan_sources = np.ascontiguousarray(indices[nonzero, 0], dtype=np.uint64)
-    plan_targets = np.ascontiguousarray(indices[nonzero, 1], dtype=np.uint64)
-    plan_values = np.ascontiguousarray(plan_values[nonzero], dtype=np.float64)
-    return plan_sources, plan_targets, plan_values, cost, _RESULT_OPTIMAL
+    origin = nx.stack([sort_source, sort_target], axis=0)  # (2, 2n)
+    excl_cumsum = nx.cumsum(origin, axis=-1) - origin
+    idx = nx.clip(excl_cumsum, None, n - 1)  # (2, 2n): [0] source, [1] target
+
+    left = nx.zero_pad(sort_val[:-1], [(1, 0)], value=0.0)
+    flow = nx.clip(sort_val - left, 0.0, None)
+
+    # The very last merge step is the simultaneous end of both CDFs (both
+    # pinned to 1 above), carrying no flow; drop it, leaving exactly 2n-1
+    # entries, as expected for a monotone coupling of two n-atom measures.
+    return idx[0, :-1], idx[1, :-1], flow[:-1]
 
 
 def emd_grid_l1(
-    A, B, numItermax=100000, return_plan=False, log=False, check_marginals=True
+    A,
+    B,
+    numItermax=100000,
+    return_plan=False,
+    log=False,
+    check_marginals=True,
+    grad="envelope",
 ):
     r"""Solves the Earth Mover's Distance with the cityblock ground metric
     between two histograms sharing the same :math:`d`-dimensional Cartesian
@@ -143,22 +217,40 @@ def emd_grid_l1(
         its own. Set `return_plan` to request it; leave it False (the
         default) when only the transport cost is needed.
 
-    .. note:: For a 1D grid (``A.ndim == 1``), this instead delegates to
-        POT's :math:`\mathcal{O}(n)` sorted-support solver
-        (:any:`ot.lp.emd_1d_sorted`), which is exact here since the grid's
-        integer positions are already a shared, sorted support. This avoids
-        the network simplex setup entirely for that case. Better still, when
-        `return_plan` is False, the cost itself has a closed form that runs
-        as generic backend reductions with no CPU round-trip at all, so a 1D
-        grid on a GPU array is solved entirely on-device.
+    .. note:: For a 1D grid (``A.ndim == B.ndim == 1``), this instead uses a
+        closed form (see :any:`_emd_grid_l1_1d`), exact here since the
+        grid's integer positions are already a shared, sorted support. This
+        avoids the network simplex setup entirely for that case, and runs
+        as generic backend reductions with no CPU round-trip at all -- for
+        the cost and gradient, but also for the plan, when requested -- so
+        a 1D grid on a GPU array is solved entirely on-device.
 
     .. note:: This function is backend-compatible and will work on arrays
-        from all compatible backends. Beyond the 1D, cost-only case above,
-        the algorithm uses a C++/Cython CPU solver, so GPU arrays are copied
+        from all compatible backends. Beyond the 1D case above, the
+        algorithm uses a C++/Cython CPU solver, so GPU arrays are copied
         to CPU before solving (and the transportation plan's bin indices, if
-        requested, are returned as CPU arrays). Gradients are not currently
-        supported: `cost` is always detached from any computation graph the
-        inputs were part of.
+        requested, are returned as CPU arrays). `cost` is always detached
+        from any computation graph the inputs were part of: this does not
+        support automatic differentiation. The exact gradient of `cost`
+        with respect to `A` and `B` is instead exposed explicitly as
+        `alpha`/`beta` in `log` (see below).
+
+    .. note:: `log["alpha"]` and `log["beta"]`, when present, are the
+        (centred) dual potentials, which give the gradient of `cost` with
+        respect to `A` and `B` directly: :math:`\partial \text{cost}/\partial
+        A_i = \text{alpha}_i` and :math:`\partial \text{cost}/\partial B_i =
+        \text{beta}_i = -\text{alpha}_i` (a single graph is used, not a
+        bipartite source/target split, so there is one potential array, not
+        two). For :math:`d \geq 2` these are LEMON's network-simplex node
+        potentials, an unavoidable byproduct of the solve itself (a free
+        application of the envelope theorem to this LP), so they are always
+        computed and returned in `log` regardless of `grad`. For a 1D grid
+        they are instead a closed form (see :any:`_emd_grid_l1_1d`) that
+        needs its own, separate :math:`\mathcal{O}(n)` pass -- not otherwise
+        free -- so `grad` controls whether it runs there. Either way they
+        are defined up to an additive constant; centring (subtracting their
+        mean) picks the canonical representative, the Riemannian gradient of
+        `cost` on the probability simplex.
 
     Parameters
     ----------
@@ -172,14 +264,25 @@ def emd_grid_l1(
     return_plan : bool, optional (default=False)
         If True, additionally recovers an explicit transportation plan (a
         sparse coupling), returned in `log`. Computing it has a cost of its
-        own (a CPU round-trip, and either a network simplex solve or an O(n)
-        merge), so it is skipped by default when only the transport cost
-        `cost` is needed.
+        own (for :math:`d \geq 2`, a network simplex solve, plus a CPU
+        round-trip since that solver is CPU-only; for a 1D grid, an
+        :math:`\mathcal{O}(n \log n)` merge, entirely on-device), so it is
+        skipped by default when only the transport cost `cost` is needed.
     log : bool, optional (default=False)
         If True, also returns a dictionary with the solver status and,
         if `return_plan` is True, the sparse transportation plan.
     check_marginals : bool, optional (default=True)
         If True, checks that `A` and `B` have the same total mass.
+    grad : {'envelope', None}, optional (default='envelope')
+        Controls whether the dual potentials `alpha`/`beta` (the gradient of
+        `cost`) are computed for a 1D grid, where doing so has a cost of its
+        own (see the note above). For :math:`d \geq 2` they come for free as
+        a byproduct of the network-simplex solve, so this has no effect
+        there: they are always computed and returned in `log`. If
+        `'envelope'` (the default), also compute them for a 1D grid, via the
+        envelope theorem applied to that grid's closed form. If None, skip
+        that computation for a 1D grid, and `log` will not contain `alpha`
+        or `beta` in that case. Has no effect unless `log` is True.
 
     Returns
     -------
@@ -188,12 +291,14 @@ def emd_grid_l1(
     log : dict, optional
         If input `log` is True, a dictionary containing the solver status
         (`warning`, `result_code`) and, if `return_plan` is True, the sparse
-        transportation plan `G` (built via the backend's `coo_matrix`, same
-        as :any:`ot.emd2_lazy`'s `return_matrix`; a real sparse matrix for
-        NumPy/PyTorch/TensorFlow/CuPy, silently densified for JAX, which has
-        no sparse array type) of shape :math:`(n, n)` with
-        :math:`n=\prod(\text{A.shape})`, indexing into `A.reshape(-1)` and
-        `B.reshape(-1)`.
+        transportation plan `G` (built via the backend's
+        `coo_matrix`, same as :any:`ot.emd2_lazy`'s `return_matrix`; a real
+        sparse matrix for NumPy/PyTorch/TensorFlow/CuPy, silently densified
+        for JAX, which has no sparse array type) of shape :math:`(n, n)`
+        with :math:`n=\prod(\text{A.shape})`, indexing into `A.reshape(-1)`
+        and `B.reshape(-1)`. Unless `A.ndim == 1` and `grad` is None, it also
+        contains the (centred) dual potentials `alpha`, `beta` (the gradient
+        of `cost` with respect to `A`, `B`; see the note above).
 
     Examples
     --------
@@ -213,6 +318,9 @@ def emd_grid_l1(
     --------
     ot.emd : Exact OT solver with a general, precomputed cost matrix
     """
+    if grad not in (None, "envelope"):
+        raise ValueError(f"grad must be None or 'envelope', got {grad!r}")
+
     A, B = list_to_array(A, B)
     nx = get_backend(A, B)
 
@@ -231,33 +339,69 @@ def emd_grid_l1(
         )
 
     if A.ndim == 1:
-        # A 1D grid is backend-native either way (works on any backend's
-        # arrays via `nx`, GPU included). Only the cost-only case below
-        # avoids a CPU round-trip entirely though: recovering the plan needs
-        # the compiled O(n) merge in _emd_grid_l1_1d_plan, which is CPU-only.
-        if not return_plan:
-            cost, result_code = _emd_grid_l1_1d_cost(A, B, nx)
-            if log:
-                return cost, {
-                    "warning": check_result(result_code),
-                    "result_code": result_code,
-                }
-            check_result(result_code)
-            return cost
+        # A 1D grid is backend-native throughout -- cost, gradient, and
+        # (when requested) the transportation plan -- so it gets its own,
+        # fully self-contained branch. See _emd_grid_l1_1d. Unlike the
+        # general (d >= 2) path below, the gradient is not a free byproduct
+        # here, so it is only computed when actually requested.
+        return_alpha = log and grad == "envelope"
+        cost, alpha, plan_sources, plan_targets, plan_values, result_code = (
+            _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx)
+        )
 
-        plan_sources, plan_targets, plan_values, cost, result_code = (
-            _emd_grid_l1_1d_plan(A, B, nx)
-        )
-    else:
-        shape = np.array(A.shape, dtype=np.int64)
-        # The C++ solver only understands flattened (CPU) numpy arrays:
-        # `to_numpy` also does the GPU -> CPU copy for backends such as
-        # torch or jax.
-        a_np = np.ascontiguousarray(nx.to_numpy(A), dtype=np.float64).reshape(-1)
-        b_np = np.ascontiguousarray(nx.to_numpy(B), dtype=np.float64).reshape(-1)
-        plan_sources, plan_targets, plan_values, cost, result_code = emd_c_grid_l1(
-            a_np, b_np, shape, numItermax, return_plan
-        )
+        if log:
+            log_dict = {
+                "warning": check_result(result_code),
+                "result_code": result_code,
+            }
+            if alpha is not None:
+                # `alpha` is only defined up to an additive constant;
+                # centring it picks the canonical representative, the
+                # Riemannian gradient of the cost on the probability
+                # simplex.
+                alpha = alpha - nx.mean(alpha)
+                log_dict["alpha"] = alpha
+                log_dict["beta"] = -alpha
+            if return_plan and result_code == _RESULT_OPTIMAL:
+                # plan_sources/targets/values are already backend-native
+                # (matching A), so this is a plain packaging step, with no
+                # conversion needed.
+                n = A.shape[0]
+                log_dict["G"] = nx.coo_matrix(
+                    plan_values,
+                    plan_sources,
+                    plan_targets,
+                    shape=(n, n),
+                    type_as=A,
+                )
+            return cost, log_dict
+
+        check_result(result_code)
+        return cost
+
+    # ndim >= 2: the general grid solver, backed by network simplex in C++.
+    shape = np.array(A.shape, dtype=np.int64)
+    # The C++ solver only understands flattened (CPU) numpy arrays:
+    # `to_numpy` also does the GPU -> CPU copy for backends such as torch or
+    # jax.
+    a_np = np.ascontiguousarray(nx.to_numpy(A), dtype=np.float64).reshape(-1)
+    b_np = np.ascontiguousarray(nx.to_numpy(B), dtype=np.float64).reshape(-1)
+    (
+        plan_sources,
+        plan_targets,
+        plan_values,
+        alpha,
+        cost,
+        result_code,
+    ) = emd_c_grid_l1(a_np, b_np, shape, numItermax, return_plan)
+
+    # `alpha` (the node potentials) is only defined up to an additive
+    # constant; centring it picks the canonical representative, the
+    # Riemannian gradient of the cost on the probability simplex.
+    # beta = -alpha since this is a single graph, not a bipartite
+    # source/target split (supply[i] = A[i] - B[i] for every node).
+    alpha = alpha - alpha.mean()
+    beta = -alpha
 
     cost = nx.from_numpy(cost, type_as=A)
 
@@ -265,6 +409,8 @@ def emd_grid_l1(
         log_dict = {
             "warning": check_result(result_code),
             "result_code": result_code,
+            "alpha": nx.from_numpy(alpha, type_as=A),
+            "beta": nx.from_numpy(beta, type_as=A),
         }
         if return_plan:
             # A.size is a numpy property but a torch method: go through

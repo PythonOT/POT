@@ -22,7 +22,7 @@ import warnings
 cdef extern from "EMD.h":
     int EMD_wrap(int n1,int n2, double *X, double *Y,double *D, double *G, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     int EMD_wrap_sparse(int n1, int n2, double *X, double *Y, uint64_t n_edges, uint64_t *edge_sources, uint64_t *edge_targets, double *edge_costs, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double *alpha, double *beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
-    int EMD_wrap_grid_l1(int ndim, int64_t *shape, double *X, double *Y, bint return_plan, uint64_t *plan_sources_out, uint64_t *plan_targets_out, double *plan_values_out, uint64_t *n_plan_entries_out, uint64_t max_plan_entries, double *cost, uint64_t maxIter) nogil
+    int EMD_wrap_grid_l1(int ndim, int64_t *shape, double *X, double *Y, bint return_plan, uint64_t *plan_sources_out, uint64_t *plan_targets_out, double *plan_values_out, uint64_t *n_plan_entries_out, uint64_t max_plan_entries, double *alpha, double *cost, uint64_t maxIter) nogil
     int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, int dim, int metric, uint64_t *flow_sources_out, uint64_t *flow_targets_out, double *flow_values_out, uint64_t *n_flows_out, uint64_t max_flows_out, double* alpha, double* beta, double *cost, uint64_t maxIter, double* alpha_init, double* beta_init) nogil
     cdef enum ProblemType: INFEASIBLE, OPTIMAL, UNBOUNDED, MAX_ITER_REACHED
 
@@ -421,6 +421,11 @@ def emd_c_grid_l1(np.ndarray[double, ndim=1, mode="c"] a,
     plan_values : (n_plan_entries,) array, float64
         Mass moved by each transportation plan entry (empty if `return_plan`
         is False)
+    alpha : (n,) array, float64
+        Raw (uncentred) node potentials, i.e. d(cost)/d(a) up to the additive
+        constant LEMON's network simplex happens to settle on; d(cost)/d(b)
+        is -alpha, since this is a single graph, not a bipartite source/
+        target split. Centre before use: `alpha -= alpha.mean()`.
     cost : float
         Total transportation cost
     result_code : int
@@ -439,6 +444,7 @@ def emd_c_grid_l1(np.ndarray[double, ndim=1, mode="c"] a,
     cdef np.ndarray[uint64_t, ndim=1, mode="c"] plan_sources = np.zeros(max_plan_entries, dtype=np.uint64)
     cdef np.ndarray[uint64_t, ndim=1, mode="c"] plan_targets = np.zeros(max_plan_entries, dtype=np.uint64)
     cdef np.ndarray[double, ndim=1, mode="c"] plan_values = np.zeros(max_plan_entries, dtype=np.float64)
+    cdef np.ndarray[double, ndim=1, mode="c"] alpha = np.zeros(a.shape[0], dtype=np.float64)
 
     with nogil:
         result_code = EMD_wrap_grid_l1(
@@ -446,11 +452,11 @@ def emd_c_grid_l1(np.ndarray[double, ndim=1, mode="c"] a,
             <double*> a.data, <double*> b.data,
             return_plan,
             <uint64_t*> plan_sources.data, <uint64_t*> plan_targets.data, <double*> plan_values.data,
-            &n_plan_entries_out, max_plan_entries, &cost, max_iter
+            &n_plan_entries_out, max_plan_entries, <double*> alpha.data, &cost, max_iter
         )
 
     plan_sources = plan_sources[:n_plan_entries_out]
     plan_targets = plan_targets[:n_plan_entries_out]
     plan_values = plan_values[:n_plan_entries_out]
 
-    return plan_sources, plan_targets, plan_values, cost, result_code
+    return plan_sources, plan_targets, plan_values, alpha, cost, result_code

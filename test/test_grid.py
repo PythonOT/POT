@@ -12,7 +12,7 @@ import pytest
 
 import ot
 from ot.lp import emd_grid_l1
-from ot.lp._grid import _emd_grid_l1_1d_cost, _emd_grid_l1_1d_plan
+from ot.lp._grid import _emd_grid_l1_1d, _emd_grid_l1_1d_monotone_plan
 
 
 def _grid_coords(shape):
@@ -185,15 +185,15 @@ def test_emd_grid_l1_random_grids_batch(ndim):
 
 def test_emd_grid_l1_1d_uses_native_cost_path():
     """A 1D grid with return_plan=False must skip both the general C++
-    solver and the O(n) merge that recovers the plan."""
+    solver and the merge that recovers the plan."""
     a = np.array([1.0, 0.0, 0.0, 0.0])
     b = np.array([0.0, 0.0, 0.0, 1.0])
 
     with (
         mock.patch("ot.lp._grid.emd_c_grid_l1") as mocked_cpp,
         mock.patch(
-            "ot.lp._grid._emd_grid_l1_1d_plan",
-            wraps=_emd_grid_l1_1d_plan,
+            "ot.lp._grid._emd_grid_l1_1d_monotone_plan",
+            wraps=_emd_grid_l1_1d_monotone_plan,
         ) as mocked_plan,
     ):
         cost = emd_grid_l1(a, b)
@@ -202,12 +202,12 @@ def test_emd_grid_l1_1d_uses_native_cost_path():
     np.testing.assert_allclose(cost, 3.0)
 
     # Requesting the plan on a 1D grid must still avoid the C++ solver, but
-    # does need the O(n) merge.
+    # does need the merge.
     with (
         mock.patch("ot.lp._grid.emd_c_grid_l1") as mocked_cpp,
         mock.patch(
-            "ot.lp._grid._emd_grid_l1_1d_plan",
-            wraps=_emd_grid_l1_1d_plan,
+            "ot.lp._grid._emd_grid_l1_1d_monotone_plan",
+            wraps=_emd_grid_l1_1d_monotone_plan,
         ) as mocked_plan,
     ):
         emd_grid_l1(a, b, return_plan=True)
@@ -277,43 +277,65 @@ def test_emd_grid_l1_1d_mass_mismatch():
     assert log["result_code"] != 1  # not OPTIMAL: infeasible
 
 
-def test_emd_grid_l1_1d_direct_cost_helper():
+def test_emd_grid_l1_1d_direct_helper_cost_only():
     nx = ot.backend.NumpyBackend()
 
     a = np.array([1.0, 0.0, 0.0, 0.0])
     b = np.array([0.0, 0.0, 0.0, 1.0])
-    cost, result_code = _emd_grid_l1_1d_cost(a, b, nx)
+    cost, alpha, sources, targets, values, result_code = _emd_grid_l1_1d(
+        a, b, False, False, nx
+    )
     assert result_code == 1  # OPTIMAL
     np.testing.assert_allclose(cost, 3.0)
+    assert alpha is None
+    assert sources is None and targets is None and values is None
+
+    # return_alpha=True must compute it even without a plan.
+    _cost, alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
+        a, b, False, True, nx
+    )
+    assert alpha is not None
 
     # Negative values and mass mismatches must be reported as infeasible,
     # like the general (C++) path.
     a_neg = np.array([1.0, -0.1, 0.0, 0.0])
-    _cost, result_code = _emd_grid_l1_1d_cost(a_neg, b, nx)
+    _cost, _alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
+        a_neg, b, False, False, nx
+    )
     assert result_code != 1
 
     a_mismatch = np.array([1.0, 0.0, 0.0, 0.0])
     b_mismatch = np.array([0.0, 0.0, 0.0, 0.5])
-    _cost, result_code = _emd_grid_l1_1d_cost(a_mismatch, b_mismatch, nx)
+    _cost, _alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
+        a_mismatch, b_mismatch, False, False, nx
+    )
     assert result_code != 1
 
 
-def test_emd_grid_l1_1d_direct_plan_helper_negative_values():
+def test_emd_grid_l1_1d_direct_helper_plan_negative_values():
     a = np.array([1.0, -0.1, 0.0, 0.0])
     b = np.array([0.0, 0.0, 0.0, 0.9])
     nx = ot.backend.NumpyBackend()
-    _sources, _targets, _values, cost, result_code = _emd_grid_l1_1d_plan(a, b, nx)
+    cost, alpha, sources, targets, values, result_code = _emd_grid_l1_1d(
+        a, b, True, True, nx
+    )
     assert result_code != 1  # not OPTIMAL: infeasible
     assert cost == 0.0
+    assert alpha is not None
+    assert sources is None and targets is None and values is None
 
 
-def test_emd_grid_l1_1d_direct_plan_helper_mass_mismatch():
+def test_emd_grid_l1_1d_direct_helper_plan_mass_mismatch():
     a = np.array([1.0, 0.0, 0.0, 0.0])
     b = np.array([0.0, 0.0, 0.0, 0.5])
     nx = ot.backend.NumpyBackend()
-    _sources, _targets, _values, cost, result_code = _emd_grid_l1_1d_plan(a, b, nx)
+    cost, alpha, sources, targets, values, result_code = _emd_grid_l1_1d(
+        a, b, True, True, nx
+    )
     assert result_code != 1  # not OPTIMAL: infeasible
     assert cost == 0.0
+    assert alpha is not None
+    assert sources is None and targets is None and values is None
 
 
 def test_emd_grid_l1_backends(nx):
@@ -359,3 +381,183 @@ def test_emd_grid_l1_1d_backends_native_cost(nx):
         cost_b = emd_grid_l1(ab, bb)
         nx.assert_same_dtype_device(tp, cost_b)
         np.testing.assert_allclose(nx.to_numpy(cost_b), cost_np, rtol=1e-6, atol=1e-8)
+
+
+@pytest.mark.parametrize("shape", [(8,), (3, 4), (2, 3, 2)])
+def test_emd_grid_l1_gradient_strong_duality(shape):
+    """The (centred) node potentials alpha, beta=-alpha are the gradient of
+    cost w.r.t. A, B, and must satisfy strong duality: for the optimal
+    coupling, dot(alpha, A) + dot(beta, B) == cost."""
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(42)
+    for _trial in range(5):
+        a = rng.rand(n)
+        a /= a.sum()
+        b = rng.rand(n)
+        b /= b.sum()
+        A, B = a.reshape(shape), b.reshape(shape)
+
+        cost, log = emd_grid_l1(A, B, log=True)
+        alpha = log["alpha"]
+        beta = log["beta"]
+
+        np.testing.assert_allclose(beta, -alpha, atol=1e-10)
+        np.testing.assert_allclose(
+            np.dot(alpha, a) + np.dot(beta, b), cost, rtol=1e-6, atol=1e-8
+        )
+        # Equivalent, since beta = -alpha.
+        np.testing.assert_allclose(np.dot(alpha, a - b), cost, rtol=1e-6, atol=1e-8)
+
+
+@pytest.mark.parametrize("shape", [(8,), (3, 4), (2, 3, 2)])
+def test_emd_grid_l1_gradient_finite_differences(shape):
+    """alpha[i] - alpha[j] must match the centered finite difference of cost
+    with respect to moving mass eps from bin j to bin i."""
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(0)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    A, B = a.reshape(shape), b.reshape(shape)
+
+    _cost, log = emd_grid_l1(A, B, log=True)
+    alpha = log["alpha"]
+
+    eps = 1e-5
+    pairs = {
+        (int(i), int(j))
+        for i, j in zip(rng.randint(0, n, size=8), rng.randint(0, n, size=8))
+        if i != j
+    }
+    for i, j in pairs:
+        a_plus = a.copy()
+        a_plus[i] += eps
+        a_plus[j] -= eps
+        a_minus = a.copy()
+        a_minus[i] -= eps
+        a_minus[j] += eps
+
+        cost_plus = emd_grid_l1(a_plus.reshape(shape), B)
+        cost_minus = emd_grid_l1(a_minus.reshape(shape), B)
+        fd = (cost_plus - cost_minus) / (2 * eps)
+
+        np.testing.assert_allclose(fd, alpha[i] - alpha[j], atol=1e-4)
+
+
+def test_emd_grid_l1_1d_gradient_matches_return_plan():
+    """The gradient must not depend on whether return_plan is also
+    requested: both the cost-only closed form and the with-plan branch
+    dispatch to the same closed-form alpha."""
+    n = 7
+    rng = np.random.RandomState(9)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+
+    cost, log = emd_grid_l1(a, b, log=True)
+    cost_p, log_p = emd_grid_l1(a, b, return_plan=True, log=True)
+
+    np.testing.assert_allclose(cost, cost_p, rtol=1e-6, atol=1e-8)
+    np.testing.assert_allclose(log["alpha"], log_p["alpha"], atol=1e-10)
+    np.testing.assert_allclose(log["beta"], log_p["beta"], atol=1e-10)
+    np.testing.assert_allclose(
+        np.dot(log_p["alpha"], a - b), cost_p, rtol=1e-6, atol=1e-8
+    )
+
+
+def test_emd_grid_l1_1d_gradient_infeasible_is_zero():
+    """Matches the general (C++) path: no meaningful gradient when
+    infeasible, so alpha/beta are exactly zero rather than nonsense."""
+    a = np.array([1.0, 0.0, 0.0, 0.0])
+    b = np.array([0.0, 0.0, 0.0, 0.5])
+
+    _cost, log = emd_grid_l1(a, b, check_marginals=False, log=True)
+    assert log["result_code"] != 1  # not OPTIMAL: infeasible
+    np.testing.assert_allclose(log["alpha"], 0.0)
+    np.testing.assert_allclose(log["beta"], 0.0)
+
+
+def test_emd_grid_l1_1d_gradient_backends(nx):
+    """The 1D gradient must also be backend-native: dtype/device matching
+    the inputs, computed without a CPU round-trip."""
+    n = 6
+    rng = np.random.RandomState(4)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+
+    cost_np, log_np = emd_grid_l1(a, b, log=True)
+
+    for tp in nx.__type_list__:
+        ab, bb = nx.from_numpy(a, b, type_as=tp)
+        cost_b, log_b = emd_grid_l1(ab, bb, log=True)
+        nx.assert_same_dtype_device(tp, log_b["alpha"])
+        nx.assert_same_dtype_device(tp, log_b["beta"])
+        np.testing.assert_allclose(
+            nx.to_numpy(log_b["alpha"]), log_np["alpha"], rtol=1e-6, atol=1e-8
+        )
+        np.testing.assert_allclose(nx.to_numpy(cost_b), cost_np, rtol=1e-6, atol=1e-8)
+
+
+def test_emd_grid_l1_grad_invalid_raises():
+    a = np.array([1.0, 0.0, 0.0, 0.0])
+    b = np.array([0.0, 0.0, 0.0, 1.0])
+    with pytest.raises(ValueError):
+        emd_grid_l1(a, b, grad="bogus")
+
+
+def test_emd_grid_l1_1d_grad_none_omits_alpha_and_skips_computation():
+    """grad=None on a 1D grid must skip the (non-free) O(n) gradient pass
+    entirely, and log must not contain alpha/beta."""
+    a = np.array([1.0, 0.0, 0.0, 0.0])
+    b = np.array([0.0, 0.0, 0.0, 1.0])
+
+    with mock.patch("ot.lp._grid._emd_grid_l1_1d", wraps=_emd_grid_l1_1d) as mocked_1d:
+        cost, log = emd_grid_l1(a, b, grad=None, log=True)
+    mocked_1d.assert_called_once_with(a, b, False, False, mock.ANY)
+    np.testing.assert_allclose(cost, 3.0)
+    assert "alpha" not in log
+    assert "beta" not in log
+
+    # The default ('envelope') must still compute and return it.
+    with mock.patch("ot.lp._grid._emd_grid_l1_1d", wraps=_emd_grid_l1_1d) as mocked_1d:
+        _cost, log = emd_grid_l1(a, b, log=True)
+    mocked_1d.assert_called_once_with(a, b, False, True, mock.ANY)
+    assert "alpha" in log
+    assert "beta" in log
+
+
+def test_emd_grid_l1_1d_grad_none_without_log_unaffected():
+    """grad only matters when log is requested; without log, behavior and
+    return value must be unchanged."""
+    a = np.array([1.0, 0.0, 0.0, 0.0])
+    b = np.array([0.0, 0.0, 0.0, 1.0])
+
+    cost_default = emd_grid_l1(a, b)
+    cost_grad_none = emd_grid_l1(a, b, grad=None)
+    np.testing.assert_allclose(cost_default, cost_grad_none)
+
+
+@pytest.mark.parametrize("shape", [(3, 4), (2, 2, 2)])
+def test_emd_grid_l1_grad_none_multid_still_has_alpha(shape):
+    """For d >= 2, alpha/beta are a free byproduct of the network-simplex
+    solve, so grad=None must not remove them from log."""
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(3)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+    A, B = a.reshape(shape), b.reshape(shape)
+
+    cost, log = emd_grid_l1(A, B, grad=None, log=True)
+    cost_default, log_default = emd_grid_l1(A, B, log=True)
+
+    assert "alpha" in log
+    assert "beta" in log
+    np.testing.assert_allclose(cost, cost_default)
+    np.testing.assert_allclose(log["alpha"], log_default["alpha"])
+    np.testing.assert_allclose(log["beta"], log_default["beta"])

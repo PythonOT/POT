@@ -559,6 +559,7 @@ int EMD_wrap_grid_l1(
     double *plan_values_out,
     uint64_t *n_plan_entries_out,
     uint64_t max_plan_entries,
+    double *alpha,
     double *cost,
     uint64_t maxIter
 ) {
@@ -591,9 +592,12 @@ int EMD_wrap_grid_l1(
     *n_plan_entries_out = 0;
 
     if (!any_diff) {
-        // Histograms are identical: nothing to transport, but if a plan is
-        // requested, the identity coupling is still the (trivially optimal)
-        // transportation plan.
+        // Histograms are identical: the cost is 0 and constant in a
+        // neighbourhood of X == Y, so the zero potential is a valid
+        // (sub)gradient here.
+        std::fill(alpha, alpha + n_nodes, 0.0);
+        // Nothing to transport, but if a plan is requested, the identity
+        // coupling is still the (trivially optimal) transportation plan.
         if (return_plan) {
             for (int64_t i = 0; i < n_nodes; ++i) {
                 if (X[i] > 1e-10) {
@@ -661,6 +665,16 @@ int EMD_wrap_grid_l1(
     }
 
     *cost = net.totalCost();
+
+    // Node potentials (dual variables) are a byproduct of the solve, cheap
+    // to extract regardless of whether a plan was requested: dW/dX[i] =
+    // alpha[i], dW/dY[i] = -alpha[i] (beta = -alpha, since supply[i] =
+    // X[i] - Y[i] uses a single graph, not a bipartite source/target split).
+    // Negated to match LEMON's sign convention, same as the bipartite
+    // extract_compressed_support above (alpha = -potential).
+    for (int64_t i = 0; i < n_nodes; ++i) {
+        alpha[i] = -net.potential(Digraph::nodeFromId(static_cast<int>(i)));
+    }
 
     if (!return_plan) {
         // The caller only wants the cost: skip decomposing the Beckmann-style
