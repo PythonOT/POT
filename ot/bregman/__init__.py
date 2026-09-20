@@ -32,6 +32,8 @@ from ._barycenter import (
 from ._convolutional import (
     convolutional_barycenter2d,
     convolutional_barycenter2d_debiased,
+    convolutional_grid_barycenter,
+    convolutional_grid_barycenter_debiased,
 )
 
 from ._empirical import (
@@ -69,6 +71,8 @@ __all__ = [
     "jcpot_barycenter",
     "convolutional_barycenter2d",
     "convolutional_barycenter2d_debiased",
+    "convolutional_grid_barycenter",
+    "convolutional_grid_barycenter_debiased",
     "empirical_sinkhorn",
     "empirical_sinkhorn2",
     "empirical_sinkhorn2_geomloss",

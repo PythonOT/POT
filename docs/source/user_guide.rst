@@ -575,7 +575,11 @@ accelerate the estimation of Wasserstein barycenter when the support has a
 separable structure [21]_. In the case of 2D images for instance one can replace
 the matrix vector production in the Bregman projections by convolution
 operators. We provide an implementation of this algorithm in function
-:any:`ot.bregman.convolutional_barycenter2d`.
+:any:`ot.bregman.convolutional_barycenter2d`, and its debiased variant [37]_ in
+:any:`ot.bregman.convolutional_barycenter2d_debiased`. The same separable-kernel
+algorithm generalizes to a regular grid of any dimension (1D signals, 3D
+volumes, ...) in :any:`ot.bregman.convolutional_grid_barycenter` and
+:any:`ot.bregman.convolutional_grid_barycenter_debiased`.
 
 
 
