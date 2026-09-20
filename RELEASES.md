@@ -15,6 +15,7 @@
 
 #### Closed issues
 
+- Warn when the convolution kernel in `ot.bregman.convolutional_barycenter2d` and `convolutional_barycenter2d_debiased` underflows at small `reg`. Past that point mass can no longer cross the image and the barycenter collapses towards the arithmetic mean of the inputs, which looks like an over-diffuse result rather than an error; `method='sinkhorn_log'` is exact in that regime (PR #867, Issue #458)
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)

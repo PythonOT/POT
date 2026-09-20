@@ -1434,13 +1434,74 @@ def test_screenkhorn(nx):
     np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
 
 
+def test_convolutional_barycenter_kernel_underflow_warns():
+    """Small reg silently loses the transport (issue #458).
+
+    exp(-(x-y)**2 / reg) underflows for distant pixels, mass can no longer
+    cross the image, and the barycenter collapses towards the arithmetic mean
+    of the inputs, which reads as an over-diffuse result rather than an error.
+    """
+    rng = np.random.RandomState(0)
+    n, sigma, sep = 32, 0.06, 0.15
+    t = np.linspace(0, 1, n)
+    X, Y = np.meshgrid(t, t, indexing="ij")
+
+    def gauss(cx):
+        g = np.exp(-((X - cx) ** 2 + (Y - 0.5) ** 2) / (2 * sigma**2))
+        return g / g.sum()
+
+    A = np.stack([gauss(0.5 - sep), gauss(0.5 + sep)])
+
+    with pytest.warns(UserWarning, match="underflow"):
+        ot.bregman.convolutional_barycenter2d_debiased(A, 1e-04)
+
+    with pytest.warns(UserWarning, match="underflow"):
+        ot.bregman.convolutional_barycenter2d(A, 1e-04)
+
+    # a usable kernel must stay silent, and so must the log-domain solver
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ot.bregman.convolutional_barycenter2d_debiased(A, 1e-02)
+        ot.bregman.convolutional_barycenter2d_debiased(A, 1e-04, method="sinkhorn_log")
+
+
+def test_convolutional_barycenter_debiased_preserves_width():
+    """The debiased barycenter of two equal-width Gaussians keeps that width.
+
+    Janati et al. 2020. The log-domain solver gets this right at every reg;
+    the default one only where its kernel has not underflowed.
+    """
+    n, sigma, sep = 32, 0.06, 0.15
+    t = np.linspace(0, 1, n)
+    X, Y = np.meshgrid(t, t, indexing="ij")
+
+    def gauss(cx):
+        g = np.exp(-((X - cx) ** 2 + (Y - 0.5) ** 2) / (2 * sigma**2))
+        return g / g.sum()
+
+    A = np.stack([gauss(0.5 - sep), gauss(0.5 + sep)])
+
+    def width(img):
+        px = img.sum(axis=1)
+        mx = (px * t).sum()
+        return np.sqrt(((t - mx) ** 2 * px).sum())
+
+    bar = ot.bregman.convolutional_barycenter2d_debiased(
+        A, 1e-03, method="sinkhorn_log"
+    )
+    np.testing.assert_allclose(width(bar), width(A[0]), rtol=0.05)
+
+
 def test_convolutional_barycenter_non_square(nx):
     # test for image with height not equal width
     A = np.ones((2, 2, 3)) / (2 * 3)
     A_nx = nx.from_numpy(A)
 
-    b_np = ot.bregman.convolutional_barycenter2d(A, 1e-03)
-    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(A_nx, 1e-03))
+    # reg=1e-3 underflows the convolution kernel on a unit grid, which does not
+    # affect a uniform image but does emit a warning; 1e-2 exercises the same
+    # non-square code path with a usable kernel
+    b_np = ot.bregman.convolutional_barycenter2d(A, 1e-02)
+    b = nx.to_numpy(ot.bregman.convolutional_barycenter2d(A_nx, 1e-02))
 
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)
     np.testing.assert_allclose(np.ones((2, 3)) / (2 * 3), b, atol=1e-02)

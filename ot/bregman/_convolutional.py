@@ -10,6 +10,8 @@ Bregman projections solvers for entropic regularized Wasserstein convolutional b
 
 import warnings
 
+import numpy as np
+
 from ..backend import get_backend
 from ..utils import list_to_array
 
@@ -18,6 +20,33 @@ _warning_msg = (
     "Try a larger number of iterations `numItermax` "
     "or a larger entropy `reg`."
 )
+
+
+def _warn_if_kernel_underflows(nx, M1, M2, reg):
+    """Warn when exp(M) is about to lose the transport to underflow.
+
+    The Sinkhorn iterations form products and ratios of kernel entries, so the
+    usable exponent range is roughly half that of the float type. Past that the
+    convolution can no longer move mass across the image and the barycenter
+    degenerates towards the arithmetic mean of the inputs, which looks like an
+    over-diffuse result rather than an error.
+    """
+    min_exponent = float(min(nx.min(M1), nx.min(M2)))
+    try:
+        tiny = np.finfo(nx.to_numpy(M1).dtype).tiny
+    except (TypeError, ValueError):  # pragma: no cover - exotic dtypes
+        return
+    # half the exponent range, i.e. the exponent of sqrt(tiny)
+    safe_exponent = np.log(tiny) / 2
+    if min_exponent < safe_exponent:
+        warnings.warn(
+            f"reg={reg:g} is small enough that the convolution kernel "
+            f"underflows: its smallest exponent is {min_exponent:.0f} against a "
+            f"usable limit of {safe_exponent:.0f}. The result will be too "
+            "diffuse, and more iterations will not help. Use "
+            "method='sinkhorn_log' for this regularization.",
+            stacklevel=3,
+        )
 
 
 def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
@@ -34,6 +63,7 @@ def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
 
     # If normal domain is selected, we can use M1 and M2 to compute the convolution
     if not log_domain:
+        _warn_if_kernel_underflows(nx, M1, M2, reg)
         K1, K2 = nx.exp(M1), nx.exp(M2)
 
         def convol_imgs(imgs):
