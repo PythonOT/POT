@@ -48,8 +48,14 @@ def roll_cols(M, shifts):
 
     n_rows, n_cols = M.shape
 
+    # `shifts` may be a plain Python int (see the first example below), which
+    # has no dtype/device to propagate; only pass it as `type_as` when it is
+    # itself a backend array (e.g. the int64 shift array roll_cols is called
+    # with elsewhere in this module).
+    shifts_type_as = shifts if hasattr(shifts, "dtype") else None
     arange1 = nx.tile(
-        nx.reshape(nx.arange(n_cols, type_as=shifts), (1, n_cols)), (n_rows, 1)
+        nx.reshape(nx.arange(n_cols, type_as=shifts_type_as), (1, n_cols)),
+        (n_rows, 1),
     )
     arange2 = (arange1 - shifts) % n_cols
 
