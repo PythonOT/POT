@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 import ot
+from ot.backend import torch
 from ot.lp import emd_grid_l1
 from ot.lp._grid import _emd_grid_l1_1d, _emd_grid_l1_1d_monotone_plan
 
@@ -398,8 +399,9 @@ def test_emd_grid_l1_gradient_strong_duality(shape):
         A, B = a.reshape(shape), b.reshape(shape)
 
         cost, log = emd_grid_l1(A, B, log=True)
-        alpha = log["alpha"]
-        beta = log["beta"]
+        # alpha/beta are shaped like A/B; flatten to match a/b here.
+        alpha = log["alpha"].reshape(-1)
+        beta = log["beta"].reshape(-1)
 
         np.testing.assert_allclose(beta, -alpha, atol=1e-10)
         np.testing.assert_allclose(
@@ -422,7 +424,9 @@ def test_emd_grid_l1_gradient_finite_differences(shape):
     A, B = a.reshape(shape), b.reshape(shape)
 
     _cost, log = emd_grid_l1(A, B, log=True)
-    alpha = log["alpha"]
+    # alpha is shaped like A; flatten so it can be indexed by the flat i, j
+    # below, matching a/b.
+    alpha = log["alpha"].reshape(-1)
 
     eps = 1e-5
     pairs = {
@@ -561,3 +565,71 @@ def test_emd_grid_l1_grad_none_multid_still_has_alpha(shape):
     np.testing.assert_allclose(cost, cost_default)
     np.testing.assert_allclose(log["alpha"], log_default["alpha"])
     np.testing.assert_allclose(log["beta"], log_default["beta"])
+
+
+@pytest.mark.parametrize("shape", [(8,), (3, 4), (2, 3, 2)])
+def test_emd_grid_l1_autodiff_matches_dual_potentials(shape):
+    """cost must support automatic differentiation, the gradient matching
+    the (centred) dual potentials alpha/beta exactly, the same way
+    ot.emd2/ot.emd2_lazy wire their own dual potentials into cost's
+    gradient. Checked with and without requesting log, since the potentials
+    must be computed either way for this to work."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(0)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+
+    a_t = torch.tensor(a.reshape(shape), dtype=torch.float64, requires_grad=True)
+    b_t = torch.tensor(b.reshape(shape), dtype=torch.float64, requires_grad=True)
+
+    cost, log = emd_grid_l1(a_t, b_t, log=True)
+    assert cost.requires_grad
+    cost.backward()
+    np.testing.assert_allclose(
+        a_t.grad.numpy(), log["alpha"].detach().numpy(), atol=1e-8
+    )
+    np.testing.assert_allclose(
+        b_t.grad.numpy(), log["beta"].detach().numpy(), atol=1e-8
+    )
+
+    # Must work identically without log: the gradient is not conditioned on
+    # requesting the log dict.
+    a_t2 = torch.tensor(a.reshape(shape), dtype=torch.float64, requires_grad=True)
+    b_t2 = torch.tensor(b.reshape(shape), dtype=torch.float64, requires_grad=True)
+    cost2 = emd_grid_l1(a_t2, b_t2)
+    assert cost2.requires_grad
+    cost2.backward()
+    np.testing.assert_allclose(a_t2.grad.numpy(), a_t.grad.numpy(), atol=1e-8)
+    np.testing.assert_allclose(b_t2.grad.numpy(), b_t.grad.numpy(), atol=1e-8)
+
+
+def test_emd_grid_l1_1d_autodiff_grad_none_disables_gradient():
+    """With grad=None, a 1D grid's cost must not support autodiff at all
+    (matching the general d >= 2 path's behaviour before this feature
+    existed): no error, but no gradient either."""
+    if not torch:
+        pytest.skip("PyTorch not available")
+
+    n = 6
+    rng = np.random.RandomState(1)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(n)
+    b /= b.sum()
+
+    a_t = torch.tensor(a, dtype=torch.float64, requires_grad=True)
+    b_t = torch.tensor(b, dtype=torch.float64, requires_grad=True)
+
+    cost = emd_grid_l1(a_t, b_t, grad=None)
+    assert not cost.requires_grad
+
+    # Also true when log is requested: the log dict just omits alpha/beta.
+    cost_log, log = emd_grid_l1(a_t, b_t, grad=None, log=True)
+    assert not cost_log.requires_grad
+    assert "alpha" not in log
+    assert "beta" not in log

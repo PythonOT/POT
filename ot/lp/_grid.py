@@ -63,7 +63,11 @@ def _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx):
     result_code)``, all backend-native, matching `A`'s dtype and device
     (`alpha`, `plan_*` are `None` when not requested/not needed, see below).
     `alpha` (raw, uncentred; the caller centres it) is `None` if
-    `return_alpha` is False. `plan_*` are `None` if `return_plan` is False.
+    `return_alpha` is False, and otherwise detached from any computation
+    graph `A`/`B` were part of (like `cost`, see :any:`_finalize_native_cost`)
+    -- it is meant to be wired back in explicitly, as an exact gradient, via
+    ``nx.set_gradients``, not to carry its own (non-smooth) graph through
+    ``nx.sign``. `plan_*` are `None` if `return_plan` is False.
     """
     n = A.shape[0]
 
@@ -90,6 +94,7 @@ def _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx):
         sign = nx.sign(cum_diff[:-1])
         suffix = nx.flip(nx.cumsum(nx.flip(sign, 0), 0), 0)
         alpha = nx.concatenate([suffix, nx.zeros((1,), type_as=A)], axis=0)
+        alpha = nx.detach(alpha)
     else:
         alpha = None
 
@@ -229,11 +234,19 @@ def emd_grid_l1(
         from all compatible backends. Beyond the 1D case above, the
         algorithm uses a C++/Cython CPU solver, so GPU arrays are copied
         to CPU before solving (and the transportation plan's bin indices, if
-        requested, are returned as CPU arrays). `cost` is always detached
-        from any computation graph the inputs were part of: this does not
-        support automatic differentiation. The exact gradient of `cost`
-        with respect to `A` and `B` is instead exposed explicitly as
-        `alpha`/`beta` in `log` (see below).
+        requested, are returned as CPU arrays).
+
+    .. note:: `cost` supports automatic differentiation, the same way
+        :any:`ot.emd2` and :any:`ot.lp.emd2_lazy` do: since the underlying
+        solve itself is not differentiated through, `cost` is first detached
+        from any computation graph `A`/`B` were part of, then the exact
+        gradient (the dual potentials below, via the envelope theorem) is
+        wired back in explicitly with ``nx.set_gradients``, so e.g.
+        ``cost.backward()`` (PyTorch) populates `A`/`B`'s `.grad` correctly.
+        For :math:`d \geq 2` this always happens, since the potentials are a
+        free byproduct of the solve; for a 1D grid it additionally requires
+        `grad` to be `'envelope'` (the default) -- with `grad` set to None,
+        `cost` stays detached there, with no autodiff support.
 
     .. note:: `log["alpha"]` and `log["beta"]`, when present, are the
         (centred) dual potentials, which give the gradient of `cost` with
@@ -241,14 +254,15 @@ def emd_grid_l1(
         A_i = \text{alpha}_i` and :math:`\partial \text{cost}/\partial B_i =
         \text{beta}_i = -\text{alpha}_i` (a single graph is used, not a
         bipartite source/target split, so there is one potential array, not
-        two). For :math:`d \geq 2` these are LEMON's network-simplex node
-        potentials, an unavoidable byproduct of the solve itself (a free
-        application of the envelope theorem to this LP), so they are always
-        computed and returned in `log` regardless of `grad`. For a 1D grid
-        they are instead a closed form (see :any:`_emd_grid_l1_1d`) that
-        needs its own, separate :math:`\mathcal{O}(n)` pass -- not otherwise
-        free -- so `grad` controls whether it runs there. Either way they
-        are defined up to an additive constant; centring (subtracting their
+        two) -- the same values wired into `cost`'s gradient above. For
+        :math:`d \geq 2` these are LEMON's network-simplex node potentials,
+        an unavoidable byproduct of the solve itself (a free application of
+        the envelope theorem to this LP), so they are always computed and
+        returned in `log` regardless of `grad`. For a 1D grid they are
+        instead a closed form (see :any:`_emd_grid_l1_1d`) that needs its
+        own, separate :math:`\mathcal{O}(n)` pass -- not otherwise free --
+        so `grad` controls whether it runs there. Either way they are
+        defined up to an additive constant; centring (subtracting their
         mean) picks the canonical representative, the Riemannian gradient of
         `cost` on the probability simplex.
 
@@ -276,18 +290,21 @@ def emd_grid_l1(
     grad : {'envelope', None}, optional (default='envelope')
         Controls whether the dual potentials `alpha`/`beta` (the gradient of
         `cost`) are computed for a 1D grid, where doing so has a cost of its
-        own (see the note above). For :math:`d \geq 2` they come for free as
-        a byproduct of the network-simplex solve, so this has no effect
-        there: they are always computed and returned in `log`. If
-        `'envelope'` (the default), also compute them for a 1D grid, via the
-        envelope theorem applied to that grid's closed form. If None, skip
-        that computation for a 1D grid, and `log` will not contain `alpha`
-        or `beta` in that case. Has no effect unless `log` is True.
+        own (see the notes above). For :math:`d \geq 2` they come for free
+        as a byproduct of the network-simplex solve, so this has no effect
+        there: they are always computed, wired into `cost`'s gradient, and
+        returned in `log`. If `'envelope'` (the default), also compute them
+        for a 1D grid, via the envelope theorem applied to that grid's
+        closed form, and wire them into `cost`'s gradient the same way. If
+        None, skip that computation for a 1D grid: `cost` then carries no
+        gradient there, and `log` will not contain `alpha` or `beta`.
 
     Returns
     -------
     cost : float
-        Optimal transportation cost.
+        Optimal transportation cost. Supports automatic differentiation
+        with respect to `A`/`B` unless `A.ndim == 1` and `grad` is None
+        (see the notes above).
     log : dict, optional
         If input `log` is True, a dictionary containing the solver status
         (`warning`, `result_code`) and, if `return_plan` is True, the sparse
@@ -343,11 +360,30 @@ def emd_grid_l1(
         # (when requested) the transportation plan -- so it gets its own,
         # fully self-contained branch. See _emd_grid_l1_1d. Unlike the
         # general (d >= 2) path below, the gradient is not a free byproduct
-        # here, so it is only computed when actually requested.
-        return_alpha = log and grad == "envelope"
+        # here, so it is only computed when actually needed: for the log
+        # dict, or to wire autodiff support in via nx.set_gradients below.
+        return_alpha = grad == "envelope"
         cost, alpha, plan_sources, plan_targets, plan_values, result_code = (
             _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx)
         )
+
+        if alpha is not None:
+            # `alpha` is only defined up to an additive constant; centring
+            # it picks the canonical representative, the Riemannian
+            # gradient of the cost on the probability simplex.
+            alpha = alpha - nx.mean(alpha)
+            # `alpha` is already detached (see _emd_grid_l1_1d); centring
+            # and negating it stay detached too (no new graph is built from
+            # ops on an already-detached tensor), so beta needs neither an
+            # extra nx.detach nor a copy (unary `-` always allocates new
+            # storage, so alpha/beta never alias each other either).
+            beta = -alpha
+            # Wires the exact (envelope-theorem) gradient in explicitly, the
+            # same way ot.emd2/ot.emd2_lazy do: `cost` was detached from any
+            # graph A/B were part of (see _emd_grid_l1_1d), so without this,
+            # backpropagating through it would silently give no gradient at
+            # all rather than a wrong one.
+            cost = nx.set_gradients(cost, (A, B), (alpha, beta))
 
         if log:
             log_dict = {
@@ -355,13 +391,8 @@ def emd_grid_l1(
                 "result_code": result_code,
             }
             if alpha is not None:
-                # `alpha` is only defined up to an additive constant;
-                # centring it picks the canonical representative, the
-                # Riemannian gradient of the cost on the probability
-                # simplex.
-                alpha = alpha - nx.mean(alpha)
                 log_dict["alpha"] = alpha
-                log_dict["beta"] = -alpha
+                log_dict["beta"] = beta
             if return_plan and result_code == _RESULT_OPTIMAL:
                 # plan_sources/targets/values are already backend-native
                 # (matching A), so this is a plain packaging step, with no
@@ -402,15 +433,27 @@ def emd_grid_l1(
     # source/target split (supply[i] = A[i] - B[i] for every node).
     alpha = alpha - alpha.mean()
     beta = -alpha
+    # emd_c_grid_l1 works with A, B flattened, so alpha/beta come back flat
+    # (n,); reshape to A.shape/B.shape (n_1, ..., n_d) here, once, both for
+    # log and for set_gradients below (which needs a gradient shaped like
+    # the actual input it is for).
+    alpha_backend = nx.reshape(nx.from_numpy(alpha, type_as=A), A.shape)
+    beta_backend = nx.reshape(nx.from_numpy(beta, type_as=A), B.shape)
 
-    cost = nx.from_numpy(cost, type_as=A)
+    # Wires the exact (envelope-theorem) gradient in explicitly, the same
+    # way ot.emd2/ot.emd2_lazy do -- alpha/beta come for free from the
+    # network-simplex solve above regardless of `grad`, so this always runs
+    # here (unlike the 1D path, where it is conditional on `grad`).
+    cost = nx.set_gradients(
+        nx.from_numpy(cost, type_as=A), (A, B), (alpha_backend, beta_backend)
+    )
 
     if log:
         log_dict = {
             "warning": check_result(result_code),
             "result_code": result_code,
-            "alpha": nx.from_numpy(alpha, type_as=A),
-            "beta": nx.from_numpy(beta, type_as=A),
+            "alpha": alpha_backend,
+            "beta": beta_backend,
         }
         if return_plan:
             # A.size is a numpy property but a torch method: go through
