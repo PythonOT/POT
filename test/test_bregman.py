@@ -1434,6 +1434,20 @@ def test_screenkhorn(nx):
     np.testing.assert_allclose(G_sink.sum(1), G_screen.sum(1), atol=1e-02)
 
 
+
+def test_screenkhorn_full_budget_non_square():
+    # with the full budget no point is screened out, which used to fail with
+    # a shape error whenever the source and target sizes differ
+    rng = np.random.RandomState(0)
+    ns, nt = 20, 12
+    a = ot.unif(ns)
+    b = ot.unif(nt)
+    M = ot.dist(rng.randn(ns, 2), rng.randn(nt, 2))
+
+    G_screen = ot.bregman.screenkhorn(a, b, M, 1.0, ns_budget=ns, nt_budget=nt)
+    np.testing.assert_allclose(G_screen, ot.sinkhorn(a, b, M, 1.0), atol=1e-6)
+
+
 def test_convolutional_barycenter_non_square(nx):
     # test for image with height not equal width
     A = np.ones((2, 2, 3)) / (2 * 3)

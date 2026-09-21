@@ -182,8 +182,8 @@ def screenkhorn(
         K_IJc = []
         K_IcJ = []
 
-        vec_eps_IJc = nx.zeros((nt,), type_as=M)
-        vec_eps_IcJ = nx.zeros((ns,), type_as=M)
+        vec_eps_IJc = nx.zeros((ns,), type_as=M)
+        vec_eps_IcJ = nx.zeros((nt,), type_as=M)
 
     else:
         # sum of rows and columns of K
