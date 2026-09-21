@@ -226,7 +226,9 @@ def barycenter_sinkhorn(
 
     UKv = nx.dot(K, (A.T / nx.sum(K, axis=0)).T)
 
-    u = (geometricMean(UKv) / UKv.T).T
+    # the updates below keep the weighted geometric mean of u unchanged, so
+    # it has to start from the weighted one for the barycenter to be optimal
+    u = (geometricBar(weights, UKv) / UKv.T).T
 
     for ii in range(numItermax):
         UKv = u * nx.dot(K.T, A / nx.dot(K, u))
@@ -573,16 +575,22 @@ def barycenter_stabilized(
         Kv = nx.dot(K, v)
         u = A / Kv
         Ktu = nx.dot(K.T, u)
-        q = geometricBar(weights, Ktu)
+        # K has absorbed the scalings exp(alpha / reg) and exp(beta / reg), so
+        # Ktu is K^T u of the original kernel multiplied by exp(beta / reg)
+        q = nx.exp(nx.dot(nx.log(Ktu), weights) - beta / reg * nx.sum(weights))
         Q = q[:, None]
         v = Q / Ktu
         absorbing = False
         if nx.any(u > tau) or nx.any(v > tau):
             absorbing = True
-            alpha += reg * nx.log(nx.max(u, 1))
-            beta += reg * nx.log(nx.max(v, 1))
+            max_u = nx.max(u, 1)
+            max_v = nx.max(v, 1)
+            alpha += reg * nx.log(max_u)
+            beta += reg * nx.log(max_v)
             K = nx.exp((alpha[:, None] + beta[None, :] - M) / reg)
-            v = nx.ones(tuple(v.shape), type_as=v)
+            # keep the scalings of every histogram, only move their common
+            # part into K
+            v = v / max_v[:, None]
         Kv = nx.dot(K, v)
         if (
             nx.any(Ktu == 0.0)

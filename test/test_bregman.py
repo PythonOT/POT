@@ -603,6 +603,33 @@ def test_barycenter(nx, method, verbose, warn):
         ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
 
 
+
+@pytest.mark.parametrize("reg", [1e-3, 1e-2])
+def test_barycenter_non_uniform_weights(reg):
+    # the three solvers compute the same barycenter; with non-uniform weights
+    # "sinkhorn" started from a uniform geometric mean and
+    # "sinkhorn_stabilized" lost the per-histogram scalings when absorbing
+    n_bins = 50
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=15, s=5)
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=35, s=5)
+    A = np.vstack((a1, a2)).T
+    M = ot.utils.dist0(n_bins)
+    M /= M.max()
+    weights = np.array([0.2, 0.8])
+
+    bars = {
+        method: ot.bregman.barycenter(
+            A, M, reg, weights, method=method, stopThr=1e-10, numItermax=20000
+        )
+        for method in ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_log"]
+    }
+    for method, bar in bars.items():
+        np.testing.assert_allclose(bar.sum(), 1, err_msg=method)
+        np.testing.assert_allclose(
+            bar, bars["sinkhorn_log"], atol=1e-7, err_msg=method
+        )
+
+
 def test_free_support_sinkhorn_barycenter():
     measures_locations = [
         np.array([-1.0]).reshape((1, 1)),  # First dirac support
