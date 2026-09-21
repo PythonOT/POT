@@ -218,6 +218,20 @@ def _prepare_warmstart(potentials_init, need_filter, row_mask, col_mask):
     return alpha_init, beta_init
 
 
+def _emd_c_dense(a, b, M, numItermax, numThreads, alpha_init, beta_init):
+    """Call :any:`emd_c`, except for a cost matrix with no finite entry
+
+    The network simplex crashes the interpreter when every cost is NaN or
+    infinite. Such a problem is reported as infeasible instead, which is what
+    the solver already returns when only some of the costs are not finite.
+    """
+    if M.size > 0 and not np.isfinite(M).any():
+        n1, n2 = M.shape
+        infeasible = 0  # ProblemType.INFEASIBLE in emd_wrap
+        return np.zeros((n1, n2)), 0.0, np.zeros(n1), np.zeros(n2), infeasible
+    return emd_c(a, b, M, numItermax, numThreads, alpha_init, beta_init)
+
+
 def emd(
     a,
     b,
@@ -459,7 +473,7 @@ def emd(
         )
 
         # Dense solver
-        G, cost, u, v, result_code = emd_c(
+        G, cost, u, v, result_code = _emd_c_dense(
             a_solver, b_solver, M_solver, numItermax, numThreads, alpha_init, beta_init
         )
 
@@ -776,7 +790,7 @@ def emd2(
             )
 
             # Solve dense EMD
-            G, cost, u, v, result_code = emd_c(
+            G, cost, u, v, result_code = _emd_c_dense(
                 a_solver,
                 b_solver,
                 M_solver,

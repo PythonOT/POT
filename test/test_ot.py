@@ -266,6 +266,28 @@ def test_emd_empty():
     np.testing.assert_allclose(w, 0)
 
 
+@pytest.mark.parametrize("value", [np.nan, np.inf])
+def test_emd_no_finite_cost(value):
+    # the network simplex crashed the interpreter when no cost was finite;
+    # the problem is reported as infeasible, as for partly non-finite costs
+    a = ot.utils.unif(4)
+    b = ot.utils.unif(3)
+    M = np.full((4, 3), value)
+
+    with pytest.warns(UserWarning, match="infeasible"):
+        G, log = ot.emd(a, b, M, log=True)
+    np.testing.assert_allclose(G, np.zeros((4, 3)))
+    assert log["result_code"] == 0
+
+    with pytest.warns(UserWarning, match="infeasible"):
+        ot.emd2(a, b, M)
+
+    # Gromov-Wasserstein builds such a cost matrix from a NaN structure
+    C1 = np.full((4, 4), value)
+    C2 = np.ones((3, 3))
+    assert np.isnan(ot.gromov.gromov_wasserstein2(C1, C2, a, b))
+
+
 def test_emd2_multi():
     n = 500  # nb bins
 
