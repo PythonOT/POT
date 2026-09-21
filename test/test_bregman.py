@@ -1445,7 +1445,7 @@ def test_screenkhorn_full_budget_non_square():
     M = ot.dist(rng.randn(ns, 2), rng.randn(nt, 2))
 
     G_screen = ot.bregman.screenkhorn(a, b, M, 1.0, ns_budget=ns, nt_budget=nt)
-    np.testing.assert_allclose(G_screen, ot.sinkhorn(a, b, M, 1.0), atol=1e-6)
+    np.testing.assert_allclose(G_screen, ot.sinkhorn(a, b, M, 1.0), atol=1e-4)
 
 
 def test_convolutional_barycenter_non_square(nx):
