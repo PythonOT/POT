@@ -22,7 +22,7 @@ _warning_msg = (
 )
 
 
-def _warn_if_kernel_underflows(nx, M1, M2, reg):
+def _warn_if_kernel_underflows(nx, reg, type_as, stacklevel):
     """Warn when exp(M) is about to lose the transport to underflow.
 
     The Sinkhorn iterations form products and ratios of kernel entries, so the
@@ -30,12 +30,17 @@ def _warn_if_kernel_underflows(nx, M1, M2, reg):
     convolution can no longer move mass across the image and the barycenter
     degenerates towards the arithmetic mean of the inputs, which looks like an
     over-diffuse result rather than an error.
+
+    The grid is always ``linspace(0, 1, n)``, so the most negative exponent is
+    ``-1 / reg`` whatever the image size, and no reduction over the kernel is
+    needed.
     """
-    min_exponent = float(min(nx.min(M1), nx.min(M2)))
     try:
-        tiny = np.finfo(nx.to_numpy(M1).dtype).tiny
+        dtype = nx.to_numpy(nx.zeros((1,), type_as=type_as)).dtype
+        tiny = np.finfo(dtype).tiny
     except (TypeError, ValueError):  # pragma: no cover - exotic dtypes
         return
+    min_exponent = -1.0 / reg
     # half the exponent range, i.e. the exponent of sqrt(tiny)
     safe_exponent = np.log(tiny) / 2
     if min_exponent < safe_exponent:
@@ -45,11 +50,11 @@ def _warn_if_kernel_underflows(nx, M1, M2, reg):
             f"usable limit of {safe_exponent:.0f}. The result will be too "
             "diffuse, and more iterations will not help. Use "
             "method='sinkhorn_log' for this regularization.",
-            stacklevel=3,
+            stacklevel=stacklevel,
         )
 
 
-def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
+def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False, stacklevel=4):
     """Return the convolution operator for 2D images.
 
     The function constructed is equivalent to blurring on horizontal then vertical directions."""
@@ -63,7 +68,7 @@ def _get_convol_img_fn(nx, width, height, reg, type_as, log_domain=False):
 
     # If normal domain is selected, we can use M1 and M2 to compute the convolution
     if not log_domain:
-        _warn_if_kernel_underflows(nx, M1, M2, reg)
+        _warn_if_kernel_underflows(nx, reg, type_as, stacklevel=stacklevel + 1)
         K1, K2 = nx.exp(M1), nx.exp(M2)
 
         def convol_imgs(imgs):
