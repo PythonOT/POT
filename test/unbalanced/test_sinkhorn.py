@@ -809,3 +809,53 @@ def test_implemented_methods(nx):
             ot.unbalanced.sinkhorn_unbalanced(a, b, M, epsilon, reg_m, method=method)
             ot.unbalanced.sinkhorn_unbalanced2(a, b, M, epsilon, reg_m, method=method)
             barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m, method=method)
+
+
+@pytest.mark.parametrize(
+    "method",
+    ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_translation_invariant"],
+)
+def test_unbalanced_total_cost(nx, method):
+    # The total cost reported in the log must be the value of the unbalanced OT
+    # objective that the solver actually minimizes. The marginal penalization is
+    # the generalized KL divergence, i.e. it includes the mass correction term
+    # (mass=True). Without it the reported value is the derivative of the
+    # objective along G -> t G, which vanishes at the optimum.
+    n = 20
+    rng = np.random.RandomState(42)
+
+    x = rng.randn(n, 2)
+    a = ot.utils.unif(n)
+    b = ot.utils.unif(n) * 1.5  # make the problem unbalanced
+    M = ot.dist(x, x)
+    a, b, M = nx.from_numpy(a, b, M)
+
+    reg = 1.0
+    reg_m = 1.0
+
+    G, log = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg=reg,
+        reg_m=reg_m,
+        method=method,
+        numItermax=5000,
+        stopThr=1e-12,
+        log=True,
+    )
+
+    c = a[:, None] * b[None, :]
+    expected = nx.sum(G * M)
+    expected = expected + reg * nx.kl_div(G, c, mass=True)
+    expected = expected + reg_m * nx.kl_div(nx.sum(G, 1), a, mass=True)
+    expected = expected + reg_m * nx.kl_div(nx.sum(G, 0), b, mass=True)
+
+    # all penalizations are divergences: the total cost is at least the
+    # linear cost of the optimal plan
+    np.testing.assert_array_less(
+        nx.to_numpy(log["cost"]) - 1e-5, nx.to_numpy(log["total_cost"])
+    )
+    np.testing.assert_allclose(
+        nx.to_numpy(log["total_cost"]), nx.to_numpy(expected), atol=1e-6
+    )

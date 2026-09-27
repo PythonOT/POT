@@ -806,11 +806,16 @@ def sinkhorn_knopp_unbalanced(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            total_cost = linear_cost + reg * nx.kl_div(plan, c)
+            # mass=True: the penalization is the generalized KL divergence
+            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
             if reg_m1 != float("inf"):
-                total_cost = total_cost + reg_m1 * nx.kl_div(nx.sum(plan, 1), a)
+                total_cost = total_cost + reg_m1 * nx.kl_div(
+                    nx.sum(plan, 1), a, mass=True
+                )
             if reg_m2 != float("inf"):
-                total_cost = total_cost + reg_m2 * nx.kl_div(nx.sum(plan, 0), b)
+                total_cost = total_cost + reg_m2 * nx.kl_div(
+                    nx.sum(plan, 0), b, mass=True
+                )
             dict_log["total_cost"] = total_cost
 
             return plan, dict_log
@@ -1106,11 +1111,16 @@ def sinkhorn_stabilized_unbalanced(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            total_cost = linear_cost + reg * nx.kl_div(plan, c)
+            # mass=True: the penalization is the generalized KL divergence
+            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
             if reg_m1 != float("inf"):
-                total_cost = total_cost + reg_m1 * nx.kl_div(nx.sum(plan, 1), a)
+                total_cost = total_cost + reg_m1 * nx.kl_div(
+                    nx.sum(plan, 1), a, mass=True
+                )
             if reg_m2 != float("inf"):
-                total_cost = total_cost + reg_m2 * nx.kl_div(nx.sum(plan, 0), b)
+                total_cost = total_cost + reg_m2 * nx.kl_div(
+                    nx.sum(plan, 0), b, mass=True
+                )
             dict_log["total_cost"] = total_cost
 
             return plan, dict_log
@@ -1389,11 +1399,16 @@ def sinkhorn_unbalanced_translation_invariant(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            total_cost = linear_cost + reg * nx.kl_div(plan, c)
+            # mass=True: the penalization is the generalized KL divergence
+            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
             if reg_m1 != float("inf"):
-                total_cost = total_cost + reg_m1 * nx.kl_div(nx.sum(plan, 1), a)
+                total_cost = total_cost + reg_m1 * nx.kl_div(
+                    nx.sum(plan, 1), a, mass=True
+                )
             if reg_m2 != float("inf"):
-                total_cost = total_cost + reg_m2 * nx.kl_div(nx.sum(plan, 0), b)
+                total_cost = total_cost + reg_m2 * nx.kl_div(
+                    nx.sum(plan, 0), b, mass=True
+                )
             dict_log["total_cost"] = total_cost
 
             return plan, dict_log
