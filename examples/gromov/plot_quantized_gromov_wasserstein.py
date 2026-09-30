@@ -267,6 +267,24 @@ OT_global_, OTs_local_, OT_, log_ = quantized_fused_gromov_wasserstein_partition
     log=True,
 )
 
+print("OT between representants: \n", OT_global_)
+print("OT local between samples and representants: \n", OTs_local_)
+
+for part_id1, cluster1 in enumerate(part1):
+    for part_id2, cluster2 in enumerate(part2):
+        print("sanity check (part1, part2) = (%s, %s): \n" % (part_id1, part_id2))
+        if OT_global_[part_id1, part_id2] > 0:
+            print(
+                np.all(
+                    OTs_local_[(part_id1, part_id2)] == OT_[cluster1, :][:, cluster2]
+                )
+            )
+plt.imshow(OT, interpolation="nearest", aspect="auto")
+plt.title("OT between samples")
+plt.colorbar()
+plt.axis("off")
+plt.show()
+
 
 # Visualization of the graph pre-processing
 
@@ -275,13 +293,17 @@ fontsize = 10
 seed_G1 = 0
 seed_G2 = 3
 
-part1_ = part1.astype(np.int32)
-part2_ = part2.astype(np.int32)
+part1_flat = np.zeros(C1.shape[0], dtype=np.int32)
+for cluster_id, cluster in enumerate(part1):
+    part1_flat[cluster] = cluster_id
 
+part2_flat = np.empty(C2.shape[0], dtype=np.int32)
+for cluster_id, cluster in enumerate(part2):
+    part2_flat[cluster] = cluster_id
 
-nodes_color_part1 = node_coloring(part1_, starting_color=0)
+nodes_color_part1 = node_coloring(part1_flat, starting_color=0)
 nodes_color_part2 = node_coloring(
-    part2_, starting_color=np.unique(nodes_color_part1).shape[0]
+    part2_flat, starting_color=np.unique(nodes_color_part1).shape[0]
 )
 
 
@@ -292,7 +314,7 @@ pl.subplot(2, 3, 1)
 pl.title(r"Input graph: $\mathbf{spC_1}$", fontsize=fontsize)
 
 pos1 = draw_graph(
-    G1, C1, ["C0" for _ in part1_], rep_indices1, node_size=node_size, seed=seed_G1
+    G1, C1, ["C0" for _ in part1_flat], rep_indices1, node_size=node_size, seed=seed_G1
 )
 
 pl.subplot(2, 3, 2)
@@ -320,7 +342,7 @@ pl.subplot(2, 3, 4)
 pl.title(r"Input graph: $\mathbf{spC_2}$", fontsize=fontsize)
 
 pos2 = draw_graph(
-    G2, C2, ["C0" for _ in part2_], rep_indices2, node_size=node_size, seed=seed_G2
+    G2, C2, ["C0" for _ in part2_flat], rep_indices2, node_size=node_size, seed=seed_G2
 )
 
 pl.subplot(2, 3, 5)
@@ -378,7 +400,14 @@ OT_global, OTs_local, OT, log = quantized_fused_gromov_wasserstein(
 
 qGW_dist = log["qFGW_dist"]
 
+print("OT between representants: \n", OT_global)
+print("OT local between samples and representants: \n", OTs_local)
 
+plt.imshow(OT, interpolation="nearest", aspect="auto")
+plt.title("OT between samples")
+plt.colorbar()
+plt.axis("off")
+plt.show()
 #############################################################################
 #
 # Visualization of the quantized Gromov-Wasserstein matching
@@ -394,8 +423,8 @@ def draw_transp_colored_qGW(
     C1,
     G2,
     C2,
-    part1,
-    part2,
+    part1_flat,
+    part2_flat,
     rep_indices1,
     rep_indices2,
     T,
@@ -410,15 +439,15 @@ def draw_transp_colored_qGW(
 ):
     starting_color = 0
     # get graphs partition and their coloring
-    unique_colors1 = ["C%s" % (starting_color + i) for i in np.unique(part1)]
+    unique_colors1 = ["C%s" % (starting_color + i) for i in np.unique(part1_flat)]
     nodes_color_part1 = []
-    for cluster in part1:
+    for cluster in part1_flat:
         nodes_color_part1.append(unique_colors1[cluster])
 
     starting_color = len(unique_colors1) + 1
-    unique_colors2 = ["C%s" % (starting_color + i) for i in np.unique(part2)]
+    unique_colors2 = ["C%s" % (starting_color + i) for i in np.unique(part2_flat)]
     nodes_color_part2 = []
-    for cluster in part2:
+    for cluster in part2_flat:
         nodes_color_part2.append(unique_colors2[cluster])
 
     pos1 = draw_graph(
@@ -440,7 +469,7 @@ def draw_transp_colored_qGW(
         pos=pos2,
         node_size=node_size,
         shiftx=shiftx,
-        seed=seed_G1,
+        seed=seed_G2,
         highlight_rep=highlight_rep,
     )
 
@@ -488,8 +517,8 @@ pos1, pos2 = draw_transp_colored_qGW(
     C1,
     weightedG2,
     C2,
-    part1_,
-    part2_,
+    part1_flat,
+    part2_flat,
     rep_indices1,
     rep_indices2,
     T=OT_,
@@ -512,8 +541,8 @@ pos1, pos2 = draw_transp_colored_qGW(
     C1,
     weightedG2,
     C2,
-    part1_,
-    part2_,
+    part1_flat,
+    part2_flat,
     rep_indices1,
     rep_indices2,
     T=OT_global,
@@ -568,8 +597,16 @@ FY = FX
 part1, rep_indices1 = get_partition_and_representants_samples(X, 4, "kmeans", 0)
 part2, rep_indices2 = get_partition_and_representants_samples(Y, 4, "kmeans", 0)
 
-upart1 = np.unique(part1)
-upart2 = np.unique(part2)
+part1_flat = np.empty(X.shape[0], dtype=np.int32)
+for cluster_id, cluster in enumerate(part1):
+    part1_flat[cluster] = cluster_id
+
+part2_flat = np.empty(Y.shape[0], dtype=np.int32)
+for cluster_id, cluster in enumerate(part2):
+    part2_flat[cluster] = cluster_id
+
+upart1 = np.unique(part1_flat)
+upart2 = np.unique(part2_flat)
 
 # Plot the source and target samples as distributions
 s = 20
@@ -584,14 +621,14 @@ plt.axis("off")
 ax2 = fig.add_subplot(1, 3, 2)
 ax2.set_title("Partitioning")
 for i, elem in enumerate(upart1):
-    idx = np.argwhere(part1 == elem)[:, 0]
+    idx = np.where(part1_flat == elem)[0]
     ax2.scatter(X[idx, 0], X[idx, 1], color="C%s" % i, alpha=FX[idx], s=s)
 plt.axis("off")
 
 ax3 = fig.add_subplot(1, 3, 3)
 ax3.set_title("Representant selection")
 for i, elem in enumerate(upart1):
-    idx = np.argwhere(part1 == elem)[:, 0]
+    idx = np.where(part1_flat == elem)[0]
     ax3.scatter(X[idx, 0], X[idx, 1], color="C%s" % i, alpha=FX[idx], s=10)
     rep_idx = rep_indices1[i]
     ax3.scatter(
@@ -613,7 +650,7 @@ plt.axis("off")
 ax5 = fig.add_subplot(1, 3, 2, projection="3d")
 ax5.set_title("Partitioning")
 for i, elem in enumerate(upart2):
-    idx = np.argwhere(part2 == elem)[:, 0]
+    idx = np.where(part2_flat == elem)[0]
     color = "C%s" % (start_color + i)
     ax5.scatter(Y[idx, 0], Y[idx, 1], Y[idx, 2], c=color, alpha=FY[idx], s=s)
 plt.axis("off")
@@ -621,7 +658,7 @@ plt.axis("off")
 ax6 = fig.add_subplot(1, 3, 3, projection="3d")
 ax6.set_title("Representant selection")
 for i, elem in enumerate(upart2):
-    idx = np.argwhere(part2 == elem)[:, 0]
+    idx = np.where(part2_flat == elem)[0]
     color = "C%s" % (start_color + i)
     rep_idx = rep_indices2[i]
     ax6.scatter(Y[idx, 0], Y[idx, 1], Y[idx, 2], c=color, alpha=FY[idx], s=s)
