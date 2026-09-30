@@ -488,3 +488,8 @@ Artificial Intelligence.
 
 \[96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). [Minimal Discrete Energy on the Sphere](https://www.math.vanderbilt.edu/~esaff/texts/155.pdf). Mathematical Research Letters, 1(6), 647-662.
 
+\[97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). [Orthogonal Estimation of Wasserstein Distances](https://proceedings.mlr.press/v89/rowland19a.html). Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89:186-195.
+
+\[98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). [Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance](https://openreview.net/forum?id=JSiTmB6Ehu). Transactions on Machine Learning Research.
+
+\[99] Sisouk, K., Delon, J., & Tierny, J. (2025). [A User's Guide to Sampling Strategies for Sliced Optimal Transport](https://openreview.net/forum?id=ECBepTWAFG). Transactions on Machine Learning Research.
