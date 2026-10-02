@@ -2158,6 +2158,11 @@ def split_sample_ratio(
         X_a = X_a[perm]
         a = a[perm]
 
+    if ratio == 1:
+        sel_a1 = perm if random_split else slice(0, n_a)
+        sel_a2 = perm[n_a:] if random_split else slice(n_a, n_a)
+        return X_a, X_a[:0], a, a[:0], sel_a1, sel_a2
+
     # find the split indices
     acs = nx.cumsum(a)
     thr_a = ratio * nx.sum(a)
