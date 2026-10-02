@@ -193,6 +193,7 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
         raise ValueError("V.ndim must be <= 2")
 
     if axis == 1:
+        max_nz = min(max_nz, V.shape[1])
         # For each row of V, find top max_nz values; arrange the
         # corresponding column indices such that their values are
         # in a descending order.
