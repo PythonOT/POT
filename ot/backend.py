@@ -1456,7 +1456,16 @@ class NumpyBackend(Backend):
         return np.reshape(a, shape)
 
     def seed(self, seed=None):
-        if seed is not None:
+        r"""Set the random generator used by :meth:`rand` and :meth:`randn`.
+
+        An integer seeds the current generator. A
+        :class:`numpy.random.RandomState` replaces it, matching the way the
+        torch and tensorflow backends adopt an external generator. ``None``
+        leaves the generator unchanged.
+        """
+        if isinstance(seed, np.random.RandomState):
+            self.rng_ = seed
+        elif seed is not None:
             self.rng_.seed(seed)
 
     def rand(self, *size, type_as=None):

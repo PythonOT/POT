@@ -982,3 +982,41 @@ def test_no_cuda_context_for_cpu_only_work():
         f"interpreter exited with returncode {result.returncode}: "
         f"{result.stderr.decode(errors='replace')[-2000:]}"
     )
+
+
+def _random_state_equal(left, right):
+    return (
+        left[0] == right[0]
+        and np.array_equal(left[1], right[1])
+        and left[2:] == right[2:]
+    )
+
+
+def test_numpy_backend_adopts_random_state():
+    # Non-regression for issue #848. RandomState.seed does not accept another
+    # RandomState, so the backend has to adopt the object.
+    shared = ot.backend.NumpyBackend.rng_
+    shared_before = shared.get_state()
+
+    adopted = np.random.RandomState(42)
+    expected = np.random.RandomState(42).rand(4)
+    backend = ot.backend.NumpyBackend()
+    backend.seed(adopted)
+    np.testing.assert_allclose(backend.rand(4), expected)
+    assert _random_state_equal(shared.get_state(), shared_before)
+
+    continued = np.random.RandomState(7)
+    reference = np.random.RandomState(7)
+    backend.seed(continued)
+    np.testing.assert_allclose(backend.randn(2, 3), reference.randn(2, 3))
+
+    fresh = ot.backend.NumpyBackend()
+    fresh.seed(1)
+    first = fresh.rand(3)
+    fresh.seed(1)
+    second = fresh.rand(3)
+    np.testing.assert_allclose(first, second)
+
+    unchanged = fresh.rng_.get_state()
+    fresh.seed(None)
+    assert _random_state_equal(fresh.rng_.get_state(), unchanged)
