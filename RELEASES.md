@@ -15,7 +15,7 @@
 
 #### Closed issues
 
-- Fix oversized `max_nz` budgets in `ot.utils.projection_sparse_simplex` so they return the documented unconstrained simplex projection for all axis modes (Issue #875).
+- Fix oversized `max_nz` budgets in `ot.utils.projection_sparse_simplex` so they return the documented unconstrained simplex projection for all axis modes (PR #876, Issue #875).
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)
