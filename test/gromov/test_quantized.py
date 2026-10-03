@@ -585,13 +585,6 @@ def test_quantized_fgw_samples(nx):
 
     MRb = ot.dist(FR1b, FR2b)
 
-    print("CR1b:", type(CR1b), CR1b.dtype)
-    print("CR2b", type(CR2b), CR2b.dtype)
-    print("list_R1b:", type(list_R1b), type(list_R1b[0]), list_R1b[0].dtype)
-    print("list_R2b:", type(list_R2b), type(list_R2b[0]), list_R2b[0].dtype)
-    print("list_p1b:", type(list_p1b), type(list_p1b[0]), list_p1b[0].dtype)
-    print("list_p2b:", type(list_p2b), type(list_p2b[0]), list_p2b[0].dtype)
-    print("MRb:", type(MRb), MRb.dtype)
     T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
         CR1b,
         CR2b,
