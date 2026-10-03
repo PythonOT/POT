@@ -1,39 +1,43 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 ===============================================
 Quantized Fused Gromov-Wasserstein examples
 ===============================================
 
 .. note::
-    Examples added in release: 0.9.4.
+    Examples added in release: 0.9.4 and updated with new API from 0.9.8.
 
 These examples show how to use the quantized (Fused) Gromov-Wasserstein
-solvers (qFGW) [68]. POT provides a generic solver `quantized_fused_gromov_wasserstein_partitioned`
+solvers (qFGW) [68]. POT provides a generic solver ``quantized_fused_gromov_wasserstein_partitioned``
 that takes as inputs partitioned graphs potentially endowed with node features,
 which have to be built by the user. On top of that, POT provides two wrappers:
-    i) `quantized_fused_gromov_wasserstein` operating over generic graphs, whose
-    partitioning is performed via `get_graph_partition` using e.g the Louvain algorithm,
-    and representant for each partition can be selected via `get_graph_representants`
+    i) ``quantized_fused_gromov_wasserstein`` operating over generic graphs, whose
+    partitioning is performed via ``get_graph_partition`` using e.g the Louvain algorithm,
+    and representant for each partition can be selected via ``get_graph_representants``
     using e.g the PageRank algorithm.
 
-    ii) `quantized_fused_gromov_wasserstein_samples` operating over point clouds,
-    e.g :math:`X_1 \in R^{n_1 * d_1}` and :math:`X_2 \in R^{n_2 * d_2}`
+    ii) ``quantized_fused_gromov_wasserstein_samples`` operating over point clouds,
+    e.g. :math:`X_1 \in \mathbb{R}^{n_1 \times d_1}` and :math:`X_2 \in \mathbb{R}^{n_2 \times d_2}`
     endowed with their respective euclidean geometry, whose partitioning and
     representant selection is performed jointly using e.g the K-means algorithm
-    via the function `get_partition_and_representants_samples`.
+    via the function ``get_partition_and_representants_samples``.
 
 
 We illustrate next how to compute the qGW distance on both types of data by:
 
-    i) Generating two graphs following Stochastic Block Models encoded as shortest
-    path matrices as qGW solvers tends to require dense structure to achieve a good
-    approximation of the GW distance (as qGW is an upper-bound of GW). In the meantime,
-    we illustrate an optional feature of our solvers, namely the use of auxiliary
-    structures e.g adjacency matrices to perform the graph partitioning.
+    i) Generating two graphs following stochastic block models. We represent each
+    graph by :math:`(\mathbf{C}_i, \mathbf{h}_i)`, where :math:`\mathbf{A}_i` is
+    its adjacency matrix, :math:`\mathbf{C}_i = d_{\mathrm{sp}}(\mathbf{A}_i)`
+    is its all-pairs shortest-path matrix, and :math:`\mathbf{h}_i` is the uniform
+    node distribution. qGW solvers tend to require dense structure to achieve a
+    good approximation of the GW distance (as qGW is an upper-bound of GW). We
+    also illustrate using :math:`\mathbf{A}_i` as an auxiliary structure for
+    graph partitioning.
 
     ii) Generating two point clouds representing curves in 2D and 3D respectively.
     We augment these point clouds by considering additional features of the same
-    dimensionaly :math:`F_1 \in R^{n_1 * d}` and :math:`F_2 \in R^{n_2 * d}`,
+    dimensionality :math:`\mathbf{F}_1 \in \mathbb{R}^{n_1 \times d}` and
+    :math:`\mathbf{F}_2 \in \mathbb{R}^{n_2 \times d}`,
     representing the color intensity associated to each sample of both distributions.
     Then we compute the qFGW distance between these attributed point clouds.
 
@@ -67,10 +71,12 @@ from ot.gromov import (
 
 #############################################################################
 #
-# Generate graphs
+# Generate graphs represented by (C1, h1) and (C2, h2)
 # --------------------------------------------------------------------------
 #
-# Create two graphs following Stochastic Block models of 2 and 3 clusters.
+# Create two stochastic block model graphs. Their adjacency matrices are A1 and
+# A2; their structure matrices C1 and C2 are the corresponding shortest-path
+# matrices, and h1 and h2 are uniform node distributions.
 
 N1 = 30  # 2 communities
 N2 = 45  # 3 communities
@@ -80,14 +86,14 @@ G1 = sbm(seed=0, sizes=[N1 // 2, N1 // 2], p=p1)
 G2 = sbm(seed=0, sizes=[N2 // 3, N2 // 3, N2 // 3], p=p2)
 
 
-C1 = networkx.to_numpy_array(G1)
-C2 = networkx.to_numpy_array(G2)
+A1 = networkx.to_numpy_array(G1)
+A2 = networkx.to_numpy_array(G2)
 
-spC1 = shortest_path(C1)
-spC2 = shortest_path(C2)
+C1 = shortest_path(A1)
+C2 = shortest_path(A2)
 
-h1 = np.ones(C1.shape[0]) / C1.shape[0]
-h2 = np.ones(C2.shape[0]) / C2.shape[0]
+h1 = np.ones(A1.shape[0]) / A1.shape[0]
+h2 = np.ones(A2.shape[0]) / A2.shape[0]
 
 # Add weights on the edges for visualization later on
 weight_intra_G1 = 5
@@ -215,8 +221,8 @@ def draw_graph(
 # We detail next the steps implemented within the wrapper that preprocess graphs
 # to form partitioned graphs, which are then passed as input to the generic qFGW solver.
 
-# 1-a) Partition C1 and C2 in 2 and 3 clusters respectively using Louvain
-#    algorithm from NetworkX. Then encode these partitions via vectors of assignments.
+# 1-a) Partition the graphs represented by (C1, h1) and (C2, h2), using their
+#    adjacency matrices A1 and A2 as inputs to the Louvain algorithm.
 
 part_method = "louvain"
 rep_method = "pagerank"
@@ -225,16 +231,16 @@ npart_1 = 2  # 2 clusters used to describe C1
 npart_2 = 3  # 3 clusters used to describe C2
 
 part1 = get_graph_partition(
-    C1, npart=npart_1, part_method=part_method, F=None, alpha=1.0, random_state=0
+    A1, npart=npart_1, part_method=part_method, F=None, alpha=1.0, random_state=0
 )
 part2 = get_graph_partition(
-    C2, npart=npart_2, part_method=part_method, F=None, alpha=1.0, random_state=0
+    A2, npart=npart_2, part_method=part_method, F=None, alpha=1.0, random_state=0
 )
 
 # 1-b) Select the PageRank representative in each partition.
 
-rep_indices1 = get_graph_representants(C1, part1, rep_method=rep_method, random_state=0)
-rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method, random_state=0)
+rep_indices1 = get_graph_representants(A1, part1, rep_method=rep_method, random_state=0)
+rep_indices2 = get_graph_representants(A2, part2, rep_method=rep_method, random_state=0)
 
 # 1-c) Format partitions such that:
 # CR contains relations between representants in each space.
@@ -242,11 +248,11 @@ rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method, random_
 # list_h contains samples relative importance within each partition.
 
 CR1, list_R1, list_h1 = format_partitioned_graph(
-    spC1, h1, part1, rep_indices1, F=None, M=None, alpha=1.0
+    C1, h1, part1, rep_indices1, F=None, M=None, alpha=1.0
 )
 
 CR2, list_R2, list_h2 = format_partitioned_graph(
-    spC2, h2, part2, rep_indices2, F=None, M=None, alpha=1.0
+    C2, h2, part2, rep_indices2, F=None, M=None, alpha=1.0
 )
 
 # 1-d) call to partitioned quantized gromov-wasserstein solver
@@ -280,11 +286,11 @@ fontsize = 10
 seed_G1 = 0
 seed_G2 = 3
 
-part1_flat = np.zeros(C1.shape[0], dtype=np.int32)
+part1_flat = np.zeros(A1.shape[0], dtype=np.int32)
 for cluster_id, cluster in enumerate(part1):
     part1_flat[cluster] = cluster_id
 
-part2_flat = np.empty(C2.shape[0], dtype=np.int32)
+part2_flat = np.empty(A2.shape[0], dtype=np.int32)
 for cluster_id, cluster in enumerate(part2):
     part2_flat[cluster] = cluster_id
 
@@ -298,17 +304,19 @@ pl.figure(1, figsize=(6, 5))
 pl.clf()
 pl.axis("off")
 pl.subplot(2, 3, 1)
-pl.title(r"Input graph: $\mathbf{spC_1}$", fontsize=fontsize)
+pl.title(
+    r"Input graph: $\mathbf{C_1}=d_{\mathrm{sp}}(\mathbf{A}_1)$", fontsize=fontsize
+)
 
 pos1 = draw_graph(
-    G1, C1, ["C0" for _ in part1_flat], rep_indices1, node_size=node_size, seed=seed_G1
+    G1, A1, ["C0" for _ in part1_flat], rep_indices1, node_size=node_size, seed=seed_G1
 )
 
 pl.subplot(2, 3, 2)
 pl.title("Partitioning", fontsize=fontsize)
 
 _ = draw_graph(
-    G1, C1, nodes_color_part1, rep_indices1, pos=pos1, node_size=node_size, seed=seed_G1
+    G1, A1, nodes_color_part1, rep_indices1, pos=pos1, node_size=node_size, seed=seed_G1
 )
 
 pl.subplot(2, 3, 3)
@@ -316,7 +324,7 @@ pl.title("Representant selection", fontsize=fontsize)
 
 _ = draw_graph(
     G1,
-    C1,
+    A1,
     nodes_color_part1,
     rep_indices1,
     pos=pos1,
@@ -326,17 +334,19 @@ _ = draw_graph(
 )
 
 pl.subplot(2, 3, 4)
-pl.title(r"Input graph: $\mathbf{spC_2}$", fontsize=fontsize)
+pl.title(
+    r"Input graph: $\mathbf{C_2}=d_{\mathrm{sp}}(\mathbf{A}_2)$", fontsize=fontsize
+)
 
 pos2 = draw_graph(
-    G2, C2, ["C0" for _ in part2_flat], rep_indices2, node_size=node_size, seed=seed_G2
+    G2, A2, ["C0" for _ in part2_flat], rep_indices2, node_size=node_size, seed=seed_G2
 )
 
 pl.subplot(2, 3, 5)
 pl.title(r"Partitioning", fontsize=fontsize)
 
 _ = draw_graph(
-    G2, C2, nodes_color_part2, rep_indices2, pos=pos2, node_size=node_size, seed=seed_G2
+    G2, A2, nodes_color_part2, rep_indices2, pos=pos2, node_size=node_size, seed=seed_G2
 )
 
 pl.subplot(2, 3, 6)
@@ -344,7 +354,7 @@ pl.title(r"Representant selection", fontsize=fontsize)
 
 _ = draw_graph(
     G2,
-    C2,
+    A2,
     nodes_color_part2,
     rep_indices2,
     pos=pos2,
@@ -359,24 +369,23 @@ pl.tight_layout()
 # Compute the quantized Gromov-Wasserstein distance using the wrapper
 # ---------------------------------------------------------
 #
-# Compute qGW(spC1, h1, spC2, h2). We also illustrate the use of auxiliary matrices
-# such that the adjacency matrices `C1_aux=C1` and `C2_aux=C2` to partition the graph using
-# Louvain algorithm, and the Pagerank algorithm for selecting representant within
-# each partition. Notice that `C1_aux` and `C2_aux` are optional, if they are not
-# specified these pre-processing algorithms will be applied to spC2 and spC3.
+# Compute qGW between the graph representations (C1, h1) and (C2, h2). The
+# adjacency matrices A1 and A2 are passed as auxiliary structures for Louvain
+# partitioning and PageRank representative selection; the wrapper uses C1 and C2
+# as the shortest-path structures in the transport problem.
 
 
 # no node features are considered on this synthetic dataset. Hence we simply
 # let F1, F2 = None and set alpha = 1.
 OT_global, OTs_local, OT, log = quantized_fused_gromov_wasserstein(
-    spC1,
-    spC2,
+    C1,
+    C2,
     npart_1,
     npart_2,
     h1,
     h2,
-    C1_aux=C1,
-    C2_aux=C2,
+    C1_aux=A1,
+    C2_aux=A2,
     F1=None,
     F2=None,
     alpha=1.0,
@@ -405,9 +414,9 @@ plt.show()
 
 def draw_transp_colored_qGW(
     G1,
-    C1,
+    A1,
     G2,
-    C2,
+    A2,
     part1_flat,
     part2_flat,
     rep_indices1,
@@ -437,7 +446,7 @@ def draw_transp_colored_qGW(
 
     pos1 = draw_graph(
         G1,
-        C1,
+        A1,
         nodes_color_part1,
         rep_indices1,
         pos=pos1,
@@ -448,7 +457,7 @@ def draw_transp_colored_qGW(
     )
     pos2 = draw_graph(
         G2,
-        C2,
+        A2,
         nodes_color_part2,
         rep_indices2,
         pos=pos2,
@@ -493,15 +502,15 @@ pl.clf()
 pl.axis("off")
 pl.subplot(1, 2, 1)
 pl.title(
-    r"qGW$(\mathbf{spC_1}, \mathbf{spC_1}) =%s$" % (np.round(qGW_dist, 3)),
+    r"qGW$(\mathbf{C_1}, \mathbf{C_2}) =%s$" % (np.round(qGW_dist, 3)),
     fontsize=fontsize,
 )
 
 pos1, pos2 = draw_transp_colored_qGW(
     weightedG1,
-    C1,
+    A1,
     weightedG2,
-    C2,
+    A2,
     part1_flat,
     part2_flat,
     rep_indices1,
@@ -523,9 +532,9 @@ pl.title(
 
 pos1, pos2 = draw_transp_colored_qGW(
     weightedG1,
-    C1,
+    A1,
     weightedG2,
-    C2,
+    A2,
     part1_flat,
     part2_flat,
     rep_indices1,
@@ -546,8 +555,13 @@ pl.show()
 # Generate attributed point clouds
 # --------------------------------------------------------------------------
 #
-# Create two attributed point clouds representing curves in 2D and 3D respectively,
-# whose samples are further associated to various color intensities.
+# Create point clouds :math:`\mathbf{X}_1 \in \mathbb{R}^{n \times 2}` and
+# :math:`\mathbf{X}_2 \in \mathbb{R}^{n \times 3}`, with feature matrices
+# :math:`\mathbf{F}_1, \mathbf{F}_2 \in \mathbb{R}^{n \times 1}`. The attributed
+# point-cloud inputs are :math:`(\mathbf{D}(\mathbf{X}_i), \mathbf{F}_i,
+# \mathbf{h}_i)`, where :math:`\mathbf{D}(\mathbf{X}_i)` is the pairwise
+# squared-Euclidean distance matrix and :math:`\mathbf{h}_i` is the uniform
+# distribution over points.
 
 n_samples = 100
 
@@ -665,10 +679,12 @@ plt.show()
 # Compute the quantized Fused Gromov-Wasserstein distance between samples using the wrapper
 # ---------------------------------------------------------
 #
-# Compute qFGW(X, FX, hX, Y, FY, HY), setting the trade-off parameter between
-# structures and features `alpha=0.5`. This solver considers a squared euclidean structure
-# for each distribution X and Y, and partition each of them into 4 clusters using
-# the K-means algorithm before computing qFGW.
+# Compute qFGW between :math:`(\mathbf{D}(\mathbf{X}_1), \mathbf{F}_1,
+# \mathbf{h}_1)` and :math:`(\mathbf{D}(\mathbf{X}_2), \mathbf{F}_2,
+# \mathbf{h}_2)`, with structure-feature trade-off :math:`\alpha=0.5`. In the
+# variables below, X1=X, X2=Y, F1=FX, and F2=FY; the omitted p and q arguments
+# make h1 and h2 uniform. The wrapper uses squared-Euclidean structure matrices
+# and partitions both point clouds into four clusters using K-means.
 
 T_global, Ts_local, T, log = quantized_fused_gromov_wasserstein_samples(
     X,
