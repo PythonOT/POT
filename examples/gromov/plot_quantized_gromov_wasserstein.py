@@ -216,7 +216,7 @@ def draw_graph(
 # to form partitioned graphs, which are then passed as input to the generic qFGW solver.
 
 # 1-a) Partition C1 and C2 in 2 and 3 clusters respectively using Louvain
-#    algorithm from Networkx. Then encode these partitions via vectors of assignments.
+#    algorithm from NetworkX. Then encode these partitions via vectors of assignments.
 
 part_method = "louvain"
 rep_method = "pagerank"
@@ -225,17 +225,16 @@ npart_1 = 2  # 2 clusters used to describe C1
 npart_2 = 3  # 3 clusters used to describe C2
 
 part1 = get_graph_partition(
-    C1, npart=npart_1, part_method=part_method, F=None, alpha=1.0
+    C1, npart=npart_1, part_method=part_method, F=None, alpha=1.0, random_state=0
 )
 part2 = get_graph_partition(
-    C2, npart=npart_2, part_method=part_method, F=None, alpha=1.0
+    C2, npart=npart_2, part_method=part_method, F=None, alpha=1.0, random_state=0
 )
 
-# 1-b) Select representant in each partition using the Pagerank algorithm
-#     implementation from networkx.
+# 1-b) Select the PageRank representative in each partition.
 
-rep_indices1 = get_graph_representants(C1, part1, rep_method=rep_method)
-rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method)
+rep_indices1 = get_graph_representants(C1, part1, rep_method=rep_method, random_state=0)
+rep_indices2 = get_graph_representants(C2, part2, rep_method=rep_method, random_state=0)
 
 # 1-c) Format partitions such that:
 # CR contains relations between representants in each space.
@@ -267,19 +266,7 @@ OT_global_, OTs_local_, OT_, log_ = quantized_fused_gromov_wasserstein_partition
     log=True,
 )
 
-print("OT between representants: \n", OT_global_)
-print("OT local between samples and representants: \n", OTs_local_)
-
-for part_id1, cluster1 in enumerate(part1):
-    for part_id2, cluster2 in enumerate(part2):
-        print("sanity check (part1, part2) = (%s, %s): \n" % (part_id1, part_id2))
-        if OT_global_[part_id1, part_id2] > 0:
-            print(
-                np.all(
-                    OTs_local_[(part_id1, part_id2)] == OT_[cluster1, :][:, cluster2]
-                )
-            )
-plt.imshow(OT, interpolation="nearest", aspect="auto")
+plt.imshow(OT_, interpolation="nearest", aspect="auto")
 plt.title("OT between samples")
 plt.colorbar()
 plt.axis("off")
@@ -395,13 +382,11 @@ OT_global, OTs_local, OT, log = quantized_fused_gromov_wasserstein(
     alpha=1.0,
     part_method=part_method,
     rep_method=rep_method,
+    random_state=0,
     log=True,
 )
 
 qGW_dist = log["qFGW_dist"]
-
-print("OT between representants: \n", OT_global)
-print("OT local between samples and representants: \n", OTs_local)
 
 plt.imshow(OT, interpolation="nearest", aspect="auto")
 plt.title("OT between samples")
@@ -521,7 +506,7 @@ pos1, pos2 = draw_transp_colored_qGW(
     part2_flat,
     rep_indices1,
     rep_indices2,
-    T=OT_,
+    T=OT,
     shiftx=1.5,
     node_size=node_size,
     seed_G1=seed_G1,

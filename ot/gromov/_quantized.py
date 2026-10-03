@@ -830,30 +830,36 @@ def quantized_fused_gromov_wasserstein(
         Quantized gromov-wasserstein. ECML PKDD 2021. Springer International Publishing.
 
     """
-    if part_method in ["fluid", "louvain", "fluid_fused", "louvain_fused"] or (
-        rep_method in ["pagerank", "pagerank_fused"]
-    ):
-        if not networkx_import:
-            warnings.warn(
-                f"""
-                Networkx is not installed, so part_method={part_method} and/or
-                rep_method={rep_method} cannot be used and are set to `random`
-                default methods. Consider installing Networkx to fix this.
-                """
-            )
-        part_method = "random"
-        rep_method = "random"
+    networkx_part_methods = {"fluid", "louvain", "fluid_fused", "louvain_fused"}
+    networkx_rep_methods = {"pagerank", "pagerank_fused"}
+    sklearn_part_methods = {"spectral", "spectral_fused"}
 
-    if (part_method in ["spectral", "spectral_fused"]) and (not sklearn_import):
+    if not networkx_import and part_method in networkx_part_methods:
         warnings.warn(
             f"""
-            Scikit-learn is not installed, so part_method={part_method} and/or
-            rep_method={rep_method} cannot be used and are set to `random`
-            default methods. Consider installing Scikit-learn to fix this.
+            NetworkX is not installed, so part_method={part_method} cannot be
+            used and is set to `random`. Consider installing NetworkX to fix this.
             """
         )
         part_method = "random"
+
+    if not networkx_import and rep_method in networkx_rep_methods:
+        warnings.warn(
+            f"""
+            NetworkX is not installed, so rep_method={rep_method} cannot be
+            used and is set to `random`. Consider installing NetworkX to fix this.
+            """
+        )
         rep_method = "random"
+
+    if not sklearn_import and part_method in sklearn_part_methods:
+        warnings.warn(
+            f"""
+            Scikit-learn is not installed, so part_method={part_method} cannot be
+            used and is set to `random`. Consider installing Scikit-learn to fix this.
+            """
+        )
+        part_method = "random"
 
     if ("fused" in part_method) or ("fused" in rep_method) or (part_method == "FGW"):
         if (F1 is None) or (F2 is None):
@@ -904,7 +910,6 @@ def quantized_fused_gromov_wasserstein(
         part2 = get_graph_partition(
             C2_aux, npart2, part_method, F2, alpha, random_state, nx
         )
-
     if "fused" in rep_method:
         if DF1 is None:
             DF1 = dist(F1, F1)
@@ -928,7 +933,6 @@ def quantized_fused_gromov_wasserstein(
         rep_indices2 = get_graph_representants(
             C2_aux, part2, rep_method, random_state, nx
         )
-
     # format partitions over (C1, F1) and (C2, F2)
     if (F1 is None) and (F2 is None):
         CR1, list_R1, list_p1 = format_partitioned_graph(
@@ -1100,8 +1104,6 @@ def get_partition_and_representants_samples(
         )
 
     rep_indices = nx.from_numpy(list_to_array(rep_indices), type_as=part[0])
-    # print('part:', type(part), type(part[0]), part[0].dtype)
-    # print('rep_indices:', type(rep_indices), rep_indices.dtype)
     return part, rep_indices
 
 

@@ -4,12 +4,96 @@
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 import pytest
 
 import ot
+from ot.gromov import _quantized
 
 from ot.gromov._quantized import networkx_import, sklearn_import
+
+
+@pytest.mark.parametrize(
+    "has_networkx,has_sklearn,requested_part,requested_rep,expected_part,expected_rep",
+    [
+        (True, True, "louvain", "pagerank", "louvain", "pagerank"),
+        (False, True, "louvain", "pagerank", "random", "random"),
+        (False, True, "random", "pagerank", "random", "random"),
+        (True, False, "spectral", "random", "random", "random"),
+        (True, False, "louvain", "pagerank", "louvain", "pagerank"),
+    ],
+)
+def test_quantized_gw_only_falls_back_for_missing_dependencies(
+    monkeypatch,
+    has_networkx,
+    has_sklearn,
+    requested_part,
+    requested_rep,
+    expected_part,
+    expected_rep,
+):
+    method_calls = {"part": [], "representant": []}
+
+    def fake_partition(
+        C, npart, part_method, F=None, alpha=1.0, random_state=0, nx=None
+    ):
+        method_calls["part"].append(part_method)
+        return [
+            np.asarray(indices)
+            for indices in np.array_split(np.arange(C.shape[0]), npart)
+        ]
+
+    def fake_representants(C, part, rep_method, random_state=0, nx=None):
+        method_calls["representant"].append(rep_method)
+        return np.asarray([indices[0] for indices in part])
+
+    def fake_partitioned_solver(
+        CR1, CR2, list_R1, list_R2, list_p1, list_p2, part1, part2, *args, **kwargs
+    ):
+        return (
+            np.zeros((len(list_R1), len(list_R2))),
+            {},
+            np.zeros((sum(map(len, part1)), sum(map(len, part2)))),
+        )
+
+    monkeypatch.setattr(_quantized, "networkx_import", has_networkx)
+    monkeypatch.setattr(_quantized, "sklearn_import", has_sklearn)
+    monkeypatch.setattr(_quantized, "get_graph_partition", fake_partition)
+    monkeypatch.setattr(_quantized, "get_graph_representants", fake_representants)
+    monkeypatch.setattr(
+        _quantized,
+        "quantized_fused_gromov_wasserstein_partitioned",
+        fake_partitioned_solver,
+    )
+
+    C1 = np.zeros((4, 4))
+    C2 = np.zeros((6, 6))
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+        warnings.simplefilter("always")
+        _quantized.quantized_fused_gromov_wasserstein(
+            C1,
+            C2,
+            2,
+            3,
+            alpha=1.0,
+            part_method=requested_part,
+            rep_method=requested_rep,
+            random_state=0,
+        )
+
+    assert method_calls["part"] == [expected_part, expected_part]
+    assert method_calls["representant"] == [expected_rep, expected_rep]
+    expected_warning_count = sum(
+        [
+            not has_networkx
+            and requested_part in {"fluid", "louvain", "fluid_fused", "louvain_fused"},
+            not has_networkx and requested_rep in {"pagerank", "pagerank_fused"},
+            not has_sklearn and requested_part in {"spectral", "spectral_fused"},
+        ]
+    )
+    assert len(recorded_warnings) == expected_warning_count
 
 
 def test_quantized_gw(nx):
