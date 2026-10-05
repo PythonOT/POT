@@ -1292,7 +1292,10 @@ class NumpyBackend(Backend):
             return np.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return np.arange(start, stop, step)
+        if type_as is None:
+            return np.arange(start, stop, step)
+        else:
+            return np.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -1732,7 +1735,12 @@ class JaxBackend(Backend):
             return self._change_device(jnp.ones(shape, dtype=type_as.dtype), type_as)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return jnp.arange(start, stop, step)
+        if type_as is None:
+            return jnp.arange(start, stop, step)
+        else:
+            return self._change_device(
+                jnp.arange(start, stop, step, dtype=type_as.dtype), type_as
+            )
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -2239,7 +2247,9 @@ class TorchBackend(Backend):
         if type_as is None:
             return torch.arange(start, stop, step)
         else:
-            return torch.arange(start, stop, step, device=type_as.device)
+            return torch.arange(
+                start, stop, step, dtype=type_as.dtype, device=type_as.device
+            )
 
     def full(self, shape, fill_value, type_as=None):
         if isinstance(shape, int):
@@ -2789,7 +2799,11 @@ class CupyBackend(Backend):  # pragma: no cover
                 return cp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return cp.arange(start, stop, step)
+        if type_as is None:
+            return cp.arange(start, stop, step)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return cp.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if isinstance(shape, (list, tuple)):
@@ -3242,7 +3256,10 @@ class TensorflowBackend(Backend):
             return tnp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return tnp.arange(start, stop, step)
+        if type_as is None:
+            return tnp.arange(start, stop, step)
+        else:
+            return tnp.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
