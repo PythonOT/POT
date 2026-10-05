@@ -27,6 +27,7 @@
 - `ot.dr.fda` and `ot.dr.wda` no longer modify the input array `X` in place (PR #840)
 - Fix `UnbalancedSinkhornTransport` `transform` failing with `AttributeError: 'NoneType' object has no attribute 'array_equal'` when `fit` was called with missing parameters (PR #837, Issue #650)
 - Fix quantized (F)GW solvers that ordered OT based on clusters and not initial node ordering (PR #857, Issue #786)
+- Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2.` (PR #882)
 
 ## 0.9.7.post1
 
