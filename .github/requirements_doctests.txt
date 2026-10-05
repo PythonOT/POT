@@ -5,7 +5,7 @@ autograd
 pymanopt
 cvxopt
 scikit-learn
-torch<2.12
+torch
 jax
 jaxlib
 tensorflow; python_version < '3.14'

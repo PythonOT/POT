@@ -11,7 +11,7 @@ Semi-relaxed Gromov-Wasserstein and Fused-Gromov-Wasserstein solvers.
 import numpy as np
 
 
-from ..utils import list_to_array, unif, dist, UndefinedParameter
+from ..utils import list_to_array, unif, dist, UndefinedParameter, check_marginal
 from ..optim import semirelaxed_cg, solve_1d_linesearch_quad
 from ..backend import get_backend
 
@@ -336,8 +336,7 @@ def semirelaxed_gromov_wasserstein2(
     nx = get_backend(C1, C2)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=C1)
+    p = check_marginal(p, C1.shape[0], type_as=C1)
 
     T, log_srgw = semirelaxed_gromov_wasserstein(
         C1,
@@ -698,8 +697,7 @@ def semirelaxed_fused_gromov_wasserstein2(
     nx = get_backend(C1, C2)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=C1)
+    p = check_marginal(p, C1.shape[0], type_as=C1)
 
     T, log_fgw = semirelaxed_fused_gromov_wasserstein(
         M,

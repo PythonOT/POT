@@ -12,7 +12,7 @@ Wasserstein Generalized Geodesic) and expected sliced.
 import warnings
 
 from ..backend import get_backend
-from ..utils import list_to_array, sparse_ot_dist, dist
+from ..utils import list_to_array, sparse_ot_dist
 from ._utils import get_random_projections
 from ..lp import wasserstein_1d
 from collections import namedtuple
@@ -103,9 +103,9 @@ def sliced_plans(
     m = X_t.shape[0]
 
     if a is None:
-        a = nx.ones(n) / n
+        a = nx.ones(n, type_as=X_s) / n
     if b is None:
-        b = nx.ones(m) / m
+        b = nx.ones(m, type_as=X_t) / m
 
     is_perm = (n == m) and (a == a.sum() / n).all() and (b == a.sum() / n).all()
 
@@ -493,7 +493,7 @@ def expected_sliced_plan(
     else:  # uniform weights
         if n_projections is None:
             n_projections = projections.shape[1]
-        weights = nx.ones(n_projections) / n_projections
+        weights = nx.ones(n_projections, type_as=X_s) / n_projections
 
     weights_e = nx.concatenate([plans[i].data * weights[i] for i in range(len(plans))])
     Xs_idx = nx.concatenate([plans[i].rows for i in range(len(plans))])
@@ -505,10 +505,16 @@ def expected_sliced_plan(
         plan = nx.todense(plan)
 
     if beta == 0.0:
-        if dense:
-            cost = nx.sum(plan * dist(X_s, X_t, metric=metric, p=p))
-        else:
-            cost = plan.multiply(dist(X_s, X_t, metric=metric, p=p)).sum()
+        cost = sparse_ot_dist(
+            X_s,
+            X_t,
+            Xs_idx,
+            Xt_idx,
+            weights_e,
+            metric=metric,
+            p=p,
+            batch_size=batch_size,
+        )
     if log:
         log_dict = {
             "projections": log_dict_plans["projections"],

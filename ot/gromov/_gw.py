@@ -17,7 +17,7 @@ import warnings
 
 from ..utils import dist, UndefinedParameter, list_to_array
 from ..optim import cg, line_search_armijo, solve_1d_linesearch_quad
-from ..utils import check_random_state, unif
+from ..utils import check_marginal, check_random_state, unif
 from ..backend import get_backend, NumpyBackend
 
 from ._utils import init_matrix, gwloss, gwggrad
@@ -373,10 +373,8 @@ def gromov_wasserstein2(
     nx = get_backend(C1, C2)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=C1)
-    if q is None:
-        q = unif(C2.shape[0], type_as=C1)
+    p = check_marginal(p, C1.shape[0], type_as=C1)
+    q = check_marginal(q, C2.shape[0], type_as=C1)
 
     T, log_gw = gromov_wasserstein(
         C1,
@@ -780,10 +778,8 @@ def fused_gromov_wasserstein2(
     nx = get_backend(C1, C2, M)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=M)
-    if q is None:
-        q = unif(C2.shape[0], type_as=M)
+    p = check_marginal(p, C1.shape[0], type_as=M)
+    q = check_marginal(q, C2.shape[0], type_as=M)
 
     T, log_fgw = fused_gromov_wasserstein(
         M,

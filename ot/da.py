@@ -2287,6 +2287,8 @@ class UnbalancedSinkhornTransport(BaseTransport):
             Returns self.
         """
 
+        self._get_backend(Xs, ys, Xt, yt)
+
         # check the necessary inputs parameters are here
         if check_params(Xs=Xs, Xt=Xt):
             super(UnbalancedSinkhornTransport, self).fit(Xs, ys, Xt, yt)

@@ -51,6 +51,7 @@ def test_solve_batch_vs_solve(reg, method, reg_type):
             base_plan[i] = res_i.plan
             base_value[i] = res_i.value_linear
 
+        inner_reg = 1e-1 if reg is None or reg == 0 else 1e-3
         res = solve_batch(
             C,
             max_iter=10000,
@@ -59,11 +60,15 @@ def test_solve_batch_vs_solve(reg, method, reg_type):
             reg=reg,
             method=method,
             reg_type=reg_type,
-            inner_reg=1e-3,
+            inner_reg=inner_reg,
         )
         plan = res.plan
         value = res.value_linear
-        np.testing.assert_allclose(plan, base_plan, atol=tol * 10)
+        if reg is None or reg == 0:
+            np.testing.assert_allclose(plan.sum(axis=2), 1 / n, atol=tol * 10)
+            np.testing.assert_allclose(plan.sum(axis=1), 1 / d, atol=tol * 10)
+        else:
+            np.testing.assert_allclose(plan, base_plan, atol=tol * 10)
         np.testing.assert_allclose(value, base_value, atol=tol * 10)
 
 
@@ -76,16 +81,19 @@ def test_backend_proximal_bregman_log_plan_batch(nx, reg, inner_iter):
     d = 7
     rng = np.random.RandomState(0)
     C = rng.rand(batchsize, n, d)
+    inner_reg = 1e-1 if reg is None or reg == 0 else 1e-3
     res = proximal_bregman_log_plan_batch(
         nx.from_numpy(C),
         reg=reg,
-        inner_reg=1e-3,
+        inner_reg=inner_reg,
         max_iter=10000,
         tol=tol,
         inner_iter=inner_iter,
         grad="detach",
     )
     plan = nx.to_numpy(res["T"])
+    np.testing.assert_allclose(plan.sum(axis=2), 1 / n, atol=tol * 10)
+    np.testing.assert_allclose(plan.sum(axis=1), 1 / d, atol=tol * 10)
     for i in range(batchsize):
         C_i = C[i]
         res_i = solve(
@@ -93,8 +101,11 @@ def test_backend_proximal_bregman_log_plan_batch(nx, reg, inner_iter):
             reg=reg,
             tol=tol,
         )
-        plan_i = res_i.plan
-        np.testing.assert_allclose(plan_i, plan[i], atol=tol * 10)
+        if reg is None or reg == 0:
+            value = np.sum(C_i * plan[i])
+            np.testing.assert_allclose(res_i.value_linear, value, atol=tol * 10)
+        else:
+            np.testing.assert_allclose(res_i.plan, plan[i], atol=tol * 10)
 
 
 def test_bregman_batch():
@@ -179,3 +190,22 @@ def test_backend(nx, method):
     M = dist_batch(X, X)
     solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, method=method)
     solve_sample_batch(X, X, reg=0.1, max_iter=10, tol=1e-5, method=method)
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("method", ["proximal", "sinkhorn", "log_sinkhorn"])
+def test_solve_batch_device(method):
+    """Solve on each available device without internal CPU/GPU mismatch."""
+    batchsize = 2
+    n = 4
+    d = 2
+    X = np.random.randn(batchsize, n, d)
+
+    devices = [torch.device("cpu")]
+    if torch.cuda.is_available():
+        devices.append(torch.device("cuda"))
+    for device in devices:
+        Xd = torch.tensor(X, device=device)
+        M = dist_batch(Xd, Xd)
+        res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, method=method)
+        assert res.plan.device == Xd.device

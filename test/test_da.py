@@ -485,6 +485,34 @@ def test_unbalanced_sinkhorn_transport_class(nx):
 
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
+def test_unbalanced_sinkhorn_transport_nx_initialized(nx):
+    """non-regression test for issue #650
+
+    fit must always initialize the backend attribute nx, even when called
+    with missing parameters, so that transform fails on a clear error
+    instead of 'NoneType' object has no attribute 'array_equal'
+    """
+
+    ns = 50
+    Xs, ys = make_data_classif("3gauss", ns)
+    Xt, yt = make_data_classif("3gauss2", ns)
+
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+
+    # incomplete fit (Xt missing) still initializes the backend
+    otda = ot.da.UnbalancedSinkhornTransport()
+    otda.fit(Xs=Xs)
+    assert otda.nx is not None
+
+    # complete fit followed by a separate transform call
+    otda = ot.da.UnbalancedSinkhornTransport()
+    otda.fit(Xs=Xs, Xt=Xt)
+    transp_Xs = otda.transform(Xs)
+    assert_equal(transp_Xs.shape, Xs.shape)
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
 def test_emd_transport_class(nx):
     """test_sinkhorn_transport"""
 

@@ -14,7 +14,7 @@ try:
     from geomloss import SamplesLoss
     import torch
     from torch.autograd import grad
-    from ..utils import get_backend, LazyTensor, dist
+    from ..utils import get_backend, LazyTensor, dist, check_marginal
 
     if geomloss.__version__ < "0.3.1":
         old_geomloss = True
@@ -199,10 +199,8 @@ def empirical_sinkhorn2_geomloss(
     if nx.__name__ not in ["torch", "numpy"]:
         raise ValueError("geomloss only support torch or numpy backend")
 
-    if a is None:
-        a = nx.ones(X_s.shape[0], type_as=X_s) / X_s.shape[0]
-    if b is None:
-        b = nx.ones(X_t.shape[0], type_as=X_t) / X_t.shape[0]
+    a = check_marginal(a, X_s.shape[0], type_as=X_s)
+    b = check_marginal(b, X_t.shape[0], type_as=X_t)
 
     if nx.__name__ == "numpy":
         X_s_torch = torch.tensor(X_s)

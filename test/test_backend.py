@@ -6,6 +6,10 @@
 #
 # License: MIT License
 
+import importlib.util
+import subprocess
+import sys
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal_nulp
@@ -173,6 +177,10 @@ def test_empty_backend():
         nx.minimum(v, v)
     with pytest.raises(NotImplementedError):
         nx.abs(M)
+    with pytest.raises(NotImplementedError):
+        nx.sin(M)
+    with pytest.raises(NotImplementedError):
+        nx.cos(M)
     with pytest.raises(NotImplementedError):
         nx.log(M)
     with pytest.raises(NotImplementedError):
@@ -440,6 +448,14 @@ def test_func_backends(nx):
         A = nx.abs(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("abs")
+
+        A = nx.sin(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("sin")
+
+        A = nx.cos(Mb)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("cos")
 
         A = nx.log(A)
         lst_b.append(nx.to_numpy(A))
@@ -914,3 +930,55 @@ def test_get_backend_none():
     assert str(nx) == "numpy"
     with pytest.raises(ValueError):
         get_backend(None, None)
+
+
+@pytest.mark.skipif(
+    not torch or not tf or importlib.util.find_spec("triton") is None,
+    reason="Requires torch, tensorflow and triton installed together",
+)
+def test_torch_optimizer_after_tensorflow_import():
+    """Non-regression test for issue #816.
+
+    Building a torch optimizer makes torch import triton lazily. If TensorFlow
+    was imported first, loading libtriton.so segfaults the interpreter, so this
+    has to run in a subprocess.
+    """
+    code = (
+        "import ot.backend\n"
+        "import torch\n"
+        "x = torch.zeros(3, requires_grad=True)\n"
+        "torch.optim.SGD([x], lr=0.1)\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True)
+    assert result.returncode == 0, (
+        f"interpreter died with returncode {result.returncode}: "
+        f"{result.stderr.decode(errors='replace')[-2000:]}"
+    )
+
+
+@pytest.mark.skipif(
+    not torch or not torch.cuda.is_available(),
+    reason="Requires torch with CUDA available",
+)
+def test_no_cuda_context_for_cpu_only_work():
+    """Non-regression test for issue #612.
+
+    Building the torch backend used to create a CUDA generator and the CUDA
+    entries of the type list straight away. That initialises a CUDA context, so
+    device memory is claimed and the GPU wakes up for a computation that stays
+    entirely on the CPU. The check needs an interpreter that has not touched
+    CUDA yet, so it runs in a subprocess.
+    """
+    code = (
+        "import torch\n"
+        "import ot\n"
+        "x = torch.randn(64, 2)\n"
+        "ot.dist(x, x)\n"
+        "assert not torch.cuda.is_initialized(), 'a CUDA context was created'\n"
+        "assert torch.cuda.memory_allocated() == 0, 'device memory was claimed'\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True)
+    assert result.returncode == 0, (
+        f"interpreter exited with returncode {result.returncode}: "
+        f"{result.stderr.decode(errors='replace')[-2000:]}"
+    )

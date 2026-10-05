@@ -8,7 +8,7 @@ Low rank OT solvers
 # License: MIT License
 
 import warnings
-from .utils import unif, dist, get_lowrank_lazytensor
+from .utils import dist, get_lowrank_lazytensor, check_marginal
 from .backend import get_backend
 from .bregman import sinkhorn
 
@@ -420,10 +420,8 @@ def lowrank_sinkhorn(
     ns, nt = X_s.shape[0], X_t.shape[0]
 
     # Initialize weights a, b
-    if a is None:
-        a = unif(ns, type_as=X_s)
-    if b is None:
-        b = unif(nt, type_as=X_t)
+    a = check_marginal(a, ns, type_as=X_s)
+    b = check_marginal(b, nt, type_as=X_t)
 
     # Compute rank (see Section 3.1, def 1)
     r = rank

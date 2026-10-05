@@ -7,7 +7,7 @@ Low rank Gromov-Wasserstein solver
 # License: MIT License
 
 import warnings
-from ..utils import unif, get_lowrank_lazytensor
+from ..utils import get_lowrank_lazytensor, check_marginal
 from ..backend import get_backend
 from ..lowrank import compute_lr_sqeuclidean_matrix, _init_lr_sinkhorn, _LR_Dysktra
 
@@ -180,10 +180,8 @@ def lowrank_gromov_wasserstein_samples(
     ns, nt = X_s.shape[0], X_t.shape[0]
 
     # Initialize weights a, b
-    if a is None:
-        a = unif(ns, type_as=X_s)
-    if b is None:
-        b = unif(nt, type_as=X_t)
+    a = check_marginal(a, ns, type_as=X_s)
+    b = check_marginal(b, nt, type_as=X_t)
 
     # Compute rank (see Section 3.1, def 1)
     r = rank

@@ -9,7 +9,7 @@ Partial (Fused) Gromov-Wasserstein solvers.
 #
 # License: MIT License
 
-from ..utils import list_to_array, unif
+from ..utils import check_marginal, list_to_array, unif
 from ..backend import get_backend, NumpyBackend
 from ..partial import entropic_partial_wasserstein
 from ._utils import _transform_matrix, gwloss, gwggrad
@@ -451,10 +451,8 @@ def partial_gromov_wasserstein2(
     nx = get_backend(C1, C2)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=C1)
-    if q is None:
-        q = unif(C2.shape[0], type_as=C1)
+    p = check_marginal(p, C1.shape[0], type_as=C1)
+    q = check_marginal(q, C2.shape[0], type_as=C1)
 
     T, log_pgw = partial_gromov_wasserstein(
         C1,
@@ -925,10 +923,8 @@ def partial_fused_gromov_wasserstein2(
     nx = get_backend(M, C1, C2)
 
     # init marginals if set as None
-    if p is None:
-        p = unif(C1.shape[0], type_as=C1)
-    if q is None:
-        q = unif(C2.shape[0], type_as=C1)
+    p = check_marginal(p, C1.shape[0], type_as=C1)
+    q = check_marginal(q, C2.shape[0], type_as=C1)
 
     T, log_pfgw = partial_fused_gromov_wasserstein(
         M,
@@ -1207,10 +1203,8 @@ def entropic_partial_gromov_wasserstein(
 
     nx = get_backend(*arr)
 
-    if p is None:
-        p = nx.ones(C1.shape[0], type_as=C1) / C1.shape[0]
-    if q is None:
-        q = nx.ones(C2.shape[0], type_as=C2) / C2.shape[0]
+    p = check_marginal(p, C1.shape[0], type_as=C1)
+    q = check_marginal(q, C2.shape[0], type_as=C2)
 
     if m is None:
         m = min(nx.sum(p), nx.sum(q))
@@ -1565,10 +1559,8 @@ def entropic_partial_fused_gromov_wasserstein(
 
     nx = get_backend(*arr)
 
-    if p is None:
-        p = nx.ones(C1.shape[0], type_as=C1) / C1.shape[0]
-    if q is None:
-        q = nx.ones(C2.shape[0], type_as=C2) / C2.shape[0]
+    p = check_marginal(p, C1.shape[0], type_as=C1)
+    q = check_marginal(q, C2.shape[0], type_as=C2)
 
     if m is None:
         m = min(nx.sum(p), nx.sum(q))

@@ -10,7 +10,7 @@ Stochastic solvers for regularized OT.
 # License: MIT License
 
 import numpy as np
-from .utils import dist, check_random_state
+from .utils import dist, check_random_state, check_marginal
 from .backend import get_backend
 
 ##############################################################################
@@ -653,11 +653,8 @@ def loss_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidea
 
     nx = get_backend(u, v, xs, xt)
 
-    if ws is None:
-        ws = nx.ones(xs.shape[0], type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones(xt.shape[0], type_as=xt) / xt.shape[0]
+    ws = check_marginal(ws, xs.shape[0], type_as=xs)
+    wt = check_marginal(wt, xt.shape[0], type_as=xt)
 
     if callable(metric):
         M = metric(xs, xt)
@@ -711,11 +708,8 @@ def plan_dual_entropic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclidea
 
     nx = get_backend(u, v, xs, xt)
 
-    if ws is None:
-        ws = nx.ones(xs.shape[0], type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones(xt.shape[0], type_as=xt) / xt.shape[0]
+    ws = check_marginal(ws, xs.shape[0], type_as=xs)
+    wt = check_marginal(wt, xt.shape[0], type_as=xt)
 
     if callable(metric):
         M = metric(xs, xt)
@@ -769,11 +763,8 @@ def loss_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclide
 
     nx = get_backend(u, v, xs, xt)
 
-    if ws is None:
-        ws = nx.ones(xs.shape[0], type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones(xt.shape[0], type_as=xt) / xt.shape[0]
+    ws = check_marginal(ws, xs.shape[0], type_as=xs)
+    wt = check_marginal(wt, xt.shape[0], type_as=xt)
 
     if callable(metric):
         M = metric(xs, xt)
@@ -827,11 +818,8 @@ def plan_dual_quadratic(u, v, xs, xt, reg=1, ws=None, wt=None, metric="sqeuclide
 
     nx = get_backend(u, v, xs, xt)
 
-    if ws is None:
-        ws = nx.ones(xs.shape[0], type_as=xs) / xs.shape[0]
-
-    if wt is None:
-        wt = nx.ones(xt.shape[0], type_as=xt) / xt.shape[0]
+    ws = check_marginal(ws, xs.shape[0], type_as=xs)
+    wt = check_marginal(wt, xt.shape[0], type_as=xt)
 
     if callable(metric):
         M = metric(xs, xt)

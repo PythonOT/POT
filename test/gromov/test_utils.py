@@ -162,3 +162,59 @@ def test_div_to_product(nx, divergence, mass):
     np.testing.assert_allclose(res1, res, atol=1e-06)
     np.testing.assert_allclose(res2, res, atol=1e-06)
     np.testing.assert_allclose(res3, res, atol=1e-06)
+
+
+@pytest.mark.parametrize("divergence", ["kl", "l2"])
+def test_fused_unbalanced_across_spaces_cost_independent_reg(nx, divergence):
+    # the entropic terms of UCOOT must be KL(pi | a x b) with the reference
+    # measures as `a`, `b` and the plan marginals as `pi1`, `pi2` (issue #854)
+    rng = np.random.RandomState(0)
+    ns, nt, ds, dt = 4, 5, 3, 2
+    X, Y = rng.rand(ns, ds), rng.rand(nt, dt)
+    pi_samp = rng.rand(ns, nt)
+    pi_feat = rng.rand(ds, dt)
+    px_samp, py_samp = rng.rand(ns) + 0.5, rng.rand(nt) + 0.5
+    px_feat, py_feat = rng.rand(ds) + 0.5, rng.rand(dt) + 0.5
+    pxy_samp = px_samp[:, None] * py_samp[None, :]
+    pxy_feat = px_feat[:, None] * py_feat[None, :]
+
+    X, Y, pi_samp, pi_feat = nx.from_numpy(X, Y, pi_samp, pi_feat)
+    px_samp, py_samp, pxy_samp = nx.from_numpy(px_samp, py_samp, pxy_samp)
+    px_feat, py_feat, pxy_feat = nx.from_numpy(px_feat, py_feat, pxy_feat)
+
+    eps_samp, eps_feat = 0.3, 0.7
+    data = (X**2, Y**2, X, Y)
+    _, cost = ot.gromov.fused_unbalanced_across_spaces_cost(
+        (None, None),
+        data,
+        (px_samp, py_samp, pxy_samp),
+        (px_feat, py_feat, pxy_feat),
+        pi_samp,
+        pi_feat,
+        (float("inf"), float("inf"), eps_samp, eps_feat),
+        divergence,
+        "independent",
+        nx,
+    )
+    _, cost_no_reg = ot.gromov.fused_unbalanced_across_spaces_cost(
+        (None, None),
+        data,
+        (px_samp, py_samp, pxy_samp),
+        (px_feat, py_feat, pxy_feat),
+        pi_samp,
+        pi_feat,
+        (float("inf"), float("inf"), 0, 0),
+        divergence,
+        "independent",
+        nx,
+    )
+
+    expected = eps_samp * ot.gromov.div_to_product(
+        pi_samp, px_samp, py_samp, divergence=divergence, mass=True, nx=nx
+    ) + eps_feat * ot.gromov.div_to_product(
+        pi_feat, px_feat, py_feat, divergence=divergence, mass=True, nx=nx
+    )
+
+    np.testing.assert_allclose(
+        nx.to_numpy(cost - cost_no_reg), nx.to_numpy(expected), rtol=1e-6
+    )

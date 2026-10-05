@@ -13,7 +13,7 @@ Bregman projections solvers for entropic regularized wasserstein barycenters
 import warnings
 import numpy as np
 
-from ..utils import dist, list_to_array, unif
+from ..utils import dist, list_to_array, unif, check_marginal
 from ..backend import get_backend
 
 from ._utils import geometricBar, geometricMean, projR, projC
@@ -352,8 +352,7 @@ def free_support_sinkhorn_barycenter(
     N = len(measures_locations)
     k = X_init.shape[0]
     d = X_init.shape[1]
-    if b is None:
-        b = nx.ones((k,), type_as=X_init) / k
+    b = check_marginal(b, k, type_as=X_init)
     if weights is None:
         weights = nx.ones((N,), type_as=X_init) / N
 

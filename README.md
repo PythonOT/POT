@@ -480,3 +480,16 @@ Artificial Intelligence.
 \[92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August). 
 [A fast proximal point method for computing exact wasserstein distance.](https://proceedings.mlr.press/v115/xie20b/xie20b.pdf) In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
 
+\[93] Tran, H., Bai, Y., Kothapalli, A., Shahbazi, A., Liu, X., Diaz Martin, R., & Kolouri, S. (2024). [Stereographic Spherical Sliced Wasserstein Distances](https://proceedings.mlr.press/v235/tran24a.html). International Conference on Machine Learning.
+
+\[94] Mezzadri, F. (2007). [How to generate random matrices from the classical compact groups](https://www.ams.org/notices/200705/fea-mezzadri-web.pdf). Notices of the American Mathematical Society, 54(5), 592-604.
+
+\[95] Nguyen, K., Bariletto, N., & Ho, N. (2024). [Quasi-Monte Carlo for 3D Sliced Wasserstein](https://arxiv.org/abs/2309.11713). International Conference on Learning Representations (ICLR).
+
+\[96] Rakhmanov, E. A., Saff, E. B., & Zhou, Y. M. (1994). [Minimal Discrete Energy on the Sphere](https://www.math.vanderbilt.edu/~esaff/texts/155.pdf). Mathematical Research Letters, 1(6), 647-662.
+
+\[97] Rowland, M., Hron, J., Tang, Y., Choromanski, K., Sarlos, T., & Weller, A. (2019). [Orthogonal Estimation of Wasserstein Distances](https://proceedings.mlr.press/v89/rowland19a.html). Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS), PMLR 89:186-195.
+
+\[98] Petrovic, V., Bardenet, R., & Desolneux, A. (2026). [Repulsive Monte Carlo on the sphere for the sliced Wasserstein distance](https://openreview.net/forum?id=JSiTmB6Ehu). Transactions on Machine Learning Research.
+
+\[99] Sisouk, K., Delon, J., & Tierny, J. (2025). [A User's Guide to Sampling Strategies for Sliced Optimal Transport](https://openreview.net/forum?id=ECBepTWAFG). Transactions on Machine Learning Research.

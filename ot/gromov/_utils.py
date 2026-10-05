@@ -1265,10 +1265,10 @@ def fused_unbalanced_across_spaces_cost(
         if eps_samp != 0:
             div_samp = div_to_product(
                 pi_samp,
-                pi1_samp,
-                pi2_samp,
                 px_samp,
                 py_samp,
+                pi1_samp,
+                pi2_samp,
                 divergence,
                 mass=True,
                 nx=nx,
@@ -1277,10 +1277,10 @@ def fused_unbalanced_across_spaces_cost(
         if eps_feat != 0:
             div_feat = div_to_product(
                 pi_feat,
-                pi1_feat,
-                pi2_feat,
                 px_feat,
                 py_feat,
+                pi1_feat,
+                pi2_feat,
                 divergence,
                 mass=True,
                 nx=nx,
