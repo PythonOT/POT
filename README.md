@@ -40,7 +40,7 @@ POT provides the following generic OT solvers:
   Algorithm](https://pythonot.github.io/auto_examples/plot_OT_1D.html) \[2] ,
   stabilized version \[9] \[10] \[34], lazy CPU/GPU solver from geomloss \[60] \[61], greedy Sinkhorn \[22] and Screening
   Sinkhorn \[26].
-* Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) \[3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) \[21]  and unmixing \[4].
+* Bregman projections for [Wasserstein barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_barycenter_lp_vs_entropic.html) \[3], [convolutional barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_convolutional_barycenter.html) \[21] (`ot.bregman.convolutional_grid_barycenter` generalizes it to grids of any dimension, e.g. 1D signals or 3D volumes) and unmixing \[4].
 * Sinkhorn divergence \[23] and entropic regularization OT from empirical data.
 * Debiased Sinkhorn barycenters [Sinkhorn divergence barycenter](https://pythonot.github.io/auto_examples/barycenters/plot_debiased_barycenter.html) \[37]
 * Smooth optimal transport solvers (dual and semi-dual) for KL and squared L2 regularizations \[17].

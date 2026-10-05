@@ -174,6 +174,7 @@ if not os.environ.get(DISABLE_CUPY_KEY, False):
     try:
         import cupy as cp
         import cupyx
+        import cupyx.scipy.special
 
         cp_type = cp.ndarray
     except ImportError:
@@ -2946,22 +2947,8 @@ class CupyBackend(Backend):  # pragma: no cover
     def unique(self, a, return_inverse=False):
         return cp.unique(a, return_inverse=return_inverse)
 
-    def logsumexp(self, a, axis=None):
-        # Taken from
-        # https://github.com/scipy/scipy/blob/v1.7.1/scipy/special/_logsumexp.py#L7-L127
-        a_max = cp.amax(a, axis=axis, keepdims=True)
-
-        if a_max.ndim > 0:
-            a_max[~cp.isfinite(a_max)] = 0
-        elif not cp.isfinite(a_max):
-            a_max = 0
-
-        tmp = cp.exp(a - a_max)
-        s = cp.sum(tmp, axis=axis)
-        out = cp.log(s)
-        a_max = cp.squeeze(a_max, axis=axis)
-        out += a_max
-        return out
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return cupyx.scipy.special.logsumexp(a, axis=axis, keepdims=keepdims)
 
     def stack(self, arrays, axis=0):
         return cp.stack(arrays, axis)
@@ -3410,8 +3397,8 @@ class TensorflowBackend(Backend):
         else:
             return y_prime
 
-    def logsumexp(self, a, axis=None):
-        return tf.math.reduce_logsumexp(a, axis=axis)
+    def logsumexp(self, a, axis=None, keepdims=False):
+        return tf.math.reduce_logsumexp(a, axis=axis, keepdims=keepdims)
 
     def stack(self, arrays, axis=0):
         return tnp.stack(arrays, axis)

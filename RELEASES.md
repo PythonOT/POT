@@ -4,6 +4,7 @@
 
 #### New features
 
+- Generalize the separable-kernel convolutional Wasserstein barycenter to regular grids of any dimension (1D signals, 3D volumes, ...) via `ot.bregman.convolutional_grid_barycenter` and `ot.bregman.convolutional_grid_barycenter_debiased`; `ot.bregman.convolutional_barycenter2d` and `ot.bregman.convolutional_barycenter2d_debiased` are now thin `A.ndim == 3` wrappers around them, with unchanged signatures, defaults and docstrings. As before, `log["U"]`/`log["V"]` are only populated by the `method="sinkhorn"` solvers, not `"sinkhorn_log"`, and this asymmetry is now consistent across all four grid functions
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
 - Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
@@ -15,6 +16,8 @@
 
 #### Closed issues
 
+- Vectorize `ot.bregman.convolutional_barycenter2d`'s log-domain solvers (`method="sinkhorn_log"`) across histograms instead of a per-histogram Python loop with in-place writes, which unblocks Jax and Tensorflow for `sinkhorn_log` (previously a `NotImplementedError`) and speeds up the exp-domain solvers too via a separable, batched kernel application (~7-8x for `sinkhorn` and ~55-65x for `sinkhorn_log` measured on the 4-image, `reg=0.004` example)
+- Fix `Backend.logsumexp` API conformance: `CupyBackend.logsumexp` and `TensorflowBackend.logsumexp` did not accept `keepdims`, unlike the NumPy/Jax/Torch backends and the base class signature; `CupyBackend.logsumexp` now delegates to `cupyx.scipy.special.logsumexp` instead of a hand-rolled port (Issue #867)
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)

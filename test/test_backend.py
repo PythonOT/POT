@@ -350,6 +350,9 @@ def test_func_backends(nx):
     M_complex = M + 1j * rnd.randn(10, 3)
     v_acos = np.clip(v, -0.99, 0.99)
 
+    M_neginf = M.copy()
+    M_neginf[0, :] = -np.inf
+
     lst_tot = []
 
     for nx in [ot.backend.NumpyBackend(), nx]:
@@ -615,6 +618,23 @@ def test_func_backends(nx):
         A = nx.logsumexp(Mb)
         lst_b.append(nx.to_numpy(A))
         lst_name.append("logsumexp")
+
+        A = nx.logsumexp(Mb, axis=0)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("logsumexp(axis=0)")
+
+        A = nx.logsumexp(Mb, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("logsumexp(axis=1)")
+
+        A = nx.logsumexp(Mb, axis=1, keepdims=True)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("logsumexp(axis=1, keepdims=True)")
+
+        M_neginf_b = nx.from_numpy(M_neginf)
+        A = nx.logsumexp(M_neginf_b, axis=1)
+        lst_b.append(nx.to_numpy(A))
+        lst_name.append("logsumexp(all -inf row)")
 
         A = nx.stack([Mb, Mb])
         lst_b.append(nx.to_numpy(A))
