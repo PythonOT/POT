@@ -1572,7 +1572,7 @@ def semirelaxed_gromov_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = nx.ones(S) / S
+        lambdas = nx.ones(S, type_as=Cs[0]) / S
     else:
         lambdas = list_to_array(lambdas)
         lambdas = nx.from_numpy(lambdas)
@@ -1886,7 +1886,7 @@ def semirelaxed_fgw_barycenters(
 
     S = len(Cs)
     if lambdas is None:
-        lambdas = nx.ones(S) / S
+        lambdas = nx.ones(S, type_as=Cs[0]) / S
     else:
         lambdas = list_to_array(lambdas)
         lambdas = nx.from_numpy(lambdas)

@@ -89,7 +89,7 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=Non
 
     if init == "deterministic":
         # Init g
-        g = nx.ones(rank) / rank
+        g = nx.ones(rank, type_as=X_s) / rank
 
         lambda_1 = min(nx.min(a), nx.min(g), nx.min(b)) / 2
         a1 = nx.arange(start=1, stop=ns + 1, type_as=X_s)
