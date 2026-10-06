@@ -30,7 +30,8 @@
 - Fix mean centering in `ot.dr.fda` and `ot.dr.wda`: `np.mean(X)` returned a scalar instead of the per-feature mean, so `proj` did not center the data as documented. In `ot.dr.fda` the same pattern in the class means made the between-class scatter matrix independent of which features separate the classes, and FDA returned a non-discriminant direction (PR #840)
 - `ot.dr.fda` and `ot.dr.wda` no longer modify the input array `X` in place (PR #840)
 - Fix `UnbalancedSinkhornTransport` `transform` failing with `AttributeError: 'NoneType' object has no attribute 'array_equal'` when `fit` was called with missing parameters (PR #837, Issue #650)
-- Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2. --- IGNORE ---` (PR #882)
+- Fix quantized (F)GW solvers that ordered OT based on clusters and not initial node ordering (PR #857, Issue #786)
+- Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2.` (PR #882)
 
 ## 0.9.7.post1
 
