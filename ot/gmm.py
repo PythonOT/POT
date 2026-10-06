@@ -355,10 +355,10 @@ def gmm_ot_apply_map(
 
             log_g_i_x = logpdf[i]
             # Could be optimized, that's not too smart to compute denom here at each iteration
-            denom = logsumexp(
-                logpdf.squeeze(), scaling_factor=w_s.reshape((-2, 1)), axis=0
+            log_denom = logsumexp(
+                logpdf.squeeze(), scaling_factor=w_s.reshape((-1, 1)), axis=0
             )
-            p_ij_x = plan[i, j] * nx.exp(log_g_i_x - denom.reshape((-2, 1)))
+            p_ij_x = plan[i, j] * nx.exp(log_g_i_x - log_denom.reshape((-1, 1)))
             out = out + p_ij_x * T_ij_x
 
         return out
