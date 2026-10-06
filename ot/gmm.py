@@ -97,7 +97,7 @@ def gmm_pdf(x, m, C, w):
         m.shape[0] == C.shape[0] == w.shape[0]
     ), "All GMM parameters must have the same amount of components"
     nx = get_backend(x, m, C, w)
-    out = nx.zeros((x.shape[:-1]))
+    out = nx.zeros((x.shape[:-1]), type_as=x)
     for k in range(m.shape[0]):
         out = out + w[k] * gaussian_pdf(x, m[k], C[k])
     return out
@@ -306,7 +306,7 @@ def gmm_ot_apply_map(
     n_samples = x.shape[0]
 
     if method == "bary":
-        out = nx.zeros(x.shape)
+        out = nx.zeros(x.shape, type_as=x)
         logpdf = nx.stack(
             [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(k_s)]
         )
@@ -334,8 +334,8 @@ def gmm_ot_apply_map(
         # i and j, b[i, j] is the translation part
         rng = np.random.RandomState(seed)
 
-        A = nx.zeros((k_s, k_t, d, d))
-        b = nx.zeros((k_s, k_t, d))
+        A = nx.zeros((k_s, k_t, d, d), type_as=m_s)
+        b = nx.zeros((k_s, k_t, d), type_as=m_s)
 
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
@@ -350,13 +350,15 @@ def gmm_ot_apply_map(
             [gaussian_logpdf(x, m_s[k], C_s[k]) for k in range(k_s)], axis=-1
         )
         # (n_samples, k_s)
-        out = nx.zeros(x.shape)
+        out = nx.zeros(x.shape, type_as=x)
 
         for i_sample in range(n_samples):
             log_g = logpdf[i_sample]
             log_diff = log_g[:, None] - log_g[None, :]
             weighted_exp = w_s[:, None] * nx.exp(log_diff)
-            denom = nx.sum(weighted_exp, axis=0)[:, None] * nx.ones(plan.shape[1])
+            denom = nx.sum(weighted_exp, axis=0)[:, None] * nx.ones(
+                plan.shape[1], type_as=plan
+            )
             p_mat = plan / denom
 
             p = p_mat.reshape(k_s * k_t)  # stack line-by-line
@@ -418,8 +420,8 @@ def gmm_ot_plan_density(x, y, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, atol=1e-2
     nx = get_backend(x, y, m_s, m_t, C_s, C_t, w_s, w_t)
 
     # hand-made d-variate meshgrid in ij indexing
-    xx = x[:, None, :] * nx.ones((1, m, 1))  # shapes (n, m, d)
-    yy = y[None, :, :] * nx.ones((n, 1, 1))  # shapes (n, m, d)
+    xx = x[:, None, :] * nx.ones((1, m, 1), type_as=x)  # shapes (n, m, d)
+    yy = y[None, :, :] * nx.ones((n, 1, 1), type_as=y)  # shapes (n, m, d)
 
     if plan is None:
         plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)

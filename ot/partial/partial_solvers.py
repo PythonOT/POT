@@ -302,9 +302,13 @@ def partial_wasserstein(a, b, M, m=None, nb_dummies=1, log=False, **kwargs):
     M_extension = nx.ones((nb_dummies, nb_dummies), type_as=M) * nx.max(M) * 2
     M_extended = nx.concatenate(
         (
-            nx.concatenate((M, nx.zeros((M.shape[0], M_extension.shape[1]))), axis=1),
             nx.concatenate(
-                (nx.zeros((M_extension.shape[0], M.shape[1])), M_extension), axis=1
+                (M, nx.zeros((M.shape[0], M_extension.shape[1]), type_as=M)),
+                axis=1,
+            ),
+            nx.concatenate(
+                (nx.zeros((M_extension.shape[0], M.shape[1]), type_as=M), M_extension),
+                axis=1,
             ),
         ),
         axis=0,

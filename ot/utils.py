@@ -199,18 +199,18 @@ def projection_sparse_simplex(V, max_nz, z=1, axis=None, nx=None):
         max_nz_indices = nx.argsort(V, axis=1)[:, -max_nz:]
         max_nz_indices = nx.flip(max_nz_indices, axis=1)
 
-        row_indices = nx.arange(V.shape[0])
+        row_indices = nx.arange(V.shape[0], type_as=max_nz_indices)
         row_indices = row_indices.reshape(-1, 1)
         # Extract the top max_nz values for each row
         # and then project to simplex.
         U = V[row_indices, max_nz_indices]
-        z = nx.ones(len(U)) * z
+        z = nx.ones(len(U), type_as=U) * z
         cssv = nx.cumsum(U, axis=1) - z[:, None]
-        ind = nx.arange(max_nz) + 1
+        ind = nx.arange(max_nz, type_as=max_nz_indices) + 1
         cond = U - cssv / ind > 0
         # rho = nx.count_nonzero(cond, axis=1)
         rho = nx.sum(cond, axis=1)
-        theta = cssv[nx.arange(len(U)), rho - 1] / rho
+        theta = cssv[nx.arange(len(U), type_as=rho), rho - 1] / rho
         nz_projection = nx.maximum(U - theta[:, None], 0)
 
         # Put the projection of max_nz_values to their original column indices
