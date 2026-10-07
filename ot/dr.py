@@ -53,6 +53,7 @@ try:
 except ImportError:  # pragma: no cover - depends on the installation
     HAS_SKLEARN = False
 
+from .backend import get_backend
 from .bregman import sinkhorn as sinkhorn_bregman
 from .utils import dist as dist_utils, check_random_state
 
@@ -111,65 +112,108 @@ def split_classes(X, y):
     return [X[y == i, :].astype(np.float32) for i in lstsclass]
 
 
-def _dist_torch(x1, x2):
-    r"""Squared euclidean distance between samples (torch)."""
-    return (
-        torch.sum(x1**2, 1).reshape((-1, 1))
-        + torch.sum(x2**2, 1).reshape((1, -1))
-        - 2 * (x1 @ x2.T)
-    )
+def _stiefel_projection(P, G, nx):
+    r"""Project a euclidean gradient onto the tangent space of the Stiefel manifold.
+
+    Parameters
+    ----------
+    P : array-like, shape (d, p)
+        Current point, with orthonormal columns.
+    G : array-like, shape (d, p)
+        Euclidean gradient at :math:`\mathbf{P}`.
+    nx : backend
+        Backend to use for the computation.
+
+    Returns
+    -------
+    G_tangent : array-like, shape (d, p)
+        Component of :math:`\mathbf{G}` tangent to Stiefel at :math:`\mathbf{P}`,
+        that is :math:`\mathbf{G} - \mathbf{P}\,\mathrm{sym}(\mathbf{P}^\top \mathbf{G})`.
+    """
+    W = nx.dot(P.T, G)
+    return G - nx.dot(P, 0.5 * (W + W.T))
 
 
-def _sinkhorn_torch(w1, w2, M, reg, k):
-    r"""Sinkhorn algorithm with fixed number of iterations (torch)."""
-    K = torch.exp(-M / reg)
-    ui = torch.ones(M.shape[0], dtype=M.dtype, device=M.device)
-    vi = torch.ones(M.shape[1], dtype=M.dtype, device=M.device)
-    for _ in range(k):
-        vi = w2 / (K.T @ ui + 1e-50)
-        ui = w1 / (K @ vi + 1e-50)
-    return ui.reshape((-1, 1)) * K * vi.reshape((1, -1))
+def _stiefel_retraction(P, X, nx):
+    r"""Retract :math:`\mathbf{P} + \mathbf{X}` onto the Stiefel manifold by QR.
+
+    The sign of each column is fixed so that the diagonal of :math:`\mathbf{R}`
+    is non-negative, which makes the retraction a continuous map.
+
+    Parameters
+    ----------
+    P : array-like, shape (d, p)
+        Current point, with orthonormal columns.
+    X : array-like, shape (d, p)
+        Tangent step to apply.
+    nx : backend
+        Backend to use for the computation.
+
+    Returns
+    -------
+    P_next : array-like, shape (d, p)
+        Point on Stiefel with orthonormal columns.
+    """
+    Q, R = nx.qr(P + X)
+    d = nx.diag(R)
+    return Q * nx.sign(nx.sign(d) + 0.5)
 
 
-def _sinkhorn_log_torch(w1, w2, M, reg, k):
-    r"""Sinkhorn algorithm in log-domain with fixed iterations (torch)."""
-    Mr = -M / reg
-    ui = torch.zeros(M.shape[0], dtype=M.dtype, device=M.device)
-    vi = torch.zeros(M.shape[1], dtype=M.dtype, device=M.device)
-    log_w1, log_w2 = torch.log(w1), torch.log(w2)
-    for _ in range(k):
-        vi = log_w2 - torch.logsumexp(Mr + ui[:, None], 0)
-        ui = log_w1 - torch.logsumexp(Mr + vi[None, :], 1)
-    return torch.exp(ui[:, None] + Mr + vi[None, :])
+def _wda_cost(P, xc, wc, regmean, reg, k, sinkhorn_method, nx):
+    r"""Wasserstein Discriminant Analysis objective at a projection :math:`\mathbf{P}`.
 
+    Computes the ratio of the within-class to the between-class entropic
+    transport cost of the projected samples, which is the quantity `wda`
+    minimizes. The Sinkhorn solver is run for exactly `k` iterations rather
+    than to a tolerance, so the objective is a fixed-depth, differentiable
+    function of :math:`\mathbf{P}`.
 
-def _stiefel_retract(P, X):
-    r"""QR retraction onto the Stiefel manifold, with a sign convention."""
-    Q, R = torch.linalg.qr(P + X)
-    return Q * torch.sign(torch.sign(torch.diagonal(R)) + 0.5)
+    Parameters
+    ----------
+    P : array-like, shape (d, p)
+        Projection, with orthonormal columns.
+    xc : list of array-like
+        Samples split by class, each of shape (n_i, d).
+    wc : list of array-like
+        Uniform weights for each class, each of shape (n_i,).
+    regmean : array-like, shape (n_classes, n_classes)
+        Per-pair scaling of `reg`, all ones unless `normalize` was requested.
+    reg : float
+        Entropic regularization term > 0.
+    k : int
+        Number of Sinkhorn iterations.
+    sinkhorn_method : str
+        Either 'sinkhorn' or 'sinkhorn_log', passed to :py:func:`ot.sinkhorn`.
+    nx : backend
+        Backend to use for the computation.
 
-
-def _stiefel_project(P, G):
-    r"""Project a euclidean gradient onto the tangent space of Stiefel."""
-    W = P.T @ G
-    return G - P @ (0.5 * (W + W.T))
-
-
-def _wda_cost_torch(P, xc, wc, regmean, reg, k, sinkhorn_solver):
-    r"""WDA objective: within-class transport cost over between-class."""
+    Returns
+    -------
+    loss : float or array-like scalar
+        Within-class cost divided by between-class cost.
+    """
     loss_b, loss_w = 0.0, 0.0
     for i, xi in enumerate(xc):
-        xi = xi @ P
+        xi = nx.dot(xi, P)
         for j, xj in enumerate(xc[i:]):
-            xj = xj @ P
-            M = _dist_torch(xi, xj)
-            G = sinkhorn_solver(wc[i], wc[j + i], M, reg * regmean[i, j], k)
-            term = torch.sum(G * M)
+            xj = nx.dot(xj, P)
+            M = dist_utils(xi, xj)
+            G = sinkhorn_bregman(
+                wc[i],
+                wc[j + i],
+                M,
+                reg * regmean[i, j],
+                method=sinkhorn_method,
+                numItermax=k,
+                stopThr=0.0,
+                warn=False,
+            )
+            term = nx.sum(G * M)
             if j == 0:
                 loss_w = loss_w + term
             else:
                 loss_b = loss_b + term
-    if float(loss_b.detach() if torch.is_tensor(loss_b) else loss_b) == 0.0:
+    if float(nx.to_numpy(loss_b)) == 0.0:
         raise ValueError(
             "The between-class transport cost underflowed to zero, so the WDA "
             "objective is undefined. reg is too small for the scale of the "
@@ -179,14 +223,70 @@ def _wda_cost_torch(P, xc, wc, regmean, reg, k, sinkhorn_solver):
     return loss_w / loss_b
 
 
-def _wda_torch(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize):
-    r"""WDA solved with PyTorch autodiff and Riemannian gradient descent.
+def _wda_torch(
+    X,
+    y,
+    p,
+    reg,
+    k,
+    sinkhorn_method,
+    maxiter,
+    verbose,
+    P0,
+    normalize,
+    random_state,
+    step_growth,
+    step_shrink,
+    max_backtracks,
+    gtol,
+):
+    r"""Solve WDA with PyTorch autodiff and Riemannian gradient descent.
 
-    Mirrors the pymanopt ``SteepestDescent`` path: projected gradient, QR
-    retraction and backtracking, so both solvers target the same optimum.
+    Follows the same scheme as pymanopt's ``SteepestDescent`` with its default
+    ``BackTrackingLineSearcher``: project the euclidean gradient onto the
+    tangent space, retract by QR, and backtrack from a step proportional to the
+    last accepted one. Both solvers therefore target the same optimum.
+
+    Parameters
+    ----------
+    X : torch.Tensor, shape (n, d)
+        Mean-centred training samples.
+    y : torch.Tensor, shape (n,)
+        Integer class codes.
+    p : int
+        Size of the dimensionality reduction.
+    reg : float
+        Entropic regularization term > 0.
+    k : int
+        Number of Sinkhorn iterations per objective evaluation.
+    sinkhorn_method : str
+        Either 'sinkhorn' or 'sinkhorn_log'.
+    maxiter : int
+        Maximum number of descent iterations.
+    verbose : int
+        Print the objective and gradient norm at each iteration if non-zero.
+    P0 : torch.Tensor, shape (d, p) or None
+        Starting point. Drawn at random when None.
+    normalize : bool
+        Scale `reg` per class pair by the mean projected distance at `P0`.
+    random_state : int, RandomState or None
+        Seeds the starting point when `P0` is None.
+    step_growth : float
+        Factor applied to the last accepted step to start the line search.
+    step_shrink : float
+        Factor applied on each backtracking step.
+    max_backtracks : int
+        Maximum number of backtracking steps before the solver stops.
+    gtol : float
+        Stop once the tangent gradient norm falls below this value.
+
+    Returns
+    -------
+    P : torch.Tensor, shape (d, p)
+        Optimal projection.
     """
-    dtype = X.dtype
-    device = X.device
+    nx = get_backend(X)
+    dtype, device = X.dtype, X.device
     labels = torch.unique(y)
     xc = [X[y == c] for c in labels]
     wc = [
@@ -200,9 +300,12 @@ def _wda_torch(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize
         raise ValueError(f"Need d >= p >= 1. Values supplied were d = {d} and p = {p}")
 
     if P0 is None:
-        P = torch.linalg.qr(torch.randn(d, p, dtype=dtype, device=device))[0]
+        rng = check_random_state(random_state)
+        P = torch.linalg.qr(torch.tensor(rng.randn(d, p), dtype=dtype, device=device))[
+            0
+        ]
     else:
-        P = P0.clone().to(dtype)
+        P = P0.clone().to(dtype=dtype, device=device)
 
     regmean = torch.ones((nc, nc), dtype=dtype, device=device)
     if P0 is not None and normalize:
@@ -211,77 +314,121 @@ def _wda_torch(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize
                 xi = xi @ P
                 for j, xj in enumerate(xc[i:]):
                     xj = xj @ P
-                    regmean[i, j] = torch.sum(_dist_torch(xi, xj)) / (
+                    regmean[i, j] = torch.sum(dist_utils(xi, xj)) / (
                         xi.shape[0] * xj.shape[0]
                     )
 
-    if sinkhorn_method.lower() == "sinkhorn":
-        solver_fn = _sinkhorn_torch
-    elif sinkhorn_method.lower() == "sinkhorn_log":
-        solver_fn = _sinkhorn_log_torch
-    else:
-        raise ValueError("Unknown Sinkhorn method '%s'." % sinkhorn_method)
-
     def value(Q):
         with torch.no_grad():
-            return _wda_cost_torch(Q, xc, wc, regmean, reg, k, solver_fn)
+            return _wda_cost(Q, xc, wc, regmean, reg, k, sinkhorn_method, nx)
 
     f = value(P)
     step = 1.0
     for it in range(maxiter):
         Q = P.detach().requires_grad_(True)
-        v = _wda_cost_torch(Q, xc, wc, regmean, reg, k, solver_fn)
+        v = _wda_cost(Q, xc, wc, regmean, reg, k, sinkhorn_method, nx)
         (g,) = torch.autograd.grad(v, Q)
-        direction = -_stiefel_project(P, g)
-        gnorm = float(torch.linalg.norm(direction))
+        direction = -_stiefel_projection(P, g, nx)
+        gnorm = float(nx.norm(direction))
         if verbose:
             print(f"{it + 1:<6d} {float(v.detach()):+.16e} {gnorm:.8e}")
-        if gnorm <= 1e-12:
+        if gnorm <= gtol:
             break
-        # start from twice the last accepted step, as pymanopt's backtracking
-        # line search does, so progress is not throttled by a fixed unit step
-        step = min(2.0 * step, 1e4 / (gnorm + 1e-12))
+        step = step_growth * step
         improved = False
-        for _ in range(40):
-            Pn = _stiefel_retract(P, step * direction)
+        for _ in range(max_backtracks):
+            Pn = _stiefel_retraction(P, step * direction, nx)
             fn = value(Pn)
             if fn < f:
                 improved = True
                 break
-            step *= 0.5
+            step = step_shrink * step
         if not improved:
             break
         P, f = Pn, fn
     return P.detach()
 
 
-def _wda_torch_entry(X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize):
-    r"""Convert inputs, centre, run the torch solver, return ``(P, proj)``.
+def _wda_torch_entry(
+    X,
+    y,
+    p,
+    reg,
+    k,
+    sinkhorn_method,
+    maxiter,
+    verbose,
+    P0,
+    normalize,
+    random_state,
+    step_growth,
+    step_shrink,
+    max_backtracks,
+    gtol,
+):
+    r"""Prepare inputs for the torch solver and wrap its output.
 
-    numpy in gives numpy out; a torch tensor in keeps its device and dtype.
+    A torch tensor keeps its dtype and device throughout. Any other array type
+    is promoted to float64 on the CPU, matching what the autograd solver
+    returns, and the projection comes back as a numpy array.
+
+    Parameters
+    ----------
+    X : array-like, shape (n, d)
+        Training samples, not modified.
+    y : array-like, shape (n,)
+        Labels, of any type numpy can take the unique values of.
+
+    Other parameters are those of :py:func:`ot.dr.wda`.
+
+    Returns
+    -------
+    P : array-like, shape (d, p)
+        Optimal projection, of the same array type as `X`.
+    proj : callable
+        Projection function including mean centering.
     """
     was_numpy = not torch.is_tensor(X)
     if was_numpy:
-        # match the autograd path, which promotes to float64 via P
         Xt = torch.as_tensor(np.asarray(X, dtype=np.float64))
     else:
         Xt = X if torch.is_floating_point(X) else X.to(torch.float64)
-    # labels may be strings or any hashable, which torch cannot hold, so index
-    # them by position the way numpy's split_classes does
+
+    # torch cannot hold arbitrary label types, so index classes by position the
+    # way split_classes does for numpy
     if torch.is_tensor(y):
-        yt = y
+        yt = y.to(Xt.device)
     else:
-        yt = torch.as_tensor(np.unique(np.asarray(y), return_inverse=True)[1])
+        yt = torch.as_tensor(
+            np.unique(np.asarray(y), return_inverse=True)[1], device=Xt.device
+        )
+
     if P0 is None:
         P0t = None
     else:
-        P0t = (P0 if torch.is_tensor(P0) else torch.as_tensor(P0)).to(Xt.dtype)
+        P0t = (P0 if torch.is_tensor(P0) else torch.as_tensor(np.asarray(P0))).to(
+            dtype=Xt.dtype, device=Xt.device
+        )
 
     mx = Xt.mean(dim=0)
     Xc = Xt - mx.reshape((1, -1))
 
     Popt = _wda_torch(
-        Xc, yt, p, reg, k, sinkhorn_method, maxiter, verbose, P0t, normalize
+        Xc,
+        yt,
+        p,
+        reg,
+        k,
+        sinkhorn_method,
+        maxiter,
+        verbose,
+        P0t,
+        normalize,
+        random_state,
+        step_growth,
+        step_shrink,
+        max_backtracks,
+        gtol,
     )
 
     if was_numpy:
@@ -358,98 +505,31 @@ def fda(X, y, p=2, reg=1e-16):
     return Popt, proj
 
 
-def wda(
-    X,
-    y,
-    p=2,
-    reg=1,
-    k=10,
-    solver=None,
-    sinkhorn_method="sinkhorn",
-    maxiter=100,
-    verbose=0,
-    P0=None,
-    normalize=False,
+def _wda_autograd(
+    X, y, p, reg, k, solver, sinkhorn_method, maxiter, verbose, P0, normalize
 ):
-    r"""
-    Wasserstein Discriminant Analysis :ref:`[11] <references-wda>`
-
-    The function solves the following optimization problem:
-
-    .. math::
-        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \quad
-        \frac{\sum\limits_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum\limits_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
-
-    where :
-
-    - :math:`P` is a linear projection operator in the Stiefel(`p`, `d`) manifold
-    - :math:`W` is entropic regularized Wasserstein distances
-    - :math:`\mathbf{X}^i` are samples in the dataset corresponding to class i
-
-    **Choosing a Sinkhorn solver**
-
-    By default and when using a regularization parameter that is not too small
-    the default sinkhorn solver should be enough. If you need to use a small
-    regularization to get sparse cost matrices, you should use the
-    :py:func:`ot.dr.sinkhorn_log` solver that will avoid numerical
-    errors, but can be slow in practice.
+    r"""Solve WDA with autograd and a pymanopt optimizer.
 
     Parameters
     ----------
     X : ndarray, shape (n, d)
-        Training samples.
+        Training samples, not modified.
     y : ndarray, shape (n,)
         Labels for training samples.
-    p : int, optional
-        Size of dimensionality reduction.
-    reg : float, optional
-        Regularization term >0 (entropic regularization)
-    solver : None | str | pymanopt.optimizers, optional
-        Chooses both the autodiff framework and the optimizer.
+    solver : None | str | pymanopt.optimizers
+        ``None`` or ``'autograd'`` selects ``SteepestDescent``, ``'tr'`` or
+        ``'TrustRegions'`` selects ``TrustRegions``, and any other value is
+        used as a pymanopt optimizer instance.
 
-        - `None` or `'autograd'` (default): autograd and pymanopt
-          `SteepestDescent`.
-        - `'TrustRegions'` (or `'tr'`): autograd and pymanopt `TrustRegions`.
-        - a `pymanopt.optimizers` instance: autograd with that optimizer.
-        - `'torch'`: PyTorch autodiff with Riemannian gradient descent and a QR
-          retraction. Requires only `torch`, so it works on installations
-          without autograd or pymanopt, and accepts torch tensors directly,
-          keeping their device and dtype.
-    sinkhorn_method : str
-        method used for the Sinkhorn solver, either 'sinkhorn' or 'sinkhorn_log'
-    P0 : ndarray, shape (d, p)
-        Initial starting point for projection.
-    normalize : bool, optional
-        Normalize the Wasserstaiun distance by the average distance on P0 (default : False)
-    verbose : int, optional
-        Print information along iterations.
+    Other parameters are those of :py:func:`ot.dr.wda`.
 
     Returns
     -------
     P : ndarray, shape (d, p)
-        Optimal transportation matrix for the given parameters
+        Optimal projection.
     proj : callable
         Projection function including mean centering.
-
-
-    .. _references-wda:
-    References
-    ----------
-    .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
-        Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
-    """  # noqa
-
-    if solver == "torch":
-        _require(HAS_TORCH, "wda(solver='torch')", "torch")
-        return _wda_torch_entry(
-            X, y, p, reg, k, sinkhorn_method, maxiter, verbose, P0, normalize
-        )
-
-    _require(
-        HAS_AUTOGRAD and HAS_PYMANOPT,
-        "wda(solver='autograd')",
-        "autograd and pymanopt",
-    )
+    """
     if solver == "autograd":
         solver = None
 
@@ -523,6 +603,137 @@ def wda(
         return (X - mx.reshape((1, -1))).dot(Popt.point)
 
     return Popt.point, proj
+
+
+def wda(
+    X,
+    y,
+    p=2,
+    reg=1,
+    k=10,
+    solver=None,
+    sinkhorn_method="sinkhorn",
+    maxiter=100,
+    verbose=0,
+    P0=None,
+    normalize=False,
+    random_state=None,
+    step_growth=2.0,
+    step_shrink=0.5,
+    max_backtracks=40,
+    gtol=1e-12,
+):
+    r"""
+    Wasserstein Discriminant Analysis :ref:`[11] <references-wda>`
+
+    The function solves the following optimization problem:
+
+    .. math::
+        \mathbf{P} = \mathop{\arg \min}_\mathbf{P} \quad
+        \frac{\sum\limits_i W(P \mathbf{X}^i, P \mathbf{X}^i)}{\sum\limits_{i, j \neq i} W(P \mathbf{X}^i, P \mathbf{X}^j)}
+
+    where :
+
+    - :math:`P` is a linear projection operator in the Stiefel(`p`, `d`) manifold
+    - :math:`W` is entropic regularized Wasserstein distances
+    - :math:`\mathbf{X}^i` are samples in the dataset corresponding to class i
+
+    **Choosing a Sinkhorn solver**
+
+    By default and when using a regularization parameter that is not too small
+    the default sinkhorn solver should be enough. If you need to use a small
+    regularization to get sparse cost matrices, you should use the
+    :py:func:`ot.dr.sinkhorn_log` solver that will avoid numerical
+    errors, but can be slow in practice.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n, d)
+        Training samples.
+    y : ndarray, shape (n,)
+        Labels for training samples.
+    p : int, optional
+        Size of dimensionality reduction.
+    reg : float, optional
+        Regularization term >0 (entropic regularization)
+    solver : None | str | pymanopt.optimizers, optional
+        Chooses both the autodiff framework and the optimizer.
+
+        - `None` or `'autograd'` (default): autograd and pymanopt
+          `SteepestDescent`.
+        - `'TrustRegions'` (or `'tr'`): autograd and pymanopt `TrustRegions`.
+        - a `pymanopt.optimizers` instance: autograd with that optimizer.
+        - `'torch'`: PyTorch autodiff with Riemannian gradient descent and a QR
+          retraction. Requires only `torch`, so it works on installations
+          without autograd or pymanopt, and accepts torch tensors directly,
+          keeping their device and dtype.
+    sinkhorn_method : str
+        method used for the Sinkhorn solver, either 'sinkhorn' or 'sinkhorn_log'
+    P0 : ndarray, shape (d, p)
+        Initial starting point for projection.
+    normalize : bool, optional
+        Normalize the Wasserstaiun distance by the average distance on P0 (default : False)
+    verbose : int, optional
+        Print information along iterations.
+    random_state : int, RandomState instance or None, optional
+        Seeds the random starting point when `P0` is None. Only used by
+        `solver='torch'`; the pymanopt solvers draw their own starting point.
+    step_growth : float, optional
+        Factor applied to the last accepted step size to start the next line
+        search (default 2.0). Only used by `solver='torch'`.
+    step_shrink : float, optional
+        Factor applied to the step size on each backtracking step
+        (default 0.5). Only used by `solver='torch'`.
+    max_backtracks : int, optional
+        Maximum number of backtracking steps per iteration before the solver
+        stops (default 40). Only used by `solver='torch'`.
+    gtol : float, optional
+        Stop once the norm of the tangent gradient falls below this value
+        (default 1e-12). Only used by `solver='torch'`.
+
+    Returns
+    -------
+    P : ndarray, shape (d, p)
+        Optimal transportation matrix for the given parameters
+    proj : callable
+        Projection function including mean centering.
+
+
+    .. _references-wda:
+    References
+    ----------
+    .. [11] Flamary, R., Cuturi, M., Courty, N., & Rakotomamonjy, A. (2016).
+        Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
+    """  # noqa
+
+    if solver == "torch":
+        _require(HAS_TORCH, "wda(solver='torch')", "torch")
+        return _wda_torch_entry(
+            X,
+            y,
+            p,
+            reg,
+            k,
+            sinkhorn_method,
+            maxiter,
+            verbose,
+            P0,
+            normalize,
+            random_state,
+            step_growth,
+            step_shrink,
+            max_backtracks,
+            gtol,
+        )
+
+    _require(
+        HAS_AUTOGRAD and HAS_PYMANOPT,
+        "wda(solver='autograd')",
+        "autograd and pymanopt",
+    )
+    return _wda_autograd(
+        X, y, p, reg, k, solver, sinkhorn_method, maxiter, verbose, P0, normalize
+    )
 
 
 def projection_robust_wasserstein(
