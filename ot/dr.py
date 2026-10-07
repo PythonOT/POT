@@ -706,6 +706,17 @@ def wda(
         Wasserstein Discriminant Analysis. arXiv preprint arXiv:1608.08063.
     """  # noqa
 
+    if HAS_TORCH and torch.is_tensor(y):
+        n_classes = int(torch.unique(y).numel())
+    else:
+        n_classes = np.unique(np.asarray(y)).size
+    if n_classes < 2:
+        raise ValueError(
+            f"WDA needs at least two classes, got {n_classes}: with a single "
+            "class the between-class transport cost is zero and the objective "
+            "is undefined."
+        )
+
     if solver == "torch":
         _require(HAS_TORCH, "wda(solver='torch')", "torch")
         return _wda_torch_entry(

@@ -526,3 +526,17 @@ def test_wda_torch_preserves_device():
 
     assert P.device == xt.device
     assert P.dtype == torch.float32
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+@pytest.mark.parametrize("solver", [None, "torch"])
+def test_wda_rejects_a_single_class(solver):
+    """One class has no between-class cost; both solvers must say so."""
+    if solver == "torch" and notorch:
+        pytest.skip("Missing module (torch)")
+    rng = np.random.RandomState(0)
+    xs = rng.randn(40, 4)
+    ys = np.zeros(40, dtype=int)
+
+    with pytest.raises(ValueError, match="at least two classes"):
+        ot.dr.wda(xs, ys, 2, maxiter=2, solver=solver)
