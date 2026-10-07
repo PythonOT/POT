@@ -13,9 +13,16 @@ import pytest
 try:  # test if autograd and pymanopt are installed
     import ot.dr
 
-    nogo = False
+    nogo = not (ot.dr.HAS_AUTOGRAD and ot.dr.HAS_PYMANOPT)
 except ImportError:
     nogo = True
+
+try:
+    import torch
+
+    notorch = False
+except ImportError:
+    notorch = True
 
 
 @pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
@@ -251,3 +258,285 @@ def test_ewca():
     U_last_eigvec = np.linalg.svd(X.T, full_matrices=False)[0][:, -k:]
     _, cos, _ = np.linalg.svd(U.T @ U_last_eigvec, full_matrices=False)
     assert np.allclose(cos, np.ones(k), atol=1e-3)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_solver():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    xs = np.hstack((xs, rng.randn(90, 4)))
+    p = 2
+
+    P, proj = ot.dr.wda(xs, ys, p, maxiter=10, solver="torch")
+
+    np.testing.assert_allclose(np.sum(P**2, 0), np.ones(p), rtol=1e-6)
+    assert proj(xs).shape == (90, p)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_accepts_torch_tensors():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    xt = torch.tensor(xs, dtype=torch.float64)
+    yt = torch.tensor(ys)
+
+    P, proj = ot.dr.wda(xt, yt, 2, maxiter=5, solver="torch")
+
+    assert torch.is_tensor(P)
+    assert P.dtype == torch.float64
+    assert proj(xt).shape == (90, 2)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_does_not_modify_input():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    xs = xs + 10.0
+    xs_copy = xs.copy()
+
+    ot.dr.wda(xs, ys, 2, maxiter=5, solver="torch")
+
+    np.testing.assert_allclose(xs, xs_copy)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_sinkhorn_log():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    p = 2
+
+    P, _ = ot.dr.wda(
+        xs, ys, p, maxiter=10, solver="torch", sinkhorn_method="sinkhorn_log"
+    )
+
+    np.testing.assert_allclose(np.sum(P**2, 0), np.ones(p), rtol=1e-6)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_cost_agrees_across_backends():
+    """_wda_cost goes through the POT backend, so numpy and torch must agree."""
+    rng = np.random.RandomState(0)
+    n, d, C, reg, k = 180, 6, 3, 1.0, 10
+    X = np.vstack([rng.randn(n // C, d) + 3 * rng.randn(1, d) for _ in range(C)])
+    X = X - X.mean(0)
+    y = np.repeat(np.arange(C), n // C)
+    P0 = np.linalg.qr(rng.randn(d, 2))[0]
+
+    xc = [np.ascontiguousarray(X[y == c]) for c in range(C)]
+    wc = [np.ones(x.shape[0]) / x.shape[0] for x in xc]
+    rm = np.ones((C, C))
+    v_np = ot.dr._wda_cost(
+        P0, xc, wc, rm, reg, k, "sinkhorn", ot.backend.NumpyBackend()
+    )
+
+    xct = [torch.tensor(x, dtype=torch.float64) for x in xc]
+    wct = [torch.tensor(w, dtype=torch.float64) for w in wc]
+    rmt = torch.ones((C, C), dtype=torch.float64)
+    Pt = torch.tensor(P0, dtype=torch.float64)
+    nxt = ot.backend.TorchBackend()
+    v_t = ot.dr._wda_cost(Pt, xct, wct, rmt, reg, k, "sinkhorn", nxt)
+
+    np.testing.assert_allclose(float(v_t), float(v_np), rtol=1e-10)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_cost_gradient_matches_finite_differences():
+    """The autodiff gradient of _wda_cost must match a central difference."""
+    rng = np.random.RandomState(0)
+    n, d, C, reg, k = 120, 4, 2, 1.0, 10
+    X = np.vstack([rng.randn(n // C, d) + 3 * rng.randn(1, d) for _ in range(C)])
+    X = X - X.mean(0)
+    y = np.repeat(np.arange(C), n // C)
+    P0 = np.linalg.qr(rng.randn(d, 2))[0]
+
+    xc = [torch.tensor(X[y == c], dtype=torch.float64) for c in range(C)]
+    wc = [torch.full((x.shape[0],), 1.0 / x.shape[0], dtype=torch.float64) for x in xc]
+    rm = torch.ones((C, C), dtype=torch.float64)
+    nx = ot.backend.TorchBackend()
+
+    def f(P):
+        return ot.dr._wda_cost(P, xc, wc, rm, reg, k, "sinkhorn", nx)
+
+    P = torch.tensor(P0, dtype=torch.float64, requires_grad=True)
+    (grad,) = torch.autograd.grad(f(P), P)
+
+    eps = 1e-6
+    fd = np.zeros_like(P0)
+    for i in range(P0.shape[0]):
+        for j in range(P0.shape[1]):
+            Pp, Pm = P0.copy(), P0.copy()
+            Pp[i, j] += eps
+            Pm[i, j] -= eps
+            with torch.no_grad():
+                vp = float(f(torch.tensor(Pp, dtype=torch.float64)))
+                vm = float(f(torch.tensor(Pm, dtype=torch.float64)))
+            fd[i, j] = (vp - vm) / (2 * eps)
+
+    np.testing.assert_allclose(grad.numpy(), fd, rtol=1e-4, atol=1e-8)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_stiefel_projection_and_retraction():
+    """The projection is tangent to Stiefel and the retraction stays on it."""
+    rng = np.random.RandomState(0)
+    d, p = 6, 2
+    nx = ot.backend.NumpyBackend()
+    P = np.linalg.qr(rng.randn(d, p))[0]
+    G = rng.randn(d, p)
+
+    T = ot.dr._stiefel_projection(P, G, nx)
+    # tangency: P^T T must be skew-symmetric
+    W = P.T @ T
+    np.testing.assert_allclose(W + W.T, np.zeros((p, p)), atol=1e-10)
+
+    Pn = ot.dr._stiefel_retraction(P, 0.1 * T, nx)
+    np.testing.assert_allclose(Pn.T @ Pn, np.eye(p), atol=1e-10)
+    # a zero step must return the same point
+    np.testing.assert_allclose(
+        ot.dr._stiefel_retraction(P, np.zeros_like(P), nx), P, atol=1e-10
+    )
+
+
+@pytest.mark.skipif(nogo or notorch, reason="Missing modules")
+def test_wda_solvers_reach_comparable_objective():
+    """Both solvers minimise the same objective, so neither should be much worse."""
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 120, random_state=rng)
+    xs = np.hstack((xs, rng.randn(120, 3)))
+    P0 = np.linalg.qr(rng.randn(xs.shape[1], 2))[0]
+
+    Pa, _ = ot.dr.wda(xs, ys, 2, maxiter=40, P0=P0)
+    Pt, _ = ot.dr.wda(xs, ys, 2, maxiter=40, P0=P0, solver="torch")
+
+    Xc = torch.tensor(xs - xs.mean(0), dtype=torch.float64)
+    yt = torch.tensor(ys)
+    xc = [Xc[yt == c] for c in torch.unique(yt)]
+    wc = [torch.full((x.shape[0],), 1.0 / x.shape[0], dtype=torch.float64) for x in xc]
+    rm = torch.ones((len(xc), len(xc)), dtype=torch.float64)
+    nx = ot.backend.TorchBackend()
+
+    def objective(P):
+        with torch.no_grad():
+            return float(
+                ot.dr._wda_cost(
+                    torch.tensor(P, dtype=torch.float64),
+                    xc,
+                    wc,
+                    rm,
+                    1,
+                    10,
+                    "sinkhorn",
+                    nx,
+                )
+            )
+
+    assert objective(Pt) < 1.15 * objective(Pa)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_unknown_sinkhorn_method():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+
+    with pytest.raises(ValueError):
+        ot.dr.wda(xs, ys, 2, maxiter=2, solver="torch", sinkhorn_method="nope")
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_non_numeric_labels():
+    """Labels need not be numeric: numpy indexes by value, torch cannot."""
+    rng = np.random.RandomState(0)
+    xs = np.vstack([rng.randn(40, 5) + 3 * rng.randn(1, 5) for _ in range(2)])
+    ys = np.array(["cat"] * 40 + ["dog"] * 40)
+
+    P, _ = ot.dr.wda(xs, ys, 2, maxiter=3, solver="torch")
+
+    assert P.shape == (5, 2)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_rejects_p_larger_than_d():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+
+    with pytest.raises(ValueError):
+        ot.dr.wda(xs, ys, xs.shape[1] + 1, maxiter=3, solver="torch")
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_numpy_input_returns_float64():
+    """numpy in gives float64 out, matching the autograd solver."""
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+
+    P, _ = ot.dr.wda(xs.astype(np.float32), ys, 2, maxiter=3, solver="torch")
+
+    assert P.dtype == np.float64
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_random_state_is_reproducible():
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+
+    kw = dict(p=2, maxiter=5, solver="torch")
+    P_a, _ = ot.dr.wda(xs, ys, random_state=0, **kw)
+    P_b, _ = ot.dr.wda(xs, ys, random_state=0, **kw)
+    P_c, _ = ot.dr.wda(xs, ys, random_state=1, **kw)
+
+    np.testing.assert_allclose(P_a, P_b)
+    assert not np.allclose(P_a, P_c)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_line_search_parameters():
+    """The line-search controls are plumbed through and bound the work done."""
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 90, random_state=rng)
+    P0 = np.linalg.qr(rng.randn(xs.shape[1], 2))[0]
+
+    # a single backtracking step with no growth still returns a valid point
+    P, _ = ot.dr.wda(
+        xs,
+        ys,
+        2,
+        maxiter=5,
+        P0=P0,
+        solver="torch",
+        step_growth=1.0,
+        step_shrink=0.1,
+        max_backtracks=1,
+    )
+    np.testing.assert_allclose(np.sum(P**2, 0), np.ones(2), rtol=1e-6)
+
+    # a gtol above the initial gradient norm stops immediately at P0
+    P_stop, _ = ot.dr.wda(xs, ys, 2, maxiter=50, P0=P0, solver="torch", gtol=1e9)
+    np.testing.assert_allclose(P_stop, P0, atol=1e-10)
+
+
+@pytest.mark.skipif(notorch, reason="Missing module (torch)")
+def test_wda_torch_preserves_device():
+    P0 = None
+    rng = np.random.RandomState(0)
+    xs, ys = ot.datasets.make_data_classif("gaussrot", 60, random_state=rng)
+    xt = torch.tensor(xs, dtype=torch.float32)
+    yt = torch.tensor(ys)
+
+    P, _ = ot.dr.wda(xt, yt, 2, maxiter=3, solver="torch", P0=P0, random_state=0)
+
+    assert P.device == xt.device
+    assert P.dtype == torch.float32
+
+
+@pytest.mark.skipif(nogo, reason="Missing modules (autograd or pymanopt)")
+@pytest.mark.parametrize("solver", [None, "torch"])
+def test_wda_rejects_a_single_class(solver):
+    """One class has no between-class cost; both solvers must say so."""
+    if solver == "torch" and notorch:
+        pytest.skip("Missing module (torch)")
+    rng = np.random.RandomState(0)
+    xs = rng.randn(40, 4)
+    ys = np.zeros(40, dtype=int)
+
+    with pytest.raises(ValueError, match="at least two classes"):
+        ot.dr.wda(xs, ys, 2, maxiter=2, solver=solver)
