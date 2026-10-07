@@ -333,6 +333,51 @@ def test_empirical_bures_wasserstein_distance(nx, bias):
     np.testing.assert_allclose(10 * bias, nx.to_numpy(Wb), rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.parametrize(
+    "func",
+    [
+        ot.gaussian.empirical_bures_wasserstein_distance,
+        ot.gaussian.empirical_bures_wasserstein_mapping,
+        ot.gaussian.empirical_gaussian_gromov_wasserstein_distance,
+        ot.gaussian.empirical_gaussian_gromov_wasserstein_mapping,
+    ],
+)
+def test_empirical_gaussian_1d_weights(nx, func):
+    # sample weights of shape (n,) give the same result as weights of shape (n, 1)
+    rng = np.random.RandomState(0)
+    xs = rng.randn(20, 3)
+    xt = rng.randn(15, 3) * 2 + 1
+    ws = rng.rand(20)
+    wt = rng.rand(15)
+    xsb, xtb, wsb, wtb = nx.from_numpy(xs, xt, ws, wt)
+
+    expected = func(xsb, xtb, ws=wsb[:, None], wt=wtb[:, None])
+    result = func(xsb, xtb, ws=wsb, wt=wtb)
+
+    if not isinstance(result, tuple):
+        result, expected = (result,), (expected,)
+    for r, e in zip(result, expected):
+        np.testing.assert_allclose(nx.to_numpy(r), nx.to_numpy(e), rtol=1e-5)
+
+
+def test_empirical_bures_wasserstein_distance_1d_weights():
+    # with as many samples as dimensions, (n,) weights used to be silently
+    # applied to the dimensions instead of the samples
+    rng = np.random.RandomState(0)
+    xs = rng.randn(3, 3)
+    xt = rng.randn(3, 3) + 1
+    ws = np.array([0.1, 0.3, 0.6])
+    wt = np.array([0.5, 0.2, 0.3])
+
+    W = ot.gaussian.empirical_bures_wasserstein_distance(xs, xt, ws=ws, wt=wt)
+
+    ms, mt = ws @ xs, wt @ xt
+    Cs = (xs - ms).T @ np.diag(ws) @ (xs - ms) + 1e-6 * np.eye(3)
+    Ct = (xt - mt).T @ np.diag(wt) @ (xt - mt) + 1e-6 * np.eye(3)
+    expected = ot.gaussian.bures_wasserstein_distance(ms, mt, Cs, Ct)
+    np.testing.assert_allclose(W, expected, rtol=1e-6)
+
+
 @pytest.mark.parametrize("bias", [True, False])
 def test_empirical_bures_wasserstein_distance_hd(nx, bias):
     ns = 400
@@ -583,6 +628,22 @@ def test_empirical_bures_wasserstein_barycenter(nx, bias):
 
     np.testing.assert_allclose(Cb, Cblog, rtol=1e-2, atol=1e-2)
     np.testing.assert_allclose(mb, mblog, rtol=1e-2, atol=1e-2)
+
+
+def test_empirical_bures_wasserstein_barycenter_1d_weights(nx):
+    rng = np.random.RandomState(0)
+    X = [rng.randn(20, 2), rng.randn(15, 2) + 1]
+    w = [rng.rand(20), rng.rand(15)]
+    Xb = nx.from_numpy(*X)
+    wb = nx.from_numpy(*w)
+
+    mb, Cb = ot.gaussian.empirical_bures_wasserstein_barycenter(Xb, w=wb)
+    mb2, Cb2 = ot.gaussian.empirical_bures_wasserstein_barycenter(
+        Xb, w=[wi[:, None] for wi in wb]
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(mb), nx.to_numpy(mb2), rtol=1e-5)
+    np.testing.assert_allclose(nx.to_numpy(Cb), nx.to_numpy(Cb2), rtol=1e-5)
 
 
 @pytest.mark.parametrize("d_target", [1, 2, 3, 10])
