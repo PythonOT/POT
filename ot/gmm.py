@@ -341,6 +341,8 @@ def gmm_ot_apply_map(
             [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(k_s)]
         )
 
+        log_denom = logsumexp(logpdf, scaling_factor=w_s.reshape((k_s, 1, 1)), axis=0)
+
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
             Cs12 = nx.sqrtm(C_s[i])
@@ -354,11 +356,7 @@ def gmm_ot_apply_map(
             T_ij_x = x @ A + b
 
             log_g_i_x = logpdf[i]
-            # Could be optimized, that's not too smart to compute denom here at each iteration
-            log_denom = logsumexp(
-                logpdf.squeeze(), scaling_factor=w_s.reshape((-1, 1)), axis=0
-            )
-            p_ij_x = plan[i, j] * nx.exp(log_g_i_x - log_denom.reshape((-1, 1)))
+            p_ij_x = plan[i, j] * nx.exp(log_g_i_x - log_denom)
             out = out + p_ij_x * T_ij_x
 
         return out
