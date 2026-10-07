@@ -162,6 +162,33 @@ def test_gmm_apply_map():
     gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan)
 
 
+def test_gmm_apply_bary_map_value(nx):
+    """
+    Transporting N(0, 1) to 0.5*N(0, -2) + 0.5*N(0, -2)
+    should result in the indentity map with the barycentric
+    method
+    """
+    x = nx.from_numpy(np.linspace(-2, 2, 10)).reshape((-1, 1))
+
+    m_s = nx.from_numpy(np.array([0.0])).reshape((-1, 1))
+    m_t = nx.from_numpy(np.array([-2.0, 2.0])).reshape((-1, 1))
+
+    k_s = len(m_s)
+    k_t = len(m_t)
+
+    C_s = nx.from_numpy(np.array([1.0])).reshape((k_s, 1, 1))
+    C_t = nx.from_numpy(np.array([1.0, 1.0])).reshape((k_t, 1, 1))
+
+    w_s = nx.from_numpy(np.array([1.0]))
+    w_t = nx.from_numpy(np.array([0.5, 0.5]))
+
+    plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+    T_mean_x = gmm_ot_apply_map(
+        x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan, method="bary"
+    )
+    assert nx.allclose(x, T_mean_x)
+
+
 @pytest.skip_backend("tf")  # skips because of array assignment
 @pytest.skip_backend("jax")
 def test_gmm_apply_map_overflow(nx):
