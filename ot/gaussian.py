@@ -267,9 +267,13 @@ def empirical_bures_wasserstein_mapping(
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     if bias:
         mxs = nx.dot(ws.T, xs) / nx.sum(ws)
@@ -389,9 +393,13 @@ def empirical_bures_wasserstein_mapping_hd(
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     if bias:
         mxs = nx.dot(ws.T, xs) / nx.sum(ws)
@@ -760,9 +768,13 @@ def empirical_bures_wasserstein_distance(
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     if bias:
         mxs = nx.dot(ws.T, xs) / nx.sum(ws)
@@ -861,9 +873,13 @@ def empirical_bures_wasserstein_distance_hd(
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     if bias:
         mxs = nx.dot(ws.T, xs) / nx.sum(ws)
@@ -1343,6 +1359,8 @@ def empirical_bures_wasserstein_barycenter(
         w = [
             nx.ones((X[i].shape[0], 1), type_as=X[i]) / X[i].shape[0] for i in range(k)
         ]
+    else:
+        w = [nx.reshape(w[i], (-1, 1)) for i in range(k)]
 
     if bias:
         m = [nx.dot(w[i].T, X[i]) / nx.sum(w[i]) for i in range(k)]
@@ -1468,9 +1486,13 @@ def empirical_gaussian_gromov_wasserstein_distance(xs, xt, ws=None, wt=None, log
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     mxs = nx.dot(ws.T, xs) / nx.sum(ws)
     mxt = nx.dot(wt.T, xt) / nx.sum(wt)
@@ -1636,9 +1658,13 @@ def empirical_gaussian_gromov_wasserstein_mapping(
 
     if ws is None:
         ws = nx.ones((xs.shape[0], 1), type_as=xs) / xs.shape[0]
+    else:
+        ws = nx.reshape(ws, (-1, 1))
 
     if wt is None:
         wt = nx.ones((xt.shape[0], 1), type_as=xt) / xt.shape[0]
+    else:
+        wt = nx.reshape(wt, (-1, 1))
 
     # estimate mean and covariance
     mu_s = nx.dot(ws.T, xs) / nx.sum(ws)
