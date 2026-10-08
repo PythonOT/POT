@@ -15,6 +15,7 @@
 
 #### Closed issues
 
+- Fix oversized `max_nz` budgets in `ot.utils.projection_sparse_simplex` so they return the documented unconstrained simplex projection for all axis modes (PR #876, Issue #875).
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
