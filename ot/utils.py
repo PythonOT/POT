@@ -111,6 +111,10 @@ def proj_simplex(v, z=1):
     .. note:: This function is backend-compatible and will work on arrays
         from all compatible backends.
 
+    Floating-point inputs are centered by their column maximum before projection.
+    A common offset does not change the simplex projection; removing it prevents
+    a large offset from erasing the simplex size in the cumulative sums.
+
     Parameters
     ----------
     v : {array-like}, shape (n, d)
@@ -123,6 +127,9 @@ def proj_simplex(v, z=1):
         Array of projections on the simplex
     """
     nx = get_backend(v)
+    # The simplex projection is invariant to a common offset per column.
+    if nx.is_floating_point(v):
+        v = v - nx.max(v, axis=0)
     n = v.shape[0]
     if v.ndim == 1:
         d1 = 1
