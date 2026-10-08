@@ -1078,6 +1078,11 @@ class Backend:
         Computes the matrix square root.
         Requires input symmetric positive semi-definite.
 
+        Eigenvalues are clamped to zero before taking the square root, since
+        those of a positive semi-definite matrix can come out slightly negative
+        from rounding. For a matrix that is not positive semi-definite, this
+        returns the square root of its positive part.
+
         This function follows the api from :any:`scipy.linalg.sqrtm`,
         allowing batches.
 
@@ -1574,7 +1579,9 @@ class NumpyBackend(Backend):
 
     def sqrtm(self, a):
         L, V = np.linalg.eigh(a)
-        L = np.sqrt(L)
+        # eigenvalues of a PSD matrix can come out slightly negative from
+        # rounding, which would give NaN; clamp as the torch backend does
+        L = np.sqrt(np.maximum(L, 0))
         # Q[...] = V[...] @ diag(L[...])
         Q = np.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
@@ -2027,7 +2034,9 @@ class JaxBackend(Backend):
 
     def sqrtm(self, a):
         L, V = jnp.linalg.eigh(a)
-        L = jnp.sqrt(L)
+        # eigenvalues of a PSD matrix can come out slightly negative from
+        # rounding, which would give NaN; clamp as the torch backend does
+        L = jnp.sqrt(jnp.maximum(L, 0))
         # Q[...] = V[...] @ diag(L[...])
         Q = jnp.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
@@ -3107,7 +3116,9 @@ class CupyBackend(Backend):  # pragma: no cover
 
     def sqrtm(self, a):
         L, V = cp.linalg.eigh(a)
-        L = cp.sqrt(L)
+        # eigenvalues of a PSD matrix can come out slightly negative from
+        # rounding, which would give NaN; clamp as the torch backend does
+        L = cp.sqrt(cp.maximum(L, 0))
         # Q[...] = V[...] @ diag(L[...])
         Q = cp.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T
@@ -3586,7 +3597,9 @@ class TensorflowBackend(Backend):
 
     def sqrtm(self, a):
         L, V = tf.linalg.eigh(a)
-        L = tf.sqrt(L)
+        # eigenvalues of a PSD matrix can come out slightly negative from
+        # rounding, which would give NaN; clamp as the torch backend does
+        L = tf.sqrt(tf.maximum(L, 0))
         # Q[...] = V[...] @ diag(L[...])
         Q = tf.einsum("...jk,...k->...jk", V, L)
         # R[...] = Q[...] @ V[...].T

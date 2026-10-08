@@ -15,6 +15,7 @@
 
 #### Closed issues
 
+- `nx.sqrtm` now clamps negative eigenvalues to zero in the NumPy, JAX, CuPy and TensorFlow backends, as the torch backend already did. Eigenvalues of a positive semi-definite matrix can come out slightly negative from rounding, which made `ot.gaussian.bures_distance` and related functions return NaN or raise `LinAlgError` on rank-deficient covariances. `ot.gaussian.bures_wasserstein_mapping` now warns when the returned map does not satisfy `A Cs A = Ct`, which replaces the non-finite check that this fix would otherwise have silenced for singular source covariances (PR #874)
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)

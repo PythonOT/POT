@@ -15,6 +15,52 @@ from .backend import get_backend
 from .utils import dots, is_all_finite, list_to_array, exp_bures
 
 
+def _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel):
+    r"""Warn when :math:`\mathbf{A}` does not push :math:`\mathbf{C}_s` onto :math:`\mathbf{C}_t`.
+
+    The Bures-Wasserstein map is the symmetric positive definite matrix with
+    :math:`\mathbf{A}\mathbf{C}_s\mathbf{A} = \mathbf{C}_t`, which is unique and
+    given by the closed form only when :math:`\mathbf{C}_s` is non-singular. The
+    relative residual of that identity therefore measures directly how far the
+    returned map is from correct. It is compared with :math:`\sqrt{\varepsilon}` of the dtype: a
+    matrix square root near a zero eigenvalue loses up to half the digits,
+    since :math:`|\sqrt{a} - \sqrt{b}| \leq \sqrt{|a - b|}`, so a larger residual
+    means more was lost than that.
+
+    Parameters
+    ----------
+    A : array-like, shape (d, d)
+        Linear part of the computed map.
+    Cs : array-like, shape (d, d)
+        Source covariance.
+    Ct : array-like, shape (d, d)
+        Target covariance.
+    nx : backend
+        Backend to use for the computation.
+    stacklevel : int
+        Passed to :py:func:`warnings.warn` so the warning points at user code.
+    """
+    try:
+        tiny_dtype = nx.to_numpy(nx.zeros((1,), type_as=Cs)).dtype
+        tol = np.sqrt(np.finfo(tiny_dtype).eps)
+    except (TypeError, ValueError):  # pragma: no cover - exotic dtypes
+        return
+    norm_ct = float(nx.to_numpy(nx.norm(Ct)))
+    if norm_ct == 0:
+        return
+    residual = float(nx.to_numpy(nx.norm(dots(A, Cs, A) - Ct))) / norm_ct
+    if not residual <= tol:  # also catches NaN
+        warnings.warn(
+            "The Bures-Wasserstein map does not transport the source covariance "
+            f"onto the target: relative residual of A Cs A = Ct is {residual:.1e}, "
+            f"above the expected {tol:.1e}. The source covariance is singular or "
+            "nearly so, and the map has lost precision accordingly. Regularize it, "
+            "for instance with the `reg` parameter of "
+            "ot.gaussian.empirical_bures_wasserstein_mapping.",
+            stacklevel=stacklevel,
+        )
+
+
 def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     r"""Return OT linear operator between samples.
 
@@ -72,6 +118,28 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     .. [2] Peyré, G., & Cuturi, M. (2017). "Computational Optimal
         Transport", 2018.
     """
+    return _bures_wasserstein_mapping(ms, mt, Cs, Ct, log=log, stacklevel=4)
+
+
+def _bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False, stacklevel=4):
+    r"""Compute the Bures-Wasserstein map, as :py:func:`bures_wasserstein_mapping`.
+
+    Split out so that callers inside POT can set the stack level of the
+    accuracy warning and have it point at user code.
+
+    Parameters
+    ----------
+    ms, mt, Cs, Ct, log
+        As for :py:func:`bures_wasserstein_mapping`.
+    stacklevel : int, optional
+        Stack level of the warning raised when the map does not transport
+        :math:`\mathbf{C}_s` onto :math:`\mathbf{C}_t`. 4 points at the caller of
+        a public function that calls this one directly.
+
+    Returns
+    -------
+    As for :py:func:`bures_wasserstein_mapping`.
+    """
     ms, mt, Cs, Ct = list_to_array(ms, mt, Cs, Ct)
     nx = get_backend(ms, mt, Cs, Ct)
 
@@ -83,6 +151,8 @@ def bures_wasserstein_mapping(ms, mt, Cs, Ct, log=False):
     A = dots(Cs12inv, M0, Cs12inv)
 
     b = mt - nx.dot(ms, A)
+
+    _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel)
 
     if log:
         log = {}
@@ -285,9 +355,9 @@ def empirical_bures_wasserstein_mapping(
     Ct = nx.dot((xt * wt).T, xt) / nx.sum(wt) + reg * nx.eye(d, type_as=xt)
 
     if log:
-        A, b, log = bures_wasserstein_mapping(mxs, mxt, Cs, Ct, log=log)
+        A, b, log = _bures_wasserstein_mapping(mxs, mxt, Cs, Ct, log=log)
     else:
-        A, b = bures_wasserstein_mapping(mxs, mxt, Cs, Ct)
+        A, b = _bures_wasserstein_mapping(mxs, mxt, Cs, Ct)
 
     if is_input_finite and not is_all_finite(A, b):
         warnings.warn(

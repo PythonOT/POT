@@ -922,6 +922,18 @@ def test_gradients_backends():
             assert nx.allclose(dl_db, b)
 
 
+def test_sqrtm_rank_deficient(nx):
+    """sqrtm must accept PSD matrices whose zero eigenvalues round negative."""
+    rng = np.random.RandomState(0)
+    d = 10
+    for rank in (9, 5, 2):
+        F = rng.randn(d, rank)
+        C = F @ F.T / rank
+        S = nx.to_numpy(nx.sqrtm(nx.from_numpy(C)))
+        assert np.all(np.isfinite(S))
+        np.testing.assert_allclose(S @ S, C, atol=1e-6)
+
+
 def test_sqrtm_backward_torch():
     if not torch:
         pytest.skip("Torch not available")
