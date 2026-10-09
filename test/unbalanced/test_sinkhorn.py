@@ -1066,3 +1066,38 @@ def test_unbalanced_multiple_inputs_reg_type_warns(nx):
     msgs = [str(w.message) for w in rec if issubclass(w.category, UserWarning)]
     assert len(msgs) == 1, msgs
     assert "n_hists=1" in msgs[0]
+
+
+def test_unbalanced_multiple_inputs_returnCost(nx):
+    """`returnCost` must be honoured or reported, never silently ignored.
+
+    With a 2d `b` only the linear cost is available. `sinkhorn_unbalanced2` used to
+    ignore `returnCost` entirely in that branch.
+    """
+    a, b, M = _unbalanced_problem(nx)
+    m = nx.to_numpy(M).shape[1]
+    B = nx.from_numpy(np.random.RandomState(1).rand(m, 3))
+
+    # "linear" is the only supported value and must not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        loss = ot.unbalanced.sinkhorn_unbalanced2(
+            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            returnCost="linear",
+        )
+    assert nx.to_numpy(loss).shape == (3,)
+
+    # "total" is not available there: warn and still return the linear cost
+    with pytest.warns(UserWarning, match="returnCost='total' is not available"):
+        loss = ot.unbalanced.sinkhorn_unbalanced2(
+            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            returnCost="total",
+        )
+    assert nx.to_numpy(loss).shape == (3,)
+
+    # an invalid value raises, as in the single histogram branch
+    with pytest.raises(ValueError, match="Unknown returnCost"):
+        ot.unbalanced.sinkhorn_unbalanced2(
+            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            returnCost="invalid",
+        )

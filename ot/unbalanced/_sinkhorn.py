@@ -576,7 +576,7 @@ def sinkhorn_unbalanced2(
         if returnCost != "linear":
             warnings.warn(
                 "returnCost='total' is not available with a 2d b (n_hists={}): "
-                "the linear cost is returned.".format(n_hists)
+                "the linear cost is returned.".format(b.shape[1])
             )
 
         if method.lower() == "sinkhorn":
