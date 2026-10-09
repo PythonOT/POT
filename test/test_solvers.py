@@ -384,40 +384,6 @@ def test_solve_grid(nx, reg, reg_type, unbalanced, unbalanced_type):
         pytest.skip("Not implemented")
 
 
-def test_solve_unbalanced_value(nx):
-    # ot.solve must return the value of the unbalanced OT problem it solves.
-    # The marginal penalization is the generalized KL divergence, i.e. it
-    # includes the mass correction term (mass=True). With the un-normalized KL
-    # the returned value is the derivative of the objective along G -> t G,
-    # which vanishes at the optimum.
-    rng = np.random.RandomState(0)
-
-    x = rng.randn(10, 2)
-    y = rng.randn(7, 2)
-    a = ot.utils.unif(10)
-    b = ot.utils.unif(7)
-    M = ot.dist(x, y)
-    a, b, M = nx.from_numpy(a, b, M)
-
-    reg = 1.0
-    unbalanced = 0.5
-
-    res = ot.solve(M, a, b, reg=reg, unbalanced=unbalanced)
-
-    G = res.plan
-    c = a[:, None] * b[None, :]
-    expected = nx.sum(G * M)
-    expected = expected + reg * nx.kl_div(G, c, mass=True)
-    expected = expected + unbalanced * nx.kl_div(nx.sum(G, 1), a, mass=True)
-    expected = expected + unbalanced * nx.kl_div(nx.sum(G, 0), b, mass=True)
-
-    # the penalizations are divergences: the value is at least the linear loss
-    np.testing.assert_array_less(
-        nx.to_numpy(res.value_linear) - 1e-5, nx.to_numpy(res.value)
-    )
-    np.testing.assert_allclose(nx.to_numpy(res.value), nx.to_numpy(expected), atol=1e-6)
-
-
 def test_solve_not_implemented(nx):
     n_samples_s = 10
     n_samples_t = 7

@@ -15,6 +15,32 @@ import warnings
 from ..backend import get_backend
 from ..utils import list_to_array, get_parameter_pair
 
+REG_TYPES = ("kl", "entropy")
+
+
+def _check_reg_type(reg_type):
+    r"""Validate `reg_type` and return its lower case form.
+
+    Only ``'kl'`` and ``'entropy'`` are implemented. Any other value used to be
+    silently handled as ``'kl'``, which silently changed the solved problem, so
+    it is now rejected explicitly.
+
+    Parameters
+    ----------
+    reg_type : str
+        Name of the regularizer, either 'kl' or 'entropy' (case insensitive).
+
+    Returns
+    -------
+    reg_type : str
+        The lower case name of the regularizer.
+    """
+    if not isinstance(reg_type, str) or reg_type.lower() not in REG_TYPES:
+        raise ValueError(
+            "Unknown reg_type '{}'. Must be either 'kl' or 'entropy'.".format(reg_type)
+        )
+    return reg_type.lower()
+
 
 def sinkhorn_unbalanced(
     a,
@@ -40,7 +66,7 @@ def sinkhorn_unbalanced(
 
     .. math::
         W = \arg \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
+        \mathrm{reg} \cdot \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -52,7 +78,17 @@ def sinkhorn_unbalanced(
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
-    - KL is the Kullback-Leibler divergence
+    - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
+      :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
+
+    and :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})` is the regularizer
+
+    .. math::
+        \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) =
+        \begin{cases}
+        \mathrm{KL}(\gamma, \mathbf{c}) & \text{if } \texttt{reg\_type} = \text{'kl'}, \\
+        \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j} & \text{if } \texttt{reg\_type} = \text{'entropy'}.
+        \end{cases}
 
     The algorithm used for solving the problem is the generalized
     Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
@@ -92,13 +128,19 @@ def sinkhorn_unbalanced(
         method used for the solver either 'sinkhorn', 'sinkhorn_stabilized', 'sinkhorn_translation_invariant' or
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
-        Regularizer term. Can take two values:
+        Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
+        case insensitive. Can take two values:
 
         - Negative entropy: 'entropy':
           :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        - Kullback-Leibler divergence (default): 'kl':
-          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+          It is equal to :math:`\mathrm{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)` minus the
+          constant :math:`dim_a \times dim_b`, and the reference measure :math:`\mathbf{c}`
+          is overwritten by the all-ones matrix.
+        - Generalized Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma, \mathbf{c}) = \mathrm{KL}(\gamma, \mathbf{c})` with
+          :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T` when `c` is None.
+
+        Any other value raises a :class:`ValueError`.
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
@@ -118,7 +160,7 @@ def sinkhorn_unbalanced(
 
     Returns
     -------
-    if n_hists == 1:
+    if n_hists == 0:
         - gamma : array-like, shape(dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
@@ -128,6 +170,18 @@ def sinkhorn_unbalanced(
             the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
+
+    Notes
+    -----
+    When `log=True`, the returned dictionary is the one of the solver selected by
+    `method`, see :any:`ot.unbalanced.sinkhorn_knopp_unbalanced`,
+    :any:`ot.unbalanced.sinkhorn_stabilized_unbalanced` and
+    :any:`ot.unbalanced.sinkhorn_unbalanced_translation_invariant`.
+
+    .. note::
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
+        only the negative entropy regularization is implemented: `reg_type` and `c` are
+        ignored, and only the linear cost is returned.
 
     Examples
     --------
@@ -274,7 +328,7 @@ def sinkhorn_unbalanced2(
 
     .. math::
         \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
+        \mathrm{reg} \cdot \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -285,7 +339,17 @@ def sinkhorn_unbalanced2(
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
-    - KL is the Kullback-Leibler divergence
+    - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
+      :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
+
+    and :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})` is the regularizer
+
+    .. math::
+        \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) =
+        \begin{cases}
+        \mathrm{KL}(\gamma, \mathbf{c}) & \text{if } \texttt{reg\_type} = \text{'kl'}, \\
+        \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j} & \text{if } \texttt{reg\_type} = \text{'entropy'}.
+        \end{cases}
 
     The algorithm used for solving the problem is the generalized
     Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25]
@@ -324,13 +388,19 @@ def sinkhorn_unbalanced2(
         method used for the solver either 'sinkhorn', 'sinkhorn_stabilized', 'sinkhorn_translation_invariant' or
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
-        Regularizer term. Can take two values:
+        Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
+        case insensitive. Can take two values:
 
         - Negative entropy: 'entropy':
           :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        - Kullback-Leibler divergence: 'kl':
-          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+          It is equal to :math:`\mathrm{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)` minus the
+          constant :math:`dim_a \times dim_b`, and the reference measure :math:`\mathbf{c}`
+          is overwritten by the all-ones matrix.
+        - Generalized Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma, \mathbf{c}) = \mathrm{KL}(\gamma, \mathbf{c})` with
+          :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T` when `c` is None.
+
+        Any other value raises a :class:`ValueError`.
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
@@ -357,6 +427,18 @@ def sinkhorn_unbalanced2(
         the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
     log : dict
         log dictionary returned only if `log` is `True`
+
+    Notes
+    -----
+    When `log=True`, the returned dictionary is the one of the solver selected by
+    `method`, see :any:`ot.unbalanced.sinkhorn_knopp_unbalanced`,
+    :any:`ot.unbalanced.sinkhorn_stabilized_unbalanced` and
+    :any:`ot.unbalanced.sinkhorn_unbalanced_translation_invariant`.
+
+    .. note::
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
+        only the negative entropy regularization is implemented: `reg_type` and `c` are
+        ignored, and only the linear cost is returned.
 
     Examples
     --------
@@ -487,8 +569,13 @@ def sinkhorn_unbalanced2(
             return cost
 
     else:
-        if reg_type == "kl":
-            warnings.warn("Reg_type not implemented yet. Use entropy.")
+        if returnCost not in ("linear", "total"):
+            raise ValueError("Unknown returnCost = {}".format(returnCost))
+        if returnCost != "linear":
+            warnings.warn(
+                "returnCost='total' is not available with multiple histograms "
+                "(n_hists > 1): the linear cost is returned."
+            )
 
         if method.lower() == "sinkhorn":
             return sinkhorn_knopp_unbalanced(
@@ -585,7 +672,7 @@ def sinkhorn_knopp_unbalanced(
 
     .. math::
         W = \arg \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
+        \mathrm{reg} \cdot \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -597,7 +684,17 @@ def sinkhorn_knopp_unbalanced(
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
-    - KL is the Kullback-Leibler divergence
+    - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
+      :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
+
+    and :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})` is the regularizer
+
+    .. math::
+        \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) =
+        \begin{cases}
+        \mathrm{KL}(\gamma, \mathbf{c}) & \text{if } \texttt{reg\_type} = \text{'kl'}, \\
+        \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j} & \text{if } \texttt{reg\_type} = \text{'entropy'}.
+        \end{cases}
 
     The algorithm used for solving the problem is the generalized Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-knopp-unbalanced>`
 
@@ -632,13 +729,19 @@ def sinkhorn_knopp_unbalanced(
         If :math:`\mathrm{reg_{m}}` is an array,
         it must have the same backend as input arrays `(a, b, M)`.
     reg_type : string, optional
-        Regularizer term. Can take two values:
+        Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
+        case insensitive. Can take two values:
 
         - Negative entropy: 'entropy':
           :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        - Kullback-Leibler divergence: 'kl':
-          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+          It is equal to :math:`\mathrm{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)` minus the
+          constant :math:`dim_a \times dim_b`, and the reference measure :math:`\mathbf{c}`
+          is overwritten by the all-ones matrix.
+        - Generalized Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma, \mathbf{c}) = \mathrm{KL}(\gamma, \mathbf{c})` with
+          :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T` when `c` is None.
+
+        Any other value raises a :class:`ValueError`.
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
@@ -658,7 +761,7 @@ def sinkhorn_knopp_unbalanced(
 
     Returns
     -------
-    if n_hists == 1:
+    if n_hists == 0:
         - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
@@ -668,6 +771,24 @@ def sinkhorn_knopp_unbalanced(
             the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
+
+    Notes
+    -----
+    The `log` dictionary returned when `log=True` contains:
+
+    - 'err' : list of float, the error at each iteration;
+    - 'logu', 'logv' : array-like, the log of the scaling vectors;
+    - 'cost' : float, the linear cost :math:`\langle \gamma, \mathbf{M} \rangle_F`;
+    - 'total_cost' : float, the value of the optimization problem above.
+
+    'cost' and 'total_cost' are only computed when `b` is a single histogram.
+
+    .. note::
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
+        the function returns the cost of each column and **only the negative entropy
+        regularization is implemented**: `reg_type` and `c` are ignored and the
+        reference measure is the all-ones matrix. In that case `log` only contains
+        'err', 'logu' and 'logv'.
 
     Examples
     --------
@@ -702,6 +823,8 @@ def sinkhorn_knopp_unbalanced(
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
+    reg_type = _check_reg_type(reg_type)
+
     dim_a, dim_b = M.shape
 
     if len(a) == 0:
@@ -713,6 +836,13 @@ def sinkhorn_knopp_unbalanced(
         n_hists = b.shape[1]
     else:
         n_hists = 0
+
+    if n_hists and (reg_type != "entropy" or c is not None):
+        warnings.warn(
+            "With multiple histograms (n_hists > 1) only the negative entropy "
+            "regularization is implemented: reg_type and c are ignored and the "
+            "reference measure is the all-ones matrix."
+        )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -732,10 +862,12 @@ def sinkhorn_knopp_unbalanced(
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    if reg_type.lower() == "entropy":
-        warnings.warn(
-            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
-        )
+    if reg_type == "entropy":
+        if c is not None:
+            warnings.warn(
+                "reg_type='entropy' ignores the provided c: the reference measure "
+                "of the regularization is the all-ones matrix."
+            )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -806,8 +938,17 @@ def sinkhorn_knopp_unbalanced(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            # mass=True: the penalization is the generalized KL divergence
-            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
+            # The regularizer is the generalized KL divergence
+            #     KL(plan, c) = sum(plan * log(plan / c) - plan + c).
+            # With reg_type="entropy" the reference measure is c = 1 and the
+            # regularizer is the negative entropy
+            #     Omega(plan) = sum(plan * log(plan) - plan)
+            #                 = KL(plan, 1) - dim_a * dim_b,
+            # so the constant dim_a * dim_b must be removed.
+            reg_cost = nx.kl_div(plan, c, mass=True)
+            if reg_type == "entropy":
+                reg_cost = reg_cost - dim_a * dim_b
+            total_cost = linear_cost + reg * reg_cost
             if reg_m1 != float("inf"):
                 total_cost = total_cost + reg_m1 * nx.kl_div(
                     nx.sum(plan, 1), a, mass=True
@@ -848,7 +989,7 @@ def sinkhorn_stabilized_unbalanced(
 
     .. math::
         W = \arg \min_\gamma \quad \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
+        \mathrm{reg} \cdot \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -860,7 +1001,17 @@ def sinkhorn_stabilized_unbalanced(
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathbf{c}` is a reference distribution for the regularization
-    - KL is the Kullback-Leibler divergence
+    - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
+      :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
+
+    and :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})` is the regularizer
+
+    .. math::
+        \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) =
+        \begin{cases}
+        \mathrm{KL}(\gamma, \mathbf{c}) & \text{if } \texttt{reg\_type} = \text{'kl'}, \\
+        \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j} & \text{if } \texttt{reg\_type} = \text{'entropy'}.
+        \end{cases}
 
     The algorithm used for solving the problem is the generalized
     Sinkhorn-Knopp matrix scaling algorithm as proposed in :ref:`[10, 25] <references-sinkhorn-stabilized-unbalanced>`
@@ -895,13 +1046,19 @@ def sinkhorn_stabilized_unbalanced(
         method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
         'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
-        Regularizer term. Can take two values:
+        Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
+        case insensitive. Can take two values:
 
         - Negative entropy: 'entropy':
           :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
-          This is equivalent (up to a constant) to :math:`\Omega(\gamma) = \text{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)`.
-        - Kullback-Leibler divergence: 'kl':
-          :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+          It is equal to :math:`\mathrm{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)` minus the
+          constant :math:`dim_a \times dim_b`, and the reference measure :math:`\mathbf{c}`
+          is overwritten by the all-ones matrix.
+        - Generalized Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma, \mathbf{c}) = \mathrm{KL}(\gamma, \mathbf{c})` with
+          :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T` when `c` is None.
+
+        Any other value raises a :class:`ValueError`.
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
@@ -927,7 +1084,7 @@ def sinkhorn_stabilized_unbalanced(
 
     Returns
     -------
-    if n_hists == 1:
+    if n_hists == 0:
         - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
@@ -937,6 +1094,24 @@ def sinkhorn_stabilized_unbalanced(
             the OT cost between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
+    Notes
+    -----
+    The `log` dictionary returned when `log=True` contains:
+
+    - 'err' : list of float, the error at each iteration;
+    - 'logu', 'logv' : array-like, the log of the scaling vectors;
+    - 'cost' : float, the linear cost :math:`\langle \gamma, \mathbf{M} \rangle_F`;
+    - 'total_cost' : float, the value of the optimization problem above.
+
+    'cost' and 'total_cost' are only computed when `b` is a single histogram.
+
+    .. note::
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
+        the function returns the cost of each column and **only the negative entropy
+        regularization is implemented**: `reg_type` and `c` are ignored and the
+        reference measure is the all-ones matrix. In that case `log` only contains
+        'err', 'logu' and 'logv'.
+
     Examples
     --------
 
@@ -969,6 +1144,8 @@ def sinkhorn_stabilized_unbalanced(
     a, b, M = list_to_array(a, b, M)
     nx = get_backend(M, a, b)
 
+    reg_type = _check_reg_type(reg_type)
+
     dim_a, dim_b = M.shape
 
     if len(a) == 0:
@@ -980,6 +1157,13 @@ def sinkhorn_stabilized_unbalanced(
         n_hists = b.shape[1]
     else:
         n_hists = 0
+
+    if n_hists and (reg_type != "entropy" or c is not None):
+        warnings.warn(
+            "With multiple histograms (n_hists > 1) only the negative entropy "
+            "regularization is implemented: reg_type and c are ignored and the "
+            "reference measure is the all-ones matrix."
+        )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -1000,9 +1184,11 @@ def sinkhorn_stabilized_unbalanced(
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "entropy":
-        warnings.warn(
-            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
-        )
+        if c is not None:
+            warnings.warn(
+                "reg_type='entropy' ignores the provided c: the reference measure "
+                "of the regularization is the all-ones matrix."
+            )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -1111,8 +1297,17 @@ def sinkhorn_stabilized_unbalanced(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            # mass=True: the penalization is the generalized KL divergence
-            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
+            # The regularizer is the generalized KL divergence
+            #     KL(plan, c) = sum(plan * log(plan / c) - plan + c).
+            # With reg_type="entropy" the reference measure is c = 1 and the
+            # regularizer is the negative entropy
+            #     Omega(plan) = sum(plan * log(plan) - plan)
+            #                 = KL(plan, 1) - dim_a * dim_b,
+            # so the constant dim_a * dim_b must be removed.
+            reg_cost = nx.kl_div(plan, c, mass=True)
+            if reg_type == "entropy":
+                reg_cost = reg_cost - dim_a * dim_b
+            total_cost = linear_cost + reg * reg_cost
             if reg_m1 != float("inf"):
                 total_cost = total_cost + reg_m1 * nx.kl_div(
                     nx.sum(plan, 1), a, mass=True
@@ -1151,7 +1346,7 @@ def sinkhorn_unbalanced_translation_invariant(
 
     .. math::
         W = \arg \min_\gamma \ \langle \gamma, \mathbf{M} \rangle_F +
-        \mathrm{reg} \cdot \mathrm{KL}(\gamma, \mathbf{c}) +
+        \mathrm{reg} \cdot \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) +
         \mathrm{reg_{m1}} \cdot \mathrm{KL}(\gamma \mathbf{1}, \mathbf{a}) +
         \mathrm{reg_{m2}} \cdot \mathrm{KL}(\gamma^T \mathbf{1}, \mathbf{b})
 
@@ -1163,7 +1358,17 @@ def sinkhorn_unbalanced_translation_invariant(
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
     - :math:`\Omega` is the entropic regularization term,KL divergence
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
-    - KL is the Kullback-Leibler divergence
+    - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
+      :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
+
+    and :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})` is the regularizer
+
+    .. math::
+        \Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c}) =
+        \begin{cases}
+        \mathrm{KL}(\gamma, \mathbf{c}) & \text{if } \texttt{reg\_type} = \text{'kl'}, \\
+        \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j} & \text{if } \texttt{reg\_type} = \text{'entropy'}.
+        \end{cases}
 
     The algorithm used for solving the problem is the translation invariant Sinkhorn algorithm as proposed in :ref:`[73] <references-sinkhorn-unbalanced-translation-invariant>`
 
@@ -1187,11 +1392,19 @@ def sinkhorn_unbalanced_translation_invariant(
         `reg_m=(float("inf"), scalar)` or `reg_m=(scalar, float("inf"))`.
         If reg_m is an array, it must have the same backend as input arrays (a, b, M).
     reg_type : string, optional
-        Regularizer term. Can take two values:
-        'entropy' (negative entropy)
-        :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`, or
-        'kl' (Kullback-Leibler)
-        :math:`\Omega(\gamma) = \text{KL}(\gamma, \mathbf{a} \mathbf{b}^T)`.
+        Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
+        case insensitive. Can take two values:
+
+        - Negative entropy: 'entropy':
+          :math:`\Omega(\gamma) = \sum_{i,j} \gamma_{i,j} \log(\gamma_{i,j}) - \sum_{i,j} \gamma_{i,j}`.
+          It is equal to :math:`\mathrm{KL}(\gamma, 1_{dim_a} 1_{dim_b}^T)` minus the
+          constant :math:`dim_a \times dim_b`, and the reference measure :math:`\mathbf{c}`
+          is overwritten by the all-ones matrix.
+        - Generalized Kullback-Leibler divergence (default): 'kl':
+          :math:`\Omega(\gamma, \mathbf{c}) = \mathrm{KL}(\gamma, \mathbf{c})` with
+          :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T` when `c` is None.
+
+        Any other value raises a :class:`ValueError`.
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
@@ -1211,7 +1424,7 @@ def sinkhorn_unbalanced_translation_invariant(
 
     Returns
     -------
-    if n_hists == 1:
+    if n_hists == 0:
         - gamma : array-like, shape (dim_a, dim_b)
             Optimal transportation matrix for the given parameters
         - log : dict
@@ -1221,6 +1434,24 @@ def sinkhorn_unbalanced_translation_invariant(
             the OT distance between :math:`\mathbf{a}` and each of the histograms :math:`\mathbf{b}_i`
         - log : dict
             log dictionary returned only if `log` is `True`
+
+    Notes
+    -----
+    The `log` dictionary returned when `log=True` contains:
+
+    - 'err' : list of float, the error at each iteration;
+    - 'logu', 'logv' : array-like, the log of the scaling vectors;
+    - 'cost' : float, the linear cost :math:`\langle \gamma, \mathbf{M} \rangle_F`;
+    - 'total_cost' : float, the value of the optimization problem above.
+
+    'cost' and 'total_cost' are only computed when `b` is a single histogram.
+
+    .. note::
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
+        the function returns the cost of each column and **only the negative entropy
+        regularization is implemented**: `reg_type` and `c` are ignored and the
+        reference measure is the all-ones matrix. In that case `log` only contains
+        'err', 'logu' and 'logv'.
 
     Examples
     --------
@@ -1245,6 +1476,8 @@ def sinkhorn_unbalanced_translation_invariant(
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
+    reg_type = _check_reg_type(reg_type)
+
     dim_a, dim_b = M.shape
 
     if len(a) == 0:
@@ -1256,6 +1489,13 @@ def sinkhorn_unbalanced_translation_invariant(
         n_hists = b.shape[1]
     else:
         n_hists = 0
+
+    if n_hists and (reg_type != "entropy" or c is not None):
+        warnings.warn(
+            "With multiple histograms (n_hists > 1) only the negative entropy "
+            "regularization is implemented: reg_type and c are ignored and the "
+            "reference measure is the all-ones matrix."
+        )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
 
@@ -1278,9 +1518,11 @@ def sinkhorn_unbalanced_translation_invariant(
     u_, v_ = u, v
 
     if reg_type == "entropy":
-        warnings.warn(
-            "If reg_type = entropy, then the matrix c is overwritten by the one matrix."
-        )
+        if c is not None:
+            warnings.warn(
+                "reg_type='entropy' ignores the provided c: the reference measure "
+                "of the regularization is the all-ones matrix."
+            )
         c = nx.ones((dim_a, dim_b), type_as=M)
 
     if n_hists:
@@ -1399,8 +1641,17 @@ def sinkhorn_unbalanced_translation_invariant(
             linear_cost = nx.sum(plan * M)
             dict_log["cost"] = linear_cost
 
-            # mass=True: the penalization is the generalized KL divergence
-            total_cost = linear_cost + reg * nx.kl_div(plan, c, mass=True)
+            # The regularizer is the generalized KL divergence
+            #     KL(plan, c) = sum(plan * log(plan / c) - plan + c).
+            # With reg_type="entropy" the reference measure is c = 1 and the
+            # regularizer is the negative entropy
+            #     Omega(plan) = sum(plan * log(plan) - plan)
+            #                 = KL(plan, 1) - dim_a * dim_b,
+            # so the constant dim_a * dim_b must be removed.
+            reg_cost = nx.kl_div(plan, c, mass=True)
+            if reg_type == "entropy":
+                reg_cost = reg_cost - dim_a * dim_b
+            total_cost = linear_cost + reg * reg_cost
             if reg_m1 != float("inf"):
                 total_cost = total_cost + reg_m1 * nx.kl_div(
                     nx.sum(plan, 1), a, mass=True

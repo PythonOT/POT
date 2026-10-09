@@ -7,6 +7,8 @@
 # License: MIT License
 
 import itertools
+import warnings
+
 import numpy as np
 import ot
 import pytest
@@ -811,27 +813,51 @@ def test_implemented_methods(nx):
             barycenter_unbalanced(A, M, reg=epsilon, reg_m=reg_m, method=method)
 
 
-@pytest.mark.parametrize(
-    "method",
-    ["sinkhorn", "sinkhorn_stabilized", "sinkhorn_translation_invariant"],
-)
-def test_unbalanced_total_cost(nx, method):
-    # The total cost reported in the log must be the value of the unbalanced OT
-    # objective that the solver actually minimizes. The marginal penalization is
-    # the generalized KL divergence, i.e. it includes the mass correction term
-    # (mass=True). Without it the reported value is the derivative of the
-    # objective along G -> t G, which vanishes at the optimum.
-    n = 20
-    rng = np.random.RandomState(42)
+METHODS_UNBALANCED = [
+    "sinkhorn",
+    "sinkhorn_stabilized",
+    "sinkhorn_translation_invariant",
+]
 
-    x = rng.randn(n, 2)
-    a = ot.utils.unif(n)
-    b = ot.utils.unif(n) * 1.5  # make the problem unbalanced
-    M = ot.dist(x, x)
-    a, b, M = nx.from_numpy(a, b, M)
 
-    reg = 1.0
-    reg_m = 1.0
+def _unbalanced_problem(nx, n=6, m=7, seed=0):
+    rng = np.random.RandomState(seed)
+    a = rng.rand(n)
+    a /= a.sum()
+    b = rng.rand(m)
+    b /= b.sum()
+    M = rng.rand(n, m)
+    M /= M.max()
+    return nx.from_numpy(a, b, M)
+
+
+def _gen_kl(P, Q):
+    r"""Generalized KL divergence, computed with plain numpy.
+
+    Deliberately independent from ``nx.kl_div`` so that the reference value does
+    not reuse the implementation under test.
+    """
+    P = np.asarray(P, dtype=np.float64)
+    Q = np.asarray(Q, dtype=np.float64)
+    return float(np.sum(P * np.log(P / Q) - P + Q))
+
+
+def _negative_entropy(P):
+    r"""Negative entropy :math:`\sum_{ij} P_{ij} \log(P_{ij}) - P_{ij}`."""
+    P = np.asarray(P, dtype=np.float64)
+    return float(np.sum(P * np.log(P) - P))
+
+
+@pytest.mark.parametrize("method", METHODS_UNBALANCED)
+def test_unbalanced_total_cost_kl(nx, method):
+    """Non-regression test for the generalized KL objective (PR #874).
+
+    The penalizations of the unbalanced OT problem are generalized KL
+    divergences, so the reported total cost must be at least the linear cost and
+    must match the objective recomputed from the returned plan.
+    """
+    a, b, M = _unbalanced_problem(nx)
+    reg, reg_m = 0.3, 1.0
 
     G, log = ot.unbalanced.sinkhorn_unbalanced(
         a,
@@ -840,22 +866,180 @@ def test_unbalanced_total_cost(nx, method):
         reg=reg,
         reg_m=reg_m,
         method=method,
-        numItermax=5000,
-        stopThr=1e-12,
+        reg_type="kl",
         log=True,
+        numItermax=5000,
+        stopThr=1e-13,
     )
 
-    c = a[:, None] * b[None, :]
-    expected = nx.sum(G * M)
-    expected = expected + reg * nx.kl_div(G, c, mass=True)
-    expected = expected + reg_m * nx.kl_div(nx.sum(G, 1), a, mass=True)
-    expected = expected + reg_m * nx.kl_div(nx.sum(G, 0), b, mass=True)
+    G_np = nx.to_numpy(G)
+    a_np = nx.to_numpy(a)
+    b_np = nx.to_numpy(b)
+    M_np = nx.to_numpy(M)
+    c_np = a_np[:, None] * b_np[None, :]
 
-    # all penalizations are divergences: the total cost is at least the
-    # linear cost of the optimal plan
-    np.testing.assert_array_less(
-        nx.to_numpy(log["cost"]) - 1e-5, nx.to_numpy(log["total_cost"])
+    expected = (
+        float(np.sum(G_np * M_np))
+        + reg * _gen_kl(G_np, c_np)
+        + reg_m * _gen_kl(G_np.sum(1), a_np)
+        + reg_m * _gen_kl(G_np.sum(0), b_np)
     )
-    np.testing.assert_allclose(
-        nx.to_numpy(log["total_cost"]), nx.to_numpy(expected), atol=1e-6
+
+    total_cost = float(nx.to_numpy(log["total_cost"]))
+    np.testing.assert_allclose(total_cost, expected, atol=1e-6)
+    # with reg_type="kl" every penalization is a divergence, hence non negative
+    np.testing.assert_array_less(float(nx.to_numpy(log["cost"])) - 1e-5, total_cost)
+
+
+@pytest.mark.parametrize("method", METHODS_UNBALANCED)
+def test_unbalanced_total_cost_entropy(nx, method):
+    """The entropy regularizer must not carry the constant ``dim_a * dim_b``.
+
+    The reported value must be the objective built on
+    :math:`\\Omega(\\gamma) = \\sum \\gamma \\log \\gamma - \\gamma`, which is
+    ``KL(gamma, 1) - dim_a * dim_b``. It may be negative, so no comparison with
+    the linear cost is made here.
+    """
+    a, b, M = _unbalanced_problem(nx)
+    reg, reg_m = 0.3, 1.0
+
+    G, log = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg=reg,
+        reg_m=reg_m,
+        method=method,
+        reg_type="entropy",
+        log=True,
+        numItermax=5000,
+        stopThr=1e-13,
     )
+
+    G_np = nx.to_numpy(G)
+    a_np = nx.to_numpy(a)
+    b_np = nx.to_numpy(b)
+    M_np = nx.to_numpy(M)
+
+    expected = (
+        float(np.sum(G_np * M_np))
+        + reg * _negative_entropy(G_np)
+        + reg_m * _gen_kl(G_np.sum(1), a_np)
+        + reg_m * _gen_kl(G_np.sum(0), b_np)
+    )
+    total_cost = float(nx.to_numpy(log["total_cost"]))
+    np.testing.assert_allclose(total_cost, expected, atol=1e-6)
+
+    # the constant reg * dim_a * dim_b must have been removed
+    without_constant_removal = expected + reg * G_np.size
+    assert abs(total_cost - without_constant_removal) > 1e-3
+
+
+@pytest.mark.parametrize("method", METHODS_UNBALANCED)
+def test_unbalanced_entropy_constant(nx, method):
+    """The entropy constant is exactly ``reg * dim_a * dim_b``.
+
+    With ``c`` set to the all-ones matrix, ``reg_type="kl"`` and
+    ``reg_type="entropy"`` minimize the same objective up to that constant, so
+    the plans must coincide and the two reported total costs must differ by
+    exactly ``reg * dim_a * dim_b``.
+    """
+    a, b, M = _unbalanced_problem(nx)
+    reg, reg_m = 0.3, 1.0
+    n, m = nx.to_numpy(M).shape
+    c_ones = nx.from_numpy(np.ones((n, m)))
+
+    G_kl, log_kl = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg=reg,
+        reg_m=reg_m,
+        method=method,
+        reg_type="kl",
+        c=c_ones,
+        log=True,
+        numItermax=5000,
+        stopThr=1e-13,
+    )
+    G_en, log_en = ot.unbalanced.sinkhorn_unbalanced(
+        a,
+        b,
+        M,
+        reg=reg,
+        reg_m=reg_m,
+        method=method,
+        reg_type="entropy",
+        log=True,
+        numItermax=5000,
+        stopThr=1e-13,
+    )
+
+    # same objective up to a constant -> same plan
+    np.testing.assert_allclose(nx.to_numpy(G_kl), nx.to_numpy(G_en), atol=1e-8)
+    diff = float(nx.to_numpy(log_kl["total_cost"])) - float(
+        nx.to_numpy(log_en["total_cost"])
+    )
+    np.testing.assert_allclose(diff, reg * n * m, rtol=1e-6)
+
+
+@pytest.mark.parametrize("method", METHODS_UNBALANCED)
+@pytest.mark.parametrize("reg_type", ["kl", "entropy"])
+def test_unbalanced_reg_type_case_insensitive(nx, method, reg_type):
+    """`reg_type` must be handled case insensitively by every method."""
+    a, b, M = _unbalanced_problem(nx)
+    reg, reg_m = 0.3, 1.0
+
+    ref_plan, ref_cost = None, None
+    for variant in [reg_type, reg_type.capitalize(), reg_type.upper()]:
+        G, log = ot.unbalanced.sinkhorn_unbalanced(
+            a,
+            b,
+            M,
+            reg=reg,
+            reg_m=reg_m,
+            method=method,
+            reg_type=variant,
+            log=True,
+            numItermax=5000,
+            stopThr=1e-13,
+        )
+        plan = nx.to_numpy(G)
+        cost = float(nx.to_numpy(log["total_cost"]))
+        if ref_plan is None:
+            ref_plan, ref_cost = plan, cost
+        else:
+            np.testing.assert_allclose(plan, ref_plan, atol=1e-10)
+            np.testing.assert_allclose(cost, ref_cost, atol=1e-10)
+
+
+@pytest.mark.parametrize("method", METHODS_UNBALANCED)
+def test_unbalanced_unknown_reg_type_raises(nx, method):
+    """An unknown `reg_type` must be rejected instead of silently using 'kl'."""
+    a, b, M = _unbalanced_problem(nx)
+    with pytest.raises(ValueError, match="Unknown reg_type"):
+        ot.unbalanced.sinkhorn_unbalanced(
+            a, b, M, reg=0.3, reg_m=1.0, method=method, reg_type="cryptic divergence"
+        )
+
+
+def test_unbalanced_multiple_inputs_reg_type_warns(nx):
+    """Multi histogram mode only implements the negative entropy regularization.
+
+    `reg_type` and `c` are ignored in that mode, which must be advertised with a
+    warning. Asking for 'entropy' (the implemented regularizer) must stay silent.
+    """
+    a, b, M = _unbalanced_problem(nx)
+    n_hists = 3
+    B = nx.from_numpy(np.random.RandomState(1).rand(nx.to_numpy(M).shape[1], n_hists))
+
+    with pytest.warns(UserWarning, match="multiple histograms"):
+        ot.unbalanced.sinkhorn_unbalanced(
+            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="kl"
+        )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ot.unbalanced.sinkhorn_unbalanced(
+            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy"
+        )
