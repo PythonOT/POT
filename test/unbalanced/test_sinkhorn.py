@@ -1027,19 +1027,42 @@ def test_unbalanced_multiple_inputs_reg_type_warns(nx):
     """Multi histogram mode only implements the negative entropy regularization.
 
     `reg_type` and `c` are ignored in that mode, which must be advertised with a
-    warning. Asking for 'entropy' (the implemented regularizer) must stay silent.
+    single warning. Asking for 'entropy' (the implemented regularizer) with the
+    default reference measure must stay silent.
     """
     a, b, M = _unbalanced_problem(nx)
     n_hists = 3
-    B = nx.from_numpy(np.random.RandomState(1).rand(nx.to_numpy(M).shape[1], n_hists))
+    m = nx.to_numpy(M).shape[1]
+    B = nx.from_numpy(np.random.RandomState(1).rand(m, n_hists))
+    c_custom = nx.from_numpy(np.full((nx.to_numpy(M).shape[0], m), 0.7))
 
-    with pytest.warns(UserWarning, match="multiple histograms"):
-        ot.unbalanced.sinkhorn_unbalanced(
-            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="kl"
-        )
+    def n_warnings(**kwargs):
+        with warnings.catch_warnings(record=True) as rec:
+            warnings.simplefilter("always")
+            ot.unbalanced.sinkhorn_unbalanced(
+                a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", **kwargs
+            )
+        return [str(w.message) for w in rec if issubclass(w.category, UserWarning)]
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    # the default reg_type is "kl", which is not implemented in that branch
+    msgs = n_warnings(reg_type="kl")
+    assert len(msgs) == 1, msgs
+    assert "2d b" in msgs[0] and "n_hists=3" in msgs[0]
+
+    # "entropy" is the implemented regularizer and c is not given -> silent
+    assert n_warnings(reg_type="entropy") == []
+
+    # an explicit c is ignored too, but must not be reported twice
+    msgs = n_warnings(reg_type="entropy", c=c_custom)
+    assert len(msgs) == 1, msgs
+
+    # a 2d b with a single column also takes that branch: the message must be exact
+    B1 = nx.from_numpy(np.random.RandomState(2).rand(m, 1))
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always")
         ot.unbalanced.sinkhorn_unbalanced(
-            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy"
+            a, B1, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="kl"
         )
+    msgs = [str(w.message) for w in rec if issubclass(w.category, UserWarning)]
+    assert len(msgs) == 1, msgs
+    assert "n_hists=1" in msgs[0]

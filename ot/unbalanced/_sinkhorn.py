@@ -179,9 +179,10 @@ def sinkhorn_unbalanced(
     :any:`ot.unbalanced.sinkhorn_unbalanced_translation_invariant`.
 
     .. note::
-        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
-        only the negative entropy regularization is implemented: `reg_type` and `c` are
-        ignored, and only the linear cost is returned.
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) -- which includes
+        :math:`n_{hists} = 1` -- only the negative entropy regularization is
+        implemented: `reg_type` and `c` are ignored, and only the linear cost is
+        returned.
 
     Examples
     --------
@@ -436,9 +437,10 @@ def sinkhorn_unbalanced2(
     :any:`ot.unbalanced.sinkhorn_unbalanced_translation_invariant`.
 
     .. note::
-        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
-        only the negative entropy regularization is implemented: `reg_type` and `c` are
-        ignored, and only the linear cost is returned.
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) -- which includes
+        :math:`n_{hists} = 1` -- only the negative entropy regularization is
+        implemented: `reg_type` and `c` are ignored, and only the linear cost is
+        returned.
 
     Examples
     --------
@@ -573,8 +575,8 @@ def sinkhorn_unbalanced2(
             raise ValueError("Unknown returnCost = {}".format(returnCost))
         if returnCost != "linear":
             warnings.warn(
-                "returnCost='total' is not available with multiple histograms "
-                "(n_hists > 1): the linear cost is returned."
+                "returnCost='total' is not available with a 2d b (n_hists={}): "
+                "the linear cost is returned.".format(n_hists)
             )
 
         if method.lower() == "sinkhorn":
@@ -784,11 +786,12 @@ def sinkhorn_knopp_unbalanced(
     'cost' and 'total_cost' are only computed when `b` is a single histogram.
 
     .. note::
-        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
-        the function returns the cost of each column and **only the negative entropy
-        regularization is implemented**: `reg_type` and `c` are ignored and the
-        reference measure is the all-ones matrix. In that case `log` only contains
-        'err', 'logu' and 'logv'.
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) -- which includes
+        :math:`n_{hists} = 1`, since any 2d `b` selects this branch -- the function
+        returns the cost of each column instead of a plan, and **only the negative
+        entropy regularization is implemented**: `reg_type` and `c` are ignored and
+        the reference measure is the all-ones matrix. In that case `log` only
+        contains 'err', 'logu' and 'logv'.
 
     Examples
     --------
@@ -839,9 +842,9 @@ def sinkhorn_knopp_unbalanced(
 
     if n_hists and (reg_type != "entropy" or c is not None):
         warnings.warn(
-            "With multiple histograms (n_hists > 1) only the negative entropy "
-            "regularization is implemented: reg_type and c are ignored and the "
-            "reference measure is the all-ones matrix."
+            "With a 2d b (n_hists={}) only the negative entropy regularization is "
+            "implemented: reg_type and c are ignored and the reference measure is "
+            "the all-ones matrix.".format(n_hists)
         )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
@@ -863,7 +866,8 @@ def sinkhorn_knopp_unbalanced(
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "entropy":
-        if c is not None:
+        # in 2d mode the warning above already reports that c is ignored
+        if c is not None and not n_hists:
             warnings.warn(
                 "reg_type='entropy' ignores the provided c: the reference measure "
                 "of the regularization is the all-ones matrix."
@@ -1106,11 +1110,12 @@ def sinkhorn_stabilized_unbalanced(
     'cost' and 'total_cost' are only computed when `b` is a single histogram.
 
     .. note::
-        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
-        the function returns the cost of each column and **only the negative entropy
-        regularization is implemented**: `reg_type` and `c` are ignored and the
-        reference measure is the all-ones matrix. In that case `log` only contains
-        'err', 'logu' and 'logv'.
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) -- which includes
+        :math:`n_{hists} = 1`, since any 2d `b` selects this branch -- the function
+        returns the cost of each column instead of a plan, and **only the negative
+        entropy regularization is implemented**: `reg_type` and `c` are ignored and
+        the reference measure is the all-ones matrix. In that case `log` only
+        contains 'err', 'logu' and 'logv'.
 
     Examples
     --------
@@ -1160,9 +1165,9 @@ def sinkhorn_stabilized_unbalanced(
 
     if n_hists and (reg_type != "entropy" or c is not None):
         warnings.warn(
-            "With multiple histograms (n_hists > 1) only the negative entropy "
-            "regularization is implemented: reg_type and c are ignored and the "
-            "reference measure is the all-ones matrix."
+            "With a 2d b (n_hists={}) only the negative entropy regularization is "
+            "implemented: reg_type and c are ignored and the reference measure is "
+            "the all-ones matrix.".format(n_hists)
         )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
@@ -1184,7 +1189,8 @@ def sinkhorn_stabilized_unbalanced(
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
     if reg_type == "entropy":
-        if c is not None:
+        # in 2d mode the warning above already reports that c is ignored
+        if c is not None and not n_hists:
             warnings.warn(
                 "reg_type='entropy' ignores the provided c: the reference measure "
                 "of the regularization is the all-ones matrix."
@@ -1447,11 +1453,12 @@ def sinkhorn_unbalanced_translation_invariant(
     'cost' and 'total_cost' are only computed when `b` is a single histogram.
 
     .. note::
-        When `b` is a 2d array of shape (`dim_b`, `n_hists`) with :math:`n_{hists} > 1`,
-        the function returns the cost of each column and **only the negative entropy
-        regularization is implemented**: `reg_type` and `c` are ignored and the
-        reference measure is the all-ones matrix. In that case `log` only contains
-        'err', 'logu' and 'logv'.
+        When `b` is a 2d array of shape (`dim_b`, `n_hists`) -- which includes
+        :math:`n_{hists} = 1`, since any 2d `b` selects this branch -- the function
+        returns the cost of each column instead of a plan, and **only the negative
+        entropy regularization is implemented**: `reg_type` and `c` are ignored and
+        the reference measure is the all-ones matrix. In that case `log` only
+        contains 'err', 'logu' and 'logv'.
 
     Examples
     --------
@@ -1492,9 +1499,9 @@ def sinkhorn_unbalanced_translation_invariant(
 
     if n_hists and (reg_type != "entropy" or c is not None):
         warnings.warn(
-            "With multiple histograms (n_hists > 1) only the negative entropy "
-            "regularization is implemented: reg_type and c are ignored and the "
-            "reference measure is the all-ones matrix."
+            "With a 2d b (n_hists={}) only the negative entropy regularization is "
+            "implemented: reg_type and c are ignored and the reference measure is "
+            "the all-ones matrix.".format(n_hists)
         )
 
     reg_m1, reg_m2 = get_parameter_pair(reg_m)
@@ -1518,7 +1525,8 @@ def sinkhorn_unbalanced_translation_invariant(
     u_, v_ = u, v
 
     if reg_type == "entropy":
-        if c is not None:
+        # in 2d mode the warning above already reports that c is ignored
+        if c is not None and not n_hists:
             warnings.warn(
                 "reg_type='entropy' ignores the provided c: the reference measure "
                 "of the regularization is the all-ones matrix."
