@@ -1082,7 +1082,13 @@ def test_unbalanced_multiple_inputs_returnCost(nx):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         loss = ot.unbalanced.sinkhorn_unbalanced2(
-            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            a,
+            B,
+            M,
+            reg=0.3,
+            reg_m=1.0,
+            method="sinkhorn",
+            reg_type="entropy",
             returnCost="linear",
         )
     assert nx.to_numpy(loss).shape == (3,)
@@ -1090,7 +1096,13 @@ def test_unbalanced_multiple_inputs_returnCost(nx):
     # "total" is not available there: warn and still return the linear cost
     with pytest.warns(UserWarning, match="returnCost='total' is not available"):
         loss = ot.unbalanced.sinkhorn_unbalanced2(
-            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            a,
+            B,
+            M,
+            reg=0.3,
+            reg_m=1.0,
+            method="sinkhorn",
+            reg_type="entropy",
             returnCost="total",
         )
     assert nx.to_numpy(loss).shape == (3,)
@@ -1098,6 +1110,12 @@ def test_unbalanced_multiple_inputs_returnCost(nx):
     # an invalid value raises, as in the single histogram branch
     with pytest.raises(ValueError, match="Unknown returnCost"):
         ot.unbalanced.sinkhorn_unbalanced2(
-            a, B, M, reg=0.3, reg_m=1.0, method="sinkhorn", reg_type="entropy",
+            a,
+            B,
+            M,
+            reg=0.3,
+            reg_m=1.0,
+            method="sinkhorn",
+            reg_type="entropy",
             returnCost="invalid",
         )
