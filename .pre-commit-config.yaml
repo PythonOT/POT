@@ -1,5 +1,5 @@
 repos:
-  # Ruff skada
+  # Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.2
     hooks:
@@ -16,9 +16,9 @@ repos:
         # D103: missing docstring in public function
         # D400: docstring first line must end with period
         args: ["--ignore=D103,D400", "--fix"]
-        files: ^docs/|^examples/^test/
+        files: ^docs/|^examples/|^test/
       - id: ruff-format
-        files: ^ot/|^docs/|^examples/|
+        files: ^ot/|^docs/|^examples/
 
   # Codespell
   - repo: https://github.com/codespell-project/codespell

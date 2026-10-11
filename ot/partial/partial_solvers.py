@@ -135,7 +135,7 @@ def partial_wasserstein_lagrange(
         return nx.zeros((len(a), len(b)), type_as=M)
 
     a0, b0, M0 = a, b, M
-    # convert to humpy
+    # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
 
     eps = 1e-20
@@ -628,7 +628,7 @@ def _entropic_partial_wasserstein_sinkhorn(
         q3 = q3 * K2prev / K
 
         if nx.any(nx.isnan(K)) or nx.any(nx.isinf(K)):
-            print("Warning: numerical errors at iteration", cpt)
+            warnings.warn("Numerical errors at iteration {}".format(cpt))
             break
         if cpt % 10 == 0:
             err = nx.norm(Kprev - K)
@@ -1559,8 +1559,6 @@ def partial_wasserstein_1d(x_a, x_b, n_transported_samples=None, p=1):
         number of samples to be transported
     p : float, optional
         power of the metric (default: 1)
-    log : bool, optional
-        record log if True
 
 
     Returns
