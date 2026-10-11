@@ -349,9 +349,7 @@ def solve_semi_dual_entropic(
     elif method.lower() == "asgd":
         opt_beta = averaged_sgd_entropic_transport(a, b, M, reg, numItermax, lr)
     else:
-        raise ValueError(
-            "Unknown method '{}', must be 'SAG' or 'ASGD'".format(method)
-        )
+        raise ValueError("Unknown method '{}', must be 'SAG' or 'ASGD'".format(method))
 
     opt_alpha = c_transform_entropic(b, M, reg, opt_beta)
     pi = (

@@ -1438,9 +1438,7 @@ def test_partial_init_duals():
     init_duals_samp = (np.zeros(n_samples), np.zeros(n_samples))
     init_duals_feat = (np.zeros(2), np.zeros(2))
 
-    kwargs = dict(
-        X=xs, Y=xt, reg_marginals=10, epsilon=1, unbalanced_solver="sinkhorn"
-    )
+    kwargs = dict(X=xs, Y=xt, reg_marginals=10, epsilon=1, unbalanced_solver="sinkhorn")
     pi_samp, pi_feat = unbalanced_co_optimal_transport(**kwargs)
     for init_duals in [(init_duals_samp, None), (None, init_duals_feat)]:
         pi_samp2, pi_feat2 = unbalanced_co_optimal_transport(

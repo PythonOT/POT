@@ -77,8 +77,8 @@ def test_eigenvalue_cost_matrix_simple():
 
 def test_delta_matrix_1d_identity():
     r = 4
-    I = np.eye(r, dtype=complex)
-    delta = _delta_matrix_1d(I, I, I, I)
+    eye = np.eye(r, dtype=complex)
+    delta = _delta_matrix_1d(eye, eye, eye, eye)
     np.testing.assert_allclose(delta, np.eye(r), atol=1e-6)
 
 
