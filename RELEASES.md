@@ -30,6 +30,8 @@
 - Fix quantized (F)GW solvers that ordered OT based on clusters and not initial node ordering (PR #857, Issue #786)
 - Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2.` (PR #882)
 
+- Support integer class labels on CUDA in domain-adaptation estimators by computing the label-presence mask with broadcast multiplication.
+
 ## 0.9.7.post1
 
 This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).
