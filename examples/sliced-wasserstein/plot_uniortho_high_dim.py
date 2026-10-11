@@ -137,7 +137,6 @@ pl.show()
 # Wasserstein in 3D") are. We use the same exact closed-form reference as
 # below (a pure translation).
 
-from ot.sliced import get_projections_spiral  # noqa: E402 (kept local to this section)
 
 d3 = 3
 rng3 = np.random.RandomState(1)
