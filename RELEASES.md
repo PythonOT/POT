@@ -29,9 +29,9 @@
 - Fix `UnbalancedSinkhornTransport` `transform` failing with `AttributeError: 'NoneType' object has no attribute 'array_equal'` when `fit` was called with missing parameters (PR #837, Issue #650)
 - Fix quantized (F)GW solvers that ordered OT based on clusters and not initial node ordering (PR #857, Issue #786)
 - Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2.` (PR #882)
-- Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #XXX)
-- Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #XXX)
-- Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #XXX)
+- Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #888)
+- Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
+- Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
 
 ## 0.9.7.post1
 
