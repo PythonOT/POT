@@ -144,7 +144,7 @@ def sinkhorn_unbalanced(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If ``reg_type="entropy"``, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -405,7 +405,7 @@ def sinkhorn_unbalanced2(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If ``reg_type="entropy"``, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
@@ -747,7 +747,7 @@ def sinkhorn_knopp_unbalanced(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If ``reg_type="entropy"``, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -1066,7 +1066,7 @@ def sinkhorn_stabilized_unbalanced(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If ``reg_type="entropy"``, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the `u`, `v` sinkhorn scaling vectors).
@@ -1413,7 +1413,7 @@ def sinkhorn_unbalanced_translation_invariant(
     c : array-like, shape (dim_a, dim_b), optional (default=None)
         Reference measure for the regularization.
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
-        If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
+        If ``reg_type="entropy"``, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     warmstart: tuple of arrays, shape (dim_a, dim_b), optional
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors).
