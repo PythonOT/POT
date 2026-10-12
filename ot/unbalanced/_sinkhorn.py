@@ -1362,7 +1362,6 @@ def sinkhorn_unbalanced_translation_invariant(
     where :
 
     - :math:`\mathbf{M}` is the (`dim_a`, `dim_b`) metric cost matrix
-    - :math:`\Omega` is the entropic regularization term,KL divergence
     - :math:`\mathbf{a}` and :math:`\mathbf{b}` are source and target unbalanced distributions
     - :math:`\mathrm{KL}` is the generalized Kullback-Leibler divergence
       :math:`\mathrm{KL}(\mathbf{P}, \mathbf{Q}) = \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j} / \mathbf{Q}_{i,j}) - \mathbf{P}_{i,j} + \mathbf{Q}_{i,j}`
