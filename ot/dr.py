@@ -59,6 +59,7 @@ from .utils import dist as dist_utils, check_random_state
 
 
 def _require(condition, function, dependencies):
+    """Check requirement and raise error if not available."""
     if not condition:
         raise ImportError(
             f"Missing dependency for ot.dr.{function}. Requires {dependencies}. "
