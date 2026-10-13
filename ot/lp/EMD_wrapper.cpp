@@ -15,7 +15,10 @@
 
 #include "network_simplex_simple.h"
 #include "sparse_bipartitegraph.h"
+#include "sparse_digraph.h"
 #include "EMD.h"
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -197,6 +200,98 @@ inline bool extract_sparse_solution(
             flow_targets_out[*n_flows_out] = static_cast<uint64_t>(idx_b[j]);
             flow_values_out[*n_flows_out] = flow;
             ++(*n_flows_out);
+        }
+    }
+    return true;
+}
+
+// An arc carrying positive flow, keyed by its head node. Used to decompose
+// grid min-cost-flow arc flows (which move mass between *adjacent* grid
+// cells) into a direct (source_bin, target_bin, mass) transport plan.
+struct GridFlowEdge {
+    int head;
+    double flow;
+};
+
+// Decomposes multi-hop arc flows into direct (source, target, mass) entries.
+//
+// A min-cost flow on the grid adjacency graph reports how much mass crosses
+// each arc between neighbouring cells, but a transport plan has to say which
+// bin each unit of mass came from and where it ended up. This walks from
+// each node with leftover supply along arcs that still carry flow until it
+// reaches one with a deficit, records that path's bottleneck as one plan
+// entry, and subtracts it from every arc on the path, repeating until no
+// supply is left. `flow_adj` is consumed in place and `rem_supply` is taken
+// by value, both as scratch.
+//
+// Returns false if the plan would exceed `max_plan_entries` entries.
+inline bool decompose_grid_flows(
+    std::vector<std::vector<GridFlowEdge>>& flow_adj,
+    std::vector<double> rem_supply,
+    uint64_t* plan_sources_out,
+    uint64_t* plan_targets_out,
+    double* plan_values_out,
+    uint64_t* n_plan_entries_out,
+    uint64_t max_plan_entries
+) {
+    const double eps = 1e-10;
+    const std::size_t n_nodes = flow_adj.size();
+    std::vector<std::size_t> ptr(n_nodes, 0);
+
+    for (std::size_t src = 0; src < n_nodes; ++src) {
+        while (rem_supply[src] > eps) {
+            std::vector<std::pair<std::size_t, std::size_t>> path_edges;
+            std::size_t cur = src;
+
+            while (true) {
+                if (rem_supply[cur] < -eps && cur != src) {
+                    break;
+                }
+                auto& list = flow_adj[cur];
+                std::size_t p = ptr[cur];
+                while (p < list.size() && list[p].flow <= eps) {
+                    ++p;
+                }
+                ptr[cur] = p;
+                if (p >= list.size()) {
+                    break;
+                }
+                path_edges.emplace_back(cur, p);
+                cur = static_cast<std::size_t>(list[p].head);
+            }
+
+            if (path_edges.empty()) {
+                break;
+            }
+
+            const std::size_t target = cur;
+            if (rem_supply[target] >= -eps) {
+                break;
+            }
+
+            double bottleneck = rem_supply[src];
+            bottleneck = std::min(bottleneck, -rem_supply[target]);
+            for (const auto& edge : path_edges) {
+                bottleneck = std::min(bottleneck, flow_adj[edge.first][edge.second].flow);
+            }
+
+            if (bottleneck <= eps) {
+                break;
+            }
+
+            for (const auto& edge : path_edges) {
+                flow_adj[edge.first][edge.second].flow -= bottleneck;
+            }
+            rem_supply[src] -= bottleneck;
+            rem_supply[target] += bottleneck;
+
+            if (*n_plan_entries_out >= max_plan_entries) {
+                return false;
+            }
+            plan_sources_out[*n_plan_entries_out] = static_cast<uint64_t>(src);
+            plan_targets_out[*n_plan_entries_out] = static_cast<uint64_t>(target);
+            plan_values_out[*n_plan_entries_out] = bottleneck;
+            ++(*n_plan_entries_out);
         }
     }
     return true;
@@ -453,7 +548,178 @@ int EMD_wrap_sparse(
     return ret;
 }
 
-int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b, 
+int EMD_wrap_grid_l1(
+    int ndim,
+    int64_t *shape,
+    double *X,
+    double *Y,
+    bool return_plan,
+    uint64_t *plan_sources_out,
+    uint64_t *plan_targets_out,
+    double *plan_values_out,
+    uint64_t *n_plan_entries_out,
+    uint64_t max_plan_entries,
+    double *alpha,
+    double *cost,
+    uint64_t maxIter
+) {
+    using namespace lemon;
+
+    int64_t n_nodes = 1;
+    for (int d = 0; d < ndim; ++d) {
+        if (shape[d] <= 0) {
+            return INFEASIBLE;
+        }
+        n_nodes *= shape[d];
+    }
+
+    double total_x = 0.0;
+    double total_y = 0.0;
+    bool any_diff = false;
+    for (int64_t i = 0; i < n_nodes; ++i) {
+        if (X[i] < 0 || Y[i] < 0) {
+            return INFEASIBLE;
+        }
+        total_x += X[i];
+        total_y += Y[i];
+        any_diff = any_diff || (X[i] != Y[i]);
+    }
+    if (std::abs(total_x - total_y) > 1e-8 * std::max(1.0, total_x)) {
+        return INFEASIBLE;
+    }
+
+    *cost = 0.0;
+    *n_plan_entries_out = 0;
+
+    if (!any_diff) {
+        // Histograms are identical: the cost is 0 and constant in a
+        // neighbourhood of X == Y, so the zero potential is a valid
+        // (sub)gradient here.
+        std::fill(alpha, alpha + n_nodes, 0.0);
+        // Nothing to transport, but if a plan is requested, the identity
+        // coupling is still the (trivially optimal) transportation plan.
+        if (return_plan) {
+            for (int64_t i = 0; i < n_nodes; ++i) {
+                if (X[i] > 1e-10) {
+                    if (*n_plan_entries_out >= max_plan_entries) {
+                        return (int)MAX_ITER_REACHED;
+                    }
+                    plan_sources_out[*n_plan_entries_out] = static_cast<uint64_t>(i);
+                    plan_targets_out[*n_plan_entries_out] = static_cast<uint64_t>(i);
+                    plan_values_out[*n_plan_entries_out] = X[i];
+                    ++(*n_plan_entries_out);
+                }
+            }
+        }
+        return OPTIMAL;
+    }
+
+    // Grid-adjacent arcs: one forward and one backward arc per adjacent cell
+    // pair, unit cost each. On a unit-spaced Cartesian grid this reduces the
+    // cityblock-EMD problem to a min-cost flow on the grid graph, which is
+    // far sparser than the full bipartite graph (Ling & Okada, 2007). Unlike
+    // that paper's bespoke tree-based solver, the reduced graph below is
+    // handed to the off-the-shelf NetworkSimplexSimple LP solver.
+    std::vector<int64_t> stride(ndim);
+    stride[ndim - 1] = 1;
+    for (int d = ndim - 2; d >= 0; --d) {
+        stride[d] = stride[d + 1] * shape[d + 1];
+    }
+
+    std::vector<std::pair<int, int>> edges;
+    for (int d = 0; d < ndim; ++d) {
+        const int64_t extent = shape[d];
+        if (extent < 2) {
+            continue;
+        }
+        const int64_t st = stride[d];
+        for (int64_t u = 0; u < n_nodes; ++u) {
+            if ((u / st) % extent < extent - 1) {
+                edges.emplace_back(static_cast<int>(u), static_cast<int>(u + st));
+                edges.emplace_back(static_cast<int>(u + st), static_cast<int>(u));
+            }
+        }
+    }
+
+    typedef SparseDigraph Digraph;
+    Digraph di(static_cast<int>(n_nodes));
+    di.buildFromEdges(edges);
+    const int64_t total_arcs = static_cast<int64_t>(edges.size());
+
+    std::vector<double> supply(n_nodes);
+    for (int64_t i = 0; i < n_nodes; ++i) {
+        supply[i] = X[i] - Y[i];
+    }
+
+    typedef NetworkSimplexSimple<Digraph, double, double, node_id_type> Simplex;
+    Simplex::SimplexOptions simplex_options(true);
+    Simplex net(di, simplex_options, static_cast<int>(n_nodes), total_arcs, maxIter);
+    net.supplyMap(supply);
+    for (int64_t k = 0; k < total_arcs; ++k) {
+        net.setCost(Digraph::arcFromId(k), 1.0);
+    }
+
+    int ret = net.run();
+    if (ret != (int)net.OPTIMAL && ret != (int)net.MAX_ITER_REACHED) {
+        return ret;
+    }
+
+    *cost = net.totalCost();
+
+    // Node potentials (dual variables) are a byproduct of the solve, cheap
+    // to extract regardless of whether a plan was requested: dW/dX[i] =
+    // alpha[i], dW/dY[i] = -alpha[i] (beta = -alpha, since supply[i] =
+    // X[i] - Y[i] uses a single graph, not a bipartite source/target split).
+    // Negated to match LEMON's sign convention, same as the bipartite
+    // extract_compressed_support above (alpha = -potential).
+    for (int64_t i = 0; i < n_nodes; ++i) {
+        alpha[i] = -net.potential(Digraph::nodeFromId(static_cast<int>(i)));
+    }
+
+    if (!return_plan) {
+        // The caller only wants the cost: skip decomposing the Beckmann-style
+        // arc flow into a transportation plan (coupling) entirely.
+        return ret;
+    }
+
+    // A bin's mass that already overlaps between X and Y needs no transport,
+    // so the min-cost flow above never routes it and the arc-flow
+    // decomposition below never reports it. Emit it directly as a same-bin
+    // plan entry so the plan is a genuine coupling (row sums X, column sums
+    // Y), not just the net residual.
+    for (int64_t i = 0; i < n_nodes; ++i) {
+        const double self_mass = std::min(X[i], Y[i]);
+        if (self_mass > 1e-10) {
+            if (*n_plan_entries_out >= max_plan_entries) {
+                return (int)net.MAX_ITER_REACHED;
+            }
+            plan_sources_out[*n_plan_entries_out] = static_cast<uint64_t>(i);
+            plan_targets_out[*n_plan_entries_out] = static_cast<uint64_t>(i);
+            plan_values_out[*n_plan_entries_out] = self_mass;
+            ++(*n_plan_entries_out);
+        }
+    }
+
+    // Decompose the arc flow into a direct (source_bin, target_bin, mass)
+    // transportation plan.
+    std::vector<std::vector<GridFlowEdge>> flow_adj(n_nodes);
+    for (int64_t k = 0; k < total_arcs; ++k) {
+        const Digraph::Arc a = Digraph::arcFromId(k);
+        const double f = net.flow(a);
+        if (f > 1e-10) {
+            flow_adj[di.source(a)].push_back({di.target(a), f});
+        }
+    }
+
+    if (!decompose_grid_flows(flow_adj, supply, plan_sources_out, plan_targets_out,
+                              plan_values_out, n_plan_entries_out, max_plan_entries)) {
+        return (int)net.MAX_ITER_REACHED;
+    }
+
+    return ret;
+}
+
+int EMD_wrap_lazy(int n1, int n2, double *X, double *Y, double *coords_a, double *coords_b,
                   int dim, int metric, uint64_t *flow_sources_out,
                   uint64_t *flow_targets_out, double *flow_values_out,
                   uint64_t *n_flows_out, uint64_t max_flows_out,
