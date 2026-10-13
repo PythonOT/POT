@@ -20,7 +20,6 @@ import pytest
 from itertools import product
 from ot.backend import torch
 from ot.batch._quadratic import (
-    tensor_batch,
     div_between_product_batch,
     loss_quadratic_samples_batch,
 )
@@ -127,7 +126,7 @@ def test_gradients_torch(grad):
     loss = res.value.sum()
     loss_plan = res.plan.sum()
     if grad == "detach":
-        assert loss.grad == None
+        assert loss.grad is None
     elif grad == "envelope":
         loss.backward()
         assert C.grad is not None
