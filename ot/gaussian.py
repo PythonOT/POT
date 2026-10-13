@@ -346,7 +346,7 @@ def empirical_bures_wasserstein_mapping_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    d_instrinsic : int or list of two ints
+    d_intrinsic : int or list of two ints
                   the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same                            
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
@@ -818,7 +818,7 @@ def empirical_bures_wasserstein_distance_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    d_instrinsic : int or list of two ints
+    d_intrinsic : int or list of two ints
                   the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same     
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
@@ -937,8 +937,6 @@ def bures_barycenter_fixpoint(
         covariance of k distributions
     weights : array-like (k), optional
         weights for each distribution
-    method : str
-        method used for the solver, either 'fixed_point' or 'gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional
@@ -990,7 +988,10 @@ def bures_barycenter_fixpoint(
         Cb = Cnew
 
     if diff > eps:
-        print("Dit not converge.")
+        warnings.warn(
+            "Bures barycenter fixed point did not converge, consider "
+            "increasing num_iter or eps."
+        )
 
     if log:
         log = {}
@@ -1027,8 +1028,6 @@ def bures_barycenter_gradient_descent(
         covariance of k distributions
     weights : array-like (k), optional
         weights for each distribution
-    method : str
-        method used for the solver, either 'fixed_point' or 'gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional

@@ -614,9 +614,9 @@ def sinkhorn_low_rank_kernel(
 
     Parameters
     ----------
-    K_1 : array-like, shape (n_samples_a, dim_r)
+    K1 : array-like, shape (n_samples_a, dim_r)
         Left factor
-    K_2 : array-like, shape (n_samples_b, dim_r)
+    K2 : array-like, shape (n_samples_b, dim_r)
         Right factor
     a : array-like, shape (n_samples_a,)
         samples weights in the source domain
