@@ -14,6 +14,7 @@ for descrete and semicontinous measures from the POT library.
 # License: MIT License
 
 import numpy as np
+import pytest
 import ot
 
 
@@ -311,3 +312,12 @@ def test_plan_dual_quadratic(nx):
     assert np.all(nx.to_numpy(G2) >= 0)
     assert G2.shape[0] == 50
     assert G2.shape[1] == 40
+
+
+def test_solve_semi_dual_entropic_invalid_method():
+    rng = np.random.RandomState(0)
+    x = rng.randn(5, 2)
+    a, b = ot.utils.unif(5), ot.utils.unif(5)
+    M = ot.dist(x, x)
+    with pytest.raises(ValueError, match="Unknown method"):
+        ot.stochastic.solve_semi_dual_entropic(a, b, M, 1, "bad_method")

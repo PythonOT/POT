@@ -4,6 +4,9 @@
 
 #### New features
 
+
+- `ot.dr.wda` gains `solver='torch'`, a PyTorch autodiff solver with Riemannian gradient descent, usable on installations without autograd or pymanopt, and accepting torch tensors directly (PR #858, Issue #806)
+- `ot.dr` dependencies (autograd, pymanopt, scikit-learn, torch) are now imported optionally, so importing `ot.dr` no longer requires all of them; each function raises an explicit `ImportError` naming what it needs (PR #858)
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
 - Add stereographic spherical sliced Wasserstein distance in `ot.sliced.stereographic_sliced_wasserstein_sphere`, with its rotationally invariant extension (PR #836)
 - Add Quasi-Monte Carlo sliced Wasserstein sampling (QSW/RQSW) via generalized
@@ -16,8 +19,10 @@
 #### Closed issues
 
 - Fix oversized `max_nz` budgets in `ot.utils.projection_sparse_simplex` so they return the documented unconstrained simplex projection for all axis modes (PR #876, Issue #875).
+- Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
 - Remove a leftover debug `print` from `ot.utils.projection_sparse_simplex` with `axis=1`, and make the `ot.datasets.make_gauss_hd` docstring a raw string so importing `ot` no longer emits a `SyntaxWarning` (PR #860)
+- Fix the value reported by the entropic unbalanced OT solvers (`ot.unbalanced.sinkhorn_unbalanced`, `sinkhorn_unbalanced2`, `sinkhorn_knopp_unbalanced`, `sinkhorn_stabilized_unbalanced` and `sinkhorn_unbalanced_translation_invariant`, also exposed as `ot.solve(..., reg=..., unbalanced=...).value`): every penalization is now evaluated with the generalized KL divergence, and with `reg_type="entropy"` the constant `dim_a * dim_b` is removed so that the reported value matches the documented negative entropy regularizer. The transport plans are unchanged. `reg_type` is now handled case insensitively by all the methods and an unknown value raises a `ValueError` instead of silently falling back to `"kl"`. The docstrings now state the generalized KL convention, the regularizer `Omega_reg_type(gamma, c)` with its two cases, the keys of the `log` dictionary and the multi-histogram behaviour (PR #874)
 - Fix `ot.dist` ignoring the weights `w` for `metric="cityblock"`, which returned the unweighted distance although the weights are documented for this metric (PR #859)
 - Fix swapped arguments to `div_to_product` in `ot.gromov.fused_unbalanced_across_spaces_cost`: with `reg_type="independent"` (UCOOT) the entropic terms used the plan marginals as the reference measures and vice versa (PR #855, Issue #854)
 - Fix device placement in `ot.batch.bregman_projection_batch` so `ot.solve_batch(..., method="sinkhorn")` no longer crashes on GPU when the torch default device is CPU (PR #851)
@@ -30,6 +35,9 @@
 - Fix `UnbalancedSinkhornTransport` `transform` failing with `AttributeError: 'NoneType' object has no attribute 'array_equal'` when `fit` was called with missing parameters (PR #837, Issue #650)
 - Fix quantized (F)GW solvers that ordered OT based on clusters and not initial node ordering (PR #857, Issue #786)
 - Update CircleCI config to use `version: 2.1` instead of the deprecated `version: 2.` (PR #882)
+- Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #888)
+- Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
+- Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
 
 ## 0.9.7.post1
 
