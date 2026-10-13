@@ -170,9 +170,7 @@ def make_data_classif(dataset, n, nz=0.5, theta=0, p=0.5, random_state=None, **k
         x[:, 1] += kwargs["bias"][1]
 
     else:
-        x = np.array(0)
-        y = np.array(0)
-        print("unknown dataset")
+        raise ValueError("Unknown dataset '{}'".format(dataset))
 
     return x, y.astype(int)
 
@@ -186,7 +184,7 @@ def get_data_classif(dataset, n, nz=0.5, theta=0, random_state=None, **kwargs):
 def make_gauss_hd(
     ns, nt, p=100, dim=5, m_diff=3.0, a=(10.0, 15.0), b=(3.0, 3.0), sub_the_same=False
 ):
-    """Generation of source and target domains from Gaussian HD distributions
+    r"""Generation of source and target domains from Gaussian HD distributions
 
     Parameters
     ----------
@@ -197,7 +195,7 @@ def make_gauss_hd(
     p       : int
             dimension of the ambient space the data live in
     dim     : (int,int) or int
-            the intrinsic dimensions of the source and target Gaussian HD distriutions. If a single int the intrinsic dimension is assumed to be the same
+            the intrinsic dimensions of the source and target Gaussian HD distributions. If a single int the intrinsic dimension is assumed to be the same
     m_diff  : float
             the shift in the first coordinate of the means of the Gaussian HD distributions, i.e. ms_0 and mt_0, respectively (see code)
     a       : (float, float)

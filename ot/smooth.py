@@ -588,7 +588,7 @@ def smooth_ot_dual(
     See Also
     --------
     ot.lp.emd : Unregularized OT
-    ot.sinhorn : Entropic regularized OT
+    ot.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT
 
     """
@@ -607,7 +607,7 @@ def smooth_ot_dual(
         raise NotImplementedError("Unknown regularization")
 
     a0, b0, M0 = a, b, M
-    # convert to humpy
+    # convert to numpy
     a, b, M = nx.to_numpy(a, b, M)
 
     # solve dual
@@ -722,7 +722,7 @@ def smooth_ot_semi_dual(
     See Also
     --------
     ot.lp.emd : Unregularized OT
-    ot.sinhorn : Entropic regularized OT
+    ot.sinkhorn : Entropic regularized OT
     ot.optim.cg : General regularized OT
 
     """

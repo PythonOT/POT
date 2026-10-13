@@ -462,7 +462,7 @@ def ewca(
     k : int, optional
         Subspace dimension.
     method : str, optional
-        Eather 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization).
+        Either 'BCD' or 'MM' (Block Coordinate Descent or Majorization-Minimization).
         Prefer MM when d is large.
     sinkhorn_method : str
         Method used for the Sinkhorn solver, see :ref:`ot.bregman.sinkhorn` for more details.

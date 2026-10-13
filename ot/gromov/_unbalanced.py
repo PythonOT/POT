@@ -203,11 +203,13 @@ def fused_unbalanced_across_spaces_divergence(
     # MAIN FUNCTION
 
     if reg_type not in ["joint", "independent"]:
-        raise (NotImplementedError('Unknown reg_type="{}"'.format(reg_type)))
+        raise NotImplementedError('Unknown reg_type="{}"'.format(reg_type))
     if divergence not in ["kl", "l2"]:
-        raise (NotImplementedError('Unknown divergence="{}"'.format(divergence)))
+        raise NotImplementedError('Unknown divergence="{}"'.format(divergence))
     if unbalanced_solver not in ["sinkhorn", "sinkhorn_log", "mm", "lbfgsb"]:
-        raise (NotImplementedError('Unknown method="{}"'.format(unbalanced_solver)))
+        raise NotImplementedError(
+            'Unknown unbalanced_solver="{}"'.format(unbalanced_solver)
+        )
 
     # hyperparameters
     alpha_samp, alpha_feat = get_parameter_pair(alpha)
@@ -242,9 +244,9 @@ def fused_unbalanced_across_spaces_divergence(
 
     arr = [X, Y]
 
-    for tuple in [duals_samp, duals_feat]:
-        if tuple is not None:
-            d1, d2 = duals_feat
+    for duals in [duals_samp, duals_feat]:
+        if duals is not None:
+            d1, d2 = duals
             if d1 is not None:
                 arr.append(list_to_array(d1))
             if d2 is not None:
