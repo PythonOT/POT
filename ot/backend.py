@@ -117,13 +117,16 @@ if not os.environ.get(DISABLE_TORCH_KEY, False):
         # first use of a feature that needs it (constructing an optimizer is
         # enough), which would otherwise happen after TensorFlow is loaded.
         # See https://github.com/PythonOT/POT/issues/816
-        if not os.environ.get(DISABLE_TF_KEY, False) and (
-            importlib.util.find_spec("tensorflow") is not None
-        ):
-            try:
+        # Probing must never be fatal: a broken or partial triton install must
+        # not stop `import ot`, and must not silently disable the torch backend
+        # either, so this catches more than ImportError.
+        try:
+            if not os.environ.get(DISABLE_TF_KEY, False) and (
+                importlib.util.find_spec("tensorflow") is not None
+            ):
                 import triton  # noqa: F401
-            except ImportError:
-                pass
+        except Exception:  # pragma: no cover - depends on the installation
+            pass
     except ImportError:
         torch = False
         torch_type = float
