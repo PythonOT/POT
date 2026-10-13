@@ -22,7 +22,6 @@ import torch
 from time import perf_counter
 import ot
 from ot.batch._quadratic import loss_quadratic_batch, tensor_batch
-from ot.gromov import fused_unbalanced_gromov_wasserstein
 from sklearn.manifold import MDS
 
 
