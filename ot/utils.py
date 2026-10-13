@@ -913,7 +913,6 @@ def get_parameter_pair(parameter):
     Parameters
     ----------
     parameter : float or indexable object
-    nx : backend object
 
     Returns
     -------

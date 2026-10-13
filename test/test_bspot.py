@@ -8,6 +8,7 @@ import ot
 import ot.bsp
 import numpy as np
 import pytest
+from ot.backend import torch
 
 
 def test_bsp_ot_exact_identity():
@@ -105,9 +106,6 @@ def test_bsp_ot_relative_error():
     assert relative_error < 0.1, "Relative error is too large: {}".format(
         relative_error
     )
-
-
-from ot.backend import torch
 
 
 @pytest.mark.skipif(not torch, reason="PyTorch not installed")

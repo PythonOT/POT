@@ -1046,9 +1046,6 @@ def sinkhorn_stabilized_unbalanced(
         :math:`\mathrm{reg_{m}}=(scalar, float("inf"))`.
         If :math:`\mathrm{reg_{m}}` is an array,
         it must have the same backend as input arrays `(a, b, M)`.
-    method : str
-        method used for the solver either 'sinkhorn', 'sinkhorn_stabilized' or
-        'sinkhorn_reg_scaling', see those function for specific parameters
     reg_type : string, optional
         Name of the regularizer :math:`\Omega_{\texttt{reg\_type}}(\gamma, \mathbf{c})`,
         case insensitive. Can take two values:
