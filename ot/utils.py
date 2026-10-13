@@ -505,10 +505,13 @@ def dist(
         if w is not None:
             return nx.from_numpy(cdist(x1, x2, metric=metric, w=w))
         return nx.from_numpy(cdist(x1, x2, metric=metric))
-    elif metric == "sqeuclidean":
-        return euclidean_distances(x1, x2, squared=True, nx=nx)
-    elif metric == "euclidean":
-        return euclidean_distances(x1, x2, squared=False, nx=nx)
+    elif metric in ("sqeuclidean", "euclidean"):
+        if w is not None:
+            # sum_k w_k (x1_k - x2_k)^2 is the squared distance between the
+            # samples scaled by sqrt(w)
+            x1 = x1 * nx.sqrt(w)[None, :]
+            x2 = x2 * nx.sqrt(w)[None, :]
+        return euclidean_distances(x1, x2, squared=metric == "sqeuclidean", nx=nx)
     elif metric == "cityblock":
         if w is None:
             if use_tensor:
@@ -557,13 +560,17 @@ def dist(
                 for i in range(x1.shape[1]):
                     M += w[i] * nx.abs(x1[:, i][:, None] - x2[:, i][None, :]) ** p
                 return M ** (1 / p)
-    elif metric == "cosine":
-        nx1 = nx.sqrt(nx.einsum("ij,ij->i", x1, x1))
-        nx2 = nx.sqrt(nx.einsum("ij,ij->i", x2, x2))
-        return 1.0 - (nx.dot(x1, nx.transpose(x2)) / nx1[:, None] / nx2[None, :])
-    elif metric == "correlation":
-        x1 = x1 - nx.mean(x1, axis=1)[:, None]
-        x2 = x2 - nx.mean(x2, axis=1)[:, None]
+    elif metric in ("cosine", "correlation"):
+        if metric == "correlation":
+            if w is None:
+                x1 = x1 - nx.mean(x1, axis=1)[:, None]
+                x2 = x2 - nx.mean(x2, axis=1)[:, None]
+            else:
+                x1 = x1 - (nx.dot(x1, w) / nx.sum(w))[:, None]
+                x2 = x2 - (nx.dot(x2, w) / nx.sum(w))[:, None]
+        if w is not None:
+            x1 = x1 * nx.sqrt(w)[None, :]
+            x2 = x2 * nx.sqrt(w)[None, :]
         nx1 = nx.sqrt(nx.einsum("ij,ij->i", x1, x1))
         nx2 = nx.sqrt(nx.einsum("ij,ij->i", x2, x2))
         return 1.0 - (nx.dot(x1, nx.transpose(x2)) / nx1[:, None] / nx2[None, :])
@@ -573,9 +580,7 @@ def dist(
         else:
             if isinstance(metric, str) and metric.endswith("minkowski"):
                 return cdist(x1, x2, metric=metric, p=p, w=w)
-            # Only pass w parameter for metrics that support it
-            # According to SciPy docs, only 'minkowski' and 'wminkowski' support w
-            if w is not None and metric in ["minkowski", "wminkowski"]:
+            if w is not None:
                 return cdist(x1, x2, metric=metric, w=w)
             return cdist(x1, x2, metric=metric)
 

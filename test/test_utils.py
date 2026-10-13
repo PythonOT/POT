@@ -320,6 +320,45 @@ def test_dist_weighted_cityblock(use_tensor):
     np.testing.assert_allclose(D, expected, atol=1e-12)
 
 
+@pytest.mark.parametrize(
+    "metric",
+    [
+        "sqeuclidean",
+        "euclidean",
+        "cosine",
+        "correlation",
+        "braycurtis",
+        "canberra",
+    ],
+)
+def test_dist_weighted_vs_cdist(metric):
+    rng = np.random.RandomState(0)
+    x1 = rng.randn(5, 3)
+    x2 = rng.randn(4, 3)
+    w = rng.rand(3)
+
+    expected = scipy.spatial.distance.cdist(x1, x2, metric=metric, w=w)
+    D = ot.dist(x1, x2, metric=metric, w=w)
+
+    np.testing.assert_allclose(D, expected, atol=1e-12)
+
+
+@pytest.mark.parametrize(
+    "metric", ["sqeuclidean", "euclidean", "cosine", "correlation"]
+)
+def test_dist_weighted_backends(nx, metric):
+    rng = np.random.RandomState(0)
+    x1 = rng.randn(5, 3)
+    x2 = rng.randn(4, 3)
+    w = rng.rand(3)
+
+    expected = scipy.spatial.distance.cdist(x1, x2, metric=metric, w=w)
+    D = ot.dist(nx.from_numpy(x1), nx.from_numpy(x2), metric=metric, w=nx.from_numpy(w))
+
+    # low atol because jax forces float32
+    np.testing.assert_allclose(nx.to_numpy(D), expected, atol=1e-5)
+
+
 def test_sparse_ot_dist_uses_pair_weights():
     x1 = np.array([[0.0], [1.0]])
     x2 = np.array([[0.0], [5.0]])
