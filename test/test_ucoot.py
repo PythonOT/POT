@@ -1426,3 +1426,23 @@ def test_raise_value_error(nx):
 
     np.testing.assert_raises(NotImplementedError, ucoot_solver, "solver_not_existed")
     np.testing.assert_raises(NotImplementedError, ucoot_solver_nx, "solver_not_existed")
+
+
+def test_partial_init_duals():
+    # init_duals with only one of the two dual pairs provided
+    n_samples = 5
+    rng = np.random.RandomState(0)
+    xs = rng.randn(n_samples, 2)
+    xt = xs[::-1].copy()
+
+    init_duals_samp = (np.zeros(n_samples), np.zeros(n_samples))
+    init_duals_feat = (np.zeros(2), np.zeros(2))
+
+    kwargs = dict(X=xs, Y=xt, reg_marginals=10, epsilon=1, unbalanced_solver="sinkhorn")
+    pi_samp, pi_feat = unbalanced_co_optimal_transport(**kwargs)
+    for init_duals in [(init_duals_samp, None), (None, init_duals_feat)]:
+        pi_samp2, pi_feat2 = unbalanced_co_optimal_transport(
+            init_duals=init_duals, **kwargs
+        )
+        np.testing.assert_allclose(pi_samp, pi_samp2, atol=1e-6)
+        np.testing.assert_allclose(pi_feat, pi_feat2, atol=1e-6)
