@@ -34,6 +34,8 @@
 - Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
 
+- Support integer class labels on CUDA in domain-adaptation estimators by computing the label-presence mask with broadcast multiplication.
+
 ## 0.9.7.post1
 
 This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).
