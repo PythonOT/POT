@@ -4,12 +4,96 @@
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 import pytest
 
 import ot
+from ot.gromov import _quantized
 
 from ot.gromov._quantized import networkx_import, sklearn_import
+
+
+@pytest.mark.parametrize(
+    "has_networkx,has_sklearn,requested_part,requested_rep,expected_part,expected_rep",
+    [
+        (True, True, "louvain", "pagerank", "louvain", "pagerank"),
+        (False, True, "louvain", "pagerank", "random", "random"),
+        (False, True, "random", "pagerank", "random", "random"),
+        (True, False, "spectral", "random", "random", "random"),
+        (True, False, "louvain", "pagerank", "louvain", "pagerank"),
+    ],
+)
+def test_quantized_gw_only_falls_back_for_missing_dependencies(
+    monkeypatch,
+    has_networkx,
+    has_sklearn,
+    requested_part,
+    requested_rep,
+    expected_part,
+    expected_rep,
+):
+    method_calls = {"part": [], "representant": []}
+
+    def fake_partition(
+        C, npart, part_method, F=None, alpha=1.0, random_state=0, nx=None
+    ):
+        method_calls["part"].append(part_method)
+        return [
+            np.asarray(indices)
+            for indices in np.array_split(np.arange(C.shape[0]), npart)
+        ]
+
+    def fake_representants(C, part, rep_method, random_state=0, nx=None):
+        method_calls["representant"].append(rep_method)
+        return np.asarray([indices[0] for indices in part])
+
+    def fake_partitioned_solver(
+        CR1, CR2, list_R1, list_R2, list_p1, list_p2, part1, part2, *args, **kwargs
+    ):
+        return (
+            np.zeros((len(list_R1), len(list_R2))),
+            {},
+            np.zeros((sum(map(len, part1)), sum(map(len, part2)))),
+        )
+
+    monkeypatch.setattr(_quantized, "networkx_import", has_networkx)
+    monkeypatch.setattr(_quantized, "sklearn_import", has_sklearn)
+    monkeypatch.setattr(_quantized, "get_graph_partition", fake_partition)
+    monkeypatch.setattr(_quantized, "get_graph_representants", fake_representants)
+    monkeypatch.setattr(
+        _quantized,
+        "quantized_fused_gromov_wasserstein_partitioned",
+        fake_partitioned_solver,
+    )
+
+    C1 = np.zeros((4, 4))
+    C2 = np.zeros((6, 6))
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+        warnings.simplefilter("always")
+        _quantized.quantized_fused_gromov_wasserstein(
+            C1,
+            C2,
+            2,
+            3,
+            alpha=1.0,
+            part_method=requested_part,
+            rep_method=requested_rep,
+            random_state=0,
+        )
+
+    assert method_calls["part"] == [expected_part, expected_part]
+    assert method_calls["representant"] == [expected_rep, expected_rep]
+    expected_warning_count = sum(
+        [
+            not has_networkx
+            and requested_part in {"fluid", "louvain", "fluid_fused", "louvain_fused"},
+            not has_networkx and requested_rep in {"pagerank", "pagerank_fused"},
+            not has_sklearn and requested_part in {"spectral", "spectral_fused"},
+        ]
+    )
+    assert len(recorded_warnings) == expected_warning_count
 
 
 def test_quantized_gw(nx):
@@ -22,8 +106,10 @@ def test_quantized_gw(nx):
     C2 = rng.uniform(low=10.0, high=20.0, size=(n_samples, n_samples))
     C2 = (C2 + C2.T) / 2.0
 
-    p = ot.unif(n_samples)
-    q = ot.unif(n_samples)
+    p = np.arange(n_samples).astype(float)
+    p /= p.sum()
+    q = np.arange(n_samples).astype(float)
+    q /= q.sum()
 
     npart2 = 3
 
@@ -50,7 +136,7 @@ def test_quantized_gw(nx):
                 npart1,
                 npart2,
                 p,
-                None,
+                q,
                 C1,
                 None,
                 part_method=part_method,
@@ -63,7 +149,7 @@ def test_quantized_gw(nx):
                 C2b,
                 npart1,
                 npart2,
-                None,
+                pb,
                 qb,
                 None,
                 C2b,
@@ -80,6 +166,12 @@ def test_quantized_gw(nx):
                 T_globalb, Ts_localb, Tb = resb
 
             Tb = nx.to_numpy(Tb)
+            print("T.sum(0):", T.sum(0))
+            print("Tb.sum(0):", Tb.sum(0))
+            print("T.sum(1):", T.sum(1))
+            print("Tb.sum(1):", Tb.sum(1))
+            print("p:", p)
+            print("q:", q)
             # check constraints
             np.testing.assert_allclose(T, Tb, atol=1e-06)
             np.testing.assert_allclose(
@@ -114,7 +206,6 @@ def test_quantized_fgw(nx):
 
     p = ot.unif(n_samples)
     q = ot.unif(n_samples)
-
     npart1 = 2
     npart2 = 3
 
@@ -196,7 +287,8 @@ def test_quantized_fgw(nx):
                 if key in logb.keys():
                     np.testing.assert_allclose(log[key], logb[key], atol=1e-06)
 
-    # complementary tests for utils functions
+    ### Complementary tests for utils functions
+    # checking consistency between wrapper and utils functions
     DF1b = ot.dist(F1b, F1b)
     DF2b = ot.dist(F2b, F2b)
     C1b_new = alpha * C1b + (1 - alpha) * DF1b
@@ -226,7 +318,17 @@ def test_quantized_fgw(nx):
     MRb = ot.dist(FR1b, FR2b)
 
     T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-        CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, alpha, build_OT=False
+        CR1b,
+        CR2b,
+        list_R1b,
+        list_R2b,
+        list_p1b,
+        list_p2b,
+        part1b,
+        part2b,
+        MRb,
+        alpha,
+        build_OT=True,
     )
 
     T_globalb = nx.to_numpy(T_globalb)
@@ -264,7 +366,17 @@ def test_quantized_fgw(nx):
     # for non admissible values of alpha
     with pytest.raises(ValueError):
         ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-            CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, 0, build_OT=False
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b,
+            None,
+            None,  # part useless when build_OT=False
+            MRb,
+            0,
+            build_OT=False,
         )
 
     # for non-consistent feature information provided
@@ -284,6 +396,41 @@ def test_quantized_fgw(nx):
             "spectral_fused",
             "random",
             log_,
+        )
+    ### Tests for non-consistent dimensions of inputs
+    # when build_OT = False, errors can come from inconsistent dimensions
+    # between list_R1b and list_p1b or list_R2b and list_p2b
+    with pytest.raises(ValueError):
+        ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b[:-2],
+            None,
+            None,  # part useless when build_OT=False
+            MRb,
+            alpha,
+            build_OT=False,
+        )
+
+    # when build_OT = True, errors can also come from inconsistent dimensions
+    # between list_R1b and part1 or list_R2b and part2
+
+    with pytest.raises(ValueError):
+        ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
+            CR1b,
+            CR2b,
+            list_R1b,
+            list_R2b,
+            list_p1b,
+            list_p2b,
+            part1b,
+            part2b[:-2],
+            MRb,
+            alpha,
+            build_OT=True,
         )
 
 
@@ -364,8 +511,8 @@ def test_quantized_fgw_samples(nx):
     F1 = rng.uniform(low=0.0, high=10, size=(n_samples_1, 3))
     F2 = rng.uniform(low=0.0, high=10, size=(n_samples_2, 3))
 
-    p = ot.unif(n_samples_1)
-    q = ot.unif(n_samples_2)
+    p = np.random.dirichlet(np.ones(n_samples_1))
+    q = np.random.dirichlet(np.ones(n_samples_2))
 
     npart1 = 2
     npart2 = 3
@@ -382,17 +529,18 @@ def test_quantized_fgw_samples(nx):
     for npart1 in [1, n_samples_1 + 1, 2]:
         log_tests = [True, False, True]
         count_mode = 0
-
+        print("--- npart:", npart1, "---")
         for method in methods:
+            print("method:", method, " nx:", nx.__name__)
             log_ = log_tests[count_mode]
             count_mode += 1
 
             res = ot.gromov.quantized_fused_gromov_wasserstein_samples(
-                X1, X2, npart1, npart2, p, None, F1, F2, alpha, method, log_
+                X1, X2, npart1, npart2, p, q, F1, F2, alpha, method, log_
             )
 
             resb = ot.gromov.quantized_fused_gromov_wasserstein_samples(
-                X1b, X2b, npart1, npart2, None, qb, F1b, F2b, alpha, method, log_
+                X1b, X2b, npart1, npart2, pb, qb, F1b, F2b, alpha, method, log_
             )
 
             if log_:
@@ -438,7 +586,17 @@ def test_quantized_fgw_samples(nx):
     MRb = ot.dist(FR1b, FR2b)
 
     T_globalb, Ts_localb, _ = ot.gromov.quantized_fused_gromov_wasserstein_partitioned(
-        CR1b, CR2b, list_R1b, list_R2b, list_p1b, list_p2b, MRb, alpha, build_OT=False
+        CR1b,
+        CR2b,
+        list_R1b,
+        list_R2b,
+        list_p1b,
+        list_p2b,
+        None,
+        None,  # part useless when build_OT=False
+        MRb,
+        alpha,
+        build_OT=False,
     )
 
     T_globalb = nx.to_numpy(T_globalb)

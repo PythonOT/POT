@@ -383,7 +383,7 @@ def binary_search_circle(
     tp = nx.tile(tp, (1, m))
     tc = (tm + tp) / 2
 
-    done = nx.zeros((u_values.shape[0], m))
+    done = nx.zeros((u_values.shape[0], m), type_as=u_values)
 
     cpt = 0
     while nx.any(1 - done):
