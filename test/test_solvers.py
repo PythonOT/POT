@@ -651,20 +651,46 @@ def test_solve_sample_lazy_value(nx, reg_type):
         nx.to_numpy(sol0.value), nx.to_numpy(sol.value), rtol=1e-5
     )
 
-    # debiased values combine the values of several lazy problems
-    for debias in [True, "split"]:
-        sol0 = ot.solve_sample(
-            X_s, X_t, a, b, reg=1, reg_type=reg_type, debias=debias
-        )
-        sol = ot.solve_sample(
-            X_s, X_t, a, b, reg=1, reg_type=reg_type, debias=debias, lazy=True
-        )
-        np.testing.assert_allclose(
-            nx.to_numpy(sol0.value), nx.to_numpy(sol.value), rtol=1e-5
-        )
+    # The lazy regularization term must also build uniform marginals by default.
+    sol0 = ot.solve_sample(X_s, X_t, reg=1, reg_type=reg_type)
+    sol = ot.solve_sample(
+        X_s, X_t, reg=1, reg_type=reg_type, lazy=True, batch_size=4
+    )
+    np.testing.assert_allclose(
+        nx.to_numpy(sol0.value), nx.to_numpy(sol.value), rtol=1e-5
+    )
 
     with pytest.raises(NotImplementedError):
         ot.solve_sample(X_s, X_t, a, b, reg=1, reg_type="L2", lazy=True)
+
+
+@pytest.mark.parametrize("reg_type", ["KL", "entropy"])
+@pytest.mark.parametrize("debias", [True, "split"])
+@pytest.skip_backend("tf", reason="Debiasing is not implemented for TensorFlow")
+def test_solve_sample_lazy_debias_value(nx, reg_type, debias):
+    rng = np.random.RandomState(0)
+    X_s = rng.randn(25, 2)
+    X_t = rng.randn(15, 2) + 1
+    a = rng.rand(25)
+    a /= a.sum()
+    b = ot.utils.unif(15)
+
+    X_s, X_t, a, b = nx.from_numpy(X_s, X_t, a, b)
+    sol0 = ot.solve_sample(X_s, X_t, a, b, reg=1, reg_type=reg_type, debias=debias)
+    sol = ot.solve_sample(
+        X_s,
+        X_t,
+        a,
+        b,
+        reg=1,
+        reg_type=reg_type,
+        debias=debias,
+        lazy=True,
+        batch_size=4,
+    )
+    np.testing.assert_allclose(
+        nx.to_numpy(sol0.value), nx.to_numpy(sol.value), rtol=1e-5
+    )
 
 
 @pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean", "cityblock"])
