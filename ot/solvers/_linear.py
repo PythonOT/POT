@@ -1569,6 +1569,17 @@ def solve_sample(
 
         else:
             if unbalanced is None:
+                if not isinstance(reg_type, str) or reg_type.lower() not in [
+                    "kl",
+                    "entropy",
+                ]:
+                    raise (
+                        NotImplementedError(
+                            'Not implemented reg_type="{}" with lazy=True'.format(
+                                reg_type
+                            )
+                        )
+                    )
                 if max_iter is None:
                     max_iter = 1000
                 if tol is None:
@@ -1593,6 +1604,23 @@ def solve_sample(
                 # compute potentials
                 potentials = (log["u"], log["v"])
                 lazy_plan = log["lazy_plan"]
+
+                # regularized value, accumulated over batches of rows of the
+                # plan to keep the memory cost of the lazy solver
+                if a is None:
+                    a = nx.ones(X_a.shape[0], type_as=X_a) / X_a.shape[0]
+                if b is None:
+                    b = nx.ones(X_b.shape[0], type_as=X_b) / X_b.shape[0]
+                reg_value = 0
+                for i in range(0, X_a.shape[0], batch_size):
+                    plan_i = lazy_plan[i : i + batch_size]
+                    if reg_type.lower() == "entropy":
+                        reg_value += nx.sum(plan_i * nx.log(plan_i + 1e-16))
+                    else:
+                        reg_value += nx.kl_div(
+                            plan_i, a[i : i + batch_size, None] * b[None, :] + 1e-15
+                        )
+                value = value_linear + reg * reg_value
 
             else:
                 raise (
