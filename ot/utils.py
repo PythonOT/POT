@@ -898,7 +898,7 @@ def get_lowrank_lazytensor(Q, R, d=None, nx=None):
     else:
 
         def func(i, j, Q, R, d):
-            return nx.dot(Q[i] * d[None, :], R[j].T)
+            return nx.dot(Q[i] * d, R[j].T)
 
         T = LazyTensor(shape, func, Q=Q, R=R, d=d)
 
