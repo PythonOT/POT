@@ -606,7 +606,7 @@ class BaseTransport(BaseEstimator):
                 # (i.e. neither is masked with MISSING_LABEL)
                 present_ys = (ys != MISSING_LABEL) + nx.zeros(ys.shape, type_as=ys)
                 present_yt = (yt != MISSING_LABEL) + nx.zeros(yt.shape, type_as=yt)
-                present_labels = present_ys[:, None] @ present_yt[None, :]
+                present_labels = present_ys[:, None] * present_yt[None, :]
                 # label_mismatch is a (ns, nt) matrix of {True, False} such that
                 # the cell (i, j) is True if ys[i] != yt[j]
                 label_mismatch = (ys[:, None] - yt[None, :]) != 0
