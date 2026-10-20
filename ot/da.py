@@ -29,7 +29,6 @@ from .utils import (
 )
 from .utils import (
     BaseEstimator,
-    check_params,
     deprecated,
     labels_to_masks,
     list_to_array,
@@ -537,6 +536,32 @@ def distribution_estimation_uniform(X):
     return unif(X.shape[0], type_as=X)
 
 
+def _check_required_parameters(**kwargs):
+    r"""Raise when required parameters are missing.
+
+    A parameter is missing when its value is ``None``. Every missing name is
+    reported together in a single exception so callers can fix all of them at
+    once. Optional arguments are omitted from ``kwargs`` and stay optional.
+
+    Parameters
+    ----------
+    **kwargs : object
+        Required arguments, passed by name.
+
+    Raises
+    ------
+    ValueError
+        If one or more arguments are ``None``.
+    """
+    missing_params = [param for param in kwargs if kwargs[param] is None]
+    if len(missing_params) > 0:
+        raise ValueError(
+            "The following required parameters are missing: {}.".format(
+                ", ".join(missing_params)
+            )
+        )
+
+
 class BaseTransport(BaseEstimator):
     """Base class for OTDA objects
 
@@ -586,51 +611,57 @@ class BaseTransport(BaseEstimator):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs, Xt=Xt)
+
         nx = self._get_backend(Xs, ys, Xt, yt)
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt):
-            # pairwise distance
-            self.cost_ = dist(Xs, Xt, metric=self.metric)
-            self.cost_, self.norm_cost_ = cost_normalization(
-                self.cost_, self.norm, return_value=True
-            )
+        # pairwise distance
+        self.cost_ = dist(Xs, Xt, metric=self.metric)
+        self.cost_, self.norm_cost_ = cost_normalization(
+            self.cost_, self.norm, return_value=True
+        )
 
-            if (ys is not None) and (yt is not None):
-                if self.limit_max != np.inf:
-                    self.limit_max = self.limit_max * nx.max(self.cost_)
+        if (ys is not None) and (yt is not None):
+            if self.limit_max != np.inf:
+                self.limit_max = self.limit_max * nx.max(self.cost_)
 
-                # present_labels is a (ns, nt) matrix of {0, 1} such that
-                # the cell (i, j) is 1 iff both ys[i] and yt[j] are labeled
-                # (i.e. neither is masked with MISSING_LABEL)
-                present_ys = (ys != MISSING_LABEL) + nx.zeros(ys.shape, type_as=ys)
-                present_yt = (yt != MISSING_LABEL) + nx.zeros(yt.shape, type_as=yt)
-                present_labels = present_ys[:, None] @ present_yt[None, :]
-                # label_mismatch is a (ns, nt) matrix of {True, False} such that
-                # the cell (i, j) is True if ys[i] != yt[j]
-                label_mismatch = (ys[:, None] - yt[None, :]) != 0
-                # cost correction is a (ns, nt) matrix of {-Inf, float, Inf} such
-                # that he cells (i, j) has -Inf where there's no correction necessary
-                # by 'correction' we mean setting cost to a large value when two
-                # labeled samples have different labels
-                # we suppress potential RuntimeWarning caused by Inf multiplication
-                # (as we explicitly cover potential NANs later)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=RuntimeWarning)
-                    cost_correction = label_mismatch * present_labels * self.limit_max
-                # this operation is necessary because 0 * Inf = NAN
-                # thus is irrelevant when limit_max is finite
-                cost_correction = nx.nan_to_num(cost_correction, -np.inf)
-                self.cost_ = nx.maximum(self.cost_, cost_correction)
+            # present_labels is a (ns, nt) matrix of {0, 1} such that
+            # the cell (i, j) is 1 iff both ys[i] and yt[j] are labeled
+            # (i.e. neither is masked with MISSING_LABEL)
+            present_ys = (ys != MISSING_LABEL) + nx.zeros(ys.shape, type_as=ys)
+            present_yt = (yt != MISSING_LABEL) + nx.zeros(yt.shape, type_as=yt)
+            present_labels = present_ys[:, None] @ present_yt[None, :]
+            # label_mismatch is a (ns, nt) matrix of {True, False} such that
+            # the cell (i, j) is True if ys[i] != yt[j]
+            label_mismatch = (ys[:, None] - yt[None, :]) != 0
+            # cost correction is a (ns, nt) matrix of {-Inf, float, Inf} such
+            # that he cells (i, j) has -Inf where there's no correction necessary
+            # by 'correction' we mean setting cost to a large value when two
+            # labeled samples have different labels
+            # we suppress potential RuntimeWarning caused by Inf multiplication
+            # (as we explicitly cover potential NANs later)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                cost_correction = label_mismatch * present_labels * self.limit_max
+            # this operation is necessary because 0 * Inf = NAN
+            # thus is irrelevant when limit_max is finite
+            cost_correction = nx.nan_to_num(cost_correction, -np.inf)
+            self.cost_ = nx.maximum(self.cost_, cost_correction)
 
-            # distribution estimation
-            self.mu_s = self.distribution_estimation(Xs)
-            self.mu_t = self.distribution_estimation(Xt)
+        # distribution estimation
+        self.mu_s = self.distribution_estimation(Xs)
+        self.mu_t = self.distribution_estimation(Xt)
 
-            # store arrays of samples
-            self.xs_ = Xs
-            self.xt_ = Xt
+        # store arrays of samples
+        self.xs_ = Xs
+        self.xt_ = Xt
 
         return self
 
@@ -686,47 +717,52 @@ class BaseTransport(BaseEstimator):
         -------
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs):
-            if nx.array_equal(self.xs_, Xs):
-                # perform standard barycentric mapping
+        if nx.array_equal(self.xs_, Xs):
+            # perform standard barycentric mapping
+            transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
+
+            # set nans to 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+
+            # compute transported samples
+            transp_Xs = nx.dot(transp, self.xt_)
+        else:
+            # perform out of sample mapping
+            indices = nx.arange(Xs.shape[0])
+            batch_ind = [
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
+
+            transp_Xs = []
+            for bi in batch_ind:
+                # get the nearest neighbor in the source domain
+                D0 = dist(Xs[bi], self.xs_)
+                idx = nx.argmin(D0, axis=1)
+
+                # transport the source samples
                 transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
-
-                # set nans to 0
                 transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+                transp_Xs_ = nx.dot(transp, self.xt_)
 
-                # compute transported samples
-                transp_Xs = nx.dot(transp, self.xt_)
-            else:
-                # perform out of sample mapping
-                indices = nx.arange(Xs.shape[0])
-                batch_ind = [
-                    indices[i : i + batch_size]
-                    for i in range(0, len(indices), batch_size)
-                ]
+                # define the transported points
+                transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - self.xs_[idx, :]
 
-                transp_Xs = []
-                for bi in batch_ind:
-                    # get the nearest neighbor in the source domain
-                    D0 = dist(Xs[bi], self.xs_)
-                    idx = nx.argmin(D0, axis=1)
+                transp_Xs.append(transp_Xs_)
 
-                    # transport the source samples
-                    transp = self.coupling_ / nx.sum(self.coupling_, axis=1)[:, None]
-                    transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
-                    transp_Xs_ = nx.dot(transp, self.xt_)
+            transp_Xs = nx.concatenate(transp_Xs, axis=0)
 
-                    # define the transported points
-                    transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - self.xs_[idx, :]
-
-                    transp_Xs.append(transp_Xs_)
-
-                transp_Xs = nx.concatenate(transp_Xs, axis=0)
-
-            return transp_Xs
+        return transp_Xs
 
     def transform_labels(self, ys=None):
         r"""Propagate source labels :math:`\mathbf{y_s}` to obtain estimated target labels as in
@@ -742,6 +778,10 @@ class BaseTransport(BaseEstimator):
         transp_ys : array-like, shape (n_target_samples, nb_classes)
             Estimated soft target labels.
 
+        Raises
+        ------
+        ValueError
+            If ``ys`` is ``None``.
 
         .. _references-basetransport-transform-labels:
         References
@@ -751,22 +791,23 @@ class BaseTransport(BaseEstimator):
             International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
 
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(ys=ys)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(ys=ys):
-            # perform label propagation
-            transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
+        # perform label propagation
+        transp = self.coupling_ / nx.sum(self.coupling_, axis=0)[None, :]
 
-            # set nans to 0
-            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+        # set nans to 0
+        transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-            # compute propagated labels
-            labels = label_normalization(ys)
-            masks = labels_to_masks(labels, nx=nx, type_as=transp)
-            transp_ys = nx.dot(masks.T, transp)
+        # compute propagated labels
+        labels = label_normalization(ys)
+        masks = labels_to_masks(labels, nx=nx, type_as=transp)
+        transp_ys = nx.dot(masks.T, transp)
 
-            return transp_ys.T
+        return transp_ys.T
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
@@ -792,46 +833,51 @@ class BaseTransport(BaseEstimator):
         -------
         transp_Xt : array-like, shape (n_source_samples, n_features)
             The transported target samples.
+
+        Raises
+        ------
+        ValueError
+            If ``Xt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xt=Xt)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(Xt=Xt):
-            if nx.array_equal(self.xt_, Xt):
-                # perform standard barycentric mapping
+        if nx.array_equal(self.xt_, Xt):
+            # perform standard barycentric mapping
+            transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
+
+            # set nans to 0
+            transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
+
+            # compute transported samples
+            transp_Xt = nx.dot(transp_, self.xs_)
+        else:
+            # perform out of sample mapping
+            indices = nx.arange(Xt.shape[0])
+            batch_ind = [
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
+
+            transp_Xt = []
+            for bi in batch_ind:
+                D0 = dist(Xt[bi], self.xt_)
+                idx = nx.argmin(D0, axis=1)
+
+                # transport the target samples
                 transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
-
-                # set nans to 0
                 transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
+                transp_Xt_ = nx.dot(transp_, self.xs_)
 
-                # compute transported samples
-                transp_Xt = nx.dot(transp_, self.xs_)
-            else:
-                # perform out of sample mapping
-                indices = nx.arange(Xt.shape[0])
-                batch_ind = [
-                    indices[i : i + batch_size]
-                    for i in range(0, len(indices), batch_size)
-                ]
+                # define the transported points
+                transp_Xt_ = transp_Xt_[idx, :] + Xt[bi] - self.xt_[idx, :]
 
-                transp_Xt = []
-                for bi in batch_ind:
-                    D0 = dist(Xt[bi], self.xt_)
-                    idx = nx.argmin(D0, axis=1)
+                transp_Xt.append(transp_Xt_)
 
-                    # transport the target samples
-                    transp_ = self.coupling_.T / nx.sum(self.coupling_, 0)[:, None]
-                    transp_ = nx.nan_to_num(transp_, nan=0, posinf=0, neginf=0)
-                    transp_Xt_ = nx.dot(transp_, self.xs_)
+            transp_Xt = nx.concatenate(transp_Xt, axis=0)
 
-                    # define the transported points
-                    transp_Xt_ = transp_Xt_[idx, :] + Xt[bi] - self.xt_[idx, :]
-
-                    transp_Xt.append(transp_Xt_)
-
-                transp_Xt = nx.concatenate(transp_Xt, axis=0)
-
-            return transp_Xt
+        return transp_Xt
 
     def inverse_transform_labels(self, yt=None):
         r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
@@ -845,22 +891,28 @@ class BaseTransport(BaseEstimator):
         -------
         transp_ys : array-like, shape (n_source_samples, nb_classes)
             Estimated soft source labels.
+
+        Raises
+        ------
+        ValueError
+            If ``yt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(yt=yt)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(yt=yt):
-            # perform label propagation
-            transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
-            # set nans to 0
-            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+        # perform label propagation
+        transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
+        # set nans to 0
+        transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-            # compute propagated labels
-            labels = label_normalization(yt)
-            masks = labels_to_masks(labels, nx=nx, type_as=transp)
-            transp_ys = nx.dot(masks.T, transp.T)
+        # compute propagated labels
+        labels = label_normalization(yt)
+        masks = labels_to_masks(labels, nx=nx, type_as=transp)
+        transp_ys = nx.dot(masks.T, transp.T)
 
-            return transp_ys.T
+        return transp_ys.T
 
 
 class LinearTransport(BaseTransport):
@@ -1001,14 +1053,20 @@ class LinearTransport(BaseTransport):
         -------
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs):
-            transp_Xs = nx.dot(Xs, self.A_) + self.B_
+        transp_Xs = nx.dot(Xs, self.A_) + self.B_
 
-            return transp_Xs
+        return transp_Xs
 
     def inverse_transform(self, Xs=None, ys=None, Xt=None, yt=None, batch_size=128):
         r"""Transports target samples :math:`\mathbf{X_t}` onto source samples :math:`\mathbf{X_s}`
@@ -1034,14 +1092,20 @@ class LinearTransport(BaseTransport):
         -------
         transp_Xt : array-like, shape (n_source_samples, n_features)
             The transported target samples.
+
+        Raises
+        ------
+        ValueError
+            If ``Xt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xt=Xt)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(Xt=Xt):
-            transp_Xt = nx.dot(Xt, self.A1_) + self.B1_
+        transp_Xt = nx.dot(Xt, self.A1_) + self.B1_
 
-            return transp_Xt
+        return transp_Xt
 
 
 class LinearGWTransport(LinearTransport):
@@ -1285,6 +1349,11 @@ class SinkhornTransport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
 
         super(SinkhornTransport, self).fit(Xs, ys, Xt, yt)
@@ -1516,6 +1585,11 @@ class EMDTransport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
 
         super(EMDTransport, self).fit(Xs, ys, Xt, yt)
@@ -1648,25 +1722,31 @@ class SinkhornLpl1Transport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs``, ``Xt`` or ``ys`` is ``None``.
         """
 
         # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt, ys=ys):
-            super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
+        _check_required_parameters(Xs=Xs, Xt=Xt, ys=ys)
 
-            returned_ = sinkhorn_lpl1_mm(
-                a=self.mu_s,
-                labels_a=ys,
-                b=self.mu_t,
-                M=self.cost_,
-                reg=self.reg_e,
-                eta=self.reg_cl,
-                numItermax=self.max_iter,
-                numInnerItermax=self.max_inner_iter,
-                stopInnerThr=self.tol,
-                verbose=self.verbose,
-                log=self.log,
-            )
+        super(SinkhornLpl1Transport, self).fit(Xs, ys, Xt, yt)
+
+        returned_ = sinkhorn_lpl1_mm(
+            a=self.mu_s,
+            labels_a=ys,
+            b=self.mu_t,
+            M=self.cost_,
+            reg=self.reg_e,
+            eta=self.reg_cl,
+            numItermax=self.max_iter,
+            numInnerItermax=self.max_inner_iter,
+            stopInnerThr=self.tol,
+            verbose=self.verbose,
+            log=self.log,
+        )
 
         # deal with the value of log
         if self.log:
@@ -1796,6 +1876,11 @@ class EMDLaplaceTransport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
 
         super(EMDLaplaceTransport, self).fit(Xs, ys, Xt, yt)
@@ -1941,32 +2026,38 @@ class SinkhornL1l2Transport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs``, ``Xt`` or ``ys`` is ``None``.
         """
 
         # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt, ys=ys):
-            super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
+        _check_required_parameters(Xs=Xs, Xt=Xt, ys=ys)
 
-            returned_ = sinkhorn_l1l2_gl(
-                a=self.mu_s,
-                labels_a=ys,
-                b=self.mu_t,
-                M=self.cost_,
-                reg=self.reg_e,
-                eta=self.reg_cl,
-                numItermax=self.max_iter,
-                numInnerItermax=self.max_inner_iter,
-                stopInnerThr=self.tol,
-                verbose=self.verbose,
-                log=self.log,
-            )
+        super(SinkhornL1l2Transport, self).fit(Xs, ys, Xt, yt)
 
-            # deal with the value of log
-            if self.log:
-                self.coupling_, self.log_ = returned_
-            else:
-                self.coupling_ = returned_
-                self.log_ = dict()
+        returned_ = sinkhorn_l1l2_gl(
+            a=self.mu_s,
+            labels_a=ys,
+            b=self.mu_t,
+            M=self.cost_,
+            reg=self.reg_e,
+            eta=self.reg_cl,
+            numItermax=self.max_iter,
+            numInnerItermax=self.max_inner_iter,
+            stopInnerThr=self.tol,
+            verbose=self.verbose,
+            log=self.log,
+        )
+
+        # deal with the value of log
+        if self.log:
+            self.coupling_, self.log_ = returned_
+        else:
+            self.coupling_ = returned_
+            self.log_ = dict()
 
         return self
 
@@ -2087,53 +2178,59 @@ class MappingTransport(BaseEstimator):
         -------
         self : object
             Returns self
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs, Xt=Xt)
+
         self._get_backend(Xs, ys, Xt, yt)
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt):
-            self.xs_ = Xs
-            self.xt_ = Xt
+        self.xs_ = Xs
+        self.xt_ = Xt
 
-            if self.kernel == "linear":
-                returned_ = joint_OT_mapping_linear(
-                    Xs,
-                    Xt,
-                    mu=self.mu,
-                    eta=self.eta,
-                    bias=self.bias,
-                    verbose=self.verbose,
-                    verbose2=self.verbose2,
-                    numItermax=self.max_iter,
-                    numInnerItermax=self.max_inner_iter,
-                    stopThr=self.tol,
-                    stopInnerThr=self.inner_tol,
-                    log=self.log,
-                )
+        if self.kernel == "linear":
+            returned_ = joint_OT_mapping_linear(
+                Xs,
+                Xt,
+                mu=self.mu,
+                eta=self.eta,
+                bias=self.bias,
+                verbose=self.verbose,
+                verbose2=self.verbose2,
+                numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter,
+                stopThr=self.tol,
+                stopInnerThr=self.inner_tol,
+                log=self.log,
+            )
 
-            elif self.kernel == "gaussian":
-                returned_ = joint_OT_mapping_kernel(
-                    Xs,
-                    Xt,
-                    mu=self.mu,
-                    eta=self.eta,
-                    bias=self.bias,
-                    sigma=self.sigma,
-                    verbose=self.verbose,
-                    verbose2=self.verbose,
-                    numItermax=self.max_iter,
-                    numInnerItermax=self.max_inner_iter,
-                    stopInnerThr=self.inner_tol,
-                    stopThr=self.tol,
-                    log=self.log,
-                )
+        elif self.kernel == "gaussian":
+            returned_ = joint_OT_mapping_kernel(
+                Xs,
+                Xt,
+                mu=self.mu,
+                eta=self.eta,
+                bias=self.bias,
+                sigma=self.sigma,
+                verbose=self.verbose,
+                verbose2=self.verbose,
+                numItermax=self.max_iter,
+                numInnerItermax=self.max_inner_iter,
+                stopInnerThr=self.inner_tol,
+                stopThr=self.tol,
+                log=self.log,
+            )
 
-            # deal with the value of log
-            if self.log:
-                self.coupling_, self.mapping_, self.log_ = returned_
-            else:
-                self.coupling_, self.mapping_ = returned_
-                self.log_ = dict()
+        # deal with the value of log
+        if self.log:
+            self.coupling_, self.mapping_, self.log_ = returned_
+        else:
+            self.coupling_, self.mapping_ = returned_
+            self.log_ = dict()
 
         return self
 
@@ -2149,32 +2246,36 @@ class MappingTransport(BaseEstimator):
         -------
         transp_Xs : array-like, shape (n_source_samples, n_features)
             The transport source samples.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs):
-            if nx.array_equal(self.xs_, Xs):
-                # perform standard barycentric mapping
-                transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
+        if nx.array_equal(self.xs_, Xs):
+            # perform standard barycentric mapping
+            transp = self.coupling_ / nx.sum(self.coupling_, 1)[:, None]
 
-                # set nans to 0
-                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+            # set nans to 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-                # compute transported samples
-                transp_Xs = nx.dot(transp, self.xt_)
-            else:
-                if self.kernel == "gaussian":
-                    K = kernel(Xs, self.xs_, method=self.kernel, sigma=self.sigma)
-                elif self.kernel == "linear":
-                    K = Xs
-                if self.bias:
-                    K = nx.concatenate(
-                        [K, nx.ones((Xs.shape[0], 1), type_as=K)], axis=1
-                    )
-                transp_Xs = nx.dot(K, self.mapping_)
+            # compute transported samples
+            transp_Xs = nx.dot(transp, self.xt_)
+        else:
+            if self.kernel == "gaussian":
+                K = kernel(Xs, self.xs_, method=self.kernel, sigma=self.sigma)
+            elif self.kernel == "linear":
+                K = Xs
+            if self.bias:
+                K = nx.concatenate([K, nx.ones((Xs.shape[0], 1), type_as=K)], axis=1)
+            transp_Xs = nx.dot(K, self.mapping_)
 
-            return transp_Xs
+        return transp_Xs
 
 
 class UnbalancedSinkhornTransport(BaseTransport):
@@ -2285,33 +2386,39 @@ class UnbalancedSinkhornTransport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` or ``Xt`` is ``None``.
         """
+
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs, Xt=Xt)
 
         self._get_backend(Xs, ys, Xt, yt)
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt):
-            super(UnbalancedSinkhornTransport, self).fit(Xs, ys, Xt, yt)
+        super(UnbalancedSinkhornTransport, self).fit(Xs, ys, Xt, yt)
 
-            returned_ = sinkhorn_unbalanced(
-                a=self.mu_s,
-                b=self.mu_t,
-                M=self.cost_,
-                reg=self.reg_e,
-                reg_m=self.reg_m,
-                method=self.method,
-                numItermax=self.max_iter,
-                stopThr=self.tol,
-                verbose=self.verbose,
-                log=self.log,
-            )
+        returned_ = sinkhorn_unbalanced(
+            a=self.mu_s,
+            b=self.mu_t,
+            M=self.cost_,
+            reg=self.reg_e,
+            reg_m=self.reg_m,
+            method=self.method,
+            numItermax=self.max_iter,
+            stopThr=self.tol,
+            verbose=self.verbose,
+            log=self.log,
+        )
 
-            # deal with the value of log
-            if self.log:
-                self.coupling_, self.log_ = returned_
-            else:
-                self.coupling_ = returned_
-                self.log_ = dict()
+        # deal with the value of log
+        if self.log:
+            self.coupling_, self.log_ = returned_
+        else:
+            self.coupling_ = returned_
+            self.log_ = dict()
 
         return self
 
@@ -2409,34 +2516,40 @@ class JCPOTTransport(BaseTransport):
         -------
         self : object
             Returns self.
+
+        Raises
+        ------
+        ValueError
+            If ``Xs``, ``Xt`` or ``ys`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs, Xt=Xt, ys=ys)
+
         self._get_backend(*Xs, *ys, Xt, yt)
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs, Xt=Xt, ys=ys):
-            self.xs_ = Xs
-            self.xt_ = Xt
+        self.xs_ = Xs
+        self.xt_ = Xt
 
-            returned_ = jcpot_barycenter(
-                Xs=Xs,
-                Ys=ys,
-                Xt=Xt,
-                reg=self.reg_e,
-                metric=self.metric,
-                distrinumItermax=self.max_iter,
-                stopThr=self.tol,
-                verbose=self.verbose,
-                log=True,
-            )
+        returned_ = jcpot_barycenter(
+            Xs=Xs,
+            Ys=ys,
+            Xt=Xt,
+            reg=self.reg_e,
+            metric=self.metric,
+            distrinumItermax=self.max_iter,
+            stopThr=self.tol,
+            verbose=self.verbose,
+            log=True,
+        )
 
-            self.coupling_ = returned_[1]["gamma"]
+        self.coupling_ = returned_[1]["gamma"]
 
-            # deal with the value of log
-            if self.log:
-                self.proportions_, self.log_ = returned_
-            else:
-                self.proportions_ = returned_
-                self.log_ = dict()
+        # deal with the value of log
+        if self.log:
+            self.proportions_, self.log_ = returned_
+        else:
+            self.proportions_ = returned_
+            self.log_ = dict()
 
         return self
 
@@ -2459,56 +2572,61 @@ class JCPOTTransport(BaseTransport):
             class label
         batch_size : int, optional (default=128)
             The batch size for out of sample inverse transform
+
+        Raises
+        ------
+        ValueError
+            If ``Xs`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(Xs=Xs)
+
         nx = self.nx
 
         transp_Xs = []
 
-        # check the necessary inputs parameters are here
-        if check_params(Xs=Xs):
-            if all([nx.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
-                # perform standard barycentric mapping for each source domain
+        if all([nx.allclose(x, y) for x, y in zip(self.xs_, Xs)]):
+            # perform standard barycentric mapping for each source domain
 
+            for coupling in self.coupling_:
+                transp = coupling / nx.sum(coupling, 1)[:, None]
+
+                # set nans to 0
+                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+
+                # compute transported samples
+                transp_Xs.append(nx.dot(transp, self.xt_))
+        else:
+            # perform out of sample mapping
+            indices = nx.arange(Xs.shape[0])
+            batch_ind = [
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
+
+            transp_Xs = []
+
+            for bi in batch_ind:
+                transp_Xs_ = []
+
+                # get the nearest neighbor in the sources domains
+                xs = nx.concatenate(self.xs_, axis=0)
+                idx = nx.argmin(dist(Xs[bi], xs), axis=1)
+
+                # transport the source samples
                 for coupling in self.coupling_:
                     transp = coupling / nx.sum(coupling, 1)[:, None]
-
-                    # set nans to 0
                     transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+                    transp_Xs_.append(nx.dot(transp, self.xt_))
 
-                    # compute transported samples
-                    transp_Xs.append(nx.dot(transp, self.xt_))
-            else:
-                # perform out of sample mapping
-                indices = nx.arange(Xs.shape[0])
-                batch_ind = [
-                    indices[i : i + batch_size]
-                    for i in range(0, len(indices), batch_size)
-                ]
+                transp_Xs_ = nx.concatenate(transp_Xs_, axis=0)
 
-                transp_Xs = []
+                # define the transported points
+                transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - xs[idx, :]
+                transp_Xs.append(transp_Xs_)
 
-                for bi in batch_ind:
-                    transp_Xs_ = []
+            transp_Xs = nx.concatenate(transp_Xs, axis=0)
 
-                    # get the nearest neighbor in the sources domains
-                    xs = nx.concatenate(self.xs_, axis=0)
-                    idx = nx.argmin(dist(Xs[bi], xs), axis=1)
-
-                    # transport the source samples
-                    for coupling in self.coupling_:
-                        transp = coupling / nx.sum(coupling, 1)[:, None]
-                        transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
-                        transp_Xs_.append(nx.dot(transp, self.xt_))
-
-                    transp_Xs_ = nx.concatenate(transp_Xs_, axis=0)
-
-                    # define the transported points
-                    transp_Xs_ = transp_Xs_[idx, :] + Xs[bi] - xs[idx, :]
-                    transp_Xs.append(transp_Xs_)
-
-                transp_Xs = nx.concatenate(transp_Xs, axis=0)
-
-            return transp_Xs
+        return transp_Xs
 
     def transform_labels(self, ys=None):
         r"""Propagate source labels :math:`\mathbf{y_s}` to obtain target labels as in
@@ -2524,6 +2642,10 @@ class JCPOTTransport(BaseTransport):
         yt : array-like, shape (n_target_samples, nb_classes)
             Estimated soft target labels.
 
+        Raises
+        ------
+        ValueError
+            If ``ys`` is ``None``.
 
         .. _references-jcpottransport-transform-labels:
         References
@@ -2532,37 +2654,38 @@ class JCPOTTransport(BaseTransport):
             "Optimal transport for multi-source domain adaptation under target shift",
             International Conference on Artificial Intelligence and Statistics (AISTATS), 2019.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(ys=ys)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(ys=ys):
-            yt = nx.zeros(
-                (len(nx.unique(nx.concatenate(ys))), self.xt_.shape[0]), type_as=ys[0]
-            )
-            for i in range(len(ys)):
-                ysTemp = label_normalization(ys[i])
-                classes = nx.unique(ysTemp)
-                n = len(classes)
-                ns = len(ysTemp)
+        yt = nx.zeros(
+            (len(nx.unique(nx.concatenate(ys))), self.xt_.shape[0]), type_as=ys[0]
+        )
+        for i in range(len(ys)):
+            ysTemp = label_normalization(ys[i])
+            classes = nx.unique(ysTemp)
+            n = len(classes)
+            ns = len(ysTemp)
 
-                # perform label propagation
-                transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
+            # perform label propagation
+            transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
-                # set nans to 0
-                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+            # set nans to 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-                if self.log:
-                    D1 = self.log_["D1"][i]
-                else:
-                    D1 = nx.zeros((n, ns), type_as=transp)
+            if self.log:
+                D1 = self.log_["D1"][i]
+            else:
+                D1 = nx.zeros((n, ns), type_as=transp)
 
-                    for c in classes:
-                        D1[int(c), ysTemp == c] = 1
+                for c in classes:
+                    D1[int(c), ysTemp == c] = 1
 
-                # compute propagated labels
-                yt = yt + nx.dot(D1, transp) / len(ys)
+            # compute propagated labels
+            yt = yt + nx.dot(D1, transp) / len(ys)
 
-            return yt.T
+        return yt.T
 
     def inverse_transform_labels(self, yt=None):
         r"""Propagate target labels :math:`\mathbf{y_t}` to obtain estimated source labels
@@ -2577,31 +2700,37 @@ class JCPOTTransport(BaseTransport):
         -------
         transp_ys : list of K array-like objects, shape K x (nk_source_samples, nb_classes)
             A list of estimated soft source labels
+
+        Raises
+        ------
+        ValueError
+            If ``yt`` is ``None``.
         """
+        # check the necessary inputs parameters are here
+        _check_required_parameters(yt=yt)
+
         nx = self.nx
 
-        # check the necessary inputs parameters are here
-        if check_params(yt=yt):
-            transp_ys = []
-            ytTemp = label_normalization(yt)
-            classes = nx.unique(ytTemp)
-            n = len(classes)
-            D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_[0])
+        transp_ys = []
+        ytTemp = label_normalization(yt)
+        classes = nx.unique(ytTemp)
+        n = len(classes)
+        D1 = nx.zeros((n, len(ytTemp)), type_as=self.coupling_[0])
 
-            for c in classes:
-                D1[int(c), ytTemp == c] = 1
+        for c in classes:
+            D1[int(c), ytTemp == c] = 1
 
-            for i in range(len(self.xs_)):
-                # perform label propagation
-                transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
+        for i in range(len(self.xs_)):
+            # perform label propagation
+            transp = self.coupling_[i] / nx.sum(self.coupling_[i], 1)[:, None]
 
-                # set nans to 0
-                transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
+            # set nans to 0
+            transp = nx.nan_to_num(transp, nan=0, posinf=0, neginf=0)
 
-                # compute propagated labels
-                transp_ys.append(nx.dot(D1, transp.T).T)
+            # compute propagated labels
+            transp_ys.append(nx.dot(D1, transp.T).T)
 
-            return transp_ys
+        return transp_ys
 
 
 class NearestBrenierPotential(BaseTransport):
