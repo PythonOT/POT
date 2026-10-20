@@ -488,9 +488,8 @@ def test_unbalanced_sinkhorn_transport_class(nx):
 def test_unbalanced_sinkhorn_transport_nx_initialized(nx):
     """non-regression test for issue #650
 
-    fit must always initialize the backend attribute nx, even when called
-    with missing parameters, so that transform fails on a clear error
-    instead of 'NoneType' object has no attribute 'array_equal'
+    fit with a missing required parameter raises ValueError naming that
+    parameter. A complete fit initializes nx and transform succeeds.
     """
 
     ns = 50
@@ -499,16 +498,207 @@ def test_unbalanced_sinkhorn_transport_nx_initialized(nx):
 
     Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
 
-    # incomplete fit (Xt missing) still initializes the backend
+    # incomplete fit (Xt missing) names the absent parameter
     otda = ot.da.UnbalancedSinkhornTransport()
-    otda.fit(Xs=Xs)
-    assert otda.nx is not None
+    with pytest.raises(ValueError, match="Xt"):
+        otda.fit(Xs=Xs)
 
     # complete fit followed by a separate transform call
     otda = ot.da.UnbalancedSinkhornTransport()
     otda.fit(Xs=Xs, Xt=Xt)
+    assert otda.nx is not None
     transp_Xs = otda.transform(Xs)
     assert_equal(transp_Xs.shape, Xs.shape)
+
+
+def _missing_da_fit_cases():
+    """Missing-input cases for every domain-adaptation fit guard."""
+    unsupervised = (
+        ot.da.EMDTransport,
+        ot.da.SinkhornTransport,
+        ot.da.MappingTransport,
+        ot.da.UnbalancedSinkhornTransport,
+    )
+    supervised = (
+        ot.da.SinkhornLpl1Transport,
+        ot.da.SinkhornL1l2Transport,
+        ot.da.JCPOTTransport,
+    )
+    cases = []
+    for cls in unsupervised:
+        for missing in (("Xs",), ("Xt",), ("Xs", "Xt"), ("Xs", "ys", "Xt", "yt")):
+            cases.append((cls, ("Xs", "Xt"), missing))
+    for cls in supervised:
+        for missing in (
+            ("Xs",),
+            ("Xt",),
+            ("Xs", "Xt"),
+            ("ys",),
+            ("Xs", "Xt", "ys"),
+            ("Xs", "ys", "Xt", "yt"),
+        ):
+            cases.append((cls, ("Xs", "Xt", "ys"), missing))
+    return cases
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+@pytest.mark.parametrize("estimator_cls, required, missing", _missing_da_fit_cases())
+def test_da_fit_missing_required_parameters(nx, capsys, estimator_cls, required, missing):
+    """Missing fit inputs raise one ValueError naming each of them."""
+    ns = 16
+    Xs, ys = make_data_classif("3gauss", ns, random_state=42)
+    Xt, yt = make_data_classif("3gauss2", ns, random_state=43)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+    if estimator_cls is ot.da.JCPOTTransport:
+        Xs2, ys2 = make_data_classif("3gauss", ns, random_state=44)
+        Xs2, ys2 = nx.from_numpy(Xs2, ys2)
+        Xs = [Xs, Xs2]
+        ys = [ys, ys2]
+
+    values = {"Xs": Xs, "ys": ys, "Xt": Xt, "yt": yt}
+    kwargs = {name: None if name in missing else values[name] for name in values}
+    with pytest.raises(ValueError) as exc_info:
+        estimator_cls().fit(**kwargs)
+
+    expected = [
+        name for name in ("Xs", "Xt", "ys") if name in required and name in missing
+    ]
+    assert str(exc_info.value) == (
+        "The following required parameters are missing: {}.".format(", ".join(expected))
+    )
+    captured = capsys.readouterr()
+    assert "POT - Warning" not in captured.out
+    assert "necessary parameters are missing" not in captured.out
+
+
+@pytest.skip_backend("jax")
+@pytest.skip_backend("tf")
+@pytest.mark.parametrize(
+    "estimator_cls, methods",
+    [
+        (
+            ot.da.EMDTransport,
+            (
+                ("transform", "Xs"),
+                ("inverse_transform", "Xt"),
+                ("transform_labels", "ys"),
+                ("inverse_transform_labels", "yt"),
+            ),
+        ),
+        (
+            ot.da.UnbalancedSinkhornTransport,
+            (
+                ("transform", "Xs"),
+                ("inverse_transform", "Xt"),
+                ("transform_labels", "ys"),
+                ("inverse_transform_labels", "yt"),
+            ),
+        ),
+        (
+            ot.da.LinearTransport,
+            (("transform", "Xs"), ("inverse_transform", "Xt")),
+        ),
+        (
+            ot.da.LinearGWTransport,
+            (("transform", "Xs"), ("inverse_transform", "Xt")),
+        ),
+        (ot.da.MappingTransport, (("transform", "Xs"),)),
+        (
+            ot.da.JCPOTTransport,
+            (
+                ("transform", "Xs"),
+                ("transform_labels", "ys"),
+                ("inverse_transform_labels", "yt"),
+            ),
+        ),
+    ],
+)
+def test_da_sample_methods_missing_required_parameters(nx, capsys, estimator_cls, methods):
+    """Missing sample or label inputs raise ValueError and valid calls keep their results."""
+    ns = 16
+    Xs, ys = make_data_classif("3gauss", ns, random_state=42)
+    Xt, yt = make_data_classif("3gauss2", ns, random_state=43)
+    Xs, ys, Xt, yt = nx.from_numpy(Xs, ys, Xt, yt)
+
+    if estimator_cls is ot.da.JCPOTTransport:
+        Xs2, ys2 = make_data_classif("3gauss", ns, random_state=44)
+        Xs2, ys2 = nx.from_numpy(Xs2, ys2)
+        otda = estimator_cls(max_iter=2000, tol=1e-9, verbose=False)
+        fitted = otda.fit(Xs=[Xs, Xs2], ys=[ys, ys2], Xt=Xt)
+        source = [Xs, Xs2]
+        source_labels = [ys, ys2]
+    elif estimator_cls is ot.da.MappingTransport:
+        otda = estimator_cls(max_iter=5)
+        fitted = otda.fit(Xs=Xs, Xt=Xt)
+        source = Xs
+        source_labels = ys
+    else:
+        otda = estimator_cls()
+        # ys and yt stay optional on unsupervised fits
+        fitted = otda.fit(Xs=Xs, Xt=Xt)
+        source = Xs
+        source_labels = ys
+    assert fitted is otda
+
+    transported = otda.transform(Xs=source)
+    if estimator_cls is ot.da.JCPOTTransport:
+        for transported_domain, domain in zip(transported, source):
+            assert_equal(transported_domain.shape, domain.shape)
+            assert np.all(np.isfinite(nx.to_numpy(transported_domain)))
+    else:
+        assert_equal(transported.shape, source.shape)
+        assert np.all(np.isfinite(nx.to_numpy(transported)))
+
+    if estimator_cls is ot.da.EMDTransport:
+        coupling = otda.coupling_
+        weights = coupling / nx.sum(coupling, axis=1)[:, None]
+        weights = nx.nan_to_num(weights, nan=0, posinf=0, neginf=0)
+        expected = nx.dot(weights, otda.xt_)
+        assert_allclose(nx.to_numpy(transported), nx.to_numpy(expected))
+        propagated = otda.transform_labels(ys=source_labels)
+        assert_allclose(
+            nx.to_numpy(nx.sum(propagated, axis=1)), np.ones(Xt.shape[0]), atol=1e-6
+        )
+
+    if "inverse_transform" in dict(methods):
+        back = otda.inverse_transform(Xt=Xt)
+        assert_equal(back.shape, Xt.shape)
+        assert np.all(np.isfinite(nx.to_numpy(back)))
+
+    if "transform_labels" in dict(methods):
+        propagated = otda.transform_labels(ys=source_labels)
+        assert_equal(propagated.shape[0], Xt.shape[0])
+        assert np.all(np.isfinite(nx.to_numpy(propagated)))
+
+    if "inverse_transform_labels" in dict(methods):
+        back_labels = otda.inverse_transform_labels(yt=yt)
+        if estimator_cls is ot.da.JCPOTTransport:
+            for labels, domain_labels in zip(back_labels, source_labels):
+                assert_equal(labels.shape[0], domain_labels.shape[0])
+                assert np.all(np.isfinite(nx.to_numpy(labels)))
+        else:
+            assert_equal(back_labels.shape[0], ys.shape[0])
+            assert np.all(np.isfinite(nx.to_numpy(back_labels)))
+
+    for method_name, param_name in methods:
+        method = getattr(otda, method_name)
+        with pytest.raises(ValueError) as exc_info:
+            method(**{param_name: None})
+        assert str(exc_info.value) == (
+            "The following required parameters are missing: {}.".format(param_name)
+        )
+
+        fresh = estimator_cls()
+        with pytest.raises(ValueError) as exc_info:
+            getattr(fresh, method_name)(**{param_name: None})
+        assert str(exc_info.value) == (
+            "The following required parameters are missing: {}.".format(param_name)
+        )
+
+    captured = capsys.readouterr()
+    assert "POT - Warning" not in captured.out
+    assert "necessary parameters are missing" not in captured.out
 
 
 @pytest.skip_backend("jax")
