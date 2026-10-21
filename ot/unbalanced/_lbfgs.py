@@ -207,6 +207,9 @@ def lbfgsb_unbalanced(
         regularization term >=0
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
+        Note that :any:`ot.solve` accepts ``float("inf")`` as a documented
+        sentinel for hard marginal constraints and resolves or rejects it before calling
+        this solver; infinite values are not supported here.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
         If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.
@@ -396,6 +399,9 @@ def lbfgsb_unbalanced2(
         regularization term >=0
     reg_m: float or indexable object of length 1 or 2
         Marginal relaxation term: nonnegative (including 0) but cannot be infinity.
+        Note that :any:`ot.solve` accepts ``float("inf")`` as a documented
+        sentinel for hard marginal constraints and resolves or rejects it before calling
+        this solver; infinite values are not supported here.
         If :math:`\mathrm{reg_{m}}` is a scalar or an indexable object of length 1,
         then the same :math:`\mathrm{reg_{m}}` is applied to both marginal relaxations.
         If :math:`\mathrm{reg_{m}}` is an array, it must be a Numpy array.

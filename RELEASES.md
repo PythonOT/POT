@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix `ot.solve(..., unbalanced=float("inf"))` (documented as the balanced limit): the exact and L-BFGSB paths returned a NaN cost, and L-BFGSB could return a plan that silently satisfied both marginals. The limit is now routed to the balanced solvers only where they minimize the same objective; `reg_type="L2"`, `"entropy"` and `"KL"` with a custom `c` (when `unbalanced_type` is not `"KL"`) raise `NotImplementedError` rather than silently solving a different problem, and one-sided infinite relaxations are rejected outside the entropic KL path.
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
