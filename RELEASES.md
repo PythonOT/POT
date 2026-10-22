@@ -18,7 +18,7 @@
 
 #### Closed issues
 
-- Fix multi-axis batches in `ot.wasserstein_1d` and `quantile_function`, and return transport plans for unbatched and pre-sorted inputs. Shared weights are repeated over omitted batch axes; plans retain the original sample indices (related to Issue #518).
+- Fix multi-axis batches in `ot.wasserstein_1d` and `quantile_function`, and return transport plans for unbatched and pre-sorted inputs. Shared weights are repeated over omitted batch axes; plans retain the original sample indices (PR #899, related to Issue #518).
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
