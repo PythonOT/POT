@@ -430,8 +430,31 @@ def emd_c_grid_l1(np.ndarray[double, ndim=1, mode="c"] a,
         Total transportation cost
     result_code : int
         Result status
+
+    Raises
+    ------
+    ValueError
+        If `shape` is empty or has a non-positive extent, or if `a` or `b`
+        does not have exactly prod(shape) entries.
     """
     cdef int ndim = shape.shape[0]
+    # The C++ solver indexes a and b (and the alpha buffer below) up to
+    # prod(shape) through raw pointers, so the geometry has to be checked
+    # here, before any of them is handed over. Python ints, so the product
+    # cannot overflow.
+    if ndim < 1:
+        raise ValueError("shape must have at least one dimension")
+    n_nodes = 1
+    for extent in shape:
+        if extent < 1:
+            raise ValueError(f"shape must only have positive extents, got {list(shape)}")
+        n_nodes *= int(extent)
+    if a.shape[0] != n_nodes or b.shape[0] != n_nodes:
+        raise ValueError(
+            f"a and b must both have prod(shape) = {n_nodes} entries, got "
+            f"{a.shape[0]} and {b.shape[0]}"
+        )
+
     cdef uint64_t n_plan_entries_out = 0
     cdef int result_code = 0
     cdef double cost = 0

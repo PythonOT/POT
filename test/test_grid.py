@@ -9,6 +9,7 @@ from unittest import mock
 
 import numpy as np
 import pytest
+from ot.lp.emd_wrap import emd_c_grid_l1
 
 import ot
 from ot.backend import torch
@@ -202,6 +203,39 @@ def test_emd_grid_l1_shape_mismatch():
     B = np.ones((3, 2)) / 6
     with pytest.raises(ValueError):
         emd_grid_l1(A, B)
+
+
+@pytest.mark.parametrize(
+    "A",
+    [np.array(1.0), np.zeros(0), np.zeros((0, 3)), np.zeros((2, 0))],
+    ids=["0d", "empty_1d", "empty_rows", "empty_cols"],
+)
+def test_emd_grid_l1_rejects_degenerate_grids(A):
+    """0-d inputs (which used to reach the C++ solver with an empty shape
+    and crash it) and empty grids must raise a clear ValueError."""
+    with pytest.raises(ValueError):
+        emd_grid_l1(A, A.copy())
+
+
+@pytest.mark.parametrize(
+    "a_len, b_len, shape",
+    [
+        (4, 4, []),  # empty shape
+        (4, 4, [2, -2]),  # non-positive extent
+        (4, 4, [0, 4]),  # zero extent
+        (4, 4, [50, 50]),  # prod(shape) larger than the buffers
+        (4, 4, [3]),  # prod(shape) smaller than the buffers
+        (4, 3, [4]),  # a and b disagree
+    ],
+)
+def test_emd_c_grid_l1_validates_geometry(a_len, b_len, shape):
+    """The Cython wrapper must reject any geometry inconsistent with the
+    buffers before handing raw pointers to the C++ solver, which would
+    otherwise read and write out of bounds."""
+    a = np.ones(a_len) / a_len
+    b = np.ones(b_len) / b_len
+    with pytest.raises(ValueError):
+        emd_c_grid_l1(a, b, np.array(shape, dtype=np.int64), 100000, True)
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3])

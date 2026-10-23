@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <unordered_map>
 #include <vector>
 
@@ -565,9 +566,18 @@ int EMD_wrap_grid_l1(
 ) {
     using namespace lemon;
 
+    // Defensive guard against invalid geometry, independently of the
+    // (Cython) caller's own validation: an empty shape would index an empty
+    // stride vector below, and node ids are ints (with one more id kept free
+    // for the simplex's root), so the node count must fit too. The buffer
+    // lengths themselves can only be checked by the caller.
+    if (ndim < 1) {
+        return INFEASIBLE;
+    }
     int64_t n_nodes = 1;
     for (int d = 0; d < ndim; ++d) {
-        if (shape[d] <= 0) {
+        if (shape[d] <= 0 ||
+            n_nodes > (std::numeric_limits<int>::max() - 1) / shape[d]) {
             return INFEASIBLE;
         }
         n_nodes *= shape[d];

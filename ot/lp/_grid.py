@@ -69,9 +69,7 @@ def _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx):
     ``nx.set_gradients``, not to carry its own (non-smooth) graph through
     ``nx.sign``. `plan_*` are `None` if `return_plan` is False.
     """
-    n = A.shape[0]
-
-    if n == 0 or nx.any(A < 0) or nx.any(B < 0):
+    if nx.any(A < 0) or nx.any(B < 0):
         zero_cost = _finalize_native_cost(0.0 * nx.sum(A), nx)
         zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
         return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
@@ -275,7 +273,9 @@ def emd_grid_l1(
     Parameters
     ----------
     A : array-like, float64, shape (n_1, ..., n_d)
-        Source histogram on a :math:`d`-dimensional Cartesian grid
+        Source histogram on a :math:`d`-dimensional Cartesian grid, with
+        :math:`d \geq 1` and every :math:`n_i \geq 1` (a `ValueError` is
+        raised otherwise)
     B : array-like, float64, shape (n_1, ..., n_d)
         Target histogram, on the same grid as `A`
     numItermax : int, optional (default=100000)
@@ -354,6 +354,10 @@ def emd_grid_l1(
         raise ValueError(
             f"A and B must have the same shape, got {A.shape} and {B.shape}"
         )
+    if A.ndim == 0:
+        raise ValueError("A and B must be grids of at least one dimension, got 0-d")
+    if any(int(s) == 0 for s in A.shape):
+        raise ValueError(f"A and B must be non-empty grids, got shape {A.shape}")
 
     if check_marginals:
         np.testing.assert_allclose(
