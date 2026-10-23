@@ -76,14 +76,19 @@ def _emd_grid_l1_1d(A, B, return_plan, return_alpha, nx):
         zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
         return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
 
+    # Same convention as ot.emd: B is rescaled to A's total mass, so that
+    # rounding differences that pass check_marginals (e.g. float32 inputs)
+    # do not make the problem infeasible. Only a zero-mass B facing a
+    # nonzero A cannot be reconciled that way.
     total_a = nx.sum(A)
     total_b = nx.sum(B)
-    if abs(float(nx.to_numpy(total_a)) - float(nx.to_numpy(total_b))) > 1e-8 * max(
-        1.0, float(nx.to_numpy(total_a))
-    ):
-        zero_cost = _finalize_native_cost(0.0 * total_a, nx)
-        zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
-        return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
+    if float(nx.to_numpy(total_b)) == 0.0:
+        if float(nx.to_numpy(total_a)) != 0.0:
+            zero_cost = _finalize_native_cost(0.0 * total_a, nx)
+            zero_alpha = nx.zeros(A.shape, type_as=A) if return_alpha else None
+            return zero_cost, zero_alpha, None, None, None, _RESULT_INFEASIBLE
+    else:
+        B = B * (total_a / total_b)
 
     cum_a = nx.cumsum(A, 0)
     cum_b = nx.cumsum(B, 0)
@@ -286,7 +291,10 @@ def emd_grid_l1(
         If True, also returns a dictionary with the solver status and,
         if `return_plan` is True, the sparse transportation plan.
     check_marginals : bool, optional (default=True)
-        If True, checks that `A` and `B` have the same total mass.
+        If True, checks that `A` and `B` have the same total mass. Either
+        way, as in :any:`ot.emd`, `B` is then rescaled to `A`'s total mass
+        before solving, so that small rounding differences (e.g. with
+        float32 inputs) do not make the problem infeasible.
     grad : {'envelope', None}, optional (default='envelope')
         Controls whether the dual potentials `alpha`/`beta` (the gradient of
         `cost`) are computed for a 1D grid, where doing so has a cost of its
@@ -417,6 +425,13 @@ def emd_grid_l1(
     # jax.
     a_np = np.ascontiguousarray(nx.to_numpy(A), dtype=np.float64).reshape(-1)
     b_np = np.ascontiguousarray(nx.to_numpy(B), dtype=np.float64).reshape(-1)
+    # Same convention as ot.emd: rescale B to A's total mass (in float64, so
+    # that e.g. float32 rounding differences that pass check_marginals do not
+    # trip the solver's tighter mass-balance check). A zero-mass B is left
+    # as is, for the solver to report as infeasible against a nonzero A.
+    total_b = b_np.sum()
+    if total_b != 0:
+        b_np = b_np * (a_np.sum() / total_b)
     (
         plan_sources,
         plan_targets,

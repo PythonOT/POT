@@ -148,9 +148,45 @@ def test_emd_grid_l1_mass_mismatch():
     with pytest.raises(AssertionError):
         emd_grid_l1(A, B)
 
-    # Explicitly skipping the check should not raise from the Python side.
-    _cost, log = emd_grid_l1(A, B, check_marginals=False, log=True)
-    assert log["result_code"] != 1  # not OPTIMAL: infeasible
+    # Explicitly skipping the check: as in ot.emd, B is rescaled to A's
+    # total mass, so this solves (and costs) the same as B=[0, 0, 0, 1].
+    cost, log = emd_grid_l1(A, B, check_marginals=False, log=True)
+    assert log["result_code"] == 1  # OPTIMAL
+    np.testing.assert_allclose(cost, 2.0)
+
+    # A zero-mass B cannot be rescaled to match a nonzero A: infeasible.
+    _cost, log = emd_grid_l1(A, np.zeros(shape), check_marginals=False, log=True)
+    assert log["result_code"] != 1
+
+
+@pytest.mark.parametrize("shape", [(8,), (3, 4), (2, 3, 2)])
+def test_emd_grid_l1_float32_rounding(shape):
+    """float32 histograms normalized in float32 pass check_marginals, but
+    their totals can differ by more than the solver's tight mass-balance
+    tolerance once promoted to float64. B must be rescaled to A's total
+    (as in ot.emd) rather than the problem being reported infeasible."""
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(0)
+    a = rng.rand(n).astype(np.float32)
+    a /= a.sum()
+    b = rng.rand(n).astype(np.float32)
+    b /= b.sum()
+    a64, b64 = a.astype(np.float64), b.astype(np.float64)
+    # Make sure this case actually exercises the rounding issue.
+    assert abs(a64.sum() - b64.sum()) > 1e-8
+
+    cost, log = emd_grid_l1(
+        a.reshape(shape), b.reshape(shape), return_plan=True, log=True
+    )
+    assert log["result_code"] == 1  # OPTIMAL
+
+    b64_rescaled = b64 * a64.sum() / b64.sum()
+    np.testing.assert_allclose(
+        cost, _dense_cost_and_check(a64, b64_rescaled, shape), rtol=1e-5
+    )
+    dense = np.asarray(ot.backend.NumpyBackend().todense(log["G"]), dtype=np.float64)
+    np.testing.assert_allclose(dense.sum(axis=1), a64, atol=1e-6)
+    np.testing.assert_allclose(dense.sum(axis=0), b64_rescaled, atol=1e-6)
 
 
 def test_emd_grid_l1_shape_mismatch():
@@ -274,8 +310,14 @@ def test_emd_grid_l1_1d_mass_mismatch():
     with pytest.raises(AssertionError):
         emd_grid_l1(a, b)
 
-    _cost, log = emd_grid_l1(a, b, check_marginals=False, log=True)
-    assert log["result_code"] != 1  # not OPTIMAL: infeasible
+    # As in ot.emd, B is rescaled to A's total mass when the check is skipped.
+    cost, log = emd_grid_l1(a, b, check_marginals=False, log=True)
+    assert log["result_code"] == 1  # OPTIMAL
+    np.testing.assert_allclose(cost, 3.0)
+
+    # A zero-mass B cannot be rescaled to match a nonzero A: infeasible.
+    _cost, log = emd_grid_l1(a, np.zeros(4), check_marginals=False, log=True)
+    assert log["result_code"] != 1
 
 
 def test_emd_grid_l1_1d_direct_helper_cost_only():
@@ -297,20 +339,27 @@ def test_emd_grid_l1_1d_direct_helper_cost_only():
     )
     assert alpha is not None
 
-    # Negative values and mass mismatches must be reported as infeasible,
-    # like the general (C++) path.
+    # Negative values and a zero-mass B (against a nonzero A) must be
+    # reported as infeasible, like the general (C++) path.
     a_neg = np.array([1.0, -0.1, 0.0, 0.0])
     _cost, _alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
         a_neg, b, False, False, nx
     )
     assert result_code != 1
 
-    a_mismatch = np.array([1.0, 0.0, 0.0, 0.0])
-    b_mismatch = np.array([0.0, 0.0, 0.0, 0.5])
     _cost, _alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
-        a_mismatch, b_mismatch, False, False, nx
+        a, np.zeros(4), False, False, nx
     )
     assert result_code != 1
+
+    # Any other mass mismatch is reconciled by rescaling B to A's total
+    # mass, as in ot.emd.
+    b_half = np.array([0.0, 0.0, 0.0, 0.5])
+    cost, _alpha, _sources, _targets, _values, result_code = _emd_grid_l1_1d(
+        a, b_half, False, False, nx
+    )
+    assert result_code == 1
+    np.testing.assert_allclose(cost, 3.0)
 
 
 def test_emd_grid_l1_1d_direct_helper_plan_negative_values():
@@ -326,9 +375,9 @@ def test_emd_grid_l1_1d_direct_helper_plan_negative_values():
     assert sources is None and targets is None and values is None
 
 
-def test_emd_grid_l1_1d_direct_helper_plan_mass_mismatch():
+def test_emd_grid_l1_1d_direct_helper_plan_zero_target_mass():
     a = np.array([1.0, 0.0, 0.0, 0.0])
-    b = np.array([0.0, 0.0, 0.0, 0.5])
+    b = np.zeros(4)
     nx = ot.backend.NumpyBackend()
     cost, alpha, sources, targets, values, result_code = _emd_grid_l1_1d(
         a, b, True, True, nx
@@ -475,7 +524,7 @@ def test_emd_grid_l1_1d_gradient_infeasible_is_zero():
     """Matches the general (C++) path: no meaningful gradient when
     infeasible, so alpha/beta are exactly zero rather than nonsense."""
     a = np.array([1.0, 0.0, 0.0, 0.0])
-    b = np.array([0.0, 0.0, 0.0, 0.5])
+    b = np.zeros(4)
 
     _cost, log = emd_grid_l1(a, b, check_marginals=False, log=True)
     assert log["result_code"] != 1  # not OPTIMAL: infeasible
