@@ -132,8 +132,8 @@ def _emd_grid_l1_1d_monotone_plan(cum_a, cum_b, nx):
     ``nx.cumsum(B, 0)``) rather than `A`, `B` themselves, since the caller
     (:any:`_emd_grid_l1_1d`) already needs them for the cost and can pass
     them along here, avoiding computing them twice. Assumes `A`, `B` are
-    feasible (nonnegative, matching total mass); the caller is responsible
-    for checking this first.
+    feasible (nonnegative, with `B` already rescaled to `A`'s total mass,
+    which need not be 1); the caller is responsible for this.
 
     Returns backend-native ``(plan_sources, plan_targets, plan_values)``,
     matching `cum_a`'s dtype and device, with exactly :math:`2n-1` entries.
@@ -146,13 +146,13 @@ def _emd_grid_l1_1d_monotone_plan(cum_a, cum_b, nx):
     """
     n = cum_a.shape[0]
 
-    # Pin the last entry of each CDF to exactly 1: avoids floating-point
-    # drift making the tie at the very end (both CDFs must reach the same
-    # total mass) not an exact tie, which would otherwise show up as a
-    # spurious tiny "flow" entry below.
-    one = nx.reshape(0.0 * cum_a[-1] + 1.0, (1,))
-    cum_a = nx.concatenate([cum_a[:-1], one], axis=0)
-    cum_b = nx.concatenate([cum_b[:-1], one], axis=0)
+    # Pin the last entry of both CDFs to exactly the same value, the shared
+    # total mass (A's; B was rescaled to it): avoids floating-point drift
+    # making the tie at the very end not an exact tie, which would otherwise
+    # show up as a spurious tiny "flow" entry below.
+    total = nx.reshape(cum_a[-1], (1,))
+    cum_a = nx.concatenate([cum_a[:-1], total], axis=0)
+    cum_b = nx.concatenate([cum_b[:-1], total], axis=0)
     all_cum = nx.concatenate([cum_a, cum_b], axis=0)  # length 2n
 
     # One-hot markers of where each of the 2n merged breakpoints came from,
@@ -176,8 +176,9 @@ def _emd_grid_l1_1d_monotone_plan(cum_a, cum_b, nx):
     flow = nx.clip(sort_val - left, 0.0, None)
 
     # The very last merge step is the simultaneous end of both CDFs (both
-    # pinned to 1 above), carrying no flow; drop it, leaving exactly 2n-1
-    # entries, as expected for a monotone coupling of two n-atom measures.
+    # pinned to the total mass above), carrying no flow; drop it, leaving
+    # exactly 2n-1 entries, as expected for a monotone coupling of two
+    # n-atom measures.
     return idx[0, :-1], idx[1, :-1], flow[:-1]
 
 

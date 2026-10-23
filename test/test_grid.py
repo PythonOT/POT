@@ -303,6 +303,48 @@ def test_emd_grid_l1_1d_identical_histograms():
     np.testing.assert_allclose(dense, np.diag(a))
 
 
+@pytest.mark.parametrize("shape", [(6,), (2, 3)])
+def test_emd_grid_l1_plan_marginals_non_unit_mass(shape):
+    """The API only requires equal total mass, not unit mass: the plan must
+    still be a genuine coupling for other totals."""
+    n = int(np.prod(shape))
+    rng = np.random.RandomState(2)
+    a = rng.rand(n)
+    a *= 3.5 / a.sum()
+    b = rng.rand(n)
+    b *= 3.5 / b.sum()
+    nx = ot.backend.NumpyBackend()
+
+    cost, log = emd_grid_l1(
+        a.reshape(shape), b.reshape(shape), return_plan=True, log=True
+    )
+
+    _check_plan(log["G"], a, b, shape, cost, nx)
+
+
+def test_emd_grid_l1_1d_plan_non_unit_point_masses():
+    nx = ot.backend.NumpyBackend()
+    cost, log = emd_grid_l1(
+        np.array([2.0, 0.0]), np.array([0.0, 2.0]), return_plan=True, log=True
+    )
+    np.testing.assert_allclose(cost, 2.0)
+    np.testing.assert_allclose(nx.todense(log["G"]), [[0.0, 2.0], [0.0, 0.0]])
+
+
+@pytest.mark.parametrize("shape", [(3,), (2, 2)])
+def test_emd_grid_l1_zero_mass_plan(shape):
+    """Two zero-mass histograms: nothing to transport, so a zero cost and an
+    all-zero plan (not a unit-mass one)."""
+    A = np.zeros(shape)
+    nx = ot.backend.NumpyBackend()
+
+    cost, log = emd_grid_l1(A, A, return_plan=True, log=True)
+
+    assert log["result_code"] == 1  # OPTIMAL
+    assert cost == 0.0
+    np.testing.assert_allclose(nx.todense(log["G"]), 0.0)
+
+
 def test_emd_grid_l1_1d_mass_mismatch():
     a = np.array([1.0, 0.0, 0.0, 0.0])
     b = np.array([0.0, 0.0, 0.0, 0.5])
