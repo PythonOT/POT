@@ -774,8 +774,10 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
 Partial optimal transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Partial OT is a variant of the optimal transport problem when only a fixed amount of mass m
-is to be transported. The partial OT metric between two histograms a and b is defined as [28]_:
+Partial OT is a variant of the optimal transport problem in which only a fixed
+amount of mass :math:`m` is transported. Each source and target weight is a
+capacity: some of that weight can remain unused. For nonnegative histograms
+:math:`a` and :math:`b`, the partial OT problem is defined as [28]_:
 
 .. math::
     \gamma = \arg\min_\gamma <\gamma,M>_F
@@ -785,13 +787,74 @@ is to be transported. The partial OT metric between two histograms a and b is de
         \gamma 1 \leq a\\
         \gamma^T 1 \leq b\\
         1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
-             
 
-Interestingly the problem can be casted into a regular OT problem by adding reservoir points
-in which the surplus mass is sent [29]_. We provide a solver for partial OT
-in :any:`ot.partial`. The exact resolution of the problem is computed in :any:`ot.partial.partial_wasserstein`
-and :any:`ot.partial.partial_wasserstein2` that return respectively the OT matrix and the value of the
-linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein`
+
+Interpreting the transported mass
+"""""""""""""""""""""""""""""""""
+
+The parameter ``m`` is an **absolute amount of mass**, in the same units as the
+weights in ``a`` and ``b``. A feasible value cannot exceed
+:math:`\min\{\sum_i a_i, \sum_j b_j\}`. When both histograms are normalized to
+sum to one, ``m=0.5`` also means transporting half of each distribution's total
+mass. Without that normalization, ``m`` is not a fraction: if the source and
+target totals are two and three, ``m=0.5`` transports one quarter of the source
+mass and one sixth of the target mass. To request a fraction :math:`\rho` of
+the smaller total, set :math:`m=\rho\min\{\sum_i a_i,\sum_j b_j\}` explicitly.
+
+Mass is also different from a number of points. With 40 uniformly weighted
+points in a normalized histogram, each point has weight :math:`1/40`, so
+``m=0.5`` transports the equivalent of 20 points' total weight. It does not
+require selecting exactly 20 points or returning 20 one-to-one matches. A
+point's weight can be used partially or split across several target points;
+the row and column sums of the returned plan describe how much weight each
+point contributes or receives. For nonuniform weights, counting matched
+points is an especially poor substitute for measuring transported mass.
+
+If both histograms have the same total mass :math:`s` and ``m=s``, all row and
+column capacities must be filled, recovering the balanced OT constraints.
+Thus ``m=1`` is the balanced endpoint only when **both totals are one**. If
+the totals differ, transporting the smaller total still leaves unused mass
+in the larger distribution.
+
+Choosing and inspecting the mass
+""""""""""""""""""""""""""""""""
+
+The mass controls a tradeoff. A small ``m`` can restrict transport to nearby
+samples while omitting some genuine overlap. Increasing ``m`` requires more
+mass to participate and can force matches involving remote samples. Partial
+OT chooses a plan from the supplied weights and costs; it does not guarantee
+outlier removal or choose ``m`` automatically. Expected overlap from the
+application, or validation suited to that application, can inform the choice.
+Inspecting several feasible masses helps show the consequences of that choice.
+
+The :ref:`2D partial Wasserstein example
+<sphx_glr_auto_examples_unbalanced-partial_plot_partial_wass_and_gromov.py>`
+keeps the same two distributions of 20 Gaussian samples and 20 remote samples
+and compares exact plans for ``m=0.25``, ``0.5``, ``0.75``, and ``1``. It shows
+the plans and the matched mass from the Gaussian and remote groups, separately
+for the source and target. The synthetic inlier/outlier labels are used only
+to summarize the results and are not passed to the solver. These categories
+describe which groups participate, not point-correspondence accuracy. When
+summarizing mass involving *either* outlier group, count an outlier-outlier
+pair once: subtract the inlier-inlier block from the total transported mass,
+instead of adding the source and target outlier masses.
+
+The raw transport cost :math:`\langle\gamma,M\rangle_F` is computed over the
+mass actually transported. Costs at different values of ``m`` therefore do
+not directly compare matching quality: a smaller cost can simply reflect
+transporting less mass. Dividing by ``m`` gives a cost per unit of mass, but
+the selected mass and pairs can still differ. Compare the plans and their
+participating mass alongside the cost, using criteria appropriate to the task.
+
+Solvers
+"""""""
+
+The problem can be cast into a regular OT problem by adding reservoir points
+to receive the surplus mass [29]_. We provide solvers in :any:`ot.partial`.
+The exact problem is solved by :any:`ot.partial.partial_wasserstein` and
+:any:`ot.partial.partial_wasserstein2`, which return the OT matrix and the
+value of the linear term, respectively. The entropic solution is computed
+by :any:`ot.partial.entropic_partial_wasserstein`
 (see [3]_). Following the convention of :any:`ot.sinkhorn`, this solver takes a ``method`` parameter:
 ``method='sinkhorn'`` (default) runs the classical multiplicative-domain iterations, while
 ``method='sinkhorn_log'`` switches to a numerically stable log-domain solver
