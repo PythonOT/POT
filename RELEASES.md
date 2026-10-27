@@ -38,7 +38,7 @@
 - Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #888)
 - Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
-- Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (Issue #864)
+- Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (PR #903, Issue #864)
 
 ## 0.9.7.post1
 
