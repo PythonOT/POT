@@ -40,6 +40,8 @@
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
 - Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (PR #903, Issue #864)
 
+- Support integer class labels on CUDA in domain-adaptation estimators by computing the label-presence mask with broadcast multiplication.
+
 ## 0.9.7.post1
 
 This release is identical to 0.9.7 but will allow the upload of a source distribution to PyPI and release on conda-forge (that requires a source distribution).

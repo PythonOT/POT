@@ -647,6 +647,45 @@ def test_semisupervised_cost_correction(nx):
     assert np.all(cost2[:, unlabeled] < limit2), "unlabeled targets wrongly forbidden"
 
 
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+@pytest.mark.parametrize("dtype_name", ["int32", "int64"])
+@pytest.mark.parametrize("missing_labels", [False, True])
+def test_semisupervised_integer_labels(device, dtype_name, missing_labels):
+    torch = pytest.importorskip("torch")
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA is not available")
+
+    Xs = np.array([[0.0], [0.1], [0.3], [0.4]])
+    Xt = np.array([[0.35], [0.05], [0.45], [0.15]])
+    ys = np.array([0, 0, 1, 1])
+    yt = np.array([1, 0, 1, 0])
+    if missing_labels:
+        ys[0] = -1
+        yt[-1] = -1
+
+    expected_cost = ((Xs[:, None, :] - Xt[None, :, :]) ** 2).sum(axis=2)
+    penalty = 10 * expected_cost.max()
+    for i, source_label in enumerate(ys):
+        for j, target_label in enumerate(yt):
+            if (
+                source_label != -1
+                and target_label != -1
+                and source_label != target_label
+            ):
+                expected_cost[i, j] = penalty
+
+    dtype = getattr(torch, dtype_name)
+    transport = ot.da.EMDTransport().fit(
+        Xs=torch.tensor(Xs, device=device),
+        ys=torch.tensor(ys, dtype=dtype, device=device),
+        Xt=torch.tensor(Xt, device=device),
+        yt=torch.tensor(yt, dtype=dtype, device=device),
+    )
+    assert_allclose(transport.cost_.cpu().numpy(), expected_cost, atol=1e-15)
+    assert_allclose(transport.coupling_.sum(0).cpu().numpy(), np.full(4, 0.25))
+    assert_allclose(transport.coupling_.sum(1).cpu().numpy(), np.full(4, 0.25))
+
+
 @pytest.skip_backend("jax")
 @pytest.skip_backend("tf")
 @pytest.mark.parametrize("kernel", ["linear", "gaussian"])
