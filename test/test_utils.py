@@ -99,6 +99,24 @@ def test_proj_simplex(nx):
     np.testing.assert_allclose(l1, l2, atol=1e-5)
 
 
+@pytest.mark.parametrize(
+    "dtype, offset",
+    [
+        (np.float32, 0),
+        (np.float32, 1e8),
+        (np.float64, 0),
+        (np.float64, 1e16),
+        (np.int64, 0),
+    ],
+)
+@pytest.mark.parametrize("matrix", [False, True])
+def test_proj_simplex_large_translation(nx, dtype, offset, matrix):
+    values = np.full((3, 2) if matrix else (3,), offset, dtype=dtype)
+    result = nx.to_numpy(ot.utils.proj_simplex(nx.from_numpy(values)))
+    np.testing.assert_allclose(result, np.full(values.shape, 1 / 3), rtol=1e-6)
+    np.testing.assert_allclose(result.sum(axis=0), 1, rtol=1e-6)
+
+
 def test_projection_sparse_simplex():
     def double_sort_projection_sparse_simplex(X, max_nz, z=1, axis=None):
         r"""This is an equivalent but less efficient version
