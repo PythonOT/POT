@@ -170,7 +170,7 @@ def test_gradients_torch(grad, method):
     loss = res.value_linear.sum()
     loss_plan = res.plan.sum()
     if grad == "detach":
-        assert loss.grad == None
+        assert loss.grad is None
     elif grad == "envelope":
         loss.backward()
         assert X.grad is not None

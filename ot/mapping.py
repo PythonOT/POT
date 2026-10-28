@@ -118,9 +118,8 @@ def nearest_brenier_potential_fit(
     """
     try:
         import cvxpy as cvx
-    except ImportError:
-        print("Please install CVXPY to use this function")
-        return
+    except ImportError as e:
+        raise ImportError("Please install CVXPY to use this function") from e
     assert (
         X.shape == V.shape
     ), f"point shape should be the same as value shape, yet {X.shape} != {V.shape}"
@@ -277,8 +276,6 @@ def nearest_brenier_potential_predict_bounds(
     ----------
     X : array-like (n, d)
         reference points used to compute the optimal values phi and G
-    X_classes : array-like (n,)
-        classes of the reference points
     phi : array-like (n,)
         optimal values of the potential at the points X
     G : array-like (n, d)
@@ -326,9 +323,8 @@ def nearest_brenier_potential_predict_bounds(
     """
     try:
         import cvxpy as cvx
-    except ImportError:
-        print("Please install CVXPY to use this function")
-        return
+    except ImportError as e:
+        raise ImportError("Please install CVXPY to use this function") from e
     nx = get_backend(X, phi, G, Y)
     X = to_numpy(X)
     phi = to_numpy(phi)
