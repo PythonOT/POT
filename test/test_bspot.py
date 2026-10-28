@@ -179,13 +179,17 @@ def test_bsp_seed_is_independent_of_call_history():
     np.testing.assert_allclose(cost0, cost1, rtol=0, atol=0)
 
 
+# Third-party imports write to stdout on import (e.g. the KeOps warning printed on
+# machines without CUDA), so the child prefixes its record with a unique marker.
+_RESULT_MARKER = "__POT_BSP_JSON_V1__="
+
 _FRESH_PROCESS_SNIPPET = """
 import hashlib, json, sys
 import numpy as np
 import ot
 from ot.bsp import bsp_wrap
 
-seed, n_plans = int(sys.argv[1]), int(sys.argv[2])
+seed, n_plans, marker = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
 rng = np.random.RandomState(0)
 A, B = rng.randn(100, 2), rng.randn(100, 2)
 out = []
@@ -197,8 +201,9 @@ for _ in range(2):
         "perm": hashlib.sha256(perm.tobytes()).hexdigest(),
         "perms": hashlib.sha256(perms.tobytes()).hexdigest(),
     })
-print(json.dumps({"results": out, "ot_file": ot.__file__,
-                  "ext_sha256": hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()}))
+print(marker + json.dumps({"results": out, "ot_file": ot.__file__,
+                           "ext_sha256": hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()}),
+      flush=True)
 """
 
 
@@ -206,6 +211,37 @@ def _ext_sha256():
     from ot.bsp import bsp_wrap
 
     return hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()
+
+
+def _parse_fresh_process_report(stdout, stderr, returncode):
+    """Return the JSON record printed by the child after ``_RESULT_MARKER``.
+
+    The marker is searched for anywhere in stdout: the child shares stdout with
+    third-party imports, so its record is neither first nor necessarily last.
+    """
+    context = (
+        f"returncode={returncode}\n"
+        f"--- child stdout ---\n{stdout!r}\n"
+        f"--- child stderr ---\n{stderr!r}"
+    )
+    occurrences = stdout.count(_RESULT_MARKER)
+    if occurrences == 0:
+        raise AssertionError(
+            f"child stdout contains no {_RESULT_MARKER!r} record\n{context}"
+        )
+    if occurrences > 1:
+        raise AssertionError(
+            f"child stdout contains {occurrences} {_RESULT_MARKER!r} records\n{context}"
+        )
+    start = stdout.index(_RESULT_MARKER) + len(_RESULT_MARKER)
+    end = stdout.find("\n", start)
+    payload = stdout[start:] if end == -1 else stdout[start:end]
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(
+            f"invalid JSON in {_RESULT_MARKER!r} record: {payload!r}\n{context}"
+        ) from exc
 
 
 def _bsp_in_fresh_process(seed, n_plans, omp_threads):
@@ -220,7 +256,14 @@ def _bsp_in_fresh_process(seed, n_plans, omp_threads):
     if omp_threads is not None:
         env["OMP_NUM_THREADS"] = str(omp_threads)
     proc = subprocess.run(
-        [sys.executable, "-c", _FRESH_PROCESS_SNIPPET, str(seed), str(n_plans)],
+        [
+            sys.executable,
+            "-c",
+            _FRESH_PROCESS_SNIPPET,
+            str(seed),
+            str(n_plans),
+            _RESULT_MARKER,
+        ],
         cwd=root,
         env=env,
         text=True,
@@ -229,7 +272,7 @@ def _bsp_in_fresh_process(seed, n_plans, omp_threads):
     )
     if proc.returncode != 0:
         return None, proc.returncode, proc.stderr
-    report = json.loads(proc.stdout)
+    report = _parse_fresh_process_report(proc.stdout, proc.stderr, proc.returncode)
     # a child that imported a different POT build would prove nothing
     assert report["ext_sha256"] == _ext_sha256(), "child loaded another build"
     return report["results"], proc.returncode, proc.stderr
@@ -251,6 +294,32 @@ def _run_in_fresh_process(seed=0, n_plans=32, omp_threads=None, attempts=3):
     raise AssertionError(
         f"BSP subprocess failed with rc={failure[0]}\n{failure[1]}"
     )
+
+
+def test_fresh_process_report_parsing_ignores_foreign_stdout():
+    report = {"results": [{"cost": 0.5}], "ot_file": "ot.py", "ext_sha256": "abc"}
+    stdout = (
+        "[KeOps] Warning : CUDA libraries not found or could not be loaded; "
+        "Switching to CPU only."
+        + _RESULT_MARKER
+        + json.dumps(report)
+        + "\ntrailing log line\n"
+    )
+    assert _parse_fresh_process_report(stdout, "", 0) == report
+
+
+def test_fresh_process_report_parsing_diagnoses_protocol_errors():
+    record = _RESULT_MARKER + '{"results": []}'
+
+    with pytest.raises(AssertionError, match="contains no") as missing:
+        _parse_fresh_process_report("only foreign output\n", "boom", 0)
+    assert "boom" in str(missing.value)
+
+    with pytest.raises(AssertionError, match="contains 2"):
+        _parse_fresh_process_report(record + "\n" + record + "\n", "", 0)
+
+    with pytest.raises(AssertionError, match="invalid JSON"):
+        _parse_fresh_process_report(_RESULT_MARKER + "{not json}\n", "", 0)
 
 
 def test_bsp_seed_reproducible_in_fresh_process():
