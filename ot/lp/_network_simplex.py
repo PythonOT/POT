@@ -134,10 +134,6 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
         Source dual potential
     beta0 : (nt,) numpy.ndarray, float64
         Target dual potential
-    alpha0 : (ns,) numpy.ndarray, float64
-        Source dual potential
-    beta0 : (nt,) numpy.ndarray, float64
-        Target dual potential
     a : (ns,) numpy.ndarray, float64
         Source distribution (uniform weights if empty list)
     b : (nt,) numpy.ndarray, float64

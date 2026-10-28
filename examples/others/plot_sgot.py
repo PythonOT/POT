@@ -28,7 +28,7 @@ compare the reference and rotated systems.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ot.sgot import sgot_metric, sgot_cost_matrix
+from ot.sgot import sgot_metric
 
 from scipy.linalg import eig
 
