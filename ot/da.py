@@ -598,8 +598,9 @@ class BaseTransport(BaseEstimator):
             )
 
             if (ys is not None) and (yt is not None):
-                if self.limit_max != np.inf:
-                    self.limit_max = self.limit_max * nx.max(self.cost_)
+                limit_max = self.limit_max
+                if limit_max != np.inf:
+                    limit_max = limit_max * nx.max(self.cost_)
 
                 # present_labels is a (ns, nt) matrix of {0, 1} such that
                 # the cell (i, j) is 1 iff both ys[i] and yt[j] are labeled
@@ -618,7 +619,7 @@ class BaseTransport(BaseEstimator):
                 # (as we explicitly cover potential NANs later)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", category=RuntimeWarning)
-                    cost_correction = label_mismatch * present_labels * self.limit_max
+                    cost_correction = label_mismatch * present_labels * limit_max
                 # this operation is necessary because 0 * Inf = NAN
                 # thus is irrelevant when limit_max is finite
                 cost_correction = nx.nan_to_num(cost_correction, -np.inf)
@@ -1454,6 +1455,8 @@ class EMDTransport(BaseTransport):
         Controls the semi supervised mode. Transport between labeled source
         and target samples of different classes will exhibit an infinite cost
         (10 times the maximum value of the cost matrix)
+        The multiplier is applied separately on each fit without changing
+        the configured value of ``limit_max``.
     max_iter : int, optional (default=100000)
         The maximum number of iterations before stopping the optimization
         algorithm if it has not converged.
