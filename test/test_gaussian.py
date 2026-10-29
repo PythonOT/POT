@@ -202,6 +202,25 @@ def test_bures_wasserstein_mapping_warns_on_singular_source():
         ot.gaussian.bures_wasserstein_mapping(X.mean(0), Y.mean(0), np.cov(X.T), Ct)
 
 
+@pytest.mark.skipif(not ot.backend.jax, reason="jax not available")
+def test_bures_wasserstein_mapping_jax_transforms():
+    # the accuracy check reads values back to NumPy, which traced values do not
+    # allow; jit and grad through the mapping must still work
+    jax = ot.backend.jax
+    rng = np.random.RandomState(0)
+    X, Y = rng.randn(50, 5), rng.randn(60, 5)
+    nx = ot.backend.JaxBackend()
+    ms, mt, Cs, Ct = nx.from_numpy(X.mean(0), Y.mean(0), np.cov(X.T), np.cov(Y.T))
+
+    def f(Cs, Ct):
+        return ot.gaussian.bures_wasserstein_mapping(ms, mt, Cs, Ct)[0]
+
+    np.testing.assert_allclose(jax.jit(f)(Cs, Ct), f(Cs, Ct), rtol=1e-8)
+    for argnums in (0, 1):
+        g = jax.grad(lambda Cs, Ct: f(Cs, Ct).sum(), argnums=argnums)(Cs, Ct)
+        assert np.all(np.isfinite(g))
+
+
 def test_bures_distance_rank_deficient(nx):
     rng = np.random.RandomState(1)
     d = 10

@@ -45,12 +45,15 @@ def _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel):
     try:
         tiny_dtype = nx.to_numpy(nx.zeros((1,), type_as=Cs)).dtype
         tol = np.finfo(tiny_dtype).eps ** 0.25
-    except (TypeError, ValueError):  # pragma: no cover - exotic dtypes
+        norm_ct = float(nx.to_numpy(nx.norm(Ct)))
+        residual = float(nx.to_numpy(nx.norm(dots(A, Cs, A) - Ct)))
+    except (TypeError, ValueError):
+        # traced values, as under jax.jit or jax.grad, cannot be read back,
+        # and integer dtypes have no machine epsilon: skip the check
         return
-    norm_ct = float(nx.to_numpy(nx.norm(Ct)))
     if norm_ct == 0:
         return
-    residual = float(nx.to_numpy(nx.norm(dots(A, Cs, A) - Ct))) / norm_ct
+    residual /= norm_ct
     if not residual <= tol:  # also catches NaN
         warnings.warn(
             "The Bures-Wasserstein map does not transport the source covariance "
