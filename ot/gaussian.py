@@ -22,10 +22,12 @@ def _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel):
     :math:`\mathbf{A}\mathbf{C}_s\mathbf{A} = \mathbf{C}_t`, which is unique and
     given by the closed form only when :math:`\mathbf{C}_s` is non-singular. The
     relative residual of that identity therefore measures directly how far the
-    returned map is from correct. It is compared with :math:`\sqrt{\varepsilon}` of the dtype: a
-    matrix square root near a zero eigenvalue loses up to half the digits,
-    since :math:`|\sqrt{a} - \sqrt{b}| \leq \sqrt{|a - b|}`, so a larger residual
-    means more was lost than that.
+    returned map is from correct. It is compared with :math:`\varepsilon^{1/4}`
+    of the dtype. A matrix square root near a zero eigenvalue loses up to half
+    the digits, since :math:`|\sqrt{a} - \sqrt{b}| \leq \sqrt{|a - b|}`, and
+    correct maps between rank-deficient covariances do reach residuals near
+    :math:`\sqrt{\varepsilon}`, so the tolerance sits well above that; a
+    singular source gives residuals many orders of magnitude larger.
 
     Parameters
     ----------
@@ -42,7 +44,7 @@ def _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel):
     """
     try:
         tiny_dtype = nx.to_numpy(nx.zeros((1,), type_as=Cs)).dtype
-        tol = np.sqrt(np.finfo(tiny_dtype).eps)
+        tol = np.finfo(tiny_dtype).eps ** 0.25
     except (TypeError, ValueError):  # pragma: no cover - exotic dtypes
         return
     norm_ct = float(nx.to_numpy(nx.norm(Ct)))
@@ -53,7 +55,7 @@ def _warn_if_map_is_inaccurate(A, Cs, Ct, nx, stacklevel):
         warnings.warn(
             "The Bures-Wasserstein map does not transport the source covariance "
             f"onto the target: relative residual of A Cs A = Ct is {residual:.1e}, "
-            f"above the expected {tol:.1e}. The source covariance is singular or "
+            f"above the tolerance {tol:.1e}. The source covariance is singular or "
             "nearly so, and the map has lost precision accordingly. Regularize it, "
             "for instance with the `reg` parameter of "
             "ot.gaussian.empirical_bures_wasserstein_mapping.",
