@@ -4,6 +4,13 @@
 #
 # License: MIT License
 
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import warnings
+
 import ot
 import ot.bsp
 import numpy as np
@@ -135,3 +142,241 @@ def test_bsp_ot_torch_backend():
 
     # cost should be zero
     np.testing.assert_allclose(cost_new, 0, atol=1e-5)
+
+
+def _two_clouds(n=100, data_seed=0):
+    rng = np.random.RandomState(data_seed)
+    return rng.randn(n, 2), rng.randn(n, 2)
+
+
+def _bsp_fingerprint(A, B, n_plans, seed):
+    cost, perm, perms = ot.bsp.compute_bspot_bijection(A, B, n_plans, seed=seed)
+    return float(np.asarray(cost)), np.asarray(perm), np.asarray(perms)
+
+
+def test_bsp_seed_repeated_calls_are_reproducible():
+    # ``seed`` is documented as "Random seed for reproducibility", so two calls with
+    # the same arguments must return the same matchings, not just a similar cost.
+    A, B = _two_clouds()
+    cost0, perm0, perms0 = _bsp_fingerprint(A, B, 32, 0)
+    cost1, perm1, perms1 = _bsp_fingerprint(A, B, 32, 0)
+
+    np.testing.assert_array_equal(perm0, perm1)
+    np.testing.assert_array_equal(perms0, perms1)
+    np.testing.assert_allclose(cost0, cost1, rtol=0, atol=0)
+
+
+def test_bsp_seed_is_independent_of_call_history():
+    # A preceding call with another seed must not disturb the seeded stream.
+    A, B = _two_clouds()
+    _bsp_fingerprint(A, B, 16, 7)
+    cost0, perm0, perms0 = _bsp_fingerprint(A, B, 32, 0)
+    _bsp_fingerprint(A, B, 16, 11)
+    cost1, perm1, perms1 = _bsp_fingerprint(A, B, 32, 0)
+
+    np.testing.assert_array_equal(perm0, perm1)
+    np.testing.assert_array_equal(perms0, perms1)
+    np.testing.assert_allclose(cost0, cost1, rtol=0, atol=0)
+
+
+# Third-party imports write to stdout on import (e.g. the KeOps warning printed on
+# machines without CUDA), so the child prefixes its record with a unique marker.
+_RESULT_MARKER = "__POT_BSP_JSON_V1__="
+
+_FRESH_PROCESS_SNIPPET = """
+import hashlib, json, sys
+import numpy as np
+import ot
+from ot.bsp import bsp_wrap
+
+seed, n_plans, marker = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
+rng = np.random.RandomState(0)
+A, B = rng.randn(100, 2), rng.randn(100, 2)
+out = []
+for _ in range(2):
+    cost, perm, perms = ot.bsp.compute_bspot_bijection(A, B, n_plans, seed=seed)
+    perm, perms = np.asarray(perm), np.asarray(perms)
+    out.append({
+        "cost": float(np.asarray(cost)),
+        "perm": hashlib.sha256(perm.tobytes()).hexdigest(),
+        "perms": hashlib.sha256(perms.tobytes()).hexdigest(),
+    })
+print(marker + json.dumps({"results": out, "ot_file": ot.__file__,
+                           "ext_sha256": hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()}),
+      flush=True)
+"""
+
+
+def _ext_sha256():
+    from ot.bsp import bsp_wrap
+
+    return hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()
+
+
+def _parse_fresh_process_report(stdout, stderr, returncode):
+    """Return the JSON record printed by the child after ``_RESULT_MARKER``.
+
+    The marker is searched for anywhere in stdout: the child shares stdout with
+    third-party imports, so its record is neither first nor necessarily last.
+    """
+    context = (
+        f"returncode={returncode}\n"
+        f"--- child stdout ---\n{stdout!r}\n"
+        f"--- child stderr ---\n{stderr!r}"
+    )
+    occurrences = stdout.count(_RESULT_MARKER)
+    if occurrences == 0:
+        raise AssertionError(
+            f"child stdout contains no {_RESULT_MARKER!r} record\n{context}"
+        )
+    if occurrences > 1:
+        raise AssertionError(
+            f"child stdout contains {occurrences} {_RESULT_MARKER!r} records\n{context}"
+        )
+    start = stdout.index(_RESULT_MARKER) + len(_RESULT_MARKER)
+    end = stdout.find("\n", start)
+    payload = stdout[start:] if end == -1 else stdout[start:end]
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(
+            f"invalid JSON in {_RESULT_MARKER!r} record: {payload!r}\n{context}"
+        ) from exc
+
+
+def _bsp_in_fresh_process(seed, n_plans, omp_threads):
+    """Run the fingerprint in a fresh interpreter.
+
+    Returns the reported results, or None together with the raw process output when the
+    child did not get as far as printing them.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = dict(os.environ)
+    env["PYTHONPATH"] = root + os.pathsep + env.get("PYTHONPATH", "")
+    if omp_threads is not None:
+        env["OMP_NUM_THREADS"] = str(omp_threads)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            _FRESH_PROCESS_SNIPPET,
+            str(seed),
+            str(n_plans),
+            _RESULT_MARKER,
+        ],
+        cwd=root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None, proc.returncode, proc.stderr
+    report = _parse_fresh_process_report(proc.stdout, proc.stderr, proc.returncode)
+    # a child that imported a different POT build would prove nothing
+    assert report["ext_sha256"] == _ext_sha256(), "child loaded another build"
+    return report["results"], proc.returncode, proc.stderr
+
+
+def _run_in_fresh_process(seed=0, n_plans=32, omp_threads=None, attempts=3):
+    # A child interpreter can die while importing POT on a host that is out of memory;
+    # that shows up as a plain exit code 1 with a Python traceback and is retried.
+    # Anything else -- a native crash such as 0xC0000005 or a signal -- is reported at
+    # once, since a real defect is deterministic and retrying it would only hide it.
+    failure = None
+    for _ in range(attempts):
+        results, returncode, stderr = _bsp_in_fresh_process(seed, n_plans, omp_threads)
+        if results is not None:
+            return results
+        failure = (returncode, stderr)
+        if returncode != 1:
+            break
+    raise AssertionError(
+        f"BSP subprocess failed with rc={failure[0]}\n{failure[1]}"
+    )
+
+
+def test_fresh_process_report_parsing_ignores_foreign_stdout():
+    report = {"results": [{"cost": 0.5}], "ot_file": "ot.py", "ext_sha256": "abc"}
+    stdout = (
+        "[KeOps] Warning : CUDA libraries not found or could not be loaded; "
+        "Switching to CPU only."
+        + _RESULT_MARKER
+        + json.dumps(report)
+        + "\ntrailing log line\n"
+    )
+    assert _parse_fresh_process_report(stdout, "", 0) == report
+
+
+def test_fresh_process_report_parsing_diagnoses_protocol_errors():
+    record = _RESULT_MARKER + '{"results": []}'
+
+    with pytest.raises(AssertionError, match="contains no") as missing:
+        _parse_fresh_process_report("only foreign output\n", "boom", 0)
+    assert "boom" in str(missing.value)
+
+    with pytest.raises(AssertionError, match="contains 2"):
+        _parse_fresh_process_report(record + "\n" + record + "\n", "", 0)
+
+    with pytest.raises(AssertionError, match="invalid JSON"):
+        _parse_fresh_process_report(_RESULT_MARKER + "{not json}\n", "", 0)
+
+
+def test_bsp_seed_reproducible_in_fresh_process():
+    # Reproducibility must not depend on whether the solver ran earlier in the
+    # session, so the reference is a first call in a brand new interpreter.
+    ref = _run_in_fresh_process()
+    assert ref[0] == ref[1], "two first calls in one fresh interpreter already disagree"
+
+    A, B = _two_clouds()
+    _bsp_fingerprint(A, B, 16, 7)  # make the current session non-pristine
+    cost, perm, perms = _bsp_fingerprint(A, B, 32, 0)
+    assert cost == ref[0]["cost"]
+    assert hashlib.sha256(np.asarray(perm).tobytes()).hexdigest() == ref[0]["perm"]
+    assert hashlib.sha256(np.asarray(perms).tobytes()).hexdigest() == ref[0]["perms"]
+
+
+def test_bsp_result_independent_of_openmp_thread_count():
+    # The candidate plans are generated by an OpenMP loop. How the loop happens to be
+    # split over threads is not part of the solver, so the answer must not change with
+    # the number of available threads (CI images and laptops differ here). Staying
+    # parallel is a performance property, checked by the benchmarks, not by this test.
+    ref = _run_in_fresh_process(omp_threads=1)
+    for threads in (2, 4):
+        got = _run_in_fresh_process(omp_threads=threads)
+        assert got == ref, f"OMP_NUM_THREADS={threads} gives a different result"
+
+
+def test_bsp_candidate_plans_are_determined_by_seed_and_index():
+    # The property the seeding gives: candidate plan i depends on
+    # (A, B, p, gaussian_slicing, seed, i) alone, so asking for 4 plans and asking for 37
+    # must agree on the first four rows, whatever the OpenMP chunking made of them and
+    # whatever was computed before.  Whether the plans are pairwise distinct is a property
+    # of the instance and of the standard library's distributions, not of the seeding --
+    # for a similarity transform every BSP candidate legitimately is the identity -- so it
+    # is not asserted here.
+    A, B = _two_clouds()
+    _, _, few = _bsp_fingerprint(A, B, 4, 0)
+    _bsp_fingerprint(A, B, 16, 5)  # unrelated call in between
+    _, _, many = _bsp_fingerprint(A, B, 37, 0)
+    np.testing.assert_array_equal(few, many[:4])
+    _, _, few_again = _bsp_fingerprint(A, B, 4, 0)
+    np.testing.assert_array_equal(few, few_again)
+
+
+def test_bsp_permutation_structure_and_cost():
+    # Structural invariants that must hold whatever random sequence is drawn.
+    # compute_bspot_bijection warns when the cost it recomputes from ``perm`` disagrees
+    # with the cost the solver reports for it, so warnings are turned into errors here:
+    # that compares the solver's own bookkeeping against the permutation it returned.
+    A, B = _two_clouds(n=80, data_seed=3)
+    M = ot.dist(A, B, metric="sqeuclidean")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for seed in (0, 1, 2):
+            cost, perm, perms = _bsp_fingerprint(A, B, 16, seed)
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(80))
+    np.testing.assert_allclose(cost, np.mean(M[np.arange(80), perm]), rtol=1e-9)
+    for row in np.asarray(perms):
+        np.testing.assert_array_equal(np.sort(row), np.arange(80))
