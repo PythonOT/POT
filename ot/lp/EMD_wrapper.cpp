@@ -236,6 +236,14 @@ int EMD_wrap(int n1, int n2, double *X, double *Y, double *D, double *G,
 		}
     }
 
+    // Empty support: there is no arc to transport mass along. When both sides
+    // are empty the zero plan is the only feasible plan and is optimal,
+    // otherwise the problem is infeasible.
+    if (n == 0 || m == 0) {
+        *cost = 0.0;
+        return (n == 0 && m == 0) ? OPTIMAL : INFEASIBLE;
+    }
+
     // Define graph and solver
     std::vector<uint64_t> indI(n), indJ(m);
     std::vector<double> weights1(n), weights2(m);
@@ -345,6 +353,14 @@ int EMD_wrap_sparse(
         }
     }
 
+    // Empty support: see EMD_wrap. No flow can be extracted, so n_flows_out
+    // is reset before returning the status of the degenerate problem.
+    if (n == 0 || m == 0) {
+        *cost = 0.0;
+        *n_flows_out = 0;
+        return (n == 0 && m == 0) ? OPTIMAL : INFEASIBLE;
+    }
+
     std::vector<uint64_t> indI(n);  // indI[graph_idx] = original_source_idx
     std::vector<uint64_t> indJ(m);  // indJ[graph_idx] = original_target_idx
     std::vector<double> weights1(n);  // Source masses (positive only)
@@ -391,6 +407,13 @@ int EMD_wrap_sparse(
     for (uint64_t k = 0; k < n_edges; k++) {
         int64_t src_orig = edge_sources[k];
         int64_t tgt_orig = edge_targets[k];
+        // Reject endpoints outside the marginals: they would index
+        // source_to_graph / target_to_graph out of bounds.
+        if (src_orig < 0 || tgt_orig < 0 ||
+            static_cast<uint64_t>(src_orig) >= static_cast<uint64_t>(n1) ||
+            static_cast<uint64_t>(tgt_orig) >= static_cast<uint64_t>(n2)) {
+            return INFEASIBLE;
+        }
         int64_t src = source_to_graph[src_orig];
         int64_t tgt = target_to_graph[tgt_orig];
 

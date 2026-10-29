@@ -40,6 +40,7 @@
 - Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
 - Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (PR #903, Issue #864)
+- Fix interpreter crashes in the exact OT solvers on degenerate inputs: `ot.emd` and `ot.emd2` reject a cost matrix with an empty dimension with a `ValueError`, marginals with a zero total mass return the exact zero plan with finite dual potentials instead of NaNs, non-finite marginals are rejected, sparse problems without any allowed transport arc report `INFEASIBLE` instead of crashing, and `ot.emd_1d` rejects an empty support with a `ValueError`. The native entry points (`emd_c`, `emd_c_sparse`, `emd_c_lazy`) validate marginal, potential and edge buffers against the problem they solve, and the network simplex pivot rule no longer reads an uninitialised arc index when no entering arc is found (Issue #901)
 
 ## 0.9.7.post1
 

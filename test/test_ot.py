@@ -266,6 +266,212 @@ def test_emd_empty():
     np.testing.assert_allclose(w, 0)
 
 
+def test_emd_empty_problem_raises():
+    # Issue #901: an empty problem used to crash the interpreter
+    from scipy.sparse import coo_matrix
+
+    for shape in [(0, 0), (0, 3), (3, 0)]:
+        with pytest.raises(ValueError, match="cost matrix"):
+            ot.emd([], [], np.zeros(shape))
+        with pytest.raises(ValueError, match="cost matrix"):
+            ot.emd2([], [], np.zeros(shape))
+        with pytest.raises(ValueError, match="cost matrix"):
+            ot.emd([], [], coo_matrix(shape))
+
+
+def test_emd_zero_mass():
+    # Issue #901: no mass on either side, the zero plan is the only feasible
+    # plan and is optimal, with finite and dual feasible potentials
+    rng = np.random.RandomState(0)
+    for n1, n2 in [(5, 3), (3, 5)]:
+        for M in [rng.rand(n1, n2), rng.randn(n1, n2)]:
+            G, log = ot.emd(np.zeros(n1), np.zeros(n2), M, log=True)
+
+            np.testing.assert_array_equal(G, np.zeros((n1, n2)))
+            assert log["cost"] == 0
+            assert np.all(np.isfinite(log["u"]))
+            assert np.all(np.isfinite(log["v"]))
+            assert np.all(log["u"][:, None] + log["v"][None, :] <= M + 1e-12)
+
+            w, log2 = ot.emd2(
+                np.zeros(n1), np.zeros(n2), M, log=True, return_matrix=True
+            )
+            assert w == 0
+            assert np.all(np.isfinite(log2["u"]))
+            assert np.all(np.isfinite(log2["v"]))
+            np.testing.assert_array_equal(log2["G"], np.zeros((n1, n2)))
+
+
+def test_emd_zero_mass_sparse():
+    # the sparse solver leaves the potentials of zero-weight nodes at zero, so
+    # only finiteness is required here (see the emd_c docstring)
+    from scipy.sparse import coo_matrix
+
+    M = coo_matrix(np.arange(15, dtype=float).reshape(5, 3))
+    G, log = ot.emd(np.zeros(5), np.zeros(3), M, log=True)
+
+    assert G.shape == (5, 3)
+    assert G.nnz == 0
+    assert log["cost"] == 0
+    assert np.all(np.isfinite(log["u"]))
+    assert np.all(np.isfinite(log["v"]))
+
+
+def test_emd_zero_mass_one_sided():
+    # a zero-mass b cannot be rescaled onto a positive-mass a: the column is
+    # reported infeasible (as before) but without NaNs or a native crash
+    M = np.ones((3, 2))
+    with pytest.warns(UserWarning, match="infeasible"):
+        G, log = ot.emd(np.ones(3) / 3, np.zeros(2), M, log=True, check_marginals=False)
+
+    np.testing.assert_array_equal(G, np.zeros((3, 2)))
+    assert np.all(np.isfinite(log["u"]))
+    assert np.all(np.isfinite(log["v"]))
+
+    # non-finite marginals cannot be rescaled either
+    with pytest.raises(ValueError, match="finite"):
+        ot.emd(
+            np.array([np.nan, 1.0]),
+            np.array([0.5, 0.5]),
+            np.ones((2, 2)),
+            check_marginals=False,
+        )
+
+
+def test_emd2_batch_with_empty_histogram():
+    # an empty histogram of a batch is infeasible, the other ones are solved
+    M = np.array([[0.0, 1.0, 2.0], [1.0, 0.0, 3.0]])
+    a = np.array([0.5, 0.5])
+    b = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 0.0]])
+
+    with pytest.warns(UserWarning, match="infeasible"):
+        res = ot.emd2(a, b, M, check_marginals=False)
+
+    np.testing.assert_allclose(res, [0.5, 0.0])
+
+
+def test_emd_1d_empty_support():
+    # emd_1d used to segfault when one of the two supports was empty
+    with pytest.raises(ValueError, match="at least one source"):
+        ot.emd_1d(np.zeros(0), np.zeros(1), np.zeros(0), np.zeros(1))
+    with pytest.raises(ValueError, match="at least one source"):
+        ot.emd_1d(np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0))
+
+
+def test_emd_sparse_no_transport_edges():
+    # no stored entry means that no transport is allowed: the problem is
+    # infeasible and must be reported as such (it used to crash the interpreter)
+    from scipy.sparse import coo_matrix
+
+    M = coo_matrix((5, 3), dtype=float)
+    with pytest.warns(UserWarning, match="infeasible"):
+        G, log = ot.emd(np.ones(5) / 5, np.ones(3) / 3, M, log=True)
+
+    assert G.shape == (5, 3)
+    assert G.nnz == 0
+    assert "infeasible" in log["warning"]
+
+
+def test_emd_c_empty_support():
+    # the native entry point is safe on an empty problem: it returns the
+    # (unique) empty plan and a zero cost instead of reading out of bounds
+    from ot.lp.emd_wrap import check_result, emd_c
+
+    G, cost, u, v, result_code = emd_c(
+        np.zeros(0), np.zeros(0), np.zeros((0, 0)), 100000, 1
+    )
+
+    assert G.shape == (0, 0)
+    assert cost == 0
+    assert u.shape == (0,) and v.shape == (0,)
+    assert check_result(result_code) is None  # OPTIMAL
+
+
+def test_emd_c_shape_mismatch():
+    # buffers shorter than the cost matrix used to be read out of bounds
+    from ot.lp.emd_wrap import emd_c
+
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c(np.zeros(2), np.zeros(3), np.zeros((5, 3)), 100000, 1)
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c(np.ones(5) / 5, np.zeros(2), np.zeros((5, 3)), 100000, 1)
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c(
+            np.ones(5) / 5,
+            np.ones(3) / 3,
+            np.zeros((5, 3)),
+            100000,
+            1,
+            alpha_init=np.zeros(1),
+            beta_init=np.zeros(3),
+        )
+
+
+def test_emd_c_sparse_invalid_edges():
+    from ot.lp.emd_wrap import emd_c_sparse
+
+    a = np.ones(3) / 3
+    b = np.ones(3) / 3
+    cost = np.array([0.0, 1.0])
+    # endpoints outside the marginals used to index internal maps out of bounds
+    with pytest.raises(ValueError, match="Edge endpoints"):
+        emd_c_sparse(
+            a,
+            b,
+            np.array([0, 7], dtype=np.uint64),
+            np.array([0, 1], dtype=np.uint64),
+            cost,
+            100000,
+        )
+    with pytest.raises(ValueError, match="Edge endpoints"):
+        emd_c_sparse(
+            a,
+            b,
+            np.array([0, 1], dtype=np.uint64),
+            np.array([0, 7], dtype=np.uint64),
+            cost,
+            100000,
+        )
+    with pytest.raises(ValueError, match="same length"):
+        emd_c_sparse(
+            a,
+            b,
+            np.array([0], dtype=np.uint64),
+            np.array([0, 1], dtype=np.uint64),
+            cost,
+            100000,
+        )
+
+
+def test_emd_c_lazy_shape_mismatch():
+    # the lazy entry point used to read the marginals and the coordinates out
+    # of bounds when their lengths did not match
+    from ot.lp.emd_wrap import emd_c_lazy
+
+    coords_a = np.zeros((5, 2))
+    coords_b = np.zeros((3, 2))
+
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c_lazy(
+            np.ones(1), np.ones(3) / 3, coords_a, coords_b, "sqeuclidean", 100000
+        )
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c_lazy(
+            np.ones(5) / 5, np.ones(1), coords_a, coords_b, "sqeuclidean", 100000
+        )
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        emd_c_lazy(
+            np.ones(5) / 5,
+            np.ones(3) / 3,
+            coords_a,
+            coords_b,
+            "sqeuclidean",
+            100000,
+            alpha_init=np.zeros(1),
+            beta_init=np.zeros(3),
+        )
+
+
 def test_emd2_multi():
     n = 500  # nb bins
 

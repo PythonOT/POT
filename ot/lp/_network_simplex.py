@@ -35,6 +35,9 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
     since :math:`\sum_i a_i=\sum_j b_j` this can be solved by adding/removing
     a constant from both  :math:`\alpha_0` and :math:`\beta_0`.
 
+    When both marginals have a zero total mass the constant is undefined and the
+    potentials are returned unchanged.
+
     .. math::
         c &= \frac{\beta_0^T \mathbf{b} - \alpha_0^T \mathbf{a}}{\mathbf{1}^T \mathbf{b} + \mathbf{1}^T \mathbf{a}}
 
@@ -80,7 +83,9 @@ def center_ot_dual(alpha0, beta0, a=None, b=None):
     # compute constant that balances the weighted sums of the duals
     ips = nx.sum(b * beta0, axis=0) - nx.sum(a * alpha0, axis=0)
     denom = nx.sum(a, axis=0) + nx.sum(b, axis=0)
-    c = ips / denom
+    # A zero denominator means both marginals are empty: there is nothing to
+    # balance, and 0/0 would turn the potentials into NaN.
+    c = ips / nx.where(denom == 0, denom + 1, denom)
 
     # update duals
     alpha = alpha0 + c
@@ -171,6 +176,32 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
     return center_ot_dual(alpha, beta, a, b)
 
 
+def _check_cost_matrix_shape(n1, n2):
+    """Raise for a cost matrix with no row or no column."""
+    if n1 == 0 or n2 == 0:
+        raise ValueError(
+            "The cost matrix must have at least one row and one column, got "
+            f"shape ({n1}, {n2}). An empty marginal cannot be defaulted to a "
+            "uniform distribution."
+        )
+
+
+def _rescale_target_mass(a, b):
+    """Rescale ``b`` to the total mass of ``a``, allowing empty marginals.
+
+    A target histogram with a zero total mass cannot be rescaled: it is left
+    unchanged, so that the solver reports it as infeasible, while the other
+    histograms of a batch are still solved. When ``a`` has no mass either, the
+    zero plan is the only feasible plan and is optimal.
+    """
+    mass_a = a.sum(0)
+    mass_b = b.sum(0, keepdims=True)
+    if not (np.isfinite(mass_a).all() and np.isfinite(mass_b).all()):
+        raise ValueError("a and b must have a finite total mass")
+
+    return b * mass_a / np.where(mass_b != 0, mass_b, 1.0)
+
+
 def _compute_active_subset(a, b, M, row_mask, col_mask):
     """Return filtered inputs restricted to the rows/columns with mass."""
     need_filter = np.any(~row_mask) or np.any(~col_mask)
@@ -258,6 +289,10 @@ def emd(
         floating point input.
 
     .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
+
+    .. note:: A cost matrix with no row or no column raises a ``ValueError``.
+        When both marginals have a zero total mass, the optimal plan is the
+        zero plan with a zero cost.
 
     Uses the algorithm proposed in :ref:`[1] <references-emd>`.
 
@@ -388,6 +423,8 @@ def emd(
     if n1 is None:
         n1, n2 = M.shape
 
+    _check_cost_matrix_shape(n1, n2)
+
     if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
     if b is None or len(b) == 0:
@@ -414,7 +451,7 @@ def emd(
             err_msg="a and b vector must have the same sum",
             decimal=6,
         )
-    b = b * a.sum() / b.sum()
+    b = _rescale_target_mass(a, b)
 
     asel = a != 0
     bsel = b != 0
@@ -567,6 +604,10 @@ def emd2(
 
     .. note:: An error will be raised if the vectors :math:`\mathbf{a}` and :math:`\mathbf{b}` do not sum to the same value.
 
+    .. note:: A cost matrix with no row or no column raises a ``ValueError``.
+        When both marginals have a zero total mass, the optimal plan is the
+        zero plan with a zero cost.
+
     Uses the algorithm proposed in :ref:`[1] <references-emd2>`.
 
     Parameters
@@ -695,6 +736,8 @@ def emd2(
     if n1 is None:
         n1, n2 = M.shape
 
+    _check_cost_matrix_shape(n1, n2)
+
     # if empty array given then use uniform distributions
     if a is None or len(a) == 0:
         a = nx.ones((n1,), type_as=type_as) / n1
@@ -731,7 +774,7 @@ def emd2(
             err_msg="a and b vector must have the same sum",
             decimal=6,
         )
-    b = b * a.sum(0) / b.sum(0, keepdims=True)
+    b = _rescale_target_mass(a, b)
 
     asel = a != 0
 
