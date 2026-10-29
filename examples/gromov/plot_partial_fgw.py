@@ -38,7 +38,6 @@ import numpy as np
 import pylab as pl
 import networkx as nx
 import math
-from scipy.sparse.csgraph import shortest_path
 import matplotlib.colors as mcol
 from matplotlib import cm
 from ot.gromov import (

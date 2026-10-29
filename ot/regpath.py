@@ -6,6 +6,8 @@ Regularization path OT solvers
 # Author: Haoran Wu <haoran.wu@univ-ubs.fr>
 # License: MIT License
 
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -665,7 +667,7 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=50
         n_iter += 1
 
     if itmax <= n_iter:
-        print("maximum iteration has been reached !")
+        warnings.warn("Maximum number of iterations has been reached.")
 
     # correct the last solution and gamma
     if len(t_list) > 1:
@@ -676,7 +678,7 @@ def fully_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=50
         gamma_list[-1] = reg
     else:
         gamma_list[-1] = reg
-        print("Regularization path does not exist !")
+        warnings.warn("Regularization path does not exist.")
 
     return t_list[-1], t_list, gamma_list
 
@@ -820,7 +822,7 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=500
         n_iter += 1
 
     if itmax <= n_iter:
-        print("maximum iteration has been reached !")
+        warnings.warn("Maximum number of iterations has been reached.")
 
     # correct the last solution and gamma
     if len(t_list) > 1:
@@ -831,7 +833,7 @@ def semi_relaxed_path(a: np.array, b: np.array, C: np.array, reg=1e-4, itmax=500
         gamma_list[-1] = reg
     else:
         gamma_list[-1] = reg
-        print("Regularization path does not exist !")
+        warnings.warn("Regularization path does not exist.")
 
     return t_list[-1], t_list, gamma_list
 

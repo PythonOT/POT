@@ -143,7 +143,6 @@ def test_empty_backend():
     rnd = np.random.RandomState(0)
     M = rnd.randn(10, 3)
     v = rnd.randn(3)
-    inds = rnd.randint(10)
 
     nx = ot.backend.Backend()
 
@@ -813,6 +812,19 @@ def test_func_backends(nx):
         )
 
 
+def test_arange_type_as(nx):
+    # `arange` used to silently ignore `type_as` for dtype (and device, in
+    # some backends), unlike `zeros`/`ones`/`full`, which do respect it.
+    for tp in nx.__type_list__:
+        a = nx.arange(5, type_as=tp)
+        nx.assert_same_dtype_device(tp, a)
+        np.testing.assert_allclose(nx.to_numpy(a), np.arange(5))
+
+        b = nx.arange(8, 2, 2, type_as=tp)
+        nx.assert_same_dtype_device(tp, b)
+        np.testing.assert_allclose(nx.to_numpy(b), np.arange(2, 8, 2))
+
+
 def test_random_backends(nx):
     tmp_u = nx.rand()
 
@@ -849,7 +861,7 @@ def test_random_backends(nx):
     assert np.allclose(M3, M4)
 
     with pytest.raises(ValueError, match="size must be"):
-        res = nx.randperm(size=[5, 12])
+        nx.randperm(size=[5, 12])
 
 
 def test_numpy_backend_seed_random_state():
@@ -943,7 +955,10 @@ def test_sqrtm_backward_torch():
     A = torch.randn(d, d, dtype=torch.float64, device="cpu")
     A = A @ A.T
     A.requires_grad_(True)
-    func = lambda x: nx.sqrtm(x).sum()
+
+    def func(x):
+        return nx.sqrtm(x).sum()
+
     assert torch.autograd.gradcheck(func, (A,), atol=1e-4, rtol=1e-4)
 
 

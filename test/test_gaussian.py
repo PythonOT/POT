@@ -723,3 +723,11 @@ def test_gaussian_gromov_wasserstein_mapping(nx, d_target):
 
     if d_target >= 2:
         np.testing.assert_allclose(Cs, Ctt)
+
+
+def test_bures_barycenter_fixpoint_no_convergence_warning():
+    rng = np.random.RandomState(0)
+    A = rng.randn(3, 4, 4)
+    C = A @ A.transpose(0, 2, 1) + np.eye(4)[None]
+    with pytest.warns(UserWarning, match="did not converge"):
+        ot.gaussian.bures_barycenter_fixpoint(C, num_iter=1)
