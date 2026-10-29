@@ -22,6 +22,7 @@
 
 #### Closed issues
 
+- Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
 - Allow `NumpyBackend.seed` to adopt an existing `np.random.RandomState` instance and remove NumPy-specific random sampling paths in sliced utilities (PR #849, Issue #848)
@@ -42,6 +43,7 @@
 - Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #888)
 - Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
+- Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (PR #903, Issue #864)
 
 ## 0.9.7.post1
 
