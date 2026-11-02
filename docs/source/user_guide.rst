@@ -1020,7 +1020,7 @@ FAQ
     Note that this problem do not occur when using conda-forge since the packages
     there are pre-compiled.
 
-    See `Issue #59 <https://github.com/rflamary/POT/issues/59>`__ for more
+    See `Issue #59 <https://github.com/PythonOT/POT/issues/59>`__ for more
     details.
 
 3. **Why is Sinkhorn slower than EMD ?**
@@ -1214,7 +1214,7 @@ References
 
 .. [39] Gozlan, N., Roberto, C., Samson, P. M., & Tetali, P. (2017).
     `Kantorovich duality for general transport costs and applications
-    <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.712.1825&rep=rep1&type=pdf>`_.
+    <https://arxiv.org/abs/1412.7480>`_.
     Journal of Functional Analysis, 273(11), 3327-3405.
 
 .. [40] Forrow, A., Hütter, J. C., Nitzan, M., Rigollet, P., Schiebinger, G., &
