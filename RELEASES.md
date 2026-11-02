@@ -18,7 +18,7 @@
 
 #### Closed issues
 
-- Fix `ot.gaussian.bures_wasserstein_distance(..., paired=True)` returning incorrectly broadcast distances or raising an error for unequal batch sizes, instead of returning all crossed distances as documented.
+- Fix `ot.gaussian.bures_wasserstein_distance(..., paired=True)` returning incorrectly broadcast distances or raising an error for unequal batch sizes, instead of returning all crossed distances as documented. (PR #909)
 
 - Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
