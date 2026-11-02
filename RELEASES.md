@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix `ot.unbalanced.sinkhorn_stabilized_unbalanced` (also `method="sinkhorn_stabilized"` in `ot.unbalanced.sinkhorn_unbalanced`) returning a wrong plan once the scalings are absorbed: the absorption reset `v` to ones without rescaling it, and the stopping criterion, relative to `max(|u|, 1)`, could stop before the small entries of `u` converged. The scalings are now rescaled so that the dual potentials are unchanged by the absorption, and the error is the entrywise relative change of `u` (PR #XXX, Issue #711)
 - Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)

@@ -1229,13 +1229,23 @@ def sinkhorn_stabilized_unbalanced(
         if nx.any(u > tau) or nx.any(v > tau):
             absorbing = True
             if n_hists:
-                alpha = alpha + reg * nx.log(nx.max(u, 1))
-                beta = beta + reg * nx.log(nx.max(v, 1))
+                u_max = nx.max(u, 1)
+                v_max = nx.max(v, 1)
+                alpha = alpha + reg * nx.log(u_max)
+                beta = beta + reg * nx.log(v_max)
+                u_max, v_max = u_max[:, None], v_max[:, None]
             else:
-                alpha = alpha + reg * nx.log(nx.max(u))
-                beta = beta + reg * nx.log(nx.max(v))
+                u_max = nx.max(u)
+                v_max = nx.max(v)
+                alpha = alpha + reg * nx.log(u_max)
+                beta = beta + reg * nx.log(v_max)
             K = nx.exp((alpha[:, None] + beta[None, :] - M0) / reg)
-            v = nx.ones(v.shape, type_as=v)
+            # rescale the scalings so that the dual potentials alpha / reg + log(u)
+            # and beta / reg + log(v) are unchanged by the absorption
+            u = u / u_max
+            v = v / v_max
+            uprev = uprev / u_max
+            vprev = vprev / v_max
         Kv = nx.dot(K, v)
 
         if (
@@ -1254,9 +1264,11 @@ def sinkhorn_stabilized_unbalanced(
         if (cpt % 10 == 0 and not absorbing) or cpt == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
-            err = nx.max(nx.abs(u - uprev)) / max(
-                nx.max(nx.abs(u)), nx.max(nx.abs(uprev)), 1.0
-            )
+            # Entrywise relative change, i.e. about the change of the dual
+            # potentials log(u). After an absorption u is at most 1, so a change
+            # measured relative to max(|u|, 1) would miss its small entries.
+            scale = nx.maximum(nx.abs(u), nx.abs(uprev))
+            err = nx.max(nx.abs(u - uprev) / nx.where(scale > 0, scale, 1.0))
             if log:
                 dict_log["err"].append(err)
             if verbose:
