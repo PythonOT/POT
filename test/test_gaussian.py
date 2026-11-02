@@ -672,3 +672,42 @@ def test_bures_barycenter_fixpoint_no_convergence_warning():
     C = A @ A.transpose(0, 2, 1) + np.eye(4)[None]
     with pytest.warns(UserWarning, match="did not converge"):
         ot.gaussian.bures_barycenter_fixpoint(C, num_iter=1)
+
+
+@pytest.mark.parametrize("batch_sizes", [(2, 1), (1, 3), (2, 3), (3, 2), (2, 2)])
+@pytest.mark.parametrize("paired", [False, True])
+@pytest.mark.parametrize("log", [False, True])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_bures_wasserstein_distance_unequal_batches(
+    nx, batch_sizes, paired, log, dtype
+):
+    ns, nt = batch_sizes
+    ms = np.array([[0, 0], [3, 4], [-2, 1]], dtype=dtype)[:ns]
+    mt = np.array([[1, -1], [2, 5], [-3, 2]], dtype=dtype)[:nt]
+    stds = np.array([[1, 2], [4, 5], [2, 3]], dtype=dtype)[:ns]
+    stdt = np.array([[2, 3], [1, 4], [3, 1]], dtype=dtype)[:nt]
+    Cs = np.array([np.diag(std**2) for std in stds])
+    Ct = np.array([np.diag(std**2) for std in stdt])
+
+    # For diagonal covariances, W2 is the Euclidean distance between the
+    # concatenated means and standard deviations.
+    reference = np.sqrt(
+        np.sum((ms[:, None] - mt[None]) ** 2, axis=-1)
+        + np.sum((stds[:, None] - stdt[None]) ** 2, axis=-1)
+    )
+    if paired and ns == nt:
+        reference = reference.diagonal()
+
+    inputs = nx.from_numpy(ms, mt, Cs, Ct)
+    snapshots = [nx.to_numpy(value).copy() for value in inputs]
+    result = ot.gaussian.bures_wasserstein_distance(*inputs, paired=paired, log=log)
+    if log:
+        result, info = result
+        assert info["Cs12"].shape == Cs.shape
+
+    assert result.shape == reference.shape
+    np.testing.assert_allclose(nx.to_numpy(result), reference, rtol=1e-6, atol=1e-6)
+    nx.assert_same_dtype_device(inputs[0], result)
+    assert nx.to_numpy(result).dtype == dtype
+    for value, snapshot in zip(inputs, snapshots):
+        np.testing.assert_array_equal(nx.to_numpy(value), snapshot)
