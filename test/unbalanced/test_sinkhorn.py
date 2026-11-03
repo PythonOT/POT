@@ -586,6 +586,47 @@ def test_unbalanced_multiple_inputs(nx, method):
     np.testing.assert_allclose(nx.to_numpy(losses), np.array([loss1, loss2]), atol=1e-4)
 
 
+@pytest.mark.parametrize("reg_m", [(0.5, 2.0), (5.0, 0.1), (1.0, 50.0)])
+def test_translation_invariant_asymmetric_reg_m(nx, reg_m):
+    # the translation invariant solver must solve the same problem as
+    # sinkhorn_knopp_unbalanced when the marginal penalties differ
+    rng = np.random.RandomState(0)
+    a = rng.rand(6) + 0.1
+    a = 1.7 * a / a.sum()
+    b = rng.rand(8) + 0.1
+    b = b / b.sum()
+    M = 2 * rng.rand(6, 8)
+    reg = 0.1
+
+    ab, bb, Mb = nx.from_numpy(a, b, M)
+
+    G = ot.unbalanced.sinkhorn_unbalanced_translation_invariant(
+        ab, bb, Mb, reg, reg_m, numItermax=100000, stopThr=1e-12
+    )
+    G_ref = ot.unbalanced.sinkhorn_knopp_unbalanced(
+        a, b, M, reg, reg_m, numItermax=100000, stopThr=1e-14
+    )
+    np.testing.assert_allclose(nx.to_numpy(G), G_ref, atol=1e-8)
+
+    # several histograms at once give the cost of each column
+    B = np.stack([b, 2 * b], axis=1)
+    costs = ot.unbalanced.sinkhorn_unbalanced_translation_invariant(
+        ab, nx.from_numpy(B), Mb, reg, reg_m, numItermax=100000, stopThr=1e-12
+    )
+    for j in range(2):
+        G_j = ot.unbalanced.sinkhorn_knopp_unbalanced(
+            a,
+            B[:, j],
+            M,
+            reg,
+            reg_m,
+            reg_type="entropy",
+            numItermax=100000,
+            stopThr=1e-14,
+        )
+        np.testing.assert_allclose(nx.to_numpy(costs)[j], np.sum(G_j * M), rtol=1e-7)
+
+
 def test_stabilized_vs_sinkhorn(nx):
     # test if stable version matches sinkhorn
     n = 100
