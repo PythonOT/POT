@@ -152,6 +152,17 @@ def merge_bijections(X, Y, perms, p=2):
 
     perms = np.asarray(perms, dtype=np.int32)
 
+    if perms.ndim != 2:
+        raise ValueError("perms must be a 2D array of shape (n_plans, n_samples)")
+
+    if perms.shape[1] != X_np.shape[0]:
+        raise ValueError(
+            "perms must have shape (n_plans, n_samples) where n_samples is the number "
+            "of points in X and Y, got {} plans of length {} for {} points".format(
+                perms.shape[0], perms.shape[1], X_np.shape[0]
+            )
+        )
+
     cost_inner, perm = merge_bijections_c(X_np, Y_np, perms, p)
 
     perm = nx.from_numpy(perm)

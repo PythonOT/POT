@@ -81,7 +81,10 @@ def merge_bijections_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double
     
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef int k = plans.shape[1]
+    # plans is laid out as (n_plans, n_samples), so the number of plans to merge is
+    # shape[0]. Reading shape[1] instead makes the C++ loop walk n_samples plans over a
+    # buffer that only holds n_plans, which reads past it when n_plans < n_samples.
+    cdef int k = plans.shape[0]
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost_val
