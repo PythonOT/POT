@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix multi-axis batches in `ot.wasserstein_1d` and `quantile_function`, and return transport plans for unbatched and pre-sorted inputs. Shared weights are repeated over omitted batch axes; plans retain the original sample indices (PR #899, related to Issue #518).
 - Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix `ot.bsp.compute_bspot_bijection` (and `random_state` of `ot.solve_sample(..., method="bsp")`) not being reproducible for a given `seed`: its candidate plans came from a `thread_local` `std::mt19937` seeded once per OpenMP thread, so the result depended on the call history and on the number of threads. Every thread started from the same state, so the previous version could underperform with multiple threads. Each plan now draws its own stream, derived from the seed and the plan index (PR #898, Issue #897)
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
