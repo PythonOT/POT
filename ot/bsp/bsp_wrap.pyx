@@ -81,16 +81,32 @@ def merge_bijections_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double
     
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    # plans is laid out as (n_plans, n_samples), so the number of plans to merge is
-    # shape[0]. Reading shape[1] instead makes the C++ loop walk n_samples plans over a
-    # buffer that only holds n_plans, which reads past it when n_plans < n_samples.
     cdef int k = plans.shape[0]
 
-    # C++ reads k * n integers, so a row that is shorter or longer than the point cloud
-    # would still make it run past the buffer even with the right plan count.
     if plans.shape[1] != n:
         raise ValueError(
             "plans must have shape (n_plans, n_samples) with one entry per point")
+
+    if k == 0:
+        raise ValueError("plans must contain at least one plan")
+
+    # C++ indexes the point clouds with these entries, so a stack whose rows are not a
+    # permutation of 0..n-1 must not reach BijectiveMatching. Counting is linear in the
+    # size of the stack and does not copy it.
+    cdef np.ndarray[int, ndim=1, mode="c"] seen = np.zeros(n, dtype=np.int32)
+    cdef int i
+    cdef int j
+    cdef int v
+
+    for i in range(k):
+        for j in range(n):
+            seen[j] = 0
+        for j in range(n):
+            v = plans[i, j]
+            if v < 0 or v >= n or seen[v] != 0:
+                raise ValueError(
+                    "each row of plans must be a permutation of 0..n_samples-1")
+            seen[v] = 1
 
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 

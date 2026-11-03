@@ -261,3 +261,98 @@ def test_bsp_merge_converts_dtypes_and_refuses_views():
     assert not view.flags["C_CONTIGUOUS"]
     with pytest.raises(ValueError, match="C-contiguous"):
         ot.bsp.merge_bijections(A, B, view, 2)
+
+
+def test_bsp_merge_rejects_empty_plan_stack():
+    # An empty stack leaves the merge helper with nothing to read, which crashes the
+    # interpreter, so it has to be refused before the helper is reached.
+    n = 8
+    rng = np.random.RandomState(0)
+
+    A = rng.randn(n, 2)
+    B = rng.randn(n, 2)
+
+    with pytest.raises(ValueError, match="at least one plan"):
+        ot.bsp.merge_bijections(A, B, np.zeros((0, n), dtype=np.int32), 2)
+
+    # the native entry point is reachable on its own, so it must refuse it too
+    from ot.bsp import bsp_wrap
+
+    with pytest.raises(ValueError, match="at least one plan"):
+        bsp_wrap.merge_bijections_c(
+            np.ascontiguousarray(A),
+            np.ascontiguousarray(B),
+            np.zeros((0, n), dtype=np.int32),
+            2,
+        )
+
+
+def test_bsp_merge_rejects_rows_that_are_not_permutations():
+    # A row describes a bijection only if it is a permutation of 0..n-1. Anything else
+    # makes the merge index outside the point clouds, so it is refused rather than read.
+    n = 8
+    rng = np.random.RandomState(0)
+
+    A = rng.randn(n, 2)
+    B = rng.randn(n, 2)
+    identity = np.arange(n, dtype=np.int32)
+
+    invalid = [
+        np.array([0, 0, 2, 3, 4, 5, 6, 7], dtype=np.int32),  # repeated entry
+        np.array([-1, 1, 2, 3, 4, 5, 6, 7], dtype=np.int32),  # negative index
+        np.array([0, 1, 2, 3, 4, 5, 6, 8], dtype=np.int32),  # past the last point
+        np.array([0, 1, 2, 3, 4, 5, 6, 6], dtype=np.int32),  # missing entry
+    ]
+
+    from ot.bsp import bsp_wrap
+
+    for row in invalid:
+        stack = row.reshape(1, n)
+        with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+            ot.bsp.merge_bijections(A, B, stack, 2)
+        with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+            bsp_wrap.merge_bijections_c(
+                np.ascontiguousarray(A),
+                np.ascontiguousarray(B),
+                np.ascontiguousarray(stack, dtype=np.int32),
+                2,
+            )
+
+        # one bad row is enough to refuse the whole stack, wherever it sits in it
+        mixed = np.stack([identity, row, identity])
+        with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+            ot.bsp.merge_bijections(A, B, mixed, 2)
+        with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+            bsp_wrap.merge_bijections_c(
+                np.ascontiguousarray(A),
+                np.ascontiguousarray(B),
+                np.ascontiguousarray(mixed, dtype=np.int32),
+                2,
+            )
+
+
+def test_bsp_merge_rejects_plans_that_only_look_valid_after_casting():
+    # The entries are checked before the conversion to int32. That cast truncates
+    # fractional values and wraps integers that do not fit, and either one would silently
+    # turn an invalid row into a permutation if the check ran after it.
+    n = 8
+    rng = np.random.RandomState(0)
+
+    A = rng.randn(n, 2)
+    B = rng.randn(n, 2)
+
+    fractional = np.arange(n, dtype=np.float64).reshape(1, n)
+    fractional[0, 3] = 3.5
+    with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+        ot.bsp.merge_bijections(A, B, fractional, 2)
+
+    wrapped = np.arange(n, dtype=np.int64).reshape(1, n)
+    wrapped[0, 3] = 2**32 + 3
+    assert wrapped.astype(np.int32)[0, 3] == 3, "the cast keeps the low bits only"
+    with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+        ot.bsp.merge_bijections(A, B, wrapped, 2)
+
+    nan = np.arange(n, dtype=np.float64).reshape(1, n)
+    nan[0, 5] = np.nan
+    with pytest.raises(ValueError, match="permutation of 0..n_samples-1"):
+        ot.bsp.merge_bijections(A, B, nan, 2)
