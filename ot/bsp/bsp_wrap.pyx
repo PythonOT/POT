@@ -85,6 +85,13 @@ def merge_bijections_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double
     # shape[0]. Reading shape[1] instead makes the C++ loop walk n_samples plans over a
     # buffer that only holds n_plans, which reads past it when n_plans < n_samples.
     cdef int k = plans.shape[0]
+
+    # C++ reads k * n integers, so a row that is shorter or longer than the point cloud
+    # would still make it run past the buffer even with the right plan count.
+    if plans.shape[1] != n:
+        raise ValueError(
+            "plans must have shape (n_plans, n_samples) with one entry per point")
+
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost_val

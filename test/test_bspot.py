@@ -206,6 +206,19 @@ def test_bsp_merge_rejects_plans_of_wrong_length():
     with pytest.raises(ValueError, match="2D"):
         ot.bsp.merge_bijections(A, B, np.zeros((n, n, 1), dtype=np.int32), 2)
 
+    # the same refusal at the native boundary, so no caller can reach the overrun
+    from ot.bsp import bsp_wrap
+
+    with pytest.raises(ValueError, match="one entry per point"):
+        bsp_wrap.merge_bijections_c(
+            np.ascontiguousarray(A, dtype=np.float64),
+            np.ascontiguousarray(B, dtype=np.float64),
+            np.ascontiguousarray(
+                np.tile(np.roll(np.arange(7), 1), (3, 1)), dtype=np.int32
+            ),
+            2,
+        )
+
 
 def test_bsp_merge_on_a_standard_stack():
     # The ordinary case must keep its documented behaviour: a bijection no worse than any
