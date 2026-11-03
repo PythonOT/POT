@@ -592,7 +592,7 @@ def bures_wasserstein_distance(ms, mt, Cs, Ct, paired=False, log=False):
         assert (
             len(ms.shape) == 2 and len(mt.shape) == 2
         ), "Both ms and mt should be batched"
-        if paired and len(ms.shape) == len(mt.shape):
+        if paired and len(ms) == len(mt):
             # Return shape (n,)
             squared_dist_m = nx.norm(ms - mt, axis=-1) ** 2
         else:
