@@ -586,6 +586,44 @@ def test_unbalanced_multiple_inputs(nx, method):
     np.testing.assert_allclose(nx.to_numpy(losses), np.array([loss1, loss2]), atol=1e-4)
 
 
+@pytest.mark.parametrize("reg_m", [1.0, (0.5, 2.0), 100.0])
+def test_stabilized_vs_sinkhorn_with_absorption(nx, reg_m):
+    # small reg and tau so that the stabilized solver absorbs the scalings
+    rng = np.random.RandomState(0)
+    a = rng.rand(5) + 0.1
+    a = 1.7 * a / a.sum()
+    b = rng.rand(9) + 0.1
+    b = b / b.sum()
+    M = 2 * rng.rand(5, 9)
+    reg = 0.05
+
+    ab, bb, Mb = nx.from_numpy(a, b, M)
+
+    G = ot.unbalanced.sinkhorn_stabilized_unbalanced(
+        ab, bb, Mb, reg, reg_m, tau=100, numItermax=100000, stopThr=1e-12
+    )
+    G_ref = ot.unbalanced.sinkhorn_knopp_unbalanced(
+        a, b, M, reg, reg_m, numItermax=100000, stopThr=1e-14
+    )
+
+    np.testing.assert_allclose(nx.to_numpy(G), G_ref, atol=1e-7)
+
+
+def test_stabilized_vs_sinkhorn_absorption_issue_711():
+    # example of Issue #711, where the stabilized solver returned another plan
+    a = np.array([0.3, 0.7])
+    b = np.array([0.7, 0.3])
+    M = np.array([[0.0, 1.0], [1.0, 0.0]])
+
+    G = ot.unbalanced.sinkhorn_stabilized_unbalanced(
+        a, b, M, 0.01, 100, reg_type="entropy", tau=1000, numItermax=100000
+    )
+    G_ref = ot.unbalanced.sinkhorn_knopp_unbalanced(
+        a, b, M, 0.01, 100, reg_type="entropy", numItermax=100000
+    )
+    np.testing.assert_allclose(G, G_ref, atol=1e-6)
+
+
 def test_stabilized_vs_sinkhorn(nx):
     # test if stable version matches sinkhorn
     n = 100
