@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix an out-of-bounds read in `ot.bsp.merge_bijections`: the number of plans to merge was taken from `perms.shape[1]`, the number of samples, instead of `perms.shape[0]`, so the C++ merge loop walked `n_samples` plans over a stack of `n_plans` and read past it when `n_plans < n_samples`, or dropped the plans at index `>= n_samples` otherwise. A `perms` that does not follow the documented `(n_plans, n_samples)` layout is now rejected before it reaches C++ (PR #911, Issue #910)
 - Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
