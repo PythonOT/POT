@@ -156,13 +156,12 @@ def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
     np.testing.assert_allclose(Ct, Cst, rtol=1.0, atol=1.0)
 
 
-def test_empirical_bures_wasserstein_mapping_numerical_error_warning():
+def test_empirical_bures_wasserstein_mapping_ill_conditioned_is_finite():
     rng = np.random.RandomState(42)
     Xs = rng.rand(766, 800) * 5
     Xt = rng.rand(295, 800) * 2
-    with pytest.warns():
-        A, b = ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt, reg=1e-8)
-        assert not is_all_finite(A, b)
+    A, b = ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt, reg=1e-8)
+    assert is_all_finite(A, b)
 
 
 def test_bures_wasserstein_distance(nx):

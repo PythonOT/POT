@@ -812,6 +812,20 @@ def test_func_backends(nx):
         )
 
 
+def test_sqrtm_rank_deficient_is_finite(nx):
+    rng = np.random.RandomState(0)
+    factors = rng.randn(10, 5)
+    covariance = factors @ factors.T / 5
+
+    covariance_backend = nx.from_numpy(covariance)
+    square_root = nx.to_numpy(nx.sqrtm(covariance_backend))
+
+    assert np.isfinite(square_root).all()
+    np.testing.assert_allclose(
+        square_root @ square_root, covariance, rtol=1e-5, atol=1e-6
+    )
+
+
 def test_arange_type_as(nx):
     # `arange` used to silently ignore `type_as` for dtype (and device, in
     # some backends), unlike `zeros`/`ones`/`full`, which do respect it.
