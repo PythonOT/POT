@@ -42,7 +42,11 @@ def compute_bspot_bijection(
         Comes with a cubic complexity with dimension.
         If 'auto', then the heuristic is used for dimensions smaller than 64, and disabled for larger dimensions.
     seed : int, optional
-        Random seed for reproducibility (default 0).
+        Random seed for reproducibility (default 0). Candidate plans are
+        reproducible for a given seed within a fixed build, so a loop that
+        refines a solution with ``initial_perm`` should use a different seed
+        at each round: reusing the same seed regenerates the same candidate
+        plans and can stall the refinement.
 
     Returns
     -------
