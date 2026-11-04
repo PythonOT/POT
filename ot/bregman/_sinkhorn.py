@@ -622,6 +622,12 @@ def sinkhorn_knopp(
 
     Kp = (1 / a).reshape(-1, 1) * K
 
+    def any_nonzero(x):
+        # Keep backend dispatch for array subclasses and other backends.
+        if type(x) is np.ndarray:
+            return x.any()
+        return nx.any(x)
+
     err = 1
     for ii in range(numItermax):
         uprev = u
@@ -631,11 +637,11 @@ def sinkhorn_knopp(
         u = 1.0 / nx.dot(Kp, v)
 
         if (
-            nx.any(KtransposeU == 0)
-            or nx.any(nx.isnan(u))
-            or nx.any(nx.isnan(v))
-            or nx.any(nx.isinf(u))
-            or nx.any(nx.isinf(v))
+            any_nonzero(KtransposeU == 0)
+            or any_nonzero(nx.isnan(u))
+            or any_nonzero(nx.isnan(v))
+            or any_nonzero(nx.isinf(u))
+            or any_nonzero(nx.isinf(v))
         ):
             # we have reached the machine precision
             # come back to previous solution and quit loop
