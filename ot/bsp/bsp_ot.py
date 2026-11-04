@@ -170,10 +170,8 @@ def merge_bijections(X, Y, perms, p=2):
     if perms.shape[0] == 0:
         raise ValueError("perms must contain at least one plan")
 
-    # Check the entries before casting to int32: the cast truncates fractional values and
-    # wraps integers that do not fit, either of which can turn an invalid row into a valid
-    # one. The merge indexes the point clouds with these values, so they must be a
-    # permutation of 0..n_samples-1 first.
+    # Checked before the cast to int32: that cast truncates fractional values and wraps
+    # integers that do not fit, either of which can turn an invalid row into a permutation.
     expected = np.broadcast_to(np.arange(X_np.shape[0]), perms.shape)
     if not np.array_equal(np.sort(perms, axis=1), expected):
         raise ValueError("each row of perms must be a permutation of 0..n_samples-1")

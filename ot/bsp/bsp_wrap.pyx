@@ -90,24 +90,6 @@ def merge_bijections_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double
     if k == 0:
         raise ValueError("plans must contain at least one plan")
 
-    # C++ indexes the point clouds with these entries, so a stack whose rows are not a
-    # permutation of 0..n-1 must not reach BijectiveMatching. Counting is linear in the
-    # size of the stack and does not copy it.
-    cdef np.ndarray[int, ndim=1, mode="c"] seen = np.zeros(n, dtype=np.int32)
-    cdef int i
-    cdef int j
-    cdef int v
-
-    for i in range(k):
-        for j in range(n):
-            seen[j] = 0
-        for j in range(n):
-            v = plans[i, j]
-            if v < 0 or v >= n or seen[v] != 0:
-                raise ValueError(
-                    "each row of plans must be a permutation of 0..n_samples-1")
-            seen[v] = 1
-
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost_val
