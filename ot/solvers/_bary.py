@@ -259,7 +259,10 @@ def solve_bary_sample(
         If None, then use :math:`\mathbf{c} = \mathbf{a}^{(k)} \mathbf{b}^T`.
         If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{|a^{(k)}|} 1_{|b|}^T`.
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
+        Type of regularization :math:`R`, either "KL", "L2", "entropy", by default
+        "KL". :math:`R(T)=\\sum_{i,j} T_{i,j}\\log(T_{i,j})` for "KL" and "entropy"
+        and :math:`R(T)=\\frac{1}{2}\\|T\\|_F^2` for "L2", so the problem solved is
+        :math:`\\langle M, T\\rangle + reg\\,R(T)` and ``res.value`` is its optimum.
     unbalanced : float or indexable object of length 1 or 2
         Marginal relaxation term.
         If it is a scalar or an indexable object of length 1,

@@ -1233,3 +1233,105 @@ def test_solve_bary_sample_callable_metric(nx):
                 metric=custom_metric,
                 max_iter_bary=1,
             )
+
+
+def _l2_primal_objective(nx, M, plan, reg):
+    # <M, plan> + (reg/2)*||plan||^2: the objective that reg_type="L2" minimises, recomputed here
+    # so that the assertions below do not simply restate the solver's reporting code.
+    return nx.sum(M * plan) + 0.5 * reg * nx.sum(plan**2)
+
+
+def test_solve_l2_value_is_the_optimum(nx):
+    # M=[[0,1],[1,0]] with a=b=[1/2,1/2] is small enough to solve exactly: for reg>2 the
+    # minimiser of <M,P> + (reg/2)||P||^2 is P=[[3/10,1/5],[1/5,3/10]], where <M,P>=2/5,
+    # ||P||^2=13/50 and the optimum is 17/10. reg must exceed 2: at reg<=1 both quadratic
+    # conventions share the vertex [[1/2,0],[0,1/2]] and no value can tell them apart.
+    M = np.array([[0.0, 1.0], [1.0, 0.0]])
+    a = np.array([0.5, 0.5])
+    Mb, ab = nx.from_numpy(M, a)
+
+    try:
+        res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
+    except NotImplementedError:
+        pytest.skip("L2 regularization not implemented for backend %s" % str(nx))
+
+    plan = nx.to_numpy(res.plan)
+    np.testing.assert_allclose(plan, [[0.3, 0.2], [0.2, 0.3]], atol=1e-6)
+
+    # the reported value is the exact optimum,
+    np.testing.assert_allclose(nx.to_numpy(res.value), 1.7, rtol=1e-6)
+    # the objective of the returned plan,
+    np.testing.assert_allclose(
+        nx.to_numpy(res.value),
+        nx.to_numpy(_l2_primal_objective(nx, Mb, res.plan, 10.0)),
+        rtol=1e-6,
+    )
+    # and a lower bound over feasible competitors -- the pre-fix value 3.0 violates this.
+    for competitor in ([[0.5, 0.0], [0.0, 0.5]], [[0.25, 0.25], [0.25, 0.25]]):
+        cb = nx.from_numpy(np.array(competitor))
+        assert nx.to_numpy(res.value) <= nx.to_numpy(
+            _l2_primal_objective(nx, Mb, cb, 10.0)
+        ) + 1e-9
+
+
+def test_solve_l2_value_matches_dual_optimum(nx):
+    # ot.solve delegates to smooth_ot_dual, which reports its own objective in log["res"]["fun"].
+    # Strong duality (the problem is a convex QP and the returned plan is interior) makes the two
+    # agree, so this compares two independent code paths rather than re-deriving a formula.
+    M = np.array([[0.0, 1.0], [1.0, 0.0]])
+    a = np.array([0.5, 0.5])
+    Mb, ab = nx.from_numpy(M, a)
+
+    try:
+        res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
+        _, log = ot.smooth.smooth_ot_dual(
+            ab, ab, Mb, 10.0, reg_type="l2", log=True, stopThr=1e-12
+        )
+    except NotImplementedError:
+        pytest.skip("L2 regularization not implemented for backend %s" % str(nx))
+
+    np.testing.assert_allclose(nx.to_numpy(res.value), -log["res"].fun, rtol=1e-5)
+
+
+def test_solve_bary_sample_l2_value_matches_plans(nx):
+    # res.value must be the objective of the plans that were actually returned, under either
+    # stopping criterion. No iteration count and no specific barycenter is asserted, so the test
+    # does not track the solver's trajectory (correcting the value does move the stopping point
+    # for some tolerances and backends).
+    rng = np.random.RandomState(7)
+    X_list = [rng.randn(n, 2) for n in (12, 15, 9)]
+    a_list = [ot.utils.unif(X.shape[0]) for X in X_list]
+    n_bary, reg = 6, 1.0
+    b, w = ot.utils.unif(n_bary), ot.utils.unif(len(X_list))
+
+    Xb_list = [nx.from_numpy(X) for X in X_list]
+    ab_list = [nx.from_numpy(a) for a in a_list]
+    bb, wb = nx.from_numpy(b, w)
+
+    for stopping_criterion in ("loss", "bary"):
+        try:
+            res = ot.solve_bary_sample(
+                Xb_list,
+                n_bary,
+                a_list=ab_list,
+                w=wb,
+                b=bb,
+                metric="sqeuclidean",
+                reg=reg,
+                reg_type="L2",
+                max_iter_bary=200,
+                tol_bary=1e-4,
+                stopping_criterion=stopping_criterion,
+            )
+        except NotImplementedError:
+            pytest.skip("L2 barycenter not implemented for backend %s" % str(nx))
+
+        X_b = nx.to_numpy(res.X)
+        objective = 0.0
+        for k in range(len(X_list)):
+            M = ot.dist(X_list[k], X_b, metric="sqeuclidean")
+            plan = nx.to_numpy(res.list_res[k].plan)
+            objective += float(w[k]) * (
+                np.sum(M * plan) + 0.5 * reg * np.sum(plan**2)
+            )
+        np.testing.assert_allclose(nx.to_numpy(res.value), objective, rtol=1e-5)
