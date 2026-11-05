@@ -443,7 +443,7 @@ The first general regularization term we can solve is the quadratic
 regularization of the form
 
 .. math::
-    \Omega(\gamma)=\sum_{i,j} \gamma_{i,j}^2
+    \Omega(\gamma)=\frac{1}{2}\sum_{i,j} \gamma_{i,j}^2
 
 This regularization term has an effect similar to entropic regularization by
 densifying the OT matrix, yet it keeps some sort of sparsity that is lost with

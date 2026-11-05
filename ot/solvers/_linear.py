@@ -106,9 +106,16 @@ def solve(
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
         If :math:`\texttt{reg_type}=`'entropy', then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", "entropy",
-        by default "KL". a tuple of functions can be provided for general
-        solver (see :any:`cg`). This is only used when ``reg!=None``.
+        Type of regularization :math:`R`, either "KL", "L2", "entropy", by default
+        "KL". :math:`R(T)=\sum_{i,j} T_{i,j}\log(T_{i,j})` for "entropy",
+        :math:`R(T)=KL(T\,\|\,\mathbf{a}\mathbf{b}^T)` for "KL" and
+        :math:`R(T)=\frac{1}{2}\|T\|_F^2` for "L2", so the problem solved is
+        :math:`\langle M, T\rangle + reg\,R(T)` and ``res.value`` is its optimum.
+        "KL" and "entropy" are solved by the same routine and give the same plan;
+        their values differ by the plan-independent constant
+        :math:`reg\,(\sum_i a_i\log a_i + \sum_j b_j\log b_j)`.
+        A tuple of functions can be provided for a general solver (see
+        :any:`cg`). This is only used when ``reg!=None``.
     unbalanced : float or indexable object of length 1 or 2
         Marginal relaxation term.
         If it is a scalar or an indexable object of length 1,
@@ -528,7 +535,10 @@ def solve(
                 )
 
                 value_linear = nx.sum(M * plan)
-                value = value_linear + reg * nx.sum(plan**2)
+                # SquaredL2.Omega (ot/smooth.py) is half-squared and smooth_ot_dual is
+                # called with gamma=reg, so `plan` above minimises
+                # <M,P> + (reg/2)*||P||_F^2. Report that objective, not <M,P> + reg*||P||_F^2.
+                value = value_linear + 0.5 * reg * nx.sum(plan**2)
                 potentials = (log["alpha"], log["beta"])
 
             else:
@@ -693,7 +703,14 @@ def solve_sample(
         If None, then use :math:`\mathbf{c} = \mathbf{a} \mathbf{b}^T`.
         If `reg_type='entropy'`, then :math:`\mathbf{c} = 1_{dim_a} 1_{dim_b}^T`.
     reg_type : str, optional
-        Type of regularization :math:`R`  either "KL", "L2", "entropy", by default "KL"
+        Type of regularization :math:`R`, either "KL", "L2", "entropy", by default
+        "KL". :math:`R(T)=\sum_{i,j} T_{i,j}\log(T_{i,j})` for "entropy",
+        :math:`R(T)=KL(T\,\|\,\mathbf{a}\mathbf{b}^T)` for "KL" and
+        :math:`R(T)=\frac{1}{2}\|T\|_F^2` for "L2", so the problem solved is
+        :math:`\langle M, T\rangle + reg\,R(T)` and ``res.value`` is its optimum.
+        "KL" and "entropy" are solved by the same routine and give the same plan;
+        their values differ by the plan-independent constant
+        :math:`reg\,(\sum_i a_i\log a_i + \sum_j b_j\log b_j)`.
     unbalanced : float or indexable object of length 1 or 2
         Marginal relaxation term.
         If it is a scalar or an indexable object of length 1,
