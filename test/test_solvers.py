@@ -1234,10 +1234,39 @@ def test_solve_bary_sample_callable_metric(nx):
                 max_iter_bary=1,
             )
 
+# Hand-computed optima for reg_type="L2". These were derived on the 2x2 transport polytope
+# independently of POT: parameterise P(t) = [[t, 1/2-t], [1/2-t, t]] for 0 <= t <= 1/2, then
+# minimise <M,P> + (reg/2)||P||_F^2. d^2/dt^2 = reg*4 > 0 makes the problem strictly convex, so
+# the stationary point is the global minimum, and KKT holds because grad = M + reg*P is additive
+# (G11+G22 == G12+G21) while every entry of P stays positive.
+#   M=[[0,1],[1,0]], reg=10: t*=3/10, <M,P>=2/5, ||P||^2=13/50 -> J = 17/10
+#   M=[[0,1],[1,0]], reg=4 : t*=3/8,  <M,P>=1/4, ||P||^2=5/16  -> J = 7/8
+#   M=[[1,2],[3,4]], reg=1 : <M,P> = 5/2 is CONSTANT along the whole segment, so the optimum is
+#       set by ||P||^2 alone: t*=1/4, ||P||^2=1/4 -> J = 5/2 + 1/8 = 21/8
+lst_l2_exact_cases = [
+    ([[0.0, 1.0], [1.0, 0.0]], 10.0, [[0.3, 0.2], [0.2, 0.3]], 17.0 / 10.0),
+    ([[0.0, 1.0], [1.0, 0.0]], 4.0, [[0.375, 0.125], [0.125, 0.375]], 7.0 / 8.0),
+    ([[1.0, 2.0], [3.0, 4.0]], 1.0, [[0.25, 0.25], [0.25, 0.25]], 21.0 / 8.0),
+]
+
+
+@pytest.mark.parametrize("M,reg,plan_expected,value_expected", lst_l2_exact_cases)
+def test_solve_l2_value_hand_computed(nx, M, reg, plan_expected, value_expected):
+    # The expected values come from the derivation above, not from any POT function, so this
+    # pins the optimum against a wrong plan too: a value merely consistent with whatever plan
+    # was returned would also match a suboptimal plan (137/80 at t=11/40 for the first case).
+    Mb, ab = nx.from_numpy(np.array(M), np.array([0.5, 0.5]))
+    res = ot.solve(Mb, ab, ab, reg=reg, reg_type="L2")
+
+    np.testing.assert_allclose(nx.to_numpy(res.plan), plan_expected, atol=1e-6)
+    # atol covers the BCD convergence error of smooth_ot_dual, worst observed ~8e-7 on these
+    # instances; the reported-value defect this guards is 0.125 to 1.3, four orders larger.
+    np.testing.assert_allclose(nx.to_numpy(res.value), value_expected, rtol=0.0, atol=1e-5)
+
 
 def _l2_primal_objective(nx, M, plan, reg):
-    # <M, plan> + (reg/2)*||plan||^2: the objective that reg_type="L2" minimises, recomputed here
-    # so that the assertions below do not simply restate the solver's reporting code.
+    # <M, plan> + (reg/2)*||plan||^2: the objective that reg_type="L2" minimises, recomputed
+    # here so the assertion below does not reuse the solver's reporting code.
     return nx.sum(M * plan) + 0.5 * reg * nx.sum(plan**2)
 
 
@@ -1250,11 +1279,7 @@ def test_solve_l2_value_is_the_optimum(nx):
     a = np.array([0.5, 0.5])
     Mb, ab = nx.from_numpy(M, a)
 
-    try:
-        res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
-    except NotImplementedError:
-        pytest.skip("L2 regularization not implemented for backend %s" % str(nx))
-
+    res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
     plan = nx.to_numpy(res.plan)
     np.testing.assert_allclose(plan, [[0.3, 0.2], [0.2, 0.3]], atol=1e-6)
 
@@ -1282,14 +1307,10 @@ def test_solve_l2_value_matches_dual_optimum(nx):
     a = np.array([0.5, 0.5])
     Mb, ab = nx.from_numpy(M, a)
 
-    try:
-        res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
-        _, log = ot.smooth.smooth_ot_dual(
-            ab, ab, Mb, 10.0, reg_type="l2", log=True, stopThr=1e-12
-        )
-    except NotImplementedError:
-        pytest.skip("L2 regularization not implemented for backend %s" % str(nx))
-
+    res = ot.solve(Mb, ab, ab, reg=10.0, reg_type="L2")
+    _, log = ot.smooth.smooth_ot_dual(
+        ab, ab, Mb, 10.0, reg_type="l2", log=True, stopThr=1e-12
+    )
     np.testing.assert_allclose(nx.to_numpy(res.value), -log["res"].fun, rtol=1e-5)
 
 
@@ -1309,29 +1330,25 @@ def test_solve_bary_sample_l2_value_matches_plans(nx):
     bb, wb = nx.from_numpy(b, w)
 
     for stopping_criterion in ("loss", "bary"):
-        try:
-            res = ot.solve_bary_sample(
-                Xb_list,
-                n_bary,
-                a_list=ab_list,
-                w=wb,
-                b=bb,
-                metric="sqeuclidean",
-                reg=reg,
-                reg_type="L2",
-                max_iter_bary=200,
-                tol_bary=1e-4,
-                stopping_criterion=stopping_criterion,
-            )
-        except NotImplementedError:
-            pytest.skip("L2 barycenter not implemented for backend %s" % str(nx))
-
+        res = ot.solve_bary_sample(
+            Xb_list,
+            n_bary,
+            a_list=ab_list,
+            w=wb,
+            b=bb,
+            metric="sqeuclidean",
+            reg=reg,
+            reg_type="L2",
+            max_iter_bary=200,
+            # chosen so both trees stop on the same iteration: the value assertion is then the
+            # only thing this test varies
+            tol_bary=1e-4,
+            stopping_criterion=stopping_criterion,
+        )
         X_b = nx.to_numpy(res.X)
         objective = 0.0
         for k in range(len(X_list)):
             M = ot.dist(X_list[k], X_b, metric="sqeuclidean")
             plan = nx.to_numpy(res.list_res[k].plan)
-            objective += float(w[k]) * (
-                np.sum(M * plan) + 0.5 * reg * np.sum(plan**2)
-            )
+            objective += float(w[k]) * (np.sum(M * plan) + 0.5 * reg * np.sum(plan**2))
         np.testing.assert_allclose(nx.to_numpy(res.value), objective, rtol=1e-5)
