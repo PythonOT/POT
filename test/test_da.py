@@ -264,8 +264,8 @@ def test_sinkhorn_l1l2_transport_class(nx):
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
-    mass_semi = nx.sum(otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
-    mass_semi = otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max]
+    label_mismatch = (ys[:, None] != yt_semi[None, :]) & (yt_semi[None, :] != -1)
+    mass_semi = otda_semi.coupling_[label_mismatch]
     assert_allclose(
         nx.to_numpy(mass_semi), np.zeros_like(mass_semi), rtol=1e-9, atol=1e-9
     )
@@ -605,13 +605,33 @@ def test_emd_transport_class(nx):
 
     # check that the coupling forbids mass transport between labeled source
     # and labeled target samples
-    mass_semi = nx.sum(otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max])
-    mass_semi = otda_semi.coupling_[otda_semi.cost_ == otda_semi.limit_max]
+    mass_semi = otda_semi.coupling_[ys[:, None] != yt[None, :]]
 
     # we need to use a small tolerance here, otherwise the test breaks
     assert_allclose(
         nx.to_numpy(mass_semi), np.zeros(list(mass_semi.shape)), rtol=1e-2, atol=1e-2
     )
+
+
+@pytest.skip_backend("tf")
+@pytest.mark.parametrize("transport", [ot.da.EMDTransport, ot.da.SinkhornTransport])
+@pytest.mark.parametrize("limit_max", [10.0, np.inf])
+def test_transport_refit_label_penalty(nx, transport, limit_max):
+    ys, yt = nx.from_numpy(np.array([0, 1]), np.array([1, 0]))
+    kwargs = {"limit_max": limit_max}
+    if transport is ot.da.SinkhornTransport:
+        kwargs["reg_e"] = 0.01
+    reused = transport(**kwargs)
+
+    # Repeated data and changing scales must behave like a fresh estimator.
+    for scale in [0.1, 0.1, 2.0, 0.1]:
+        Xs, Xt = nx.from_numpy(np.array([[0.0], [scale]]), np.array([[0.0], [scale]]))
+        fresh = transport(**kwargs).fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+        reused.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
+        assert_allclose(nx.to_numpy(reused.cost_), nx.to_numpy(fresh.cost_))
+        assert_allclose(nx.to_numpy(reused.coupling_), nx.to_numpy(fresh.coupling_))
+
+    assert reused.get_params()["limit_max"] == limit_max
 
 
 @pytest.skip_backend("tf")
@@ -631,7 +651,7 @@ def test_semisupervised_cost_correction(nx):
     otda = ot.da.EMDTransport(limit_max=10)
     otda.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt)
     cost = nx.to_numpy(otda.cost_)
-    limit = float(nx.to_numpy(otda.limit_max))
+    limit = 10 * nx.to_numpy(ot.dist(Xs, Xt)).max()
     ys_np, yt_np = nx.to_numpy(ys), nx.to_numpy(yt)
     mismatch = ys_np[:, None] != yt_np[None, :]
     assert np.all(cost[mismatch] >= limit - 1e-9), "different labels not penalized"
@@ -642,7 +662,7 @@ def test_semisupervised_cost_correction(nx):
     otda2 = ot.da.EMDTransport(limit_max=10)
     otda2.fit(Xs=Xs, ys=ys, Xt=Xt, yt=yt_semi)
     cost2 = nx.to_numpy(otda2.cost_)
-    limit2 = float(nx.to_numpy(otda2.limit_max))
+    limit2 = 10 * nx.to_numpy(ot.dist(Xs, Xt)).max()
     unlabeled = nx.to_numpy(yt_semi) == -1
     assert np.all(cost2[:, unlabeled] < limit2), "unlabeled targets wrongly forbidden"
 
