@@ -144,6 +144,152 @@ def test_bsp_ot_torch_backend():
     np.testing.assert_allclose(cost_new, 0, atol=1e-5)
 
 
+def _mean_squared_cost(A, B, perm):
+    # cost of ``perm`` recomputed here, independently of what the solver reports
+    return float(np.mean(np.sum((A - B[np.asarray(perm)]) ** 2, axis=1)))
+
+
+def _clouds(n=8, data_seed=0):
+    rng = np.random.RandomState(data_seed)
+    return rng.randn(n, 2), rng.randn(n, 2)
+
+
+def test_bsp_merge_fewer_plans_than_samples():
+    # perms stacks (n_plans, n_samples) permutations, so the merge has n_plans of them to
+    # read. With one plan over 32 samples the old code read one plan per sample and walked
+    # off the end of the array (issue #910).
+    n = 32
+    A, B = _clouds(n)
+    perms = np.arange(n, dtype=np.int32).reshape(1, n)
+
+    with warnings.catch_warnings():
+        # merge_bijections warns when its reported cost is not the cost of the permutation
+        warnings.simplefilter("error")
+        cost, perm = ot.bsp.merge_bijections(A, B, perms, 2)
+
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(n))
+    np.testing.assert_allclose(cost, _mean_squared_cost(A, B, perm), rtol=1e-9)
+    assert cost <= _mean_squared_cost(A, B, np.arange(n)) + 1e-12
+
+
+def test_bsp_merge_uses_every_supplied_plan():
+    # The plans past the n_samples-th must reach the merge. Both clouds are the same, so
+    # the identity is the only plan that can give a zero cost.
+    n = 8
+    A, _ = _clouds(n)
+    B = A.copy()
+
+    mediocre = np.roll(np.arange(n), 1).astype(np.int32)
+    without = np.tile(mediocre, (n, 1))
+    with_last = np.vstack([without, np.arange(n)]).astype(np.int32)
+
+    cost_without, _ = ot.bsp.merge_bijections(A, B, without, 2)
+    cost_with, perm_with = ot.bsp.merge_bijections(A, B, with_last, 2)
+
+    assert cost_with < cost_without, "the plan past n_samples was ignored"
+    np.testing.assert_array_equal(np.asarray(perm_with), np.arange(n))
+    np.testing.assert_allclose(cost_with, 0.0, atol=1e-12)
+
+
+def test_bsp_merge_on_a_standard_stack():
+    # The ordinary case keeps its documented behaviour: a bijection no worse than any plan
+    # it merged, and a cost that is the cost of that bijection.
+    n = 50
+    A, B = _clouds(n)
+    perms = np.stack([np.roll(np.arange(n), s) for s in (1, 7, 23, 41)]).astype(np.int32)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cost, perm = ot.bsp.merge_bijections(A, B, perms, 2)
+
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(n))
+    np.testing.assert_allclose(cost, _mean_squared_cost(A, B, perm), rtol=1e-9)
+    for plan in perms:
+        assert cost <= _mean_squared_cost(A, B, plan) + 1e-12
+
+
+def test_bsp_merge_supports_documented_dtypes_and_refuses_views():
+    # int64, float64 and list input were accepted before the fix and must stay so; a
+    # non-contiguous view was already refused rather than read.
+    n = 8
+    A, B = _clouds(n)
+    plans = np.tile(np.roll(np.arange(n), 1), (4, 1))
+
+    ref_cost, ref_perm = ot.bsp.merge_bijections(A, B, plans.astype(np.int32), 2)
+    for other in (plans.astype(np.int64), plans.astype(np.float64), plans.tolist()):
+        cost, perm = ot.bsp.merge_bijections(A, B, other, 2)
+        np.testing.assert_allclose(cost, ref_cost, rtol=0, atol=0)
+        np.testing.assert_array_equal(np.asarray(perm), np.asarray(ref_perm))
+
+    view = np.asfortranarray(plans.astype(np.int32))
+    assert not view.flags["C_CONTIGUOUS"]
+    with pytest.raises(ValueError, match="C-contiguous"):
+        ot.bsp.merge_bijections(A, B, view, 2)
+
+
+@pytest.mark.parametrize(
+    "perms, reason",
+    [
+        pytest.param(np.arange(8, dtype=np.int32), "2D", id="one_dimensional"),
+        pytest.param(np.zeros((8, 8, 1), np.int32), "2D", id="three_dimensional"),
+        pytest.param(
+            np.tile(np.roll(np.arange(7), 1), (3, 1)),
+            "n_samples is the number of points",
+            id="rows_of_wrong_length",
+        ),
+        pytest.param(np.zeros((0, 8), np.int32), "at least one plan", id="empty_stack"),
+        pytest.param([[0, 0, 2, 3, 4, 5, 6, 7]], "permutation of", id="repeated_entry"),
+        pytest.param([[-1, 1, 2, 3, 4, 5, 6, 7]], "permutation of", id="negative_index"),
+        pytest.param([[0, 1, 2, 3, 4, 5, 6, 8]], "permutation of", id="index_past_last_point"),
+        pytest.param([[0, 1, 2, 3, 4, 5, 6, 6]], "permutation of", id="missing_entry"),
+        pytest.param([[0, 1, 2, np.nan, 4, 5, 6, 7]], "permutation of", id="nan_entry"),
+    ],
+)
+def test_bsp_merge_rejects_invalid_perms(perms, reason):
+    # A row that is not a permutation of 0..n_samples-1 makes the merge index outside the
+    # point clouds, and a stack that is not (n_plans, n_samples) cannot be read at all.
+    A, B = _clouds()
+    with pytest.raises(ValueError, match=reason):
+        ot.bsp.merge_bijections(A, B, perms, 2)
+
+
+@pytest.mark.parametrize(
+    "perms",
+    [
+        pytest.param(np.array([0, 1, 2, 3.5, 4, 5, 6, 7]), id="truncates_to_valid"),
+        pytest.param(
+            np.array([0, 1, 2, 2**32 + 3, 4, 5, 6, 7], dtype=np.int64),
+            id="wraps_to_valid",
+        ),
+    ],
+)
+def test_bsp_merge_checks_the_entries_before_casting_to_int32(perms):
+    # Reading these rows as int32 yields a valid permutation -- the cast truncates 3.5 and
+    # keeps the low bits of 2**32 + 3 -- so only a check made before the cast refuses them.
+    A, B = _clouds()
+    np.testing.assert_array_equal(perms.astype(np.int32), np.arange(8))
+    with pytest.raises(ValueError, match="permutation of"):
+        ot.bsp.merge_bijections(A, B, perms.reshape(1, 8), 2)
+
+
+def test_bsp_merge_c_refuses_a_stack_it_cannot_bound():
+    # merge_bijections_c is reachable on its own, so it keeps the row-length and the
+    # empty-stack guards that bound the buffer it hands to C++.
+    from ot.bsp import bsp_wrap
+
+    A, B = _clouds()
+    for perms, reason in [
+        (np.tile(np.roll(np.arange(7), 1), (3, 1)), "one entry per point"),
+        (np.zeros((0, 8), np.int32), "at least one plan"),
+    ]:
+        with pytest.raises(ValueError, match=reason):
+            bsp_wrap.merge_bijections_c(
+                A, B, np.ascontiguousarray(perms, dtype=np.int32), 2
+            )
+
+
 def _two_clouds(n=100, data_seed=0):
     rng = np.random.RandomState(data_seed)
     return rng.randn(n, 2), rng.randn(n, 2)
