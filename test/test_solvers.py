@@ -654,6 +654,15 @@ def test_solve_sample_lazy_emd(nx, metric):
     # Lazy solver: compute distances on-the-fly
     sol_lazy = ot.solve_sample(X_sb, X_tb, ab, bb, lazy=True, metric=metric)
 
+    # Access marginals without materializing the full sparse transport plan.
+    assert sol_lazy.marginals is not None
+    for actual, expected in [
+        (sol_lazy.marginal_a, ab),
+        (sol_lazy.marginal_b, bb),
+        *zip(sol_lazy.marginals, (ab, bb)),
+    ]:
+        np.testing.assert_allclose(nx.to_numpy(actual), nx.to_numpy(expected))
+
     # Check that optimal costs match
     np.testing.assert_allclose(
         nx.to_numpy(sol_standard.value),

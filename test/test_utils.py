@@ -562,6 +562,116 @@ def test_OTResult():
             getattr(res, at)
 
 
+@pytest.mark.parametrize("representation", ["dense", "sparse", "lazy"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_OTResult_marginals(nx, representation, dtype):
+    # A rectangular plan with a zero target marginal and nonuniform weights.
+    plan_np = np.array([[0.2, 0.0, 0.3], [0.0, 0.0, 0.5]], dtype=dtype)
+    plan = nx.from_numpy(plan_np)
+    if representation == "sparse":
+        rows, cols = np.nonzero(plan_np)
+        sparse = nx.coo_matrix(
+            *nx.from_numpy(plan_np[rows, cols], rows, cols),
+            shape=plan_np.shape,
+            type_as=plan,
+        )
+        res = ot.utils.OTResult(sparse_plan=sparse, backend=nx)
+    elif representation == "lazy":
+        lazy = ot.utils.LazyTensor(plan.shape, lambda i, j: plan[i, j])
+        res = ot.utils.OTResult(lazy_plan=lazy, backend=nx, batch_size=1)
+    else:
+        res = ot.utils.OTResult(plan=plan, backend=nx)
+
+    expected_a = np.array([0.5, 0.5])
+    expected_b = np.array([0.2, 0.0, 0.8])
+    assert res.marginal_a is not None
+    assert res.marginal_b is not None
+    assert res.marginals is not None
+    for actual, expected in [
+        (res.marginal_a, expected_a),
+        (res.marginal_b, expected_b),
+        *zip(res.marginals, (expected_a, expected_b)),
+    ]:
+        assert actual.shape == expected.shape
+        nx.assert_same_dtype_device(plan, actual)
+        np.testing.assert_allclose(nx.to_numpy(actual), expected)
+
+
+def test_OTResult_sparse_matrix_marginals():
+    # csr_matrix reductions otherwise retain an extra dimension as np.matrix.
+    plan = scipy.sparse.csr_matrix([[0.2, 0.0, 0.3], [0.0, 0.0, 0.5]])
+    res = ot.utils.OTResult(sparse_plan=plan)
+    assert res.marginal_a is not None
+    assert res.marginal_b is not None
+    assert res.marginal_a.shape == (2,)
+    assert res.marginal_b.shape == (3,)
+    np.testing.assert_allclose(res.marginal_a, [0.5, 0.5])
+    np.testing.assert_allclose(res.marginal_b, [0.2, 0.0, 0.8])
+
+
+def test_OTResult_sparse_marginals_no_densification(nx, monkeypatch):
+    # Duplicate entries and a rectangular shape exercise real sparse reductions.
+    data = np.array([0.1, 0.1, 0.3, 0.5])
+    rows = np.array([0, 0, 0, 1])
+    cols = np.array([0, 0, 2, 2])
+    data, rows, cols = nx.from_numpy(data, rows, cols)
+    plan = nx.coo_matrix(data, rows, cols, shape=(2, 3), type_as=data)
+    res = ot.utils.OTResult(sparse_plan=plan, backend=nx)
+
+    def no_dense_plan(*args, **kwargs):
+        raise AssertionError("The full sparse plan must not be densified")
+
+    monkeypatch.setattr(nx, "todense", no_dense_plan)
+    assert res.marginals is not None
+    a, b = res.marginals
+    np.testing.assert_allclose(nx.to_numpy(a), [0.5, 0.5])
+    np.testing.assert_allclose(nx.to_numpy(b), [0.2, 0.0, 0.8])
+
+
+@pytest.mark.parametrize("layout", ["csr", "csc"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_OTResult_compressed_sparse_marginals_torch(layout, dtype, monkeypatch):
+    torch = pytest.importorskip("torch")
+    nx = ot.backend.TorchBackend()
+    dense = torch.from_numpy(np.array([[0.1, 0.0, 0.2], [0.0, 0.3, 0.4]], dtype=dtype))
+    plan = dense.to_sparse_csr() if layout == "csr" else dense.to_sparse_csc()
+    res = ot.utils.OTResult(sparse_plan=plan, backend=nx)
+    # Backend detection currently recognizes CSR; an explicit CSC plan also works.
+    assert nx.issparse(plan) == (layout == "csr")
+    assert res.sparse_plan is plan
+
+    def no_dense_plan(*args, **kwargs):
+        raise AssertionError("The full sparse plan must not be densified")
+
+    monkeypatch.setattr(nx, "todense", no_dense_plan)
+    expected_a = np.array([0.3, 0.7])
+    expected_b = np.array([0.1, 0.3, 0.6])
+    assert res.marginals is not None
+    for actual, expected in [
+        (res.marginal_a, expected_a),
+        (res.marginal_b, expected_b),
+        *zip(res.marginals, (expected_a, expected_b)),
+    ]:
+        assert actual.shape == expected.shape
+        nx.assert_same_dtype_device(dense, actual)
+        np.testing.assert_allclose(nx.to_numpy(actual), expected)
+
+
+def test_OTResult_sparse_marginals_torch_gradients():
+    torch = pytest.importorskip("torch")
+    data = torch.tensor([0.2, 0.3, 0.5], dtype=torch.float64, requires_grad=True)
+    indices = torch.tensor([[0, 0, 1], [0, 2, 2]])
+    plan = torch.sparse_coo_tensor(indices, data, (2, 3))
+    res = ot.utils.OTResult(sparse_plan=plan, backend=ot.backend.TorchBackend())
+    assert res.marginals is not None
+    a, b = res.marginals
+    loss = a @ torch.tensor([2.0, 3.0], dtype=data.dtype)
+    loss = loss + b @ torch.tensor([5.0, 7.0, 11.0], dtype=data.dtype)
+    loss.backward()
+    # Each transport entry contributes its row coefficient plus its column's.
+    np.testing.assert_allclose(data.grad, [7.0, 13.0, 14.0])
+
+
 def test_BaryResult():
     res = ot.utils.BaryResult()
 
