@@ -19,6 +19,7 @@ from ._utils import (
     init_matrix_semirelaxed,
     gwloss,
     gwggrad,
+    tensor_product,
     update_barycenter_structure,
     update_barycenter_feature,
     semirelaxed_init_plan,
@@ -970,26 +971,30 @@ def entropic_semirelaxed_gromov_wasserstein(
 
     constC, hC1, hC2, fC2t = init_matrix_semirelaxed(C1, C2, p, loss_fun, nx)
 
-    ones_p = nx.ones(p.shape[0], type_as=p)
-
     if symmetric:
+        # df returns half of the gradient, the factor 2 of gwggrad is applied
+        # exactly through the step size below
+        grad_factor = 2
 
         def df(G):
             qG = nx.sum(G, 0)
-            marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
-            return gwggrad(constC + marginal_product, hC1, hC2, G, nx)
+            marginal_product = nx.dot(qG, fC2t)[None, :]
+            return tensor_product(constC + marginal_product, hC1, hC2, G, nx)
     else:
+        grad_factor = 1
         constCt, hC1t, hC2t, fC2 = init_matrix_semirelaxed(C1.T, C2.T, p, loss_fun, nx)
 
         def df(G):
             qG = nx.sum(G, 0)
-            marginal_product_1 = nx.outer(ones_p, nx.dot(qG, fC2t))
-            marginal_product_2 = nx.outer(ones_p, nx.dot(qG, fC2))
-            return 0.5 * (
-                gwggrad(constC + marginal_product_1, hC1, hC2, G, nx)
-                + gwggrad(constCt + marginal_product_2, hC1t, hC2t, G, nx)
-            )
+            marginal_product_1 = nx.dot(qG, fC2t)[None, :]
+            marginal_product_2 = nx.dot(qG, fC2)[None, :]
+            # equals 0.5 * (gwggrad(...) + gwggrad(...)) exactly
+            return tensor_product(
+                constC + marginal_product_1, hC1, hC2, G, nx
+            ) + tensor_product(constCt + marginal_product_2, hC1t, hC2t, G, nx)
 
+    # -grad / epsilon == df(G) / neg_step exactly, as scaling by 2 is exact
+    neg_step = -epsilon / grad_factor
     cpt = 0
     err = 1e15
     G = G0
@@ -1000,9 +1005,9 @@ def entropic_semirelaxed_gromov_wasserstein(
     while err > tol and cpt < max_iter:
         Gprev = G
         # compute the kernel
-        K = G * nx.exp(-df(G) / epsilon)
+        K = G * nx.exp(df(G) / neg_step)
         scaling = p / nx.sum(K, 1)
-        G = nx.reshape(scaling, (-1, 1)) * K
+        G = scaling[:, None] * K
         if cpt % 10 == 0:
             # we can speed up the process by checking for the error only all
             # the 10th iterations
@@ -1020,7 +1025,7 @@ def entropic_semirelaxed_gromov_wasserstein(
 
     if log:
         qG = nx.sum(G, 0)
-        marginal_product = nx.outer(ones_p, nx.dot(qG, fC2t))
+        marginal_product = nx.dot(qG, fC2t)[None, :]
         log["srgw_dist"] = gwloss(constC + marginal_product, hC1, hC2, G, nx)
         return G, log
     else:
