@@ -5,6 +5,8 @@
 #
 # License: MIT License
 
+import warnings
+
 import numpy as np
 
 import pytest
@@ -157,12 +159,88 @@ def test_empirical_bures_wasserstein_mapping_hd(nx, bias):
 
 
 def test_empirical_bures_wasserstein_mapping_numerical_error_warning():
+    # 766 source samples in 800 dimensions: with reg=0 the source covariance is
+    # singular and no Bures-Wasserstein map exists
     rng = np.random.RandomState(42)
     Xs = rng.rand(766, 800) * 5
     Xt = rng.rand(295, 800) * 2
-    with pytest.warns():
-        A, b = ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt, reg=1e-8)
-        assert not is_all_finite(A, b)
+    with pytest.warns(UserWarning, match="does not transport"):
+        ot.gaussian.empirical_bures_wasserstein_mapping(Xs, Xt, reg=0)
+
+
+def test_empirical_bures_wasserstein_mapping_ill_conditioned_is_accurate():
+    # same data with reg=1e-8: the source covariance is ill-conditioned but
+    # invertible, so the map exists; it used to come back NaN because rounding
+    # pushed eigenvalues of a PSD matrix below zero before the square root
+    rng = np.random.RandomState(42)
+    Xs = rng.rand(766, 800) * 5
+    Xt = rng.rand(295, 800) * 2
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        A, b, log = ot.gaussian.empirical_bures_wasserstein_mapping(
+            Xs, Xt, reg=1e-8, log=True
+        )
+    assert is_all_finite(A, b)
+    Cs, Ct = log["Cs"], log["Ct"]
+    np.testing.assert_allclose(dots(A, Cs, A), Ct, rtol=1e-6, atol=1e-6)
+
+
+def test_bures_wasserstein_mapping_warns_on_singular_source():
+    rng = np.random.RandomState(0)
+    Y = rng.randn(200, 10)
+    Ct = np.cov(Y.T)
+
+    Z = rng.randn(5, 10)  # 5 samples in 10 dimensions
+    with pytest.warns(UserWarning, match="does not transport"):
+        ot.gaussian.bures_wasserstein_mapping(
+            Z.mean(0), Y.mean(0), np.cov(Z.T, bias=True), Ct
+        )
+
+    X = rng.randn(200, 10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ot.gaussian.bures_wasserstein_mapping(X.mean(0), Y.mean(0), np.cov(X.T), Ct)
+
+
+@pytest.mark.skipif(not ot.backend.jax, reason="jax not available")
+def test_bures_wasserstein_mapping_jax_transforms():
+    # the accuracy check reads values back to NumPy, which traced values do not
+    # allow; jit and grad through the mapping must still work
+    jax = ot.backend.jax
+    rng = np.random.RandomState(0)
+    X, Y = rng.randn(50, 5), rng.randn(60, 5)
+    nx = ot.backend.JaxBackend()
+    ms, mt, Cs, Ct = nx.from_numpy(X.mean(0), Y.mean(0), np.cov(X.T), np.cov(Y.T))
+
+    def f(Cs, Ct):
+        return ot.gaussian.bures_wasserstein_mapping(ms, mt, Cs, Ct)[0]
+
+    np.testing.assert_allclose(jax.jit(f)(Cs, Ct), f(Cs, Ct), rtol=1e-8)
+    for argnums in (0, 1):
+        g = jax.grad(lambda Cs, Ct: f(Cs, Ct).sum(), argnums=argnums)(Cs, Ct)
+        assert np.all(np.isfinite(g))
+
+
+def test_bures_distance_rank_deficient(nx):
+    rng = np.random.RandomState(1)
+    d = 10
+    for rank in (9, 5, 2):
+        F = rng.randn(d, rank)
+        C = nx.from_numpy(F @ F.T / rank)
+        # B(C, C) = 0 for any PSD C; this used to give NaN or LinAlgError
+        np.testing.assert_allclose(
+            nx.to_numpy(ot.gaussian.bures_distance(C, C)), 0, atol=1e-6
+        )
+
+    # commuting case with a shared null space: B^2 = sum (sqrt(a) - sqrt(b))^2
+    a = rng.rand(d) + 0.1
+    b = rng.rand(d) + 0.1
+    a[:4] = b[:4] = 0.0
+    expected = np.sqrt(np.sum((np.sqrt(a) - np.sqrt(b)) ** 2))
+    Cs, Ct = nx.from_numpy(np.diag(a), np.diag(b))
+    np.testing.assert_allclose(
+        nx.to_numpy(ot.gaussian.bures_distance(Cs, Ct)), expected, rtol=1e-6
+    )
 
 
 def test_bures_wasserstein_distance(nx):
