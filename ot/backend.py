@@ -1708,16 +1708,21 @@ class JaxBackend(Backend):
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
 
-        (val,) = jax.lax.stop_gradient((val,))
-
         ravelled_inputs, _ = ravel_pytree(inputs)
         ravelled_grads, _ = ravel_pytree(grads)
 
-        aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
-        aux = aux - jax.lax.stop_gradient(aux)
+        @jax.custom_jvp
+        def auxiliary(args, gradients):
+            return jnp.zeros((), dtype=jnp.result_type(args, gradients, 0.0))
 
-        (val,) = jax.tree_util.tree_map(lambda z: z + aux, (val,))
-        return val
+        @auxiliary.defjvp
+        def auxiliary_jvp(primals, tangents):
+            args, gradients = primals
+            args_dot, _ = tangents
+            return auxiliary(args, gradients), jnp.sum(args_dot * gradients)
+
+        aux = auxiliary(ravelled_inputs, ravelled_grads)
+        return jax.tree_util.tree_map(lambda z: jax.lax.stop_gradient(z) + aux, val)
 
     def _detach(self, a):
         return jax.lax.stop_gradient(a)
