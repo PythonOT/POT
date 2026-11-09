@@ -89,10 +89,15 @@ pl.show()
 # Interpret the transported mass on the same 2D samples
 # -----------------------------------------------------
 #
-# Both histograms have total mass one, so ``m`` is also the transported
-# fraction here. With 40 uniformly weighted samples, each sample can supply
-# or receive at most 1/40 of the mass. The parameter constrains total mass,
-# rather than selecting a fixed number of points or one-to-one matches.
+# The parameter ``m`` is an absolute amount of mass, in the same units as
+# the histogram weights. Both totals are one here, so ``m`` is also the
+# transported fraction. With source and target totals of two and three,
+# ``m=0.5`` would transport one quarter and one sixth of their masses.
+# With 40 uniformly weighted samples here, each sample can supply or receive
+# at most 1/40 of the mass. A sample's weight can be used partially or split
+# across several pairs; ``m`` does not select a fixed number of points.
+# Full mass recovers balanced OT when both totals agree. With unequal totals,
+# transporting the smaller total leaves unused weight in the larger one.
 #
 # We vary ``m`` using the exact partial Wasserstein solver. The first 20
 # samples in each distribution are Gaussian samples (called inliers below),
@@ -102,7 +107,7 @@ pl.show()
 # transporting remote samples. Partial OT does not guarantee outlier removal.
 
 mass_study = {
-    "masses": np.array([0.25, 0.5, 0.75, 1.0]),
+    "masses": np.arange(1, 9) / 8,
     "plans": [],
     "source_weights": p.copy(),
     "target_weights": q.copy(),
@@ -146,16 +151,9 @@ assert np.isclose(
 )
 
 print("\nExact partial Wasserstein mass study (raw transport costs):")
-print("   m      cost  source in source out  target in target out    any out")
+print("    m      cost")
 for record in mass_study["records"]:
-    print(
-        f'{record["mass"]:4.2f} {record["cost"]:9.4f}'
-        f' {record["source_inlier_mass"]:10.4f}'
-        f' {record["source_outlier_mass"]:10.4f}'
-        f' {record["target_inlier_mass"]:10.4f}'
-        f' {record["target_outlier_mass"]:10.4f}'
-        f' {record["any_outlier_mass"]:10.4f}'
-    )
+    print(f'{record["mass"]:5.3f} {record["cost"]:9.4f}')
 
 #############################################################################
 #
@@ -166,7 +164,9 @@ for record in mass_study["records"]:
 fig_plans, plan_axes = pl.subplots(
     1, 4, figsize=(12, 3.6), sharex=True, sharey=True, constrained_layout=True
 )
-for ax, mass, plan in zip(plan_axes, mass_study["masses"], mass_study["plans"]):
+for ax, mass, plan in zip(
+    plan_axes, mass_study["masses"][1::2], mass_study["plans"][1::2]
+):
     image = ax.imshow(plan, cmap="Blues", vmin=0, vmax=p.max())
     ax.axhline(n_samples - 0.5, color="gray", linestyle="--", linewidth=1)
     ax.axvline(n_samples - 0.5, color="gray", linestyle="--", linewidth=1)
@@ -174,44 +174,57 @@ for ax, mass, plan in zip(plan_axes, mass_study["masses"], mass_study["plans"]):
     ax.set_xlabel("Target sample index")
     ax.set_xticks([0, n_samples, n_samples + n_noise - 1])
 plan_axes[0].set_ylabel("Source sample index")
-fig_plans.suptitle("Exact partial OT: indices 0-19 are inliers, 20-39 are outliers")
+fig_plans.suptitle("Exact partial OT: indices 0-19 are Gaussian, 20-39 are remote")
 fig_plans.colorbar(image, ax=plan_axes, label="Mass per pair", shrink=0.75)
 pl.show()
 
 #############################################################################
 #
 # Summarize the mass used from each distribution separately. Each stacked
-# bar has height ``m``. Mass involving any outlier is reported in the table
-# as total mass minus the inlier-inlier block, since adding the source and
-# target outlier masses would count outlier-outlier pairs twice.
+# bar has height ``m`` and separates mass from Gaussian and remote samples.
 #
 # These summaries describe participation of the synthetic groups, not
 # point-correspondence accuracy. Raw costs at different masses are not a
 # direct comparison of matching quality, because the amount transported
 # changes. The solver also does not choose ``m`` automatically.
 
-fig_mass, mass_axes = pl.subplots(
-    1, 2, figsize=(9, 4), sharey=True, constrained_layout=True
-)
-for ax, side in zip(mass_axes, ("source", "target")):
+fig_mass, mass_axes = pl.subplots(1, 2, figsize=(12, 5), sharey=True)
+fig_mass.subplots_adjust(bottom=0.25, wspace=0.12)
+for ax, side, title in zip(
+    mass_axes,
+    ("source", "target"),
+    ("Mass transported from source", "Mass transported to target"),
+):
     inlier_masses = [record[f"{side}_inlier_mass"] for record in mass_study["records"]]
     outlier_masses = [
         record[f"{side}_outlier_mass"] for record in mass_study["records"]
     ]
-    ax.bar(mass_study["masses"], inlier_masses, width=0.15, label="Gaussian (inlier)")
+    ax.bar(
+        mass_study["masses"],
+        inlier_masses,
+        width=0.08,
+        label="Gaussian samples (inliers)",
+    )
     ax.bar(
         mass_study["masses"],
         outlier_masses,
         bottom=inlier_masses,
-        width=0.15,
-        label="Remote (outlier)",
+        width=0.08,
+        label="Remote samples (outliers)",
     )
-    ax.set_title(f"{side.capitalize()} matched mass")
-    ax.set_xlabel("Requested transported mass m")
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel("Requested transported mass m", fontsize=12)
     ax.set_xticks(mass_study["masses"])
+    ax.tick_params(labelsize=11)
     ax.set_ylim(0, 1.05)
-mass_axes[0].set_ylabel("Matched mass")
-mass_axes[1].legend(loc="upper left")
+mass_axes[0].set_ylabel("Transported mass", fontsize=12)
+fig_mass.legend(
+    *mass_axes[0].get_legend_handles_labels(),
+    loc="lower center",
+    bbox_to_anchor=(0.5, 0.01),
+    ncol=2,
+    fontsize=12,
+)
 mass_study["figures"] = {"plans": fig_plans, "mass_accounting": fig_mass}
 pl.show()
 
