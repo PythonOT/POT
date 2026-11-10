@@ -347,3 +347,148 @@ def test_wasserstein_1d_plan():
         shape=(x.shape[0], y.shape[0]),
     ).toarray()
     np.testing.assert_allclose(plan_1d_tuple, plan_emd, atol=1e-05)
+
+
+@pytest.mark.parametrize("batch_shape", [(), (2,), (2, 3)])
+@pytest.mark.parametrize("weights", ["uniform", "shared", "batched"])
+@pytest.mark.parametrize("require_sort", [False, True])
+@pytest.mark.parametrize("return_plans", [True, "coo_tuple"])
+def test_wasserstein_1d_batched_plans(
+    nx, batch_shape, weights, require_sort, return_plans
+):
+    rng = np.random.RandomState(42)
+    n, m = 7, 5
+    u = rng.randn(n, *batch_shape)
+    v = rng.randn(m, *batch_shape)
+    if not require_sort:
+        u = np.sort(u, axis=0)
+        v = np.sort(v, axis=0)
+
+    if weights == "uniform":
+        a, b = np.full(u.shape, 1 / n), np.full(v.shape, 1 / m)
+        ab = bb = None
+    else:
+        weight_shape = batch_shape if weights == "batched" else ()
+        a = rng.uniform(0.1, 1, (n, *weight_shape))
+        b = rng.uniform(0.1, 1, (m, *weight_shape))
+        a[0] = b[-1] = 0
+        a /= a.sum(axis=0)
+        b /= b.sum(axis=0)
+        ab, bb = nx.from_numpy(a, b)
+        if weights == "shared":
+            a = np.broadcast_to(a.reshape((n,) + (1,) * len(batch_shape)), u.shape)
+            b = np.broadcast_to(b.reshape((m,) + (1,) * len(batch_shape)), v.shape)
+
+    ub, vb = nx.from_numpy(u, v)
+    cost, plans = wasserstein_1d(
+        ub, vb, ab, bb, p=2, require_sort=require_sort, return_plans=return_plans
+    )
+    cost_only = wasserstein_1d(ub, vb, ab, bb, p=2, require_sort=require_sort)
+    assert cost.shape == batch_shape
+    nx.assert_same_dtype_device(ub, cost)
+    np.testing.assert_allclose(nx.to_numpy(cost), nx.to_numpy(cost_only))
+    batches = list(np.ndindex(batch_shape))
+    assert len(plans) == len(batches)
+    for plan, batch in zip(plans, batches):
+        if return_plans == "coo_tuple":
+            data, rows, cols = nx.to_numpy(plan.data, plan.rows, plan.cols)
+            plan = coo_array((data, (rows, cols)), shape=(n, m)).toarray()
+        else:
+            plan = nx.to_numpy(nx.todense(plan))
+        index = (slice(None),) + batch
+        ai, bi = np.ascontiguousarray(a[index]), np.ascontiguousarray(b[index])
+        matrix = (u[index][:, None] - v[index][None, :]) ** 2
+        reference = ot.emd(ai, bi, matrix)
+        np.testing.assert_allclose(plan, reference, atol=1e-12)
+        np.testing.assert_allclose(plan.sum(axis=1), ai, atol=1e-12)
+        np.testing.assert_allclose(plan.sum(axis=0), bi, atol=1e-12)
+        np.testing.assert_allclose(nx.to_numpy(cost)[batch], (plan * matrix).sum())
+
+
+@pytest.mark.parametrize("p", [1, 2])
+def test_wasserstein_1d_shared_batch_weights(nx, p):
+    rng = np.random.RandomState(4)
+    u, v = [rng.randn(n, 2, 3) for n in (7, 5)]
+    a, b = [rng.uniform(0.1, 1, (n, 2)) for n in (7, 5)]
+    a /= a.sum(axis=0)
+    b /= b.sum(axis=0)
+    cost = nx.to_numpy(wasserstein_1d(*nx.from_numpy(u, v, a, b), p=p))
+    assert cost.shape == (2, 3)
+    for i, j in np.ndindex(2, 3):
+        matrix = np.abs(u[:, i, j, None] - v[None, :, i, j]) ** p
+        reference = ot.emd2(
+            np.ascontiguousarray(a[:, i]), np.ascontiguousarray(b[:, i]), matrix
+        )
+        np.testing.assert_allclose(cost[i, j], reference)
+
+
+@pytest.mark.parametrize("batch_shape", [(), (2,), (2, 3), (2, 1, 3)])
+def test_quantile_function_batch_axes(nx, batch_shape):
+    rng = np.random.RandomState(0)
+    xs = np.sort(rng.randn(7, *batch_shape), axis=0)
+    weights = rng.uniform(0.1, 1, xs.shape)
+    cws = np.cumsum(weights / weights.sum(axis=0), axis=0)
+    qs = np.sort(rng.uniform(0, 1, (5, *batch_shape)), axis=0)
+    qs[0], qs[-1] = 0, 1
+    expected_idx = np.empty(qs.shape, dtype=int)
+    for batch in np.ndindex(batch_shape):
+        index = (slice(None),) + batch
+        expected_idx[index] = np.clip(np.searchsorted(cws[index], qs[index]), 0, 6)
+    q, idx = ot.lp.solver_1d.quantile_function(
+        *nx.from_numpy(qs, cws, xs), return_index=True
+    )
+    np.testing.assert_array_equal(nx.to_numpy(idx), expected_idx)
+    np.testing.assert_array_equal(
+        nx.to_numpy(q), np.take_along_axis(xs, expected_idx, axis=0)
+    )
+
+
+def test_wasserstein_1d_multibatch_gradients_torch():
+    torch = pytest.importorskip("torch")
+    rng = np.random.RandomState(5)
+    u, v = [
+        torch.tensor(rng.randn(n, 2, 3), requires_grad=True).transpose(1, 2)
+        for n in (4, 5)
+    ]
+    a, b = [torch.tensor(rng.randn(n), requires_grad=True) for n in (4, 5)]
+
+    def loss(u, v, a, b):
+        return wasserstein_1d(u, v, a.softmax(0), b.softmax(0), p=2).sum()
+
+    result = loss(u, v, a, b)
+    reference = sum(
+        wasserstein_1d(u[:, i, j], v[:, i, j], a.softmax(0), b.softmax(0), p=2)
+        for i in range(3)
+        for j in range(2)
+    )
+    np.testing.assert_allclose(result.detach(), reference.detach())
+    actual_grads = torch.autograd.grad(result, (u, v, a, b))
+    reference_grads = torch.autograd.grad(reference, (u, v, a, b))
+    for actual, expected in zip(actual_grads, reference_grads):
+        np.testing.assert_allclose(actual, expected, atol=1e-12)
+    assert torch.autograd.gradcheck(loss, (u, v, a, b))
+
+
+def test_wasserstein_1d_multibatch_gradients_jax():
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    rng = np.random.RandomState(5)
+    u, v, a, b = [jnp.array(rng.randn(n, 2, 3)) for n in (4, 5, 4, 5)]
+
+    def loss(u, v, a, b):
+        return wasserstein_1d(
+            u, v, jax.nn.softmax(a, axis=0), jax.nn.softmax(b, axis=0), p=2
+        ).sum()
+
+    def reference(u, v, a, b):
+        return sum(
+            loss(u[:, i, j], v[:, i, j], a[:, i, j], b[:, i, j])
+            for i in range(2)
+            for j in range(3)
+        )
+
+    np.testing.assert_allclose(jax.jit(loss)(u, v, a, b), reference(u, v, a, b))
+    actual_grads = jax.grad(loss, argnums=(0, 1, 2, 3))(u, v, a, b)
+    reference_grads = jax.grad(reference, argnums=(0, 1, 2, 3))(u, v, a, b)
+    for actual, expected in zip(actual_grads, reference_grads):
+        np.testing.assert_allclose(actual, expected, atol=1e-12)
