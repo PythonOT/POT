@@ -9,8 +9,7 @@ import numpy as np
 import pytest
 
 import ot
-from ot.sliced import get_random_projections
-from ot.backend import tf, torch
+from ot.backend import torch
 
 
 def test_projections_stiefel():

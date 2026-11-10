@@ -93,7 +93,7 @@ def FGW_distance_to_templates(
         Graph node features.
     tplt_features : list of torch.Tensor, shape (n_templates, n_template_nodes, n_features)
         List of the node features of the templates.
-    weights : torch.Tensor, shape (n_templates, n_template_nodes)
+    tplt_weights : torch.Tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
     alpha : float, optional
         Trade-off parameter (0 < alpha < 1).
@@ -243,7 +243,7 @@ def wasserstein_distance_to_templates(
         Node features of the graph.
     tplt_features : list of torch.Tensor, shape (n_templates, n_template_nodes, n_features)
         List of the node features of the templates.
-    weights : torch.Tensor, shape (n_templates, n_template_nodes)
+    tplt_weights : torch.Tensor, shape (n_templates, n_template_nodes)
         Weights on the nodes of the templates.
     batch: torch.Tensor, optional
         Batch vector which assigns each node to its graph.

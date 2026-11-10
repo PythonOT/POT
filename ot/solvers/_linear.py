@@ -97,7 +97,7 @@ def solve(
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
     b : array-like, shape (dim_b,), optional
-        Samples weights in the source domain (default is uniform)
+        Samples weights in the target domain (default is uniform)
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)
@@ -684,7 +684,7 @@ def solve_sample(
     a : array-like, shape (dim_a,), optional
         Samples weights in the source domain (default is uniform)
     b : array-like, shape (dim_b,), optional
-        Samples weights in the source domain (default is uniform)
+        Samples weights in the target domain (default is uniform)
     reg : float, optional
         Regularization weight :math:`\lambda_r`, by default None (no reg., exact
         OT)

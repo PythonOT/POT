@@ -20,7 +20,6 @@ ACM Transactions on Graphics, Siggraph Asia (2025).
 import ot.utils
 import ot.bsp
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 

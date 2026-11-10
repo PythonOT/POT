@@ -244,7 +244,7 @@ def max_sliced_wasserstein_distance(
         samples weights in the target domain
     n_projections : int, optional
         Number of projections used for the Monte-Carlo approximation
-    p: float, optional =
+    p : float, optional
         Power p used for computing the sliced Wasserstein
     projections: shape (dim, n_projections), optional
         Projection matrix (n_projections and seed are not used in this case)

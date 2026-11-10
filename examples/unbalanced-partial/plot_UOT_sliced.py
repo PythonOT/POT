@@ -147,9 +147,10 @@ A_USOT, B_USOT, _ = ot.unbalanced_sliced_ot(
 
 # %%
 
-get_rot = lambda theta: np.array(
-    [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
-)
+
+def get_rot(theta):
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
 
 # visu parameters
 nb_slices = 180  # 60
@@ -480,9 +481,10 @@ def plot_slices(
 
 # %%
 
-get_rot = lambda theta: np.array(
-    [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
-)
+
+def get_rot(theta):
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
 
 n_samples = 500
 nb_outliers = 200

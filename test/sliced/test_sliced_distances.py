@@ -16,7 +16,7 @@ from ot.sliced import (
     get_projections_spiral,
     get_random_orthogonal_directions,
 )
-from ot.backend import tf, torch
+from ot.backend import tf
 
 
 def test_env():

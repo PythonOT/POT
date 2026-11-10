@@ -35,7 +35,7 @@ def get_sinkhorn_geomloss_lazytensor(
     ----------
     X_a : array-like, shape (n_samples_a, dim)
         samples in the source domain
-    X_torch: array-like, shape (n_samples_b, dim)
+    X_b : array-like, shape (n_samples_b, dim)
         samples in the target domain
     f : array-like, shape (n_samples_a,)
         First dual potentials (log space)

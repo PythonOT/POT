@@ -1309,7 +1309,6 @@ def test_emd_sparse_warmstart():
     np.testing.assert_allclose(G_warm.sum(0), b, atol=1e-7)
 
     # Test sparse solver directly with warmstart via COO format
-    import scipy.sparse as sp
     from ot.lp.emd_wrap import emd_c_sparse
 
     row_indices = np.repeat(np.arange(n), n).astype(np.uint64)

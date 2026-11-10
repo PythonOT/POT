@@ -3,6 +3,7 @@
 
 .. automodule:: {{ fullname }}
    :members:
+   :exclude-members: {{ (functions + classes) | join(', ') }}
 
    {% block functions %}
    {% if functions %}

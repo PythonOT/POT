@@ -5,6 +5,7 @@
 # License: MIT License
 
 import numpy as np
+import pytest
 import ot
 
 
@@ -58,3 +59,17 @@ def test_semi_relaxed_path():
     G = t.reshape((n_source, n_target))
     np.testing.assert_allclose(a, G.sum(1), atol=1e-05)
     np.testing.assert_allclose(b, G.sum(0), atol=1e-10)
+
+
+def test_regularization_path_max_iter_warning():
+    rng = np.random.RandomState(0)
+    xs = rng.randn(10, 2)
+    xt = rng.randn(8, 2)
+    a, b = ot.utils.unif(10), ot.utils.unif(8)
+    M = ot.dist(xs, xt)
+    M /= M.max()
+    for semi_relaxed in [False, True]:
+        with pytest.warns(UserWarning, match="Maximum number of iterations"):
+            ot.regpath.regularization_path(
+                a, b, M, reg=1e-8, semi_relaxed=semi_relaxed, itmax=2
+            )

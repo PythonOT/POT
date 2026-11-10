@@ -152,7 +152,7 @@ def benchmark_naive(samples_source, samples_target):
     start = perf_counter()
     for i in range(n_problems):
         M = ot.dist(samples_source[i], samples_target[i])
-        res = ot.solve(M, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy")
+        ot.solve(M, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy")
     end = perf_counter()
     return end - start
 
@@ -160,9 +160,7 @@ def benchmark_naive(samples_source, samples_target):
 def benchmark_batch(samples_source, samples_target):
     start = perf_counter()
     M_batch = ot.dist_batch(samples_source, samples_target)
-    res_batch = ot.solve_batch(
-        M=M_batch, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy"
-    )
+    ot.solve_batch(M=M_batch, reg=reg, max_iter=max_iter, tol=tol, reg_type="entropy")
     end = perf_counter()
     return end - start
 

@@ -846,8 +846,8 @@ def test_zero_mass_solvers():
     res = ot.solve_sample(x, y, a, b)
     res_reg = ot.solve_sample(x, y, a, b, reg=1.0)
 
-    assert np.isnan(res.value) == False
-    assert np.isnan(res_reg.value) == False
+    assert not np.isnan(res.value)
+    assert not np.isnan(res_reg.value)
 
 
 @pytest.skip_backend("tf", reason="Not implemented for tf backend")
@@ -1211,7 +1211,7 @@ def test_solve_bary_sample_callable_metric(nx):
             ValueError,
             match="ground_bary must be provided in kwargs for true_fixed_point method with callable metrics",
         ):
-            sol_fixed_point = ot.solve_bary_sample(
+            ot.solve_bary_sample(
                 X_listb,
                 n,
                 a_list=a_listb,
@@ -1225,7 +1225,7 @@ def test_solve_bary_sample_callable_metric(nx):
             AssertionError,
             match=f"Backend {str(nx)} is not compatible with ground_bary=None, it must be provided if not using PyTorch backend",
         ):
-            sol_wrong_backend = ot.solve_bary_sample(
+            ot.solve_bary_sample(
                 X_listb,
                 n,
                 a_list=a_listb,

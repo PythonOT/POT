@@ -118,7 +118,7 @@ def quantized_fused_gromov_wasserstein_partitioned(
         List of relations between representants and their associated samples in the target space.
     list_p1 : list of npart1 arrays,
         List of node distributions within each partition of the source space.
-    list_p : list of npart2 arrays,
+    list_p2 : list of npart2 arrays,
         List of node distributions within each partition of the target space.
     part1 : list of npart1 arrays, optional. Default is None.
         List of arrays containing the indices of nodes in each partition of the source space.

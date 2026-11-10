@@ -54,8 +54,6 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
         n training distributions a_i of size d
     M : np.ndarray (d,d)
         loss matrix for OT
-    reg : float
-        Regularization term >0
     weights : np.ndarray (n,)
         Weights of each histogram a_i on the simplex (barycentric coordinates)
     verbose : bool, optional
