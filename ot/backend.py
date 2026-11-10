@@ -518,6 +518,20 @@ class Backend:
         """
         raise NotImplementedError()
 
+    def weighted_logsumexp(self, array, scaling_factor, axis=None):
+        """
+        Computes the log of the sum of exponentials of input elements with per-element weight.
+
+        See: https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
+        """
+        if scaling_factor is None:
+            return self.logsumexp(array, axis=axis)
+
+        # We can add log weights to obtain the scaling
+        # in the log domain
+        # \sum_i exp(x_i + log(w_i)) = \sum_i w_i exp(x_i)
+        return self.logsumexp(array + self.log(scaling_factor), axis=axis)
+
     def sqrt(self, a):
         r"""
         Returns the non-ngeative square root of a tensor, element-wise.

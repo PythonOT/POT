@@ -249,36 +249,6 @@ def gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t, log=False):
     return emd(w_s, w_t, D, log=log)
 
 
-def logsumexp(a, scaling_factor, axis=None):
-    """
-    Computes log(sum(scaling_factor * exp(x))) stably using the log-sum-exp trick
-    with per-element weight. The backend nx.logsumexp does not allow passing
-    scaling weights.
-
-    Parameters
-    ----------
-    a : array-like
-        Log-values to sum.
-    scaling_factor : array-like
-        Weights for each term, must be of the same shape as a.
-
-    Returns
-    -------
-    float
-        log(sum(scaling_factor * exp(a))), computed stably.
-
-    References
-    ----------
-    Gundersen, G. (2020). The Log-Sum-Exp trick. Blog Post. Retrieved from https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
-    """
-    nx = get_backend(a, scaling_factor)
-    if scaling_factor is None:
-        scaling_factor = 1
-    shift = nx.max(a)
-    y = shift + nx.log(nx.sum(scaling_factor * nx.exp(a - shift), axis=axis))
-    return y
-
-
 def gmm_ot_apply_map(
     x, m_s, m_t, C_s, C_t, w_s, w_t, plan=None, method="bary", seed=None
 ):
@@ -341,7 +311,9 @@ def gmm_ot_apply_map(
             [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(k_s)]
         )
 
-        log_denom = logsumexp(logpdf, scaling_factor=w_s.reshape((k_s, 1, 1)), axis=0)
+        log_denom = nx.weighted_logsumexp(
+            logpdf, scaling_factor=w_s.reshape((k_s, 1, 1)), axis=0
+        )
 
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
@@ -386,7 +358,7 @@ def gmm_ot_apply_map(
 
         for i_sample in range(n_samples):
             log_g = logpdf[i_sample]
-            log_denom = logsumexp(log_g, scaling_factor=w_s)
+            log_denom = nx.weighted_logsumexp(log_g, scaling_factor=w_s)
             p_mat = plan * nx.exp(
                 log_g.reshape((k_s, 1)) - log_denom
             )  # shape (k_s, k_t): p_mat[i,j] = plan[i,j]*g_i(x)/D(x)

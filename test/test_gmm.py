@@ -19,7 +19,6 @@ from ot.gmm import (
     gmm_ot_apply_map,
     gmm_ot_plan_density,
     gmm_barycenter_fixed_point,
-    logsumexp,
 )
 
 try:
@@ -221,13 +220,54 @@ def test_gmm_apply_map_overflow(nx):
         )
 
 
-def test_logsumexp_overflow_safety(nx):
+def test_weighted_logsumexp_overflow_safety(nx):
     """Test that large exponents don't overflow."""
     x = nx.from_numpy(np.array([0.0, 710.0]))
-    result = logsumexp(x, scaling_factor=nx.from_numpy(np.array([1, 1])))
+    result = nx.weighted_logsumexp(x, scaling_factor=nx.from_numpy(np.array([1, 1])))
     # Should be equal to exp(log(0)) + exp(log(710)) = 710
     assert nx.isfinite(result)
     assert nx.allclose(result, nx.from_numpy(np.array([710.0])))
+
+
+def test_weighted_logsumexp_dims_and_axes(nx):
+    """
+    Test whether the logsumexp yields expected results
+    with all the possible axis arguments
+    """
+    elements = nx.from_numpy(np.array([[0.0, 0.0], [5.0, 5.0], [10.0, 10.0]]))
+    weights = nx.ones(elements.shape, type_as=elements)
+
+    # Each axis along its expected result
+    configs = (
+        (
+            0,
+            nx.from_numpy(
+                np.array(
+                    [
+                        np.log(1 + np.exp(5) + np.exp(10)),
+                        np.log(1 + np.exp(5) + np.exp(10)),
+                    ]
+                ),
+                type_as=elements,
+            ),
+        ),
+        (
+            1,
+            nx.from_numpy(
+                np.array([np.log(2), 5 + np.log(2), 10 + np.log(2)]), type_as=elements
+            ),
+        ),
+        (
+            None,
+            nx.from_numpy(
+                np.array([np.log(2 + 2 * np.exp(5) + 2 * np.exp(10))]), type_as=elements
+            ),
+        ),
+    )
+
+    for axis, expected in configs:
+        result = nx.weighted_logsumexp(elements, weights, axis=axis)
+        assert nx.allclose(result, expected), f"Unexpected behaviour with axis={axis}"
 
 
 @pytest.mark.skipif(not torch, reason="No torch available")
