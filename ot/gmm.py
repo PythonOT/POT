@@ -311,6 +311,10 @@ def gmm_ot_apply_map(
             [gaussian_logpdf(x, m_s[k], C_s[k])[:, None] for k in range(k_s)]
         )
 
+        log_denom = nx.weighted_logsumexp(
+            logpdf, scaling_factor=w_s.reshape((k_s, 1, 1)), axis=0
+        )
+
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
             Cs12 = nx.sqrtm(C_s[i])
@@ -322,10 +326,10 @@ def gmm_ot_apply_map(
 
             # gaussian mapping between components i and j applied to x
             T_ij_x = x @ A + b
-            z = w_s[:, None, None] * nx.exp(logpdf - logpdf[i][None, :, :])
-            denom = nx.sum(z, axis=0)
 
-            out = out + plan[i, j] * T_ij_x / denom
+            log_g_i_x = logpdf[i]
+            p_ij_x = plan[i, j] * nx.exp(log_g_i_x - log_denom)
+            out = out + p_ij_x * T_ij_x
 
         return out
 
@@ -334,8 +338,8 @@ def gmm_ot_apply_map(
         # i and j, b[i, j] is the translation part
         rng = np.random.RandomState(seed)
 
-        A = nx.zeros((k_s, k_t, d, d), type_as=m_s)
-        b = nx.zeros((k_s, k_t, d), type_as=m_s)
+        A = nx.zeros((k_s, k_t, d, d), type_as=C_s)
+        b = nx.zeros((k_s, k_t, d), type_as=A)
 
         # only need to compute for non-zero plan entries
         for i, j in zip(*nx.where(plan > 0)):
@@ -354,12 +358,10 @@ def gmm_ot_apply_map(
 
         for i_sample in range(n_samples):
             log_g = logpdf[i_sample]
-            log_diff = log_g[:, None] - log_g[None, :]
-            weighted_exp = w_s[:, None] * nx.exp(log_diff)
-            denom = nx.sum(weighted_exp, axis=0)[:, None] * nx.ones(
-                plan.shape[1], type_as=plan
-            )
-            p_mat = plan / denom
+            log_denom = nx.weighted_logsumexp(log_g, scaling_factor=w_s)
+            p_mat = plan * nx.exp(
+                log_g.reshape((k_s, 1)) - log_denom
+            )  # shape (k_s, k_t): p_mat[i,j] = plan[i,j]*g_i(x)/D(x)
 
             p = p_mat.reshape(k_s * k_t)  # stack line-by-line
             # sample between 0 and k_s * k_t - 1
