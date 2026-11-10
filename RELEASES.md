@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Center floating-point inputs in `ot.utils.proj_simplex` to prevent large common offsets from erasing the simplex mass (Issue #879, PR #880).
 - Fix an out-of-bounds read in `ot.bsp.merge_bijections`: the number of plans was taken from `perms.shape[1]` (the number of samples) instead of `perms.shape[0]`, so merging fewer plans than samples read past the array and merging more silently dropped plans. A `perms` outside the documented `(n_plans, n_samples)` layout, an empty plan stack and rows that are not permutations are now rejected (PR #911, Issue #910)
 - Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
 - Fix `ot.bsp.compute_bspot_bijection` (and `random_state` of `ot.solve_sample(..., method="bsp")`) not being reproducible for a given `seed`: its candidate plans came from a `thread_local` `std::mt19937` seeded once per OpenMP thread, so the result depended on the call history and on the number of threads. Every thread started from the same state, so the previous version could underperform with multiple threads. Each plan now draws its own stream, derived from the seed and the plan index (PR #898, Issue #897)
