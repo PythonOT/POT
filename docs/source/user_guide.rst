@@ -774,8 +774,10 @@ implemented the main function :any:`ot.barycenter_unbalanced`.
 Partial optimal transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Partial OT is a variant of the optimal transport problem when only a fixed amount of mass m
-is to be transported. The partial OT metric between two histograms a and b is defined as [28]_:
+Partial OT is a variant of the optimal transport problem in which only a fixed
+amount of mass :math:`m` is transported. Each source and target weight is a
+capacity: some of that weight can remain unused. For nonnegative histograms
+:math:`a` and :math:`b`, the partial OT problem is defined as [28]_:
 
 .. math::
     \gamma = \arg\min_\gamma <\gamma,M>_F
@@ -785,13 +787,21 @@ is to be transported. The partial OT metric between two histograms a and b is de
         \gamma 1 \leq a\\
         \gamma^T 1 \leq b\\
         1^T \gamma^T 1 = m \leq \min\{\|a\|_1, \|b\|_1\}
-             
 
-Interestingly the problem can be casted into a regular OT problem by adding reservoir points
-in which the surplus mass is sent [29]_. We provide a solver for partial OT
-in :any:`ot.partial`. The exact resolution of the problem is computed in :any:`ot.partial.partial_wasserstein`
-and :any:`ot.partial.partial_wasserstein2` that return respectively the OT matrix and the value of the
-linear term. The entropic solution of the problem is computed in :any:`ot.partial.entropic_partial_wasserstein`
+
+See the :ref:`2D partial Wasserstein example
+<sphx_glr_auto_examples_unbalanced-partial_plot_partial_wass_and_gromov.py>`
+for an illustration of how transported mass changes the plans and group participation.
+
+Solvers
+"""""""
+
+The problem can be cast into a regular OT problem by adding reservoir points
+to receive the surplus mass [29]_. We provide solvers in :any:`ot.partial`.
+The exact problem is solved by :any:`ot.partial.partial_wasserstein` and
+:any:`ot.partial.partial_wasserstein2`, which return the OT matrix and the
+value of the linear term, respectively. The entropic solution is computed
+by :any:`ot.partial.entropic_partial_wasserstein`
 (see [3]_). Following the convention of :any:`ot.sinkhorn`, this solver takes a ``method`` parameter:
 ``method='sinkhorn'`` (default) runs the classical multiplicative-domain iterations, while
 ``method='sinkhorn_log'`` switches to a numerically stable log-domain solver
