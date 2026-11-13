@@ -1008,3 +1008,40 @@ def test_no_cuda_context_for_cpu_only_work():
         f"interpreter exited with returncode {result.returncode}: "
         f"{result.stderr.decode(errors='replace')[-2000:]}"
     )
+
+
+@pytest.mark.skipif(not tf, reason="TensorFlow not installed")
+@pytest.mark.parametrize("coefficient", [0.0, 1.0, -2.0, 7.0])
+@pytest.mark.parametrize("compiled", [False, True])
+def test_tensorflow_set_gradients_chain_rule(coefficient, compiled):
+    nx = ot.backend.TensorflowBackend()
+    x = tf.constant([1.0, 2.0], dtype=tf.float64)
+    y = tf.constant(3.0, dtype=tf.float64)
+
+    def differentiate(x, y):
+        with tf.GradientTape() as tape:
+            tape.watch((x, y))
+            value = nx.set_gradients(
+                tf.constant(5.0, dtype=x.dtype), (x, y), (2 * x, 3 * y)
+            )
+            loss = coefficient * value
+        return value, tape.gradient(loss, (x, y))
+
+    if compiled:
+        differentiate = tf.function(differentiate)
+    value, gradients = differentiate(x, y)
+    np.testing.assert_allclose(value, 5.0)
+    np.testing.assert_allclose(gradients[0], coefficient * 2 * x)
+    np.testing.assert_allclose(gradients[1], coefficient * 3 * y)
+
+
+@pytest.mark.skipif(not tf, reason="TensorFlow not installed")
+@pytest.mark.parametrize("coefficient", [0.0, -2.0, 7.0])
+def test_tensorflow_emd2_scaled_gradient(coefficient):
+    a = tf.constant([0.5, 0.5], dtype=tf.float64)
+    cost = tf.constant([[0.0, 2.0], [3.0, 0.0]], dtype=tf.float64)
+    with tf.GradientTape() as tape:
+        tape.watch(cost)
+        loss = coefficient * ot.emd2(a, a, cost)
+    gradient = tape.gradient(loss, cost)
+    np.testing.assert_allclose(gradient, coefficient * np.diag([0.5, 0.5]))
