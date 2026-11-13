@@ -3234,7 +3234,7 @@ class TensorflowBackend(Backend):
         @tf.custom_gradient
         def tmp(input):
             def grad(upstream):
-                return grads
+                return tf.nest.map_structure(lambda g: upstream * g, grads)
 
             return val, grad
 
