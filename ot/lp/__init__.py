@@ -10,6 +10,7 @@ Solvers for the original linear program OT problem.
 
 from .dmmot import dmmot_monge_1dgrid_loss, dmmot_monge_1dgrid_optimize
 from ._network_simplex import emd, emd2, emd2_lazy
+from ._grid import emd_grid_l1
 from ._barycenter_solvers import (
     barycenter,
     free_support_barycenter,
@@ -40,6 +41,7 @@ __all__ = [
     "emd",
     "emd2",
     "emd2_lazy",
+    "emd_grid_l1",
     "barycenter",
     "free_support_barycenter",
     "cvx",
