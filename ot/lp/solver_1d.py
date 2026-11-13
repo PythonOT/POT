@@ -319,6 +319,14 @@ def emd_1d(
             + "`['sqeuclidean', 'minkowski', 'cityblock', 'euclidean']`"
         )
 
+    # an empty support has no transport plan: reject it before the marginal
+    # defaulting divides by zero
+    if x_a.shape[0] == 0 or x_b.shape[0] == 0:
+        raise ValueError(
+            "The 1d EMD problem needs at least one source and one target point, "
+            f"got {x_a.shape[0]} and {x_b.shape[0]}"
+        )
+
     # if empty array given then use uniform distributions
     if a is None or a.ndim == 0 or len(a) == 0:
         a = nx.ones((x_a.shape[0],), type_as=x_a) / x_a.shape[0]
