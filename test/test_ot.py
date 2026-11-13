@@ -190,6 +190,76 @@ def test_emd2_gradients():
         )
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("log,return_matrix", [(False, False), (True, False), (False, True)])
+@pytest.mark.parametrize("argnums", [0, 1, 2, (0, 1, 2)])
+def test_emd2_jax_gradients(dtype, log, return_matrix, argnums):
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    a = jnp.array([0.2, 0.35, 0.45], dtype=dtype)
+    b = jnp.array([0.4, 0.3, 0.3], dtype=dtype)
+    M = jnp.array([[0, 1, 4], [2, 0.2, 1.5], [5, 2, 0.1]], dtype=dtype)
+    plan = np.array([[0.2, 0, 0], [0.2, 0.15, 0], [0, 0.15, 0.3]])
+    expected = (np.array([-29, 1, 28]) / 15, np.array([55, 1, -56]) / 30, plan)
+    tolerance = 2e-4 if dtype == np.float32 else 1e-8
+    step = 1e-3 if dtype == np.float32 else 1e-5
+
+    def loss(a, b, M):
+        result = ot.emd2(a, b, M, log=log, return_matrix=return_matrix)
+        return result[0] if log or return_matrix else result
+
+    value = loss(a, b, M)
+    np.testing.assert_allclose(value, 0.76, atol=tolerance)
+    assert value.dtype == a.dtype
+    assert value.devices() == a.devices()
+    if return_matrix:
+        _, info = ot.emd2(a, b, M, return_matrix=True)
+        np.testing.assert_allclose(info["G"], plan, atol=tolerance)
+
+    with jax.checking_leaks():
+        gradients = jax.grad(loss, argnums=argnums)(a, b, M)
+        scaled = jax.grad(lambda a, b, M: 7 * loss(a, b, M), argnums=argnums)(a, b, M)
+    indices = argnums if isinstance(argnums, tuple) else (argnums,)
+    if not isinstance(argnums, tuple):
+        gradients, scaled = (gradients,), (scaled,)
+    for index, gradient, scaled_gradient in zip(indices, gradients, scaled):
+        np.testing.assert_allclose(gradient, expected[index], atol=tolerance)
+        np.testing.assert_allclose(scaled_gradient, 7 * expected[index], atol=7 * tolerance)
+        directions = np.eye(9).reshape(9, 3, 3) if index == 2 else np.array([[1, -1, 0], [0, 1, -1]])
+        for direction in directions:
+            plus, minus = [a, b, M], [a, b, M]
+            plus[index] = plus[index] + step * direction
+            minus[index] = minus[index] - step * direction
+            finite_difference = (float(loss(*plus)) - float(loss(*minus))) / (2 * step)
+            np.testing.assert_allclose(np.sum(np.asarray(gradient) * direction), finite_difference, atol=tolerance)
+
+
+@pytest.mark.parametrize("empty_a,empty_b", [(True, False), (False, True), (True, True)])
+def test_emd2_jax_empty_marginals(empty_a, empty_b):
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    a = jnp.array([] if empty_a else [0.2, 0.35, 0.45])
+    b = jnp.array([] if empty_b else [0.4, 0.3, 0.3])
+    M = jnp.array([[0., 1., 4.], [2., 0.2, 1.5], [5., 2., 0.1]])
+    reference_a = np.ones(3) / 3 if empty_a else np.asarray(a)
+    reference_b = np.ones(3) / 3 if empty_b else np.asarray(b)
+    plan = ot.emd(reference_a, reference_b, np.asarray(M))
+    with jax.checking_leaks():
+        gradients = jax.grad(ot.emd2, argnums=(0, 1, 2))(a, b, M)
+    assert gradients[0].shape == a.shape
+    assert gradients[1].shape == b.shape
+    np.testing.assert_allclose(gradients[2], plan, atol=1e-8)
+    for index, empty in enumerate((empty_a, empty_b)):
+        if empty:
+            continue
+        for direction in np.array([[1., -1., 0.], [0., 1., -1.]]):
+            plus, minus = [a, b, M], [a, b, M]
+            plus[index] = plus[index] + 1e-5 * direction
+            minus[index] = minus[index] - 1e-5 * direction
+            finite_difference = (float(ot.emd2(*plus)) - float(ot.emd2(*minus))) / 2e-5
+            np.testing.assert_allclose(np.sum(gradients[index] * direction), finite_difference, atol=1e-8)
+
+
 def test_emd_emd2():
     # test emd and emd2 for simple identity
     n = 100
