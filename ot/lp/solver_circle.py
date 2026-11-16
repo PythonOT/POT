@@ -698,7 +698,8 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 
-    u_values = nx.sort(u_values, 0)
+    u_values, u_sorter = nx.sort2(u_values, 0)
+    u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
     u_cdf = nx.cumsum(u_weights, 0)
     u_cdf = nx.zero_pad(u_cdf, [(1, 0), (0, 0)])
 
