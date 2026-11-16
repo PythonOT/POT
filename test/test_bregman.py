@@ -1222,7 +1222,7 @@ def test_lazy_empirical_sinkhorn_autocast(device):
         pytest.skip("CUDA unavailable")
     xs = 200 + torch.arange(14, dtype=torch.float32, device=device).reshape(7, 2) / 8
     xt = xs[:5] - 0.25
-    kwargs = dict(reg=2, isLazy=True, batchSize=3)
+    kwargs = dict(reg=2, isLazy=True, batchSize=3, stopThr=1e-5, numIterMax=100)
     expected = ot.bregman.empirical_sinkhorn2(xs, xt, **kwargs)
     with torch.autocast(device):
         actual = ot.bregman.empirical_sinkhorn2(xs, xt, **kwargs)
