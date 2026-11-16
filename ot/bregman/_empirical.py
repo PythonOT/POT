@@ -13,7 +13,7 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 import warnings
 
 from ..utils import dist, list_to_array, unif, LazyTensor
-from ..backend import get_backend
+from ..backend import get_backend, torch
 
 from ._sinkhorn import sinkhorn, sinkhorn2
 from ..lowrank import (
@@ -81,6 +81,10 @@ def _lazy_cost_blocks(X_s, X_t, metric, a, nx):
 
         def cost(rows, cols):
             return dist(X_s[rows], X_t[cols], metric=metric, nx=nx)
+
+        if nx.__name__ == "torch" and X_s.device.type in ("cpu", "cuda"):
+            # Autocast can overflow the dot product before the squared norms cancel.
+            cost = torch.autocast(X_s.device.type, enabled=False)(cost)
 
     else:
         # Other metrics can require scipy, and the cost must match the weights.
