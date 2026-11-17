@@ -568,7 +568,7 @@ def solve_gromov_batch(
         Gromov problem (when M is not provided). By default ``alpha=None``
         corresponds to ``alpha=1`` for Gromov problem (``M==None``) and
         ``alpha=0.5`` for Fused Gromov-Wasserstein problem (``M!=None``)
-    epsilon : float, optional
+    reg : float, optional
         Regularization parameter for proximal gradient descent. Default is 1e-2.
     T_init : array-like, shape (B, n, m), optional
         Initial transport plan. If None, it is initialized to uniform distribution.
@@ -584,11 +584,11 @@ def solve_gromov_batch(
         Type of gradient computation, either or 'autodiff', 'envelope' or 'detach'. 'autodiff' provides gradients wrt all
         outputs (`plan, value, value_linear`) but with important memory cost.
         'envelope' provides gradients only for (`value, value_linear`)`.  `detach`` is the fastest option but
-        provides no gradients. Default is 'detach'.
-    assume_inner_convergence : bool, optional
-        If True, assumes that the inner Bregman projection always converged i.e. the transport plan satisfies the marginal constraints.
-        This enables faster computations of the tensor product but might results in inaccurate results (e.g. negative values of the loss).
-        Default is True.
+        provides no gradients. Default is 'envelope'.
+    logits : bool, optional
+        For KL loss, whether Ca and Cb are logits (unnormalized log
+        probabilities). Default is None.
+
     Returns
     -------
     res : OTResult()

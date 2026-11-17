@@ -293,7 +293,7 @@ def sinkhorn2(
     of the regularization (and using warm start) sometimes leads to better
     solutions. Note that the greedy version of the sinkhorn
     :py:func:`ot.bregman.greenkhorn` can also lead to a speedup and the screening
-    version of the sinkhorn :py:func:`ot.bregman.screenkhorn` aim a providing  a
+    version of the sinkhorn :py:func:`ot.bregman.screenkhorn` aims at providing a
     fast approximation of the Sinkhorn problem. For use of GPU and gradient
     computation with small number of iterations we strongly recommend the
     :py:func:`ot.bregman.sinkhorn_log` solver that will no need to check for
@@ -1491,9 +1491,9 @@ def sinkhorn_epsilon_scaling(
     dim_a = len(a)
     dim_b = len(b)
 
-    # nrelative umerical precision with 64 bits
+    # relative numerical precision with 64 bits
     numItermin = 35
-    numItermax = max(numItermin, numItermax)  # ensure that last velue is exact
+    numItermax = max(numItermin, numItermax)  # ensure that last value is exact
 
     ii = 0
     if log:
