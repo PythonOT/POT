@@ -134,10 +134,6 @@ def estimate_dual_null_weights(alpha0, beta0, a, b, M):
         Source dual potential
     beta0 : (nt,) numpy.ndarray, float64
         Target dual potential
-    alpha0 : (ns,) numpy.ndarray, float64
-        Source dual potential
-    beta0 : (nt,) numpy.ndarray, float64
-        Target dual potential
     a : (ns,) numpy.ndarray, float64
         Source distribution (uniform weights if empty list)
     b : (nt,) numpy.ndarray, float64
@@ -709,6 +705,9 @@ def emd2(
     else:
         type_as = a if a is not None else b
 
+    if type_as is not None:
+        type_as = nx.detach(type_as)
+
     # Set n1, n2 if not already set (dense case)
     if n1 is None:
         n1, n2 = M.shape
@@ -731,7 +730,7 @@ def emd2(
     if is_sparse:
         a, b = nx.to_numpy(a, b)
     else:
-        M, a, b = nx.to_numpy(M, a, b)
+        M, a, b = nx.to_numpy(*nx.detach(M, a, b))
         M = np.asarray(M, dtype=np.float64, order="C")
 
     a = np.asarray(a, dtype=np.float64)

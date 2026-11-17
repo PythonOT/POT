@@ -889,7 +889,7 @@ class LinearTransport(BaseTransport):
     Parameters
     ----------
     reg : float,optional
-        regularization added to the daigonals of covariances (>0)
+        regularization added to the diagonals of covariances (>0)
     bias: boolean, optional
         estimate bias :math:`\mathbf{b}` else :math:`\mathbf{b} = 0` (default:True)
     log : bool, optional

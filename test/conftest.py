@@ -51,6 +51,24 @@ def nx(request):
     yield backend
 
 
+@pytest.fixture
+def meta_default_device():
+    """Make torch allocations without an explicit device land on ``meta``.
+
+    Inputs built with ``torch.from_numpy`` (or before the fixture is set up)
+    stay on CPU. A function that creates an internal buffer without
+    ``type_as`` then mixes ``meta`` and CPU tensors and raises a device error,
+    as it would with GPU inputs, so this catches device bugs on CPU-only CI.
+    """
+    torch = pytest.importorskip("torch")
+    previous = torch.get_default_device()
+    torch.set_default_device("meta")
+    try:
+        yield
+    finally:
+        torch.set_default_device(previous)
+
+
 def skip_arg(arg, value, reason=None, getter=lambda x: x):
     if isinstance(arg, (tuple, list)):
         n = len(arg)

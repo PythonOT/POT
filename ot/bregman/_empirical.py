@@ -124,7 +124,7 @@ def empirical_sinkhorn(
         samples weights in the source domain
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
-    numItermax : int, optional
+    numIterMax : int, optional
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -359,7 +359,7 @@ def empirical_sinkhorn2(
         samples weights in the source domain
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
-    numItermax : int, optional
+    numIterMax : int, optional
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)
@@ -598,7 +598,7 @@ def empirical_sinkhorn_divergence(
         samples weights in the source domain
     b : array-like, shape (n_samples_b,)
         samples weights in the target domain
-    numItermax : int, optional
+    numIterMax : int, optional
         Max number of iterations
     stopThr : float, optional
         Stop threshold on error (>0)

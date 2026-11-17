@@ -89,7 +89,7 @@ def _init_lr_sinkhorn(X_s, X_t, a, b, rank, init, reg_init, random_state, nx=Non
 
     if init == "deterministic":
         # Init g
-        g = nx.ones(rank) / rank
+        g = nx.ones(rank, type_as=X_s) / rank
 
         lambda_1 = min(nx.min(a), nx.min(g), nx.min(b)) / 2
         a1 = nx.arange(start=1, stop=ns + 1, type_as=X_s)
@@ -614,9 +614,9 @@ def sinkhorn_low_rank_kernel(
 
     Parameters
     ----------
-    K_1 : array-like, shape (n_samples_a, dim_r)
+    K1 : array-like, shape (n_samples_a, dim_r)
         Left factor
-    K_2 : array-like, shape (n_samples_b, dim_r)
+    K2 : array-like, shape (n_samples_b, dim_r)
         Right factor
     a : array-like, shape (n_samples_a,)
         samples weights in the source domain

@@ -49,7 +49,7 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
         Cost matrix.
     reg : float
         Regularization term > 0.
-    v : ndarray, shape (nt,)
+    beta : ndarray, shape (nt,)
         Dual variable.
     i : int
         Picked number `i`.
@@ -67,7 +67,10 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
         Advances in Neural Information Processing Systems (2016).
     """
     r = M[i, :] - beta
-    exp_beta = np.exp(-r / reg) * b
+    # shift before exponentiating: the factor cancels in the ratio below, but
+    # without it exp overflows once beta grows and khi becomes all-NaN
+    min_r = np.min(r)
+    exp_beta = np.exp(-(r - min_r) / reg) * b
     khi = exp_beta / (np.sum(exp_beta))
     return b - khi
 
@@ -253,7 +256,7 @@ def c_transform_entropic(b, M, reg, beta):
         Cost matrix
     reg : float
         Regularization term > 0
-    v : ndarray, shape (nt,)
+    beta : ndarray, shape (nt,)
         Dual variable.
 
     Returns
@@ -325,10 +328,6 @@ def solve_semi_dual_entropic(
         number of iteration
     lr : float
         learning rate
-    n_source : int
-        size of the source measure
-    n_target : int
-        size of the target measure
     log : bool, optional
         record log if True
 
@@ -353,8 +352,7 @@ def solve_semi_dual_entropic(
     elif method.lower() == "asgd":
         opt_beta = averaged_sgd_entropic_transport(a, b, M, reg, numItermax, lr)
     else:
-        print("Please, select your method between SAG and ASGD")
-        return None
+        raise ValueError("Unknown method '{}', must be 'SAG' or 'ASGD'".format(method))
 
     opt_alpha = c_transform_entropic(b, M, reg, opt_beta)
     pi = (

@@ -48,8 +48,14 @@ def roll_cols(M, shifts):
 
     n_rows, n_cols = M.shape
 
+    # `shifts` may be a plain Python int (see the first example below), which
+    # has no dtype/device to propagate; only pass it as `type_as` when it is
+    # itself a backend array (e.g. the int64 shift array roll_cols is called
+    # with elsewhere in this module).
+    shifts_type_as = shifts if hasattr(shifts, "dtype") else None
     arange1 = nx.tile(
-        nx.reshape(nx.arange(n_cols, type_as=shifts), (1, n_cols)), (n_rows, 1)
+        nx.reshape(nx.arange(n_cols, type_as=shifts_type_as), (1, n_cols)),
+        (n_rows, 1),
     )
     arange2 = (arange1 - shifts) % n_cols
 
@@ -377,7 +383,7 @@ def binary_search_circle(
     tp = nx.tile(tp, (1, m))
     tc = (tm + tp) / 2
 
-    done = nx.zeros((u_values.shape[0], m))
+    done = nx.zeros((u_values.shape[0], m), type_as=u_values)
 
     cpt = 0
     while nx.any(1 - done):
@@ -692,7 +698,8 @@ def semidiscrete_wasserstein2_unif_circle(u_values, u_weights=None):
     elif u_weights.ndim != u_values.ndim:
         u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
 
-    u_values = nx.sort(u_values, 0)
+    u_values, u_sorter = nx.sort2(u_values, 0)
+    u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
     u_cdf = nx.cumsum(u_weights, 0)
     u_cdf = nx.zero_pad(u_cdf, [(1, 0), (0, 0)])
 
