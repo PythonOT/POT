@@ -1234,6 +1234,7 @@ def test_solve_bary_sample_callable_metric(nx):
                 max_iter_bary=1,
             )
 
+
 # Hand-computed optima for reg_type="L2". These were derived on the 2x2 transport polytope
 # independently of POT: parameterise P(t) = [[t, 1/2-t], [1/2-t, t]] for 0 <= t <= 1/2, then
 # minimise <M,P> + (reg/2)||P||_F^2. d^2/dt^2 = reg*4 > 0 makes the problem strictly convex, so
@@ -1352,3 +1353,34 @@ def test_solve_bary_sample_l2_value_matches_plans(nx):
             plan = nx.to_numpy(res.list_res[k].plan)
             objective += float(w[k]) * (np.sum(M * plan) + 0.5 * reg * np.sum(plan**2))
         np.testing.assert_allclose(nx.to_numpy(res.value), objective, rtol=1e-5)
+
+
+@pytest.mark.parametrize("reg_type", ["entropy", "KL"])
+def test_solve_jax_envelope_gradients(reg_type):
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    M = np.array([[0.1, 0.3, 0.5], [0.4, 0.2, 0.3], [0.6, 0.4, 0.1]])
+    a = b = np.ones(3) / 3
+
+    def loss(M, a, b):
+        return ot.solve(
+            M, a, b, reg=0.1, reg_type=reg_type, grad="envelope", tol=1e-12
+        ).value
+
+    inputs = (M, a, b)
+    with jax.checking_leaks():
+        gradients = jax.grad(loss, argnums=(0, 1, 2))(*map(jnp.asarray, inputs))
+    for index, gradient in enumerate(gradients):
+        directions = (
+            np.eye(9).reshape(9, 3, 3)
+            if index == 0
+            else np.array([[1., -1., 0.], [0., 1., -1.]])
+        )
+        for direction in directions:
+            plus, minus = list(inputs), list(inputs)
+            plus[index] = plus[index] + 1e-5 * direction
+            minus[index] = minus[index] - 1e-5 * direction
+            finite_difference = (loss(*plus) - loss(*minus)) / 2e-5
+            np.testing.assert_allclose(
+                np.sum(np.asarray(gradient) * direction), finite_difference, atol=1e-7
+            )

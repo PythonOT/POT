@@ -1008,3 +1008,60 @@ def test_no_cuda_context_for_cpu_only_work():
         f"interpreter exited with returncode {result.returncode}: "
         f"{result.stderr.decode(errors='replace')[-2000:]}"
     )
+
+
+@pytest.mark.parametrize("power,expected,second", [(0, 3., 0.), (1, 6., 3.), (2, 12., 12.)])
+def test_jax_supplied_gradients(power, expected, second):
+    jax = pytest.importorskip("jax")
+    nx = ot.backend.JaxBackend()
+
+    def loss(x):
+        return nx.set_gradients(x**4, (x,), (3 * x**power,))
+
+    np.testing.assert_allclose(loss(2.), 16.)
+    with jax.checking_leaks():
+        np.testing.assert_allclose(jax.grad(loss)(2.), expected)
+        np.testing.assert_allclose(jax.jvp(loss, (2.,), (1.,))[1], expected)
+        np.testing.assert_allclose(jax.grad(lambda x: 7 * loss(x))(2.), 7 * expected)
+        np.testing.assert_allclose(jax.grad(jax.grad(loss))(2.), second)
+        np.testing.assert_allclose(jax.hessian(loss)(2.), second)
+
+
+def test_jax_supplied_gradients_nested_inputs():
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    nx = ot.backend.JaxBackend()
+
+    def loss(x, y):
+        inputs = {"x": x, "y": y}
+        grads = {"x": 2 * x + jnp.sum(y), "y": jnp.ones_like(y) * jnp.sum(x)}
+        return nx.set_gradients(jnp.sum(x**4) + jnp.sum(y**4), inputs, grads)
+
+    x, y = jnp.array([1., 2.]), jnp.array([3., 4., 5.])
+    with jax.checking_leaks():
+        dx, dy = jax.grad(loss, argnums=(0, 1))(x, y)
+        hessian = jax.hessian(loss, argnums=(0, 1))(x, y)
+    np.testing.assert_allclose(dx, [14., 16.])
+    np.testing.assert_allclose(dy, [3., 3., 3.])
+    np.testing.assert_allclose(hessian[0][0], [[2., 0.], [0., 2.]])
+    np.testing.assert_allclose(hessian[0][1], np.ones((2, 3)))
+    np.testing.assert_allclose(hessian[1][0], np.ones((3, 2)))
+    np.testing.assert_allclose(hessian[1][1], np.zeros((3, 3)))
+
+
+@pytest.mark.parametrize("value_dtype", [np.float32, np.float64, np.int32])
+def test_jax_supplied_gradients_value_dtype(value_dtype):
+    jax = pytest.importorskip("jax")
+    jnp = jax.numpy
+    nx = ot.backend.JaxBackend()
+
+    def loss(x):
+        value = {"a": jnp.array(2, dtype=value_dtype), "b": jnp.array([4, 5], dtype=value_dtype)}
+        result = nx.set_gradients(value, (x,), (3 * x,))
+        return result["a"] + jnp.sum(result["b"])
+
+    x = jnp.array(2., dtype=jnp.float64)
+    np.testing.assert_allclose(loss(x), 11.)
+    with jax.checking_leaks():
+        np.testing.assert_allclose(jax.grad(loss)(x), 18.)
+        np.testing.assert_allclose(jax.hessian(loss)(x), 9.)

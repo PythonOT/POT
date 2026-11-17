@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
 - Fix an out-of-bounds read in `ot.bsp.merge_bijections`: the number of plans was taken from `perms.shape[1]` (the number of samples) instead of `perms.shape[0]`, so merging fewer plans than samples read past the array and merging more silently dropped plans. A `perms` outside the documented `(n_plans, n_samples)` layout, an empty plan stack and rows that are not permutations are now rejected (PR #911, Issue #910)
 - Fix the value reported by `ot.solve`, `ot.solve_sample` and `ot.solve_bary_sample` for `reg_type="L2"`: it was `<M,P> + reg*||P||_F^2`, while `smooth_ot_dual` is called with `gamma=reg` and `ot.smooth.SquaredL2.Omega` is half-squared, so the reported scalar was `<M,P> + 2*Omega(P)` and not the optimum of the problem that was solved (for `M=[[0,1],[1,0]]`, `a=b=[1/2,1/2]`, `reg=10` it returned 3.0 instead of 17/10). Transport plans are unchanged. `reg_type` docstrings and `docs/source/user_guide.rst` now state `R(T) = (1/2)||T||_F^2`. Since `solve_bary_sample` uses that value as its `stopping_criterion="loss"` signal, its converged barycenter can change for some tolerances and backends (PR #914, Issue #896)
