@@ -16,6 +16,10 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
 - Fix `ot.solve(..., unbalanced=float("inf"))` (documented as the balanced limit): the exact and L-BFGSB paths returned a NaN cost, and L-BFGSB could return a plan that silently satisfied both marginals. The limit is now routed to the balanced solvers only where they minimize the same objective; `reg_type="L2"`, `"entropy"` and `"KL"` with a custom `c` (when `unbalanced_type` is not `"KL"`) raise `NotImplementedError` rather than silently solving a different problem, and one-sided infinite relaxations are rejected outside the entropic KL path.
