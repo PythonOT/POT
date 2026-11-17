@@ -86,8 +86,8 @@ def gromov_wasserstein_dictionary_learning(
     projection: str , optional
         If 'nonnegative' and/or 'symmetric' is in projection, the corresponding projection will be performed at each stochastic update of the dictionary
         Else the set of atoms is :math:`R^{nt * nt}`. Default is 'nonnegative_symmetric'
-    log: bool, optional
-        If set to True, losses evolution by batches and epochs are tracked. Default is False.
+    use_log: bool, optional
+        If set to True, losses evolution by batches and epochs are tracked. Default is True.
     use_adam_optimizer: bool, optional
         If set to True, adam optimizer with default settings is used as adaptative learning rate strategy.
         Else perform SGD with fixed learning rate. Default is True.
@@ -670,7 +670,7 @@ def fused_gromov_wasserstein_dictionary_learning(
     projection: str, optional
         If 'nonnegative' and/or 'symmetric' is in projection, the corresponding projection will be performed at each stochastic update of the dictionary
         Else the set of atoms is :math:`R^{nt * nt}`. Default is 'nonnegative_symmetric'
-    log: bool, optional
+    use_log: bool, optional
         If set to True, losses evolution by batches and epochs are tracked. Default is False.
     use_adam_optimizer: bool, optional
         If set to True, adam optimizer with default settings is used as adaptative learning rate strategy.

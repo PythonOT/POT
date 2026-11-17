@@ -1292,7 +1292,10 @@ class NumpyBackend(Backend):
             return np.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return np.arange(start, stop, step)
+        if type_as is None:
+            return np.arange(start, stop, step)
+        else:
+            return np.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -1456,7 +1459,9 @@ class NumpyBackend(Backend):
         return np.reshape(a, shape)
 
     def seed(self, seed=None):
-        if seed is not None:
+        if isinstance(seed, np.random.RandomState):
+            self.rng_ = seed
+        elif seed is not None:
             self.rng_.seed(seed)
 
     def rand(self, *size, type_as=None):
@@ -1703,16 +1708,21 @@ class JaxBackend(Backend):
     def set_gradients(self, val, inputs, grads):
         from jax.flatten_util import ravel_pytree
 
-        (val,) = jax.lax.stop_gradient((val,))
-
         ravelled_inputs, _ = ravel_pytree(inputs)
         ravelled_grads, _ = ravel_pytree(grads)
 
-        aux = jnp.sum(ravelled_inputs * ravelled_grads) / 2
-        aux = aux - jax.lax.stop_gradient(aux)
+        @jax.custom_jvp
+        def auxiliary(args, gradients):
+            return jnp.zeros((), dtype=jnp.result_type(args, gradients, 0.0))
 
-        (val,) = jax.tree_util.tree_map(lambda z: z + aux, (val,))
-        return val
+        @auxiliary.defjvp
+        def auxiliary_jvp(primals, tangents):
+            args, gradients = primals
+            args_dot, _ = tangents
+            return auxiliary(args, gradients), jnp.sum(args_dot * gradients)
+
+        aux = auxiliary(ravelled_inputs, ravelled_grads)
+        return jax.tree_util.tree_map(lambda z: jax.lax.stop_gradient(z) + aux, val)
 
     def _detach(self, a):
         return jax.lax.stop_gradient(a)
@@ -1730,7 +1740,12 @@ class JaxBackend(Backend):
             return self._change_device(jnp.ones(shape, dtype=type_as.dtype), type_as)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return jnp.arange(start, stop, step)
+        if type_as is None:
+            return jnp.arange(start, stop, step)
+        else:
+            return self._change_device(
+                jnp.arange(start, stop, step, dtype=type_as.dtype), type_as
+            )
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:
@@ -2237,7 +2252,9 @@ class TorchBackend(Backend):
         if type_as is None:
             return torch.arange(start, stop, step)
         else:
-            return torch.arange(start, stop, step, device=type_as.device)
+            return torch.arange(
+                start, stop, step, dtype=type_as.dtype, device=type_as.device
+            )
 
     def full(self, shape, fill_value, type_as=None):
         if isinstance(shape, int):
@@ -2787,7 +2804,11 @@ class CupyBackend(Backend):  # pragma: no cover
                 return cp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return cp.arange(start, stop, step)
+        if type_as is None:
+            return cp.arange(start, stop, step)
+        else:
+            with cp.cuda.Device(type_as.device):
+                return cp.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if isinstance(shape, (list, tuple)):
@@ -3240,7 +3261,10 @@ class TensorflowBackend(Backend):
             return tnp.ones(shape, dtype=type_as.dtype)
 
     def arange(self, stop, start=0, step=1, type_as=None):
-        return tnp.arange(start, stop, step)
+        if type_as is None:
+            return tnp.arange(start, stop, step)
+        else:
+            return tnp.arange(start, stop, step, dtype=type_as.dtype)
 
     def full(self, shape, fill_value, type_as=None):
         if type_as is None:

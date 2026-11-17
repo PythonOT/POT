@@ -100,6 +100,33 @@ def test_wasserstein_1d_unif_circle():
     np.testing.assert_allclose(wass2_circle, wass2_unif_circle, atol=1e-2)
 
 
+@pytest.mark.parametrize("shift", [0.0, 0.3])
+@pytest.mark.parametrize("batched", [False, True])
+@pytest.mark.parametrize("permute", [False, True])
+def test_semidiscrete_unif_circle_weighted_invariance(nx, shift, batched, permute):
+    u = np.array([0.1, 0.4, 0.8])
+    weights = np.array([0.2, 0.3, 0.5])
+    reference = ot.semidiscrete_wasserstein2_unif_circle(u, weights)
+
+    if permute:
+        order = [2, 0, 1]
+        u, weights = u[order], weights[order]
+    u = (u + shift) % 1
+    if batched:
+        u = np.column_stack((u, (u + 0.2) % 1))
+        weights = np.column_stack((weights, weights))
+
+    for tp in nx.__type_list__:
+        ub, wb = nx.from_numpy(u, weights, type_as=tp)
+        result = ot.semidiscrete_wasserstein2_unif_circle(ub, wb)
+        np.testing.assert_allclose(
+            nx.to_numpy(result),
+            np.repeat(reference, 2 if batched else 1),
+            atol=1e-6,
+        )
+        nx.assert_same_dtype_device(ub, result)
+
+
 def test_wasserstein1d_unif_circle_devices(nx):
     rng = np.random.RandomState(0)
 

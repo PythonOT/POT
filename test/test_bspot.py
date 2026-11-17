@@ -4,10 +4,18 @@
 #
 # License: MIT License
 
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import warnings
+
 import ot
 import ot.bsp
 import numpy as np
 import pytest
+from ot.backend import torch
 
 
 def test_bsp_ot_exact_identity():
@@ -107,9 +115,6 @@ def test_bsp_ot_relative_error():
     )
 
 
-from ot.backend import torch
-
-
 @pytest.mark.skipif(not torch, reason="PyTorch not installed")
 def test_bsp_ot_torch_backend():
     # test that bsp-ot works with torch tensors
@@ -137,3 +142,384 @@ def test_bsp_ot_torch_backend():
 
     # cost should be zero
     np.testing.assert_allclose(cost_new, 0, atol=1e-5)
+
+
+def _mean_squared_cost(A, B, perm):
+    # cost of ``perm`` recomputed here, independently of what the solver reports
+    return float(np.mean(np.sum((A - B[np.asarray(perm)]) ** 2, axis=1)))
+
+
+def _clouds(n=8, data_seed=0):
+    rng = np.random.RandomState(data_seed)
+    return rng.randn(n, 2), rng.randn(n, 2)
+
+
+def test_bsp_merge_fewer_plans_than_samples():
+    # perms stacks (n_plans, n_samples) permutations, so the merge has n_plans of them to
+    # read. With one plan over 32 samples the old code read one plan per sample and walked
+    # off the end of the array (issue #910).
+    n = 32
+    A, B = _clouds(n)
+    perms = np.arange(n, dtype=np.int32).reshape(1, n)
+
+    with warnings.catch_warnings():
+        # merge_bijections warns when its reported cost is not the cost of the permutation
+        warnings.simplefilter("error")
+        cost, perm = ot.bsp.merge_bijections(A, B, perms, 2)
+
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(n))
+    np.testing.assert_allclose(cost, _mean_squared_cost(A, B, perm), rtol=1e-9)
+    assert cost <= _mean_squared_cost(A, B, np.arange(n)) + 1e-12
+
+
+def test_bsp_merge_uses_every_supplied_plan():
+    # The plans past the n_samples-th must reach the merge. Both clouds are the same, so
+    # the identity is the only plan that can give a zero cost.
+    n = 8
+    A, _ = _clouds(n)
+    B = A.copy()
+
+    mediocre = np.roll(np.arange(n), 1).astype(np.int32)
+    without = np.tile(mediocre, (n, 1))
+    with_last = np.vstack([without, np.arange(n)]).astype(np.int32)
+
+    cost_without, _ = ot.bsp.merge_bijections(A, B, without, 2)
+    cost_with, perm_with = ot.bsp.merge_bijections(A, B, with_last, 2)
+
+    assert cost_with < cost_without, "the plan past n_samples was ignored"
+    np.testing.assert_array_equal(np.asarray(perm_with), np.arange(n))
+    np.testing.assert_allclose(cost_with, 0.0, atol=1e-12)
+
+
+def test_bsp_merge_on_a_standard_stack():
+    # The ordinary case keeps its documented behaviour: a bijection no worse than any plan
+    # it merged, and a cost that is the cost of that bijection.
+    n = 50
+    A, B = _clouds(n)
+    perms = np.stack([np.roll(np.arange(n), s) for s in (1, 7, 23, 41)]).astype(np.int32)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        cost, perm = ot.bsp.merge_bijections(A, B, perms, 2)
+
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(n))
+    np.testing.assert_allclose(cost, _mean_squared_cost(A, B, perm), rtol=1e-9)
+    for plan in perms:
+        assert cost <= _mean_squared_cost(A, B, plan) + 1e-12
+
+
+def test_bsp_merge_supports_documented_dtypes_and_refuses_views():
+    # int64, float64 and list input were accepted before the fix and must stay so; a
+    # non-contiguous view was already refused rather than read.
+    n = 8
+    A, B = _clouds(n)
+    plans = np.tile(np.roll(np.arange(n), 1), (4, 1))
+
+    ref_cost, ref_perm = ot.bsp.merge_bijections(A, B, plans.astype(np.int32), 2)
+    for other in (plans.astype(np.int64), plans.astype(np.float64), plans.tolist()):
+        cost, perm = ot.bsp.merge_bijections(A, B, other, 2)
+        np.testing.assert_allclose(cost, ref_cost, rtol=0, atol=0)
+        np.testing.assert_array_equal(np.asarray(perm), np.asarray(ref_perm))
+
+    view = np.asfortranarray(plans.astype(np.int32))
+    assert not view.flags["C_CONTIGUOUS"]
+    with pytest.raises(ValueError, match="C-contiguous"):
+        ot.bsp.merge_bijections(A, B, view, 2)
+
+
+@pytest.mark.parametrize(
+    "perms, reason",
+    [
+        pytest.param(np.arange(8, dtype=np.int32), "2D", id="one_dimensional"),
+        pytest.param(np.zeros((8, 8, 1), np.int32), "2D", id="three_dimensional"),
+        pytest.param(
+            np.tile(np.roll(np.arange(7), 1), (3, 1)),
+            "n_samples is the number of points",
+            id="rows_of_wrong_length",
+        ),
+        pytest.param(np.zeros((0, 8), np.int32), "at least one plan", id="empty_stack"),
+        pytest.param([[0, 0, 2, 3, 4, 5, 6, 7]], "permutation of", id="repeated_entry"),
+        pytest.param([[-1, 1, 2, 3, 4, 5, 6, 7]], "permutation of", id="negative_index"),
+        pytest.param([[0, 1, 2, 3, 4, 5, 6, 8]], "permutation of", id="index_past_last_point"),
+        pytest.param([[0, 1, 2, 3, 4, 5, 6, 6]], "permutation of", id="missing_entry"),
+        pytest.param([[0, 1, 2, np.nan, 4, 5, 6, 7]], "permutation of", id="nan_entry"),
+    ],
+)
+def test_bsp_merge_rejects_invalid_perms(perms, reason):
+    # A row that is not a permutation of 0..n_samples-1 makes the merge index outside the
+    # point clouds, and a stack that is not (n_plans, n_samples) cannot be read at all.
+    A, B = _clouds()
+    with pytest.raises(ValueError, match=reason):
+        ot.bsp.merge_bijections(A, B, perms, 2)
+
+
+@pytest.mark.parametrize(
+    "perms",
+    [
+        pytest.param(np.array([0, 1, 2, 3.5, 4, 5, 6, 7]), id="truncates_to_valid"),
+        pytest.param(
+            np.array([0, 1, 2, 2**32 + 3, 4, 5, 6, 7], dtype=np.int64),
+            id="wraps_to_valid",
+        ),
+    ],
+)
+def test_bsp_merge_checks_the_entries_before_casting_to_int32(perms):
+    # Reading these rows as int32 yields a valid permutation -- the cast truncates 3.5 and
+    # keeps the low bits of 2**32 + 3 -- so only a check made before the cast refuses them.
+    A, B = _clouds()
+    np.testing.assert_array_equal(perms.astype(np.int32), np.arange(8))
+    with pytest.raises(ValueError, match="permutation of"):
+        ot.bsp.merge_bijections(A, B, perms.reshape(1, 8), 2)
+
+
+def test_bsp_merge_c_refuses_a_stack_it_cannot_bound():
+    # merge_bijections_c is reachable on its own, so it keeps the row-length and the
+    # empty-stack guards that bound the buffer it hands to C++.
+    from ot.bsp import bsp_wrap
+
+    A, B = _clouds()
+    for perms, reason in [
+        (np.tile(np.roll(np.arange(7), 1), (3, 1)), "one entry per point"),
+        (np.zeros((0, 8), np.int32), "at least one plan"),
+    ]:
+        with pytest.raises(ValueError, match=reason):
+            bsp_wrap.merge_bijections_c(
+                A, B, np.ascontiguousarray(perms, dtype=np.int32), 2
+            )
+
+
+def _two_clouds(n=100, data_seed=0):
+    rng = np.random.RandomState(data_seed)
+    return rng.randn(n, 2), rng.randn(n, 2)
+
+
+def _bsp_fingerprint(A, B, n_plans, seed):
+    cost, perm, perms = ot.bsp.compute_bspot_bijection(A, B, n_plans, seed=seed)
+    return float(np.asarray(cost)), np.asarray(perm), np.asarray(perms)
+
+
+def test_bsp_seed_repeated_calls_are_reproducible():
+    # Two calls with the same arguments must return the same matchings, not
+    # just a similar cost.
+    A, B = _two_clouds()
+    cost0, perm0, perms0 = _bsp_fingerprint(A, B, 32, 0)
+    cost1, perm1, perms1 = _bsp_fingerprint(A, B, 32, 0)
+
+    np.testing.assert_array_equal(perm0, perm1)
+    np.testing.assert_array_equal(perms0, perms1)
+    np.testing.assert_allclose(cost0, cost1, rtol=0, atol=0)
+
+
+def test_bsp_seed_is_independent_of_call_history():
+    # A preceding call with another seed must not disturb the seeded stream.
+    A, B = _two_clouds()
+    _bsp_fingerprint(A, B, 16, 7)
+    cost0, perm0, perms0 = _bsp_fingerprint(A, B, 32, 0)
+    _bsp_fingerprint(A, B, 16, 11)
+    cost1, perm1, perms1 = _bsp_fingerprint(A, B, 32, 0)
+
+    np.testing.assert_array_equal(perm0, perm1)
+    np.testing.assert_array_equal(perms0, perms1)
+    np.testing.assert_allclose(cost0, cost1, rtol=0, atol=0)
+
+
+# Third-party imports write to stdout on import (e.g. the KeOps warning printed on
+# machines without CUDA), so the child prefixes its record with a unique marker.
+_RESULT_MARKER = "__POT_BSP_JSON_V1__="
+
+_FRESH_PROCESS_SNIPPET = """
+import hashlib, json, sys
+import numpy as np
+import ot
+from ot.bsp import bsp_wrap
+
+seed, n_plans, marker = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
+rng = np.random.RandomState(0)
+A, B = rng.randn(100, 2), rng.randn(100, 2)
+out = []
+for _ in range(2):
+    cost, perm, perms = ot.bsp.compute_bspot_bijection(A, B, n_plans, seed=seed)
+    perm, perms = np.asarray(perm), np.asarray(perms)
+    out.append({
+        "cost": float(np.asarray(cost)),
+        "perm": hashlib.sha256(perm.tobytes()).hexdigest(),
+        "perms": hashlib.sha256(perms.tobytes()).hexdigest(),
+    })
+print(marker + json.dumps({"results": out, "ot_file": ot.__file__,
+                           "ext_sha256": hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()}),
+      flush=True)
+"""
+
+
+def _ext_sha256():
+    from ot.bsp import bsp_wrap
+
+    return hashlib.sha256(open(bsp_wrap.__file__, "rb").read()).hexdigest()
+
+
+def _parse_fresh_process_report(stdout, stderr, returncode):
+    """Return the JSON record printed by the child after ``_RESULT_MARKER``.
+
+    The marker is searched for anywhere in stdout, since the child's record is
+    neither first nor necessarily last.
+    """
+    context = (
+        f"returncode={returncode}\n"
+        f"--- child stdout ---\n{stdout!r}\n"
+        f"--- child stderr ---\n{stderr!r}"
+    )
+    occurrences = stdout.count(_RESULT_MARKER)
+    if occurrences == 0:
+        raise AssertionError(
+            f"child stdout contains no {_RESULT_MARKER!r} record\n{context}"
+        )
+    if occurrences > 1:
+        raise AssertionError(
+            f"child stdout contains {occurrences} {_RESULT_MARKER!r} records\n{context}"
+        )
+    start = stdout.index(_RESULT_MARKER) + len(_RESULT_MARKER)
+    end = stdout.find("\n", start)
+    payload = stdout[start:] if end == -1 else stdout[start:end]
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(
+            f"invalid JSON in {_RESULT_MARKER!r} record: {payload!r}\n{context}"
+        ) from exc
+
+
+def _bsp_in_fresh_process(seed, n_plans, omp_threads):
+    """Run the fingerprint in a fresh interpreter.
+
+    Returns the reported results, or None together with the raw process output when the
+    child did not get as far as printing them.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = dict(os.environ)
+    env["PYTHONPATH"] = root + os.pathsep + env.get("PYTHONPATH", "")
+    if omp_threads is not None:
+        env["OMP_NUM_THREADS"] = str(omp_threads)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            _FRESH_PROCESS_SNIPPET,
+            str(seed),
+            str(n_plans),
+            _RESULT_MARKER,
+        ],
+        cwd=root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None, proc.returncode, proc.stderr
+    report = _parse_fresh_process_report(proc.stdout, proc.stderr, proc.returncode)
+    # a child that imported a different POT build would prove nothing
+    assert report["ext_sha256"] == _ext_sha256(), "child loaded another build"
+    return report["results"], proc.returncode, proc.stderr
+
+
+def _run_in_fresh_process(seed=0, n_plans=32, omp_threads=None, attempts=3):
+    # A child interpreter can die while importing POT on a host that is out of memory;
+    # that shows up as a plain exit code 1 with a Python traceback and is retried.
+    # Anything else -- a native crash such as 0xC0000005 or a signal -- is reported at
+    # once, since a real defect is deterministic and retrying it would only hide it.
+    failure = None
+    for _ in range(attempts):
+        results, returncode, stderr = _bsp_in_fresh_process(seed, n_plans, omp_threads)
+        if results is not None:
+            return results
+        failure = (returncode, stderr)
+        if returncode != 1:
+            break
+    raise AssertionError(
+        f"BSP subprocess failed with rc={failure[0]}\n{failure[1]}"
+    )
+
+
+def test_fresh_process_report_parsing_ignores_foreign_stdout():
+    report = {"results": [{"cost": 0.5}], "ot_file": "ot.py", "ext_sha256": "abc"}
+    stdout = (
+        "[KeOps] Warning : CUDA libraries not found or could not be loaded; "
+        "Switching to CPU only."
+        + _RESULT_MARKER
+        + json.dumps(report)
+        + "\ntrailing log line\n"
+    )
+    assert _parse_fresh_process_report(stdout, "", 0) == report
+
+
+def test_fresh_process_report_parsing_diagnoses_protocol_errors():
+    record = _RESULT_MARKER + '{"results": []}'
+
+    with pytest.raises(AssertionError, match="contains no") as missing:
+        _parse_fresh_process_report("only foreign output\n", "boom", 0)
+    assert "boom" in str(missing.value)
+
+    with pytest.raises(AssertionError, match="contains 2"):
+        _parse_fresh_process_report(record + "\n" + record + "\n", "", 0)
+
+    with pytest.raises(AssertionError, match="invalid JSON"):
+        _parse_fresh_process_report(_RESULT_MARKER + "{not json}\n", "", 0)
+
+
+def test_bsp_seed_reproducible_in_fresh_process():
+    # Reproducibility must not depend on whether the solver ran earlier in the
+    # session, so the reference is a first call in a brand new interpreter.
+    ref = _run_in_fresh_process()
+    assert ref[0] == ref[1], "two first calls in one fresh interpreter already disagree"
+
+    A, B = _two_clouds()
+    _bsp_fingerprint(A, B, 16, 7)  # make the current session non-pristine
+    cost, perm, perms = _bsp_fingerprint(A, B, 32, 0)
+    assert cost == ref[0]["cost"]
+    assert hashlib.sha256(np.asarray(perm).tobytes()).hexdigest() == ref[0]["perm"]
+    assert hashlib.sha256(np.asarray(perms).tobytes()).hexdigest() == ref[0]["perms"]
+
+
+def test_bsp_result_independent_of_openmp_thread_count():
+    # How the candidate-plan loop happens to be split over threads is not part of the
+    # solver, so the answer must not change with the number of available threads.
+    # Staying parallel is a performance property, not asserted here.
+    ref = _run_in_fresh_process(omp_threads=1)
+    for threads in (2, 4):
+        got = _run_in_fresh_process(omp_threads=threads)
+        assert got == ref, f"OMP_NUM_THREADS={threads} gives a different result"
+
+
+def test_bsp_candidate_plans_are_determined_by_seed_and_index():
+    # The property the seeding gives: candidate plan i depends on
+    # (A, B, p, gaussian_slicing, seed, i) alone, so asking for 4 plans and asking for 37
+    # must agree on the first four rows. Whether the plans are pairwise distinct is a
+    # property of the instance and of the standard library's distributions, not of the
+    # seeding -- for a similarity transform every candidate legitimately is the identity
+    # -- so it is not asserted here.
+    A, B = _two_clouds()
+    _, _, few = _bsp_fingerprint(A, B, 4, 0)
+    _bsp_fingerprint(A, B, 16, 5)  # unrelated call in between
+    _, _, many = _bsp_fingerprint(A, B, 37, 0)
+    np.testing.assert_array_equal(few, many[:4])
+    _, _, few_again = _bsp_fingerprint(A, B, 4, 0)
+    np.testing.assert_array_equal(few, few_again)
+
+
+def test_bsp_permutation_structure_and_cost():
+    # Invariants that must hold whatever random sequence is drawn. The solver warns when
+    # the cost it recomputes from ``perm`` disagrees with the cost it reports for it, so
+    # warnings are turned into errors here.
+    A, B = _two_clouds(n=80, data_seed=3)
+    M = ot.dist(A, B, metric="sqeuclidean")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for seed in (0, 1, 2):
+            cost, perm, perms = _bsp_fingerprint(A, B, 16, seed)
+    perm = np.asarray(perm)
+    np.testing.assert_array_equal(np.sort(perm), np.arange(80))
+    np.testing.assert_allclose(cost, np.mean(M[np.arange(80), perm]), rtol=1e-9)
+    for row in np.asarray(perms):
+        np.testing.assert_array_equal(np.sort(row), np.arange(80))
