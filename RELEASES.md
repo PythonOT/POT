@@ -18,6 +18,7 @@
 
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
 - Fix an out-of-bounds read in `ot.bsp.merge_bijections`: the number of plans was taken from `perms.shape[1]` (the number of samples) instead of `perms.shape[0]`, so merging fewer plans than samples read past the array and merging more silently dropped plans. A `perms` outside the documented `(n_plans, n_samples)` layout, an empty plan stack and rows that are not permutations are now rejected (PR #911, Issue #910)
