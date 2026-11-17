@@ -81,7 +81,15 @@ def merge_bijections_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double
     
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
-    cdef int k = plans.shape[1]
+    cdef int k = plans.shape[0]
+
+    if plans.shape[1] != n:
+        raise ValueError(
+            "plans must have shape (n_plans, n_samples) with one entry per point")
+
+    if k == 0:
+        raise ValueError("plans must contain at least one plan")
+
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
     cdef double cost_val

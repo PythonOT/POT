@@ -67,7 +67,10 @@ def coordinate_grad_semi_dual(b, M, reg, beta, i):
         Advances in Neural Information Processing Systems (2016).
     """
     r = M[i, :] - beta
-    exp_beta = np.exp(-r / reg) * b
+    # shift before exponentiating: the factor cancels in the ratio below, but
+    # without it exp overflows once beta grows and khi becomes all-NaN
+    min_r = np.min(r)
+    exp_beta = np.exp(-(r - min_r) / reg) * b
     khi = exp_beta / (np.sum(exp_beta))
     return b - khi
 

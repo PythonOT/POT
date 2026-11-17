@@ -177,13 +177,15 @@ def test_kl_custom_reference_is_honoured(nx):
 @pytest.mark.parametrize(
     "reg_type,unbalanced_type,custom_c",
     [
-        # L2, reg=1 on this fixture: the balanced branch *solves*
-        # reg/2 * ||P||^2 with no reference measure and *reports*
-        # <P,M> + reg * ||P||^2, while the UOT hard limit is
-        # <P,M> + reg/2 * ||P - c||^2. Oracle: x*=0.5, V*=0.125, but the
-        # balanced call returns V=0.5. The plans coincide only because a and b
-        # are uniform here; with a=(0.7,0.3), b=(0.6,0.4), M=0, reg=1 they
-        # differ (0.42 vs 0.40). At reg=2 the same pair is x*=0.5, 0.25 vs 1.0.
+        # L2, reg=1 on this fixture: the balanced branch *solves* and *reports*
+        # <P,M> + reg/2 * ||P||^2 with no reference measure, while the UOT hard
+        # limit is <P,M> + reg/2 * ||P - c||^2. Oracle: x*=0.5, V*=0.125, while
+        # the balanced call returns V=0.25 (after the half-squared objective fix
+        # of PR #914; the pre-fix value was 0.5). The plans coincide only because
+        # a and b are uniform here; with a=(0.7,0.3), b=(0.6,0.4), M=0, reg=1
+        # they differ (0.42 vs 0.40). At reg=2 the same pair is x*=0.5, 0.25 vs
+        # 0.50 (pre-fix 1.0). The two problems are not equivalent even though
+        # #914 corrected the balanced value coefficient.
         ("l2", "KL", False),
         ("l2", "L2", False),
         ("l2", "TV", False),
