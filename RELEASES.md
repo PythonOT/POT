@@ -16,6 +16,10 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
 - Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
