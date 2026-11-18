@@ -16,6 +16,10 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
 - Fix `ot.bregman.barycenter` with the default `method="sinkhorn"` (`ot.bregman.barycenter_sinkhorn`) converging to a wrong barycenter when the weights are not uniform. The scalings started from the unweighted geometric mean, which set their weighted product to a value other than 1 for the whole run; they now start from the weighted one. Results with uniform weights are unchanged (PR #920, Issue #919)
