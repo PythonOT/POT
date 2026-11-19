@@ -7,6 +7,8 @@
 
 import numpy as np
 import ot
+import pytest
+from ot.backend import torch
 
 
 def create_test_data(nx):
@@ -80,3 +82,27 @@ def test_dmmot_monge_1dgrid_optimize(nx):
             err_msg="Test failed: \
                                    Expected vectors of all zeros",
         )
+
+
+@pytest.mark.skipif(not torch, reason="PyTorch not installed")
+@pytest.mark.parametrize("coeff", [1.0, 7.0, -2.0, 0.0])
+@pytest.mark.parametrize("n,d", [(4, 2), (6, 3)])
+def test_dmmot_monge_1dgrid_loss_gradients(coeff, n, d):
+    rng = np.random.RandomState(0)
+    A = rng.rand(n, d) + 0.1
+    A /= A.sum(axis=0, keepdims=True)
+
+    _, log = ot.lp.dmmot_monge_1dgrid_loss(A, log=True)
+    # dual[j] is the potential of marginal j, i.e. the gradient wrt column j of A
+    expected = np.stack(log["dual"], axis=1)
+
+    A_torch = torch.from_numpy(A).requires_grad_()
+    loss = ot.lp.dmmot_monge_1dgrid_loss(A_torch)
+    np.testing.assert_allclose(float(loss.detach()), log["primal objective"], rtol=1e-12)
+
+    (coeff * loss).backward()
+
+    assert A_torch.grad.dtype == A_torch.dtype
+    np.testing.assert_allclose(
+        A_torch.grad.numpy(), coeff * expected, atol=1e-12, rtol=1e-12
+    )
