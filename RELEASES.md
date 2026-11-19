@@ -16,6 +16,10 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
 - Fix multi-axis batches in `ot.wasserstein_1d` and `quantile_function`, and return transport plans for unbatched and pre-sorted inputs. Shared weights are repeated over omitted batch axes; plans retain the original sample indices (PR #899, related to Issue #518).
