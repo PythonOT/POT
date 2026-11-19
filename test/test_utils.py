@@ -1046,3 +1046,26 @@ def test_split_sample_ratio(nx, ratio, n, random):
         ot.utils.split_sample_ratio(X, ratio=1.5, a=a, random_state=seed, nx=nx)
 
     #
+
+
+@pytest.mark.parametrize("ratio", [0, 1])
+@pytest.mark.parametrize("random", [False, True])
+@pytest.mark.parametrize("weighted", [False, True])
+def test_split_sample_ratio_endpoints(nx, ratio, random, weighted):
+    values = np.arange(6, dtype=float).reshape(3, 2)
+    weights = np.array([0.2, 0.0, 0.8]) if weighted else np.full(3, 1 / 3)
+    X = nx.from_numpy(values)
+    a = nx.from_numpy(weights) if weighted else None
+    X1, X2, a1, a2, id1, id2 = ot.utils.split_sample_ratio(
+        X, a=a, ratio=ratio, random_split=random, random_state=42
+    )
+    full_X, full_a, full_id = (X1, a1, id1) if ratio == 1 else (X2, a2, id2)
+    empty_X, empty_a = (X2, a2) if ratio == 1 else (X1, a1)
+    np.testing.assert_array_equal(nx.to_numpy(full_X), nx.to_numpy(X[full_id]))
+    order = np.argsort(nx.to_numpy(full_X)[:, 0])
+    np.testing.assert_array_equal(nx.to_numpy(full_X)[order], values)
+    np.testing.assert_allclose(nx.to_numpy(full_a)[order], weights)
+    assert empty_X.shape == (0, 2)
+    assert empty_a.shape == (0,)
+    empty_id = id2 if ratio == 1 else id1
+    assert X[empty_id].shape == empty_X.shape
