@@ -22,6 +22,7 @@
 
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix crashes in `ot.bsp.compute_bspot_bijection` on degenerate inputs: validate `n_plans` and `initial_perm` at the Python/Cython boundaries and guard the native merge against an empty candidate list. Valid inputs and seeding are unchanged.
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
