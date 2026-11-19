@@ -33,20 +33,17 @@ def scipy_sparse_to_spmatrix(A):
 def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm"):
     r"""Compute the Wasserstein barycenter of distributions A
 
-     The function solves the following optimization problem [16]:
+    The function solves the following optimization problem [16]:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{1}(\mathbf{a},\mathbf{a}_i)
+       \min_{\mathbf{a}} \sum_i w_i\,\mathrm{OT}_M(\mathbf{a}_i, \mathbf{a})
 
-    where :
+    where :math:`\mathrm{OT}_M` is the transport cost from a column
+    :math:`\mathbf{a}_i` of :math:`\mathbf{A}` to the barycenter
+    :math:`\mathbf{a}` using the cost matrix :math:`M`.
 
-    - :math:`W_1(\cdot,\cdot)` is the Wasserstein distance (see ot.emd.sinkhorn)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
-
-    The linear program is solved using the interior point solver from scipy.optimize.
-    If cvxopt solver if installed it can use cvxopt
-
-    Note that this problem do not scale well (both in memory and computational time).
+    The linear program is solved with SciPy or CVXOPT and can be large
+    even for a moderate number of bins.
 
     Parameters
     ----------
