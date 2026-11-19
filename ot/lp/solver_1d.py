@@ -15,7 +15,7 @@ import warnings
 
 from .emd_wrap import emd_1d_sorted
 from ..backend import get_backend
-from ..utils import list_to_array
+from ..utils import list_to_array, unif
 from ._network_simplex import center_ot_dual
 from collections import namedtuple
 
@@ -56,6 +56,97 @@ def quantile_function(qs, cws, xs, return_index=False):
         return nx.take_along_axis(xs, idx, axis=0), idx
     else:
         return nx.take_along_axis(xs, idx, axis=0)
+
+
+def free_support_barycenter_1d(measures_locations, measures_weights=None, weights=None):
+    r"""Compute the exact quadratic Wasserstein barycenter on the real line.
+
+    The barycenter quantile is the weighted mean of the input quantiles [16]_.
+    It changes only at their cumulative masses. Evaluating these breakpoints
+    gives both the support and the masses without a prescribed grid.
+
+    Parameters
+    ----------
+    measures_locations : list of array-like, each of shape (n_i,)
+        Atom locations for each input measure.
+    measures_weights : list of array-like, optional
+        Nonnegative atom masses for each measure, normalized separately.
+        If omitted, atoms within a measure have equal mass.
+    weights : array-like, shape (k,), optional
+        Nonnegative weights of the k measures, normalized to sum to one.
+        The default gives all measures equal weight.
+
+    Returns
+    -------
+    locations : array-like, shape (n,)
+        Distinct barycenter atoms in increasing order.
+    masses : array-like, shape (n,)
+        Probability mass at each atom.
+
+    Examples
+    --------
+    >>> from ot.lp import free_support_barycenter_1d
+    >>> x, a = free_support_barycenter_1d([[0., 4.], [2.]])
+    >>> x
+    array([1., 3.])
+    >>> a
+    array([0.5, 0.5])
+
+    References
+    ----------
+    .. [16] Agueh, M. and Carlier, G. (2011). Barycenters in the Wasserstein
+       space. SIAM Journal on Mathematical Analysis, 43(2), 904-924.
+    """
+    k = len(measures_locations)
+    if k == 0 or (measures_weights is not None and len(measures_weights) != k):
+        raise ValueError("Provide at least one measure and one mass array per measure.")
+    locations = [list_to_array(x) for x in measures_locations]
+    nx = get_backend(*locations)
+
+    def as_weights(a, size, x):
+        unit = unif(size, type_as=x) if a is None else a
+        if isinstance(unit, list):
+            unit, _ = list_to_array(unit, unif(1, type_as=x))
+        get_backend(x, unit)
+        return unit
+
+    weights = as_weights(weights, k, locations[0])
+
+    def check_weights(a, size):
+        if (
+            a.shape != (size,)
+            or nx.any(~nx.isfinite(a))
+            or nx.any(a < 0)
+            or not nx.any(a > 0)
+        ):
+            raise ValueError(
+                "Expected finite nonnegative weights with positive total mass."
+            )
+
+    check_weights(weights, k)
+    weights = weights / nx.max(weights)
+    weights = weights / nx.sum(weights)
+    quantiles = []
+    for i, x in enumerate(locations):
+        if x.ndim != 1 or len(x) == 0 or nx.any(~nx.isfinite(x)):
+            raise ValueError("Expected a nonempty vector of finite atom locations.")
+        a = as_weights(
+            None if measures_weights is None else measures_weights[i], len(x), x
+        )
+        check_weights(a, len(x))
+        if weights[i] > 0:
+            xs, order = nx.sort2(x)
+            a = nx.take_along_axis(a, order, axis=0)
+            cdf = nx.cumsum(a / nx.max(a))
+            quantiles.append((weights[i], cdf / cdf[-1], xs))
+
+    ends = nx.unique(nx.concatenate([cdf for _, cdf, _ in quantiles]))
+    ends = ends[ends > 0]
+    atoms = sum(w * quantile_function(ends, cdf, xs) for w, cdf, xs in quantiles)
+    # Keep the right endpoint of each interval with the same barycenter atom.
+    keep = nx.concatenate((atoms[:-1] != atoms[1:], ends[-1:] > 0))
+    ends = ends[keep]
+    return atoms[keep], ends - nx.concatenate((nx.zeros(1, type_as=ends), ends[:-1]))
 
 
 def wasserstein_1d(

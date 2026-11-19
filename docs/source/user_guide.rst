@@ -605,6 +605,10 @@ We provide a solver based on [20]_ in
 return a locally optimal support :math:`\{x_i\}` for uniform or given weights
 :math:`a`.
 
+For measures on the real line, :func:`ot.lp.free_support_barycenter_1d`
+returns the exact support and atom masses by averaging quantiles, including
+when the input histograms have different sizes.
+
 .. minigallery:: ot.lp.free_support_barycenter
     :add-heading: Examples of free support barycenter estimation
     :heading-level: "
