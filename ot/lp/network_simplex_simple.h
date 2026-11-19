@@ -819,6 +819,10 @@ namespace lemon {
                             cnt = _block_size;
                         }
                     }
+                    // No arc with a negative reduced cost was scanned, so
+                    // _in_arc was never assigned and the current flow is
+                    // optimal. Return before dereferencing it.
+                    if (min >= 0) return false;
                     a=fabs(_pi[_ns.arcSource(_in_arc)])>fabs(_pi[_ns.arcTarget(_in_arc)]) ? fabs(_pi[_ns.arcSource(_in_arc)]):fabs(_pi[_ns.arcTarget(_in_arc)]);
                     a=a>fabs(getCost(_in_arc))?a:fabs(getCost(_in_arc));
                     if (min >=  -EPSILON*a) return false;
@@ -928,9 +932,15 @@ namespace lemon {
             _D_ptr = D;
             _D_n2 = n2;
             // Precompute max cost once for reuse in init()
+            if (_arc_num == 0) {
+                // No arc means there is no cost to read: D[0] would be out of
+                // bounds and the scan below would never terminate.
+                _has_max_cost = false;
+                return *this;
+            }
             _has_max_cost = true;
             _max_cost = D[0];
-            for (ArcsType i = 1; i != _arc_num; ++i) {
+            for (ArcsType i = 1; i < _arc_num; ++i) {
                 if (D[i] > _max_cost) _max_cost = D[i];
             }
             return *this;
@@ -1930,6 +1940,10 @@ namespace lemon {
                 }
                 _all_arc_num = f;
             }
+
+            // Initialize in_arc to a valid value: the pivot rule reads it to
+            // scale the tolerance even when no entering arc has been found.
+            in_arc = 0;
 
             return true;
         }

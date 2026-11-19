@@ -97,6 +97,14 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     cdef int result_code = 0
     cdef int nG=0
 
+    if (a.shape[0] != n1 and a.shape[0] != 0) or (
+        b.shape[0] != n2 and b.shape[0] != 0
+    ):
+        raise ValueError(
+            f"Shape mismatch: the cost matrix has shape ({n1}, {n2}) but a has "
+            f"{a.shape[0]} entries and b has {b.shape[0]}"
+        )
+
     cdef double cost=0
     cdef np.ndarray[double, ndim=1, mode="c"] alpha=np.zeros(n1)
     cdef np.ndarray[double, ndim=1, mode="c"] beta=np.zeros(n2)
@@ -124,6 +132,12 @@ def emd_c(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1, mod
     if alpha_init is not None and beta_init is not None:
         alpha_init_c = np.ascontiguousarray(alpha_init, dtype=np.float64)
         beta_init_c = np.ascontiguousarray(beta_init, dtype=np.float64)
+        if alpha_init_c.size != n1 or beta_init_c.size != n2:
+            raise ValueError(
+                f"Shape mismatch: the initial potentials have sizes "
+                f"{alpha_init_c.size} and {beta_init_c.size}, expected {n1} "
+                f"and {n2}"
+            )
         alpha_init_ptr = <double*> alpha_init_c.data
         beta_init_ptr = <double*> beta_init_c.data
 
@@ -174,6 +188,12 @@ def emd_1d_sorted(np.ndarray[double, ndim=1, mode="c"] u_weights,
     cdef double cost = 0.
     cdef Py_ssize_t n = u_weights.shape[0]
     cdef Py_ssize_t m = v_weights.shape[0]
+
+    if n == 0 or m == 0:
+        raise ValueError(
+            "The 1d EMD problem needs at least one source and one target point, "
+            f"got {n} and {m}"
+        )
 
     cdef Py_ssize_t i = 0
     cdef double w_i = u_weights[0]
@@ -278,9 +298,27 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
     cdef int n1 = a.shape[0]
     cdef int n2 = b.shape[0]
     cdef uint64_t n_edges = edge_sources.shape[0]
+    cdef uint64_t max_source = 0
+    cdef uint64_t max_target = 0
     cdef uint64_t n_flows_out = 0
     cdef int result_code = 0
     cdef double cost = 0
+
+    if edge_targets.shape[0] != n_edges or edge_costs.shape[0] != n_edges:
+        raise ValueError(
+            "edge_sources, edge_targets and edge_costs must have the same "
+            f"length, got {n_edges}, {edge_targets.shape[0]} and "
+            f"{edge_costs.shape[0]}"
+        )
+    if n_edges > 0:
+        max_source = edge_sources.max()
+        max_target = edge_targets.max()
+        if max_source >= <uint64_t>n1 or max_target >= <uint64_t>n2:
+            raise ValueError(
+                f"Edge endpoints must be smaller than the marginals: got a "
+                f"maximal source index of {max_source} (n1={n1}) and a maximal "
+                f"target index of {max_target} (n2={n2})"
+            )
 
     # Allocate output arrays (max size = n_edges)
     cdef np.ndarray[uint64_t, ndim=1, mode="c"] flow_sources = np.zeros(n_edges, dtype=np.uint64)
@@ -292,6 +330,12 @@ def emd_c_sparse(np.ndarray[double, ndim=1, mode="c"] a,
     cdef double* alpha_init_ptr = NULL
     cdef double* beta_init_ptr = NULL
     if alpha_init is not None and beta_init is not None:
+        if alpha_init.shape[0] != n1 or beta_init.shape[0] != n2:
+            raise ValueError(
+                f"Shape mismatch: the initial potentials have sizes "
+                f"{alpha_init.shape[0]} and {beta_init.shape[0]}, expected "
+                f"{n1} and {n2}"
+            )
         alpha_init_ptr = <double*> alpha_init.data
         beta_init_ptr = <double*> beta_init.data
     
@@ -328,6 +372,15 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     cdef uint64_t n_flows_out = 0
     cdef uint64_t max_flows_out = n1 + n2
     
+    if (a.shape[0] != n1 and a.shape[0] != 0) or (
+        b.shape[0] != n2 and b.shape[0] != 0
+    ):
+        raise ValueError(
+            f"Shape mismatch: the coordinates have shapes ({n1}, {dim}) and "
+            f"({n2}, {coords_b.shape[1]}) but a has {a.shape[0]} entries and b "
+            f"has {b.shape[0]}"
+        )
+
     # Validate dimension consistency
     if coords_b.shape[1] != dim:
         raise ValueError(f"Coordinate dimension mismatch: coords_a has {dim} dimensions but coords_b has {coords_b.shape[1]}")
@@ -356,6 +409,12 @@ def emd_c_lazy(np.ndarray[double, ndim=1, mode="c"] a, np.ndarray[double, ndim=1
     cdef double* alpha_init_ptr = NULL
     cdef double* beta_init_ptr = NULL
     if alpha_init is not None and beta_init is not None:
+        if alpha_init.shape[0] != n1 or beta_init.shape[0] != n2:
+            raise ValueError(
+                f"Shape mismatch: the initial potentials have sizes "
+                f"{alpha_init.shape[0]} and {beta_init.shape[0]}, expected "
+                f"{n1} and {n2}"
+            )
         alpha_init_ptr = <double*> alpha_init.data
         beta_init_ptr = <double*> beta_init.data
     
