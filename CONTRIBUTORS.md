@@ -64,6 +64,7 @@ The contributors to this library are:
 * [Huy Tran](https://github.com/huytransformer) (Stereographic Spherical Sliced-Wasserstein)
 * [Samuel Vangu](https://github.com/Samuel-Vangu) (Quasi-Monte Carlo Sliced-Wasserstein)
 * [xihaian251](https://github.com/xihaian251) (Unbalanced OT objective correctness and regression tests)
+* [Mark Santos](https://www.markstudios.com/) (Documentation link fixes)
 
 
 ## Acknowledgments
