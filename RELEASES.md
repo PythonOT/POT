@@ -5,6 +5,7 @@
 #### New features
 
 
+- Add `ot.lp.emd_grid_l1`, an exact EMD-L1 solver for histograms sharing a multi-dimensional Cartesian grid support. It solves a min-cost flow on the grid's adjacency graph rather than the full bipartite graph (Ling & Okada, 2007), which is one to two orders of magnitude faster for this case (PR #863)
 - `ot.dr.wda` gains `solver='torch'`, a PyTorch autodiff solver with Riemannian gradient descent, usable on installations without autograd or pymanopt, and accepting torch tensors directly (PR #858, Issue #806)
 - `ot.dr` dependencies (autograd, pymanopt, scikit-learn, torch) are now imported optionally, so importing `ot.dr` no longer requires all of them; each function raises an explicit `ImportError` naming what it needs (PR #858)
 - Use `ot.utils.check_marginal` (and shape-tuple support in `ot.utils.unif`) to fill and validate default marginals consistently across solvers (Gromov, low-rank, stochastic, barycenter, factored) (PR #856)
