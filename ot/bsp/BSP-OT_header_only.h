@@ -888,6 +888,12 @@ Vec evalMappings(const BijectiveMatching& T,const cost_function& cost) {
 }
 
 BijectiveMatching MergePlansNoPar(const std::vector<BijectiveMatching> &plans, const cost_function &cost, BijectiveMatching T,bool cycle) {
+    // With no candidate plan there is nothing to rank or merge. Return the
+    // supplied starting matching (empty when none was given) before indexing
+    // plans[I[0]] or plans[0] below, which would read a null/empty vector.
+    if (plans.empty()) {
+        return T;
+    }
     int s = 0;
     auto I = true ? rankPlans(plans,cost) : rangeVec(plans.size());
     if (T.size() == 0) {

@@ -74,12 +74,26 @@ def compute_bspot_bijection(
     if X_np.ndim != 2:
         raise ValueError("X and Y must be 2D arrays")
 
+    if n_plans <= 0:
+        raise ValueError("n_plans must be a positive integer, got {}".format(n_plans))
+
     if initial_perm is not None:
         initial_perm = list_to_array(initial_perm)
         if initial_perm.shape != (X.shape[0],):
             raise ValueError(
                 "initial_perm must have shape (n,) where n is the number of points"
             )
+        # A non-permutation makes the native inverse construction write out of
+        # bounds (negative or out-of-range entries) or hang (duplicates), so
+        # reject it before crossing the Cython boundary. Check the exact
+        # integer permutation (dtype and value), not just min/max/unique:
+        # fractional arrays such as [0.1, 1.1, ...] and arrays containing NaN
+        # must be rejected here rather than relying on the Cython dtype check.
+        ip = np.asarray(initial_perm)
+        if ip.dtype.kind not in "iu" or not np.array_equal(
+            np.sort(ip), np.arange(X_np.shape[0])
+        ):
+            raise ValueError("initial_perm must be a permutation of 0..n-1")
 
     if gaussian_slicing == "auto":
         gaussian_slicing = X_np.shape[1] <= 64

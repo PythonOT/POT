@@ -523,3 +523,93 @@ def test_bsp_permutation_structure_and_cost():
     np.testing.assert_allclose(cost, np.mean(M[np.arange(80), perm]), rtol=1e-9)
     for row in np.asarray(perms):
         np.testing.assert_array_equal(np.sort(row), np.arange(80))
+
+
+def test_bsp_rejects_nonpositive_n_plans():
+    # Degenerate plan counts used to segfault in MergePlansNoPar (empty plans).
+    A, B = _two_clouds(n=6, data_seed=1)
+    for bad in (0, -1):
+        with pytest.raises(ValueError, match="n_plans"):
+            ot.bsp.compute_bspot_bijection(A, B, n_plans=bad)
+
+
+def test_bsp_solve_c_rejects_nonpositive_n_plans():
+    # Direct Cython boundary must validate too, so callers bypassing the
+    # public API cannot reach the native empty-plan crash.
+    A, B = _two_clouds(n=6, data_seed=1)
+    from ot.bsp.bsp_wrap import bsp_solve_c
+
+    for bad in (0, -1):
+        with pytest.raises(ValueError, match="n_plans"):
+            bsp_solve_c(
+                np.asarray(A, dtype=np.float64),
+                np.asarray(B, dtype=np.float64),
+                bad,
+                2,
+            )
+
+
+@pytest.mark.parametrize(
+    "bad", [[0, 0, 2, 3], [0, 1, 2, 4], [0, 1, 2, -1]]
+)
+def test_bsp_rejects_invalid_initial_perm(bad):
+    # A non-permutation initial plan made getInverse write out of bounds
+    # (negative / out-of-range entry) or hang (duplicate).
+    rng = np.random.RandomState(11)
+    A = rng.rand(4, 2)
+    B = rng.rand(4, 2)
+    with pytest.raises(ValueError, match="permutation"):
+        ot.bsp.compute_bspot_bijection(A, B, n_plans=2, initial_perm=bad)
+
+
+def test_bsp_initial_perm_wrong_length():
+    rng = np.random.RandomState(12)
+    A = rng.rand(4, 2)
+    B = rng.rand(4, 2)
+    with pytest.raises(ValueError):
+        ot.bsp.compute_bspot_bijection(A, B, n_plans=2, initial_perm=[0, 1, 2])
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        np.array([0, 0, 2, 3], dtype=np.int32),   # duplicate
+        np.array([0, 1, 2, 4], dtype=np.int32),   # out of range
+        np.array([0, 1, 2, -1], dtype=np.int32),  # negative
+        np.array([0, 1, 2], dtype=np.int32),      # short buffer
+    ],
+)
+def test_bsp_solve_c_rejects_invalid_initial_plan(bad):
+    # The direct Cython entry point must enforce the same initial-plan contract
+    # as the public API: an invalid permutation or a short buffer would make
+    # the native getInverse() write out of bounds. This test needs a rebuilt
+    # bsp_wrap extension (the fix lives in the Cython layer).
+    A, B = _two_clouds(n=4, data_seed=11)
+    from ot.bsp.bsp_wrap import bsp_solve_c
+
+    with pytest.raises(ValueError, match="initial_plan"):
+        bsp_solve_c(
+            np.ascontiguousarray(A, dtype=np.float64),
+            np.ascontiguousarray(B, dtype=np.float64),
+            2,
+            2,
+            bad,
+        )
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        [0.1, 1.1, 2.1, 3.1],
+        [0.0, 1.0, 2.0, np.nan],
+    ],
+)
+def test_bsp_rejects_non_integral_initial_perm(bad):
+    # Fractional/NaN arrays are not integer permutations. Cython's typed int
+    # buffer would reject them later, but the public API must reject them with
+    # a precise permutation error before crossing that boundary.
+    rng = np.random.RandomState(13)
+    A = rng.rand(4, 2)
+    B = rng.rand(4, 2)
+    with pytest.raises(ValueError, match="permutation"):
+        ot.bsp.compute_bspot_bijection(A, B, n_plans=2, initial_perm=bad)
