@@ -49,6 +49,26 @@ def bsp_solve_c(np.ndarray[double, ndim=2, mode="c"] X, np.ndarray[double, ndim=
         print("not contiugous")
     cdef int n = X.shape[0]
     cdef int d = X.shape[1]
+
+    # Guard the native boundary: a non-positive plan count would leave an
+    # empty candidate vector that MergePlansNoPar indexes at [0], and an
+    # initial plan of the wrong length or with non-permutation entries makes
+    # getInverse() write out of bounds (TI[T[i]] = i with T[i] negative or >= n).
+    if n_plans <= 0:
+        raise ValueError("n_plans must be a positive integer, got {}".format(n_plans))
+    if initial_plan is not None:
+        if initial_plan.shape[0] != n:
+            raise ValueError(
+                "initial_plan must have one entry per point, got {} for {} points".format(
+                    initial_plan.shape[0], n
+                )
+            )
+        # The typed int buffer already rejects float/NaN arrays before this
+        # point; an exact sort check additionally rejects negative,
+        # out-of-range and duplicated entries in one step.
+        if not np.array_equal(np.sort(initial_plan), np.arange(n)):
+            raise ValueError("initial_plan must be a permutation of 0..n-1")
+
     cdef np.ndarray[int, ndim=2, mode="c"] plans = np.zeros((n_plans,n), dtype=np.int32) 
     cdef np.ndarray[int, ndim=1, mode="c"] plan = np.zeros(n, dtype=np.int32) 
 
