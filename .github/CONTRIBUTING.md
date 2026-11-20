@@ -45,7 +45,7 @@ GitHub, clone, and develop on a branch. Steps:
 
    Always use a `feature` branch. It's good practice to never work on the `master` branch!
 
-6. Install a compiler with OpenMP support for your platform (see details on the [scikit-learn contributing guide](https://scikit-learn.org/stable/developers/advanced_installation.html#platform-specific-instructions)).
+6. Install a compiler with OpenMP support for your platform (see details on the [scikit-learn contributing guide](https://scikit-learn.org/stable/developers/development_setup.html)).
    For instance, with macOS, Apple clang does not support OpenMP. One can install the LLVM OpenMP library from homebrew:
 
    ```bash
@@ -88,7 +88,7 @@ GitHub, clone, and develop on a branch. Steps:
    to create a pull request from your fork. This will send an email to the committers.
 
 (If any of the above seems like magic to you, please look up the
-[Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
+[Git documentation](https://git-scm.com/doc) on the web, or ask a friend or another contributor for help.)
 
 ## Pull Request Checklist
 
