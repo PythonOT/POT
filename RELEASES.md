@@ -22,6 +22,7 @@
 
 #### Closed issues
 
+- Fix `ot.bregman.barycenter` with the default `method="sinkhorn"` (`ot.bregman.barycenter_sinkhorn`) converging to a wrong barycenter when the weights are not uniform. The scalings started from the unweighted geometric mean, which set their weighted product to a value other than 1 for the whole run; they now start from the weighted one. Results with uniform weights are unchanged (PR #920, Issue #919)
 - Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
