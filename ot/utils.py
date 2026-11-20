@@ -1180,6 +1180,10 @@ class UndefinedParameter(Exception):
 class OTResult:
     """Base class for OT results.
 
+    Marginals are available for dense, sparse and lazy transport plans. Sparse
+    plans are reduced without constructing the full dense matrix, while lazy
+    plans are evaluated in batches controlled by ``batch_size``.
+
     Parameters
     ----------
 
@@ -1380,7 +1384,11 @@ class OTResult:
     def marginals(self):
         """Marginals of the transport plan: should be very close to "a" and "b"
         for balanced OT."""
-        if self._plan is not None:
+        if (
+            self._plan is not None
+            or self._sparse_plan is not None
+            or self._lazy_plan is not None
+        ):
             return self.marginal_a, self.marginal_b
         else:
             return None
@@ -1390,6 +1398,11 @@ class OTResult:
         """First marginal of the transport plan, with the same shape as "a"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 1)
+        elif self._sparse_plan is not None:
+            nx = self._backend
+            # Reduce the sparse plan without materializing the full matrix.
+            ones = nx.ones((self._sparse_plan.shape[1], 1), type_as=self._sparse_plan)
+            return nx.reshape(self._sparse_plan @ ones, (-1,))
         elif self._lazy_plan is not None:
             lp = self._lazy_plan
             bs = self._batch_size
@@ -1403,6 +1416,10 @@ class OTResult:
         """Second marginal of the transport plan, with the same shape as "b"."""
         if self._plan is not None:
             return self._backend.sum(self._plan, 0)
+        elif self._sparse_plan is not None:
+            nx = self._backend
+            ones = nx.ones((1, self._sparse_plan.shape[0]), type_as=self._sparse_plan)
+            return nx.reshape(ones @ self._sparse_plan, (-1,))
         elif self._lazy_plan is not None:
             lp = self._lazy_plan
             bs = self._batch_size
