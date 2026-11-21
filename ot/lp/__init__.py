@@ -26,6 +26,7 @@ from .solver_1d import (
     emd_1d,
     emd2_1d,
     wasserstein_1d,
+    free_support_barycenter_1d,
     emd_1d_dual_backprop,
 )
 
@@ -47,6 +48,7 @@ __all__ = [
     "emd_1d",
     "emd2_1d",
     "wasserstein_1d",
+    "free_support_barycenter_1d",
     "emd_1d_dual",
     "emd_1d_dual_backprop",
     "generalized_free_support_barycenter",
