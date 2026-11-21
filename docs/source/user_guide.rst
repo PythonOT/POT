@@ -562,6 +562,10 @@ function uses :any:`scipy.optimize.linprog`, but more efficient LP solvers from
 requires to solve a very large linear program and can be very slow in
 practice.
 
+The rows of the cost matrix correspond to the input bins and the columns to
+the allowed barycenter bins. These supports can have different sizes, as in
+:ref:`sphx_glr_auto_examples_barycenters_plot_barycenter_output_grid.py`.
+
 Similarly to the OT problem, OT barycenters can be computed in the regularized
 case. When entropic regularization is used, the problem can be solved with a
 generalization of the Sinkhorn algorithm based on Bregman projections [3]_. This

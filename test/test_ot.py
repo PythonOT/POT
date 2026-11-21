@@ -401,6 +401,33 @@ def test_lp_barycenter():
     np.testing.assert_allclose(bary.sum(), 1)
 
 
+@pytest.mark.parametrize("solver", ["highs-ipm", "highs-ds", None])
+@pytest.mark.parametrize("m", [1, 3, 7])
+def test_lp_barycenter_rectangular_cost(solver, m):
+    if solver is None and not ot.lp._barycenter_solvers.cvxopt:
+        pytest.skip("cvxopt is not installed")
+    # A Dirac in each input column forces its transport plan to put all
+    # the corresponding mass on the optimal barycenter bin.
+    A = np.eye(4)[:, [0, 2]]
+    weights = np.array([0.25, 0.75])
+    bins = np.linspace(0.1, 2.8, m)
+    M = (np.arange(4)[:, None] - bins) ** 2
+    expected = np.zeros(m)
+    expected[np.argmin(weights @ M[[0, 2]])] = 1
+    result, _ = ot.lp.barycenter(A, M, weights, solver=solver, log=True)
+    np.testing.assert_allclose(result, expected, atol=1e-6)
+
+
+def test_lp_barycenter_on_a_coarser_grid():
+    A = np.array([[0.2, 0.1], [0.3, 0.4], [0.5, 0.5]])
+    # Both inputs send their first two bins to output bin 0, their last to 1.
+    M = np.array([[0.0, 9.0], [1.0, 4.0], [9.0, 0.0]])
+    result = ot.lp.barycenter(A, M)
+    np.testing.assert_allclose(result, [0.5, 0.5])
+    with pytest.raises(ValueError, match="one row per input bin"):
+        ot.lp.barycenter(A, M.T)
+
+
 def test_free_support_barycenter():
     measures_locations = [
         np.array([-1.0]).reshape((1, 1)),

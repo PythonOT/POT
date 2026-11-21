@@ -33,27 +33,25 @@ def scipy_sparse_to_spmatrix(A):
 def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm"):
     r"""Compute the Wasserstein barycenter of distributions A
 
-     The function solves the following optimization problem [16]:
+    The function solves the following optimization problem [16]:
 
     .. math::
-       \mathbf{a} = arg\min_\mathbf{a} \sum_i W_{1}(\mathbf{a},\mathbf{a}_i)
+       \min_{\mathbf{a}} \sum_i w_i\,\mathrm{OT}_M(\mathbf{a}_i, \mathbf{a})
 
-    where :
+    where :math:`\mathrm{OT}_M` is the transport cost from a column
+    :math:`\mathbf{a}_i` of :math:`\mathbf{A}` to the barycenter
+    :math:`\mathbf{a}` using the cost matrix :math:`M`.
 
-    - :math:`W_1(\cdot,\cdot)` is the Wasserstein distance (see ot.emd.sinkhorn)
-    - :math:`\mathbf{a}_i` are training distributions in the columns of matrix :math:`\mathbf{A}`
-
-    The linear program is solved using the interior point solver from scipy.optimize.
-    If cvxopt solver if installed it can use cvxopt
-
-    Note that this problem do not scale well (both in memory and computational time).
+    The linear program is solved with SciPy or CVXOPT and can be large
+    even for a moderate number of bins.
 
     Parameters
     ----------
     A : np.ndarray (d,n)
         n training distributions a_i of size d
-    M : np.ndarray (d,d)
-        loss matrix for OT
+    M : np.ndarray (d,m)
+        Cost from each input bin (row) to each prescribed barycenter bin
+        (column). The two supports need not have the same size.
     weights : np.ndarray (n,)
         Weights of each histogram a_i on the simplex (barycentric coordinates)
     verbose : bool, optional
@@ -66,7 +64,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
 
     Returns
     -------
-    a : (d,) ndarray
+    a : (m,) ndarray
         Wasserstein barycenter
     log : dict
         log dictionary return only if log==True in parameters
@@ -88,18 +86,20 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
     n_distributions = A.shape[1]
     n = A.shape[0]
 
-    n2 = n * n
+    if M.ndim != 2 or M.shape[0] != n or M.shape[1] == 0:
+        raise ValueError("M must have one row per input bin and at least one column.")
+    m = M.shape[1]
     c = np.zeros((0))
     b_eq1 = np.zeros((0))
     for i in range(n_distributions):
         c = np.concatenate((c, M.ravel() * weights[i]))
         b_eq1 = np.concatenate((b_eq1, A[:, i]))
-    c = np.concatenate((c, np.zeros(n)))
+    c = np.concatenate((c, np.zeros(m)))
 
-    lst_idiag1 = [sps.kron(sps.eye(n), np.ones((1, n))) for i in range(n_distributions)]
+    lst_idiag1 = [sps.kron(sps.eye(n), np.ones((1, m))) for i in range(n_distributions)]
     #  row constraints
     A_eq1 = sps.hstack(
-        (sps.block_diag(lst_idiag1), sps.coo_matrix((n_distributions * n, n)))
+        (sps.block_diag(lst_idiag1), sps.coo_matrix((n_distributions * n, m)))
     )
 
     # columns constraints
@@ -107,11 +107,11 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
     lst_eye = []
     for i in range(n_distributions):
         if i == 0:
-            lst_idiag2.append(sps.kron(np.ones((1, n)), sps.eye(n)))
-            lst_eye.append(-sps.eye(n))
+            lst_idiag2.append(sps.kron(np.ones((1, n)), sps.eye(m)))
+            lst_eye.append(-sps.eye(m))
         else:
-            lst_idiag2.append(sps.kron(np.ones((1, n)), sps.eye(n - 1, n)))
-            lst_eye.append(-sps.eye(n - 1, n))
+            lst_idiag2.append(sps.kron(np.ones((1, n)), sps.eye(m - 1, m)))
+            lst_eye.append(-sps.eye(m - 1, m))
 
     A_eq2 = sps.hstack((sps.block_diag(lst_idiag2), sps.vstack(lst_eye)))
     b_eq2 = np.zeros((A_eq2.shape[0]))
@@ -131,11 +131,11 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
             c, A_eq=A_eq, b_eq=b_eq, method=solver, options=options
         )
         x = sol.x
-        b = x[-n:]
+        b = x[-m:]
 
     else:
-        h = np.zeros((n_distributions * n2 + n))
-        G = -sps.eye(n_distributions * n2 + n)
+        h = np.zeros((n_distributions * n * m + m))
+        G = -sps.eye(n_distributions * n * m + m)
 
         sol = solvers.lp(
             matrix(c),
@@ -147,7 +147,7 @@ def barycenter(A, M, weights=None, verbose=False, log=False, solver="highs-ipm")
         )
 
         x = np.array(sol["x"])
-        b = x[-n:].ravel()
+        b = x[-m:].ravel()
 
     if log:
         return b, sol
