@@ -209,3 +209,148 @@ def test_solve_batch_device(method):
         M = dist_batch(Xd, Xd)
         res = solve_batch(M, reg=0.1, max_iter=10, tol=1e-5, method=method)
         assert res.plan.device == Xd.device
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("batch_size", [1, 2, 3, 8])
+def test_solve_batch_envelope_entropy_gradients_torch(batch_size):
+    """Envelope mode must propagate M and marginal gradients batch-wise."""
+    rng = np.random.RandomState(0)
+    p_np = 0.5 + 0.4 * rng.rand(batch_size)
+    w_np = rng.randn(batch_size)
+
+    p = torch.tensor(p_np, dtype=torch.float64, requires_grad=True)
+    a = torch.stack([p, 1 - p], dim=1)
+    b = torch.full((batch_size, 2), 0.5, dtype=torch.float64)
+    M = torch.zeros((batch_size, 2, 2), dtype=torch.float64, requires_grad=True)
+    w = torch.tensor(w_np, dtype=torch.float64)
+
+    res = solve_batch(
+        M, reg=1.0, a=a, b=b, method="log_sinkhorn", reg_type="entropy",
+        grad="envelope", max_iter=2000, tol=1e-14,
+    )
+    grad_M, grad_p = torch.autograd.grad(
+        (res.value * w).sum(), (M, p), allow_unused=True
+    )
+
+    # M = 0 gives F(p) = reg*(p log p + (1-p) log(1-p) - log 2)
+    expected_p = w_np * (np.log(p_np) - np.log(1 - p_np))
+    expected_M = w_np[:, None, None] * res.plan.detach().numpy()
+    assert grad_p is not None
+    np.testing.assert_allclose(grad_p.detach().numpy(), expected_p, atol=1e-10)
+    np.testing.assert_allclose(grad_M.numpy(), expected_M, atol=1e-12)
+    assert grad_p.shape == p.shape and grad_p.dtype == p.dtype
+    assert grad_M.shape == M.shape and grad_M.device == M.device
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+def test_solve_batch_envelope_two_batch_exact_cotangent():
+    """p1=3/4, p2=4/5 with w=(1,-2) must give (log 3, -2 log 4)."""
+    p = torch.tensor([0.75, 0.8], dtype=torch.float64, requires_grad=True)
+    a = torch.stack([p, 1 - p], dim=1)
+    b = torch.full((2, 2), 0.5, dtype=torch.float64)
+    M = torch.zeros((2, 2, 2), dtype=torch.float64, requires_grad=True)
+    res = solve_batch(
+        M, reg=1.0, a=a, b=b, method="log_sinkhorn", reg_type="entropy",
+        grad="envelope", max_iter=2000, tol=1e-14,
+    )
+    _, grad_p = torch.autograd.grad(
+        (res.value * torch.tensor([1.0, -2.0], dtype=torch.float64)).sum(),
+        (M, p), allow_unused=True,
+    )
+    np.testing.assert_allclose(
+        grad_p.numpy(), [np.log(3.0), -2 * np.log(4.0)], atol=1e-12
+    )
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("reg_type", ["entropy", "kl"])
+def test_solve_batch_envelope_marginal_vs_finite_difference(reg_type):
+    """Independent mass-conserving finite difference, including KL reference term."""
+    M_np = np.array([[0.1, 0.9], [1.3, 0.2]], dtype=np.float64)
+    p0 = 0.75
+    h = 1e-6
+
+    def value_at(p):
+        a = np.array([[p, 1 - p]], dtype=np.float64)
+        b = np.full((1, 2), 0.5, dtype=np.float64)
+        return float(solve_batch(
+            M_np[None], reg=1.0, a=a, b=b, method="log_sinkhorn",
+            reg_type=reg_type, grad="detach", max_iter=5000, tol=1e-14,
+        ).value[0])
+
+    oracle = (value_at(p0 + h) - value_at(p0 - h)) / (2 * h)
+
+    p = torch.tensor([p0], dtype=torch.float64, requires_grad=True)
+    a = torch.cat([p, 1 - p]).unsqueeze(0)
+    b = torch.full((1, 2), 0.5, dtype=torch.float64)
+    M = torch.tensor(M_np[None], dtype=torch.float64, requires_grad=True)
+    res = solve_batch(
+        M, reg=1.0, a=a, b=b, method="log_sinkhorn", reg_type=reg_type,
+        grad="envelope", max_iter=5000, tol=1e-14,
+    )
+    _, grad_p = torch.autograd.grad(res.value.sum(), (M, p), allow_unused=True)
+    assert grad_p is not None
+    np.testing.assert_allclose(grad_p.item(), oracle, atol=1e-7)
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+@pytest.mark.parametrize("reg_type", ["entropy", "kl"])
+def test_solve_batch_envelope_forward_unchanged(reg_type):
+    """Envelope VJP registration must not alter value or plan."""
+    rng = np.random.RandomState(1)
+    M_np = rng.rand(2, 3, 4)
+    a_np = rng.rand(2, 3)
+    a_np /= a_np.sum(axis=1, keepdims=True)
+    b_np = rng.rand(2, 4)
+    b_np /= b_np.sum(axis=1, keepdims=True)
+
+    def solve(grad):
+        return solve_batch(
+            torch.tensor(M_np, requires_grad=True),
+            reg=0.5, a=torch.tensor(a_np), b=torch.tensor(b_np),
+            method="log_sinkhorn", reg_type=reg_type, grad=grad,
+            max_iter=1000, tol=1e-12,
+        )
+
+    ref, env = solve("detach"), solve("envelope")
+    np.testing.assert_array_equal(env.value.detach().numpy(), ref.value.numpy())
+    np.testing.assert_array_equal(env.plan.detach().numpy(), ref.plan.numpy())
+
+
+@pytest.mark.skipif(not torch, reason="torch not installed")
+def test_solve_batch_envelope_both_marginals_analytic_torch():
+    """Both a and b gradients in one autograd call, against closed-form values.
+
+    For M=0 and reg=1 the envelope objective separates as
+    F = a log a + b log b, hence with a=(p,1-p), p=3/4 and
+    b=(q, 1/3, 2/3-q), q=1/2: dF/dp = dF/dq = log 3.
+    """
+    p = torch.tensor([0.75], dtype=torch.float64, requires_grad=True)
+    q = torch.tensor([0.5], dtype=torch.float64, requires_grad=True)
+    a = torch.cat([p, 1 - p]).unsqueeze(0)
+    b = torch.cat([q, torch.tensor([1.0 / 3.0], dtype=torch.float64), 2.0 / 3.0 - q])
+    b = b.unsqueeze(0)
+    M = torch.zeros((1, 2, 3), dtype=torch.float64, requires_grad=True)
+    w = torch.tensor([-2.0], dtype=torch.float64)
+
+    res = solve_batch(
+        M, reg=1.0, a=a, b=b, method="log_sinkhorn", reg_type="entropy",
+        grad="envelope", max_iter=2000, tol=1e-14,
+    )
+    grad_M, grad_p, grad_q = torch.autograd.grad(
+        (res.value * w).sum(), (M, p, q), allow_unused=True
+    )
+
+    expected = float(np.log(3.0))
+    assert grad_p is not None and grad_q is not None
+    # Upstream cotangent scaling w=-2 is applied to both marginals.
+    np.testing.assert_allclose(grad_p.numpy(), [w.item() * expected], atol=1e-12)
+    np.testing.assert_allclose(grad_q.numpy(), [w.item() * expected], atol=1e-12)
+    # grad_M = w * P* and only the M path is scaled by the plan.
+    np.testing.assert_allclose(
+        grad_M.numpy(), w.item() * res.plan.detach().numpy(), atol=1e-12
+    )
+    assert grad_p.shape == p.shape and grad_q.shape == q.shape
+    assert grad_p.dtype == p.dtype and grad_q.dtype == q.dtype
+    assert grad_p.device == p.device and grad_q.device == q.device
