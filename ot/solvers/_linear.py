@@ -8,7 +8,13 @@ General OT solvers with unified API
 #
 # License: MIT License
 
-from ..utils import OTResult, dist, split_sample_ratio, apply_scaler
+from ..utils import (
+    OTResult,
+    dist,
+    split_sample_ratio,
+    apply_scaler,
+    get_parameter_pair,
+)
 from ..lp import emd2, emd2_lazy, wasserstein_1d
 from ..backend import get_backend
 from ..unbalanced import mm_unbalanced, sinkhorn_knopp_unbalanced, lbfgsb_unbalanced
@@ -56,6 +62,35 @@ lst_method_solve_sample = [
 ]
 
 all_valid_methods_solve_sample = lst_valid_methods_solve + lst_method_solve_sample
+
+
+def _is_pos_inf(value):
+    r"""Return True when every entry of ``value`` is the ``+inf`` sentinel.
+
+    ``unbalanced=float("inf")`` is a documented way to request hard marginal
+    constraints in :any:`ot.solve`. The sentinel is detected here, before
+    dispatch, because the solvers behind the exact (MM) and L-BFGSB paths do
+    not accept infinite marginal relaxations. Array-like inputs are only
+    reported as infinite when *all* their entries are ``+inf``; anything else
+    (including ``-inf`` or ``nan``) returns False and keeps the previous
+    behaviour. Traced values (e.g. a JAX tracer inside ``jit``) are not
+    supported and also return False.
+
+    Parameters
+    ----------
+    value : float or array-like
+        Marginal relaxation term to test.
+
+    Returns
+    -------
+    is_inf : bool
+    """
+    try:
+        if hasattr(value, "all"):
+            return bool((value == float("inf")).all())
+        return bool(value == float("inf"))
+    except (TypeError, ValueError, RuntimeError):
+        return False
 
 
 def solve(
@@ -113,10 +148,22 @@ def solve(
         Marginal relaxation term.
         If it is a scalar or an indexable object of length 1,
         then the same relaxation is applied to both marginal relaxations.
-        The balanced OT can be recovered using :math:`unbalanced=float("inf")`.
+        The balanced OT can be recovered using :math:`unbalanced=float("inf")`
+        (both marginal relaxations infinite) when the hard-constraint limit of
+        the objective is the balanced problem itself: exact OT (``reg=0``), the
+        entropic KL solver, ``reg_type="KL"`` with the default reference measure
+        ``c = a b^T``, and a user supplied ``(f, df)`` pair. Other regularizers
+        (``reg_type="L2"``, ``"entropy"``, or ``"KL"`` with a custom ``c`` when
+        ``unbalanced_type`` is not ``"KL"``) raise :class:`NotImplementedError`,
+        because their balanced branch minimizes a different objective. A ``c``
+        passed explicitly is treated as a custom reference measure even when it
+        is numerically equal to ``a b^T``.
         For semi-relaxed case, use either
         :math:`unbalanced=(float("inf"), scalar)` or
-        :math:`unbalanced=(scalar, float("inf"))`.
+        :math:`unbalanced=(scalar, float("inf"))`. Semi-relaxed OT is only
+        available for the entropic KL solver (``reg>0``, ``reg_type="KL"`` and
+        ``unbalanced_type="KL"``); other combinations raise
+        :class:`NotImplementedError`.
         If unbalanced is an array,
         it must have the same backend as input arrays `(a, b, M)`.
     unbalanced_type : str, optional
@@ -307,10 +354,72 @@ def solve(
     if b is None:
         b = nx.ones(M.shape[1], type_as=M) / M.shape[1]
     if c is None:
+        c_is_default = True
         c = a[:, None] * b[None, :]
+    else:
+        c_is_default = False
 
     if reg is None:
         reg = 0
+
+    # ``unbalanced=float("inf")`` is documented as the balanced limit and must
+    # be normalized *before* dispatch. Only the Sinkhorn KL path implements the
+    # sentinel itself: the exact (MM) path would build a kernel from
+    # ``inf / inf`` and the L-BFGSB path would multiply a zero penalty by
+    # ``inf``, silently returning NaN or solving the balanced problem instead of
+    # the requested semi-relaxed one.
+    unbalanced_is_inf = (False, False)
+    if unbalanced is not None:
+        rho_1, rho_2 = get_parameter_pair(unbalanced)
+        unbalanced_is_inf = (_is_pos_inf(rho_1), _is_pos_inf(rho_2))
+        # The entropic KL Sinkhorn path implements the sentinel itself (it skips
+        # the infinite penalty term and keeps the hard constraint), and it is
+        # the only path that also honours `potentials_init` and `method`. It is
+        # therefore left untouched, so that already working calls keep their
+        # exact behaviour.
+        entropic_kl_path = (
+            reg > 0
+            and isinstance(reg_type, str)
+            and reg_type.lower() == "kl"
+            and isinstance(unbalanced_type, str)
+            and unbalanced_type.lower() == "kl"
+        )
+        if all(unbalanced_is_inf) and not entropic_kl_path:
+            # A two-sided infinite relaxation is the hard-constraint limit of
+            # the *same* objective, which may only be replaced by a balanced
+            # solver when that solver minimizes the same objective:
+            #   * ``reg == 0``: the regularizer vanishes, so the limit is exact
+            #     balanced OT whatever ``c`` is;
+            #   * ``reg_type="kl"`` with the default reference measure
+            #     ``c = a b^T``: the limit is exactly the balanced KL problem;
+            #   * a user supplied ``(f, df)`` pair: the balanced CG solver
+            #     minimizes the same ``f``.
+            # The L2 and entropy regularizers use a different coefficient, a
+            # different reference measure and/or a different value convention in
+            # the balanced branch, so their hard-constraint limit is *not* the
+            # balanced problem. Dispatching them would silently solve another
+            # optimization problem (e.g. returning ``a b^T`` instead of ``c``,
+            # or a value off by ``reg``), so they are rejected instead.
+            balanced_matches_limit = isinstance(reg_type, tuple) or (
+                isinstance(reg_type, str) and reg_type.lower() == "kl" and c_is_default
+            )
+            if reg == 0 or balanced_matches_limit:
+                unbalanced = None
+            else:
+                reg_name = reg_type if isinstance(reg_type, str) else "custom"
+                ut_name = (
+                    unbalanced_type if isinstance(unbalanced_type, str) else "custom"
+                )
+                raise NotImplementedError(
+                    "The hard-constraint limit (unbalanced=float('inf')) of "
+                    f"reg_type={reg_name!r} with unbalanced_type={ut_name!r} is not "
+                    "the balanced problem solved by unbalanced=None: the balanced "
+                    "branch uses a different regularizer coefficient, reference "
+                    "measure or value convention. Returning it would silently solve "
+                    "another optimization problem. Pass a finite `unbalanced` for "
+                    "the unbalanced problem, or `unbalanced=None` to explicitly "
+                    "solve the balanced problem that this reg_type implements."
+                )
 
     if method is not None and method not in lst_valid_methods_solve:
         raise ValueError(
@@ -347,6 +456,15 @@ def solve(
             potentials = (log["u"], log["v"])
             plan = log["G"]
             status = log["warning"] if log["warning"] is not None else "Converged"
+
+        elif any(unbalanced_is_inf):
+            raise NotImplementedError(
+                "Semi-relaxed exact unbalanced OT (reg=0 with exactly one "
+                'infinite marginal relaxation, e.g. unbalanced=(float("inf"), '
+                'rho)) is not implemented. Use reg>0 with reg_type="KL" and '
+                'unbalanced_type="KL" for semi-relaxed entropic OT, or pass a '
+                "finite `unbalanced` for exact unbalanced OT."
+            )
 
         elif unbalanced_type.lower() in ["kl", "l2"]:  # unbalanced exact OT
             # default values for exact unbalanced OT
@@ -574,6 +692,20 @@ def solve(
                 isinstance(reg_type, tuple)
                 or reg_type.lower() in ["kl", "l2", "entropy"]
             ) and unbalanced_type.lower() in ["kl", "l2", "tv"]:
+                if any(unbalanced_is_inf):
+                    raise NotImplementedError(
+                        "The L-BFGSB solver path does not support an infinite "
+                        "marginal relaxation (semi-relaxed OT). The infinite "
+                        "penalty cannot be represented, so the solver would "
+                        "ignore it and silently solve the balanced problem "
+                        "(with a NaN cost) instead of the requested "
+                        "semi-relaxed one. The combination is rejected before "
+                        "optimization. Use "
+                        'reg_type="KL" with unbalanced_type="KL" for '
+                        "semi-relaxed entropic OT, or pass unbalanced=None for "
+                        "balanced OT."
+                    )
+
                 if isinstance(reg_type, tuple) and nx.__name__ == "tf":
                     raise NotImplementedError(
                         "Custom regularization is not implemented for TensorFlow backend."
