@@ -16,8 +16,13 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix the envelope gradient of `ot.batch.solve_batch` with respect to the marginals `a` and `b` for the PyTorch backend: `grad="envelope"` returned no gradient (entropy) or an incorrect one (KL) because the transport plan is detached and the marginals only entered through the solver. The gradient is now registered locally with a batch-aware VJP from the converged dual potentials, including the explicit KL reference-measure term; the existing gradient path to `M` and the forward `value` and `plan` are unchanged. This is a first-order, PyTorch-only correction; JAX/TensorFlow batch marginal gradients and higher-order differentiation are not affected
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
