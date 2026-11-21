@@ -1194,6 +1194,51 @@ def test_geomloss_solver(nx, metric):
         ot.bregman.empirical_sinkhorn2_geomloss(X_sb, X_tb, 1, metric="wrong_metric")
 
 
+@pytest.mark.skipif(not torch, reason="requires torch")
+@pytest.mark.parametrize("metric", ["sqeuclidean", "euclidean"])
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_lazy_euclidean_cost_on_device(monkeypatch, metric, device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA unavailable")
+
+    rng = np.random.RandomState(42)
+    xs, xt = rng.randn(7, 2), rng.randn(5, 2)
+    expected = ot.bregman.empirical_sinkhorn2(xs, xt, 2, metric=metric)
+    xs, xt = (torch.tensor(x, device=device) for x in (xs, xt))
+    nx = ot.backend.get_backend(xs)
+
+    def no_host_copy(*args):
+        pytest.fail("Euclidean cost blocks should stay on the input backend")
+
+    monkeypatch.setattr(nx, "to_numpy", no_host_copy)
+    result = ot.solve_sample(xs, xt, reg=2, metric=metric, lazy=True, batch_size=3)
+    torch.testing.assert_close(result.value_linear, xs.new_tensor(expected))
+
+
+@pytest.mark.skipif(not torch, reason="requires torch")
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_lazy_empirical_sinkhorn_autocast(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA unavailable")
+    xs = 200 + torch.arange(14, dtype=torch.float32, device=device).reshape(7, 2) / 8
+    xt = xs[:5] - 0.25
+    kwargs = dict(reg=2, isLazy=True, batchSize=3, stopThr=1e-5, numIterMax=100)
+    expected = ot.bregman.empirical_sinkhorn2(xs, xt, **kwargs)
+    with torch.autocast(device):
+        actual = ot.bregman.empirical_sinkhorn2(xs, xt, **kwargs)
+    torch.testing.assert_close(actual, expected)
+
+
+@pytest.mark.skipif(not torch, reason="requires torch")
+def test_lazy_empirical_sinkhorn_scipy_metric():
+    rng = np.random.RandomState(42)
+    xs, xt = rng.randn(7, 2), rng.randn(5, 2)
+    kwargs = dict(reg=2, metric="chebyshev", isLazy=True, batchSize=3)
+    expected = ot.bregman.empirical_sinkhorn2(xs, xt, **kwargs)
+    loss = ot.bregman.empirical_sinkhorn2(torch.tensor(xs), torch.tensor(xt), **kwargs)
+    torch.testing.assert_close(loss, torch.tensor(expected))
+
+
 def test_lazy_empirical_sinkhorn(nx):
     # test sinkhorn
     n = 10

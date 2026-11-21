@@ -13,7 +13,7 @@ Bregman projections solvers for entropic regularized OT for empirical distributi
 import warnings
 
 from ..utils import dist, list_to_array, unif, LazyTensor
-from ..backend import get_backend
+from ..backend import get_backend, torch
 
 from ._sinkhorn import sinkhorn, sinkhorn2
 from ..lowrank import (
@@ -69,6 +69,31 @@ def get_sinkhorn_lazytensor(X_a, X_b, f, g, metric="sqeuclidean", reg=1e-1, nx=N
     T = LazyTensor(shape, func, X_a=X_a, X_b=X_b, f=f, g=g, metric=metric, reg=reg)
 
     return T
+
+
+def _lazy_cost_blocks(X_s, X_t, metric, a, nx):
+    # Keep the dual iteration detached from the samples as in the NumPy path.
+    if (
+        metric in ("sqeuclidean", "euclidean")
+        and nx.dtype_device(X_s) == nx.dtype_device(X_t) == nx.dtype_device(a)
+    ):
+        X_s, X_t = nx.detach(X_s, X_t)
+
+        def cost(rows, cols):
+            return dist(X_s[rows], X_t[cols], metric=metric, nx=nx)
+
+        if nx.__name__ == "torch" and X_s.device.type in ("cpu", "cuda"):
+            # Autocast can overflow the dot product before the squared norms cancel.
+            cost = torch.autocast(X_s.device.type, enabled=False)(cost)
+
+    else:
+        # Other metrics can require scipy, and the cost must match the weights.
+        X_s, X_t = nx.to_numpy(X_s, X_t)
+
+        def cost(rows, cols):
+            return nx.from_numpy(dist(X_s[rows], X_t[cols], metric=metric), type_as=a)
+
+    return cost
 
 
 def empirical_sinkhorn(
@@ -132,6 +157,8 @@ def empirical_sinkhorn(
         If True, then only calculate the cost matrix by block and return
         the dual potentials only (to save memory). If False, calculate full
         cost matrix and return outputs of sinkhorn function.
+        Euclidean and squared Euclidean cost blocks are computed on the input
+        backend when samples and source weights share a dtype and device.
     batchSize: int or tuple of 2 int, optional
         Size of the batches used to compute the sinkhorn update without memory overhead.
         When a tuple is provided it sets the size of the left/right batches.
@@ -212,22 +239,19 @@ def empirical_sinkhorn(
         lse_f = nx.zeros((ns,), type_as=a)
         lse_g = nx.zeros((nt,), type_as=a)
 
-        X_s_np = nx.to_numpy(X_s)
-        X_t_np = nx.to_numpy(X_t)
+        cost = _lazy_cost_blocks(X_s, X_t, metric, a, nx)
 
         for i_ot in range(numIterMax):
             lse_f_cols = []
             for i in range_s:
-                M = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
-                M = nx.from_numpy(M, type_as=a)
+                M = cost(slice(i, i + bs), slice(None))
                 lse_f_cols.append(nx.logsumexp(g[None, :] - M / reg, axis=1))
             lse_f = nx.concatenate(lse_f_cols, axis=0)
             f = log_a - lse_f
 
             lse_g_cols = []
             for j in range_t:
-                M = dist(X_s_np, X_t_np[j : j + bt, :], metric=metric)
-                M = nx.from_numpy(M, type_as=a)
+                M = cost(slice(None), slice(j, j + bt))
                 lse_g_cols.append(nx.logsumexp(f[:, None] - M / reg, axis=0))
             lse_g = nx.concatenate(lse_g_cols, axis=0)
             g = log_b - lse_g
@@ -235,8 +259,7 @@ def empirical_sinkhorn(
             if (i_ot + 1) % 10 == 0:
                 m1_cols = []
                 for i in range_s:
-                    M = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
-                    M = nx.from_numpy(M, type_as=a)
+                    M = cost(slice(i, i + bs), slice(None))
                     m1_cols.append(
                         nx.sum(
                             nx.exp(f[i : i + bs, None] + g[None, :] - M / reg), axis=1
@@ -468,12 +491,10 @@ def empirical_sinkhorn2(
 
         loss = 0
 
-        X_s_np = nx.to_numpy(X_s)
-        X_t_np = nx.to_numpy(X_t)
+        cost = _lazy_cost_blocks(X_s, X_t, metric, a, nx)
 
         for i in range_s:
-            M_block = dist(X_s_np[i : i + bs, :], X_t_np, metric=metric)
-            M_block = nx.from_numpy(M_block, type_as=a)
+            M_block = cost(slice(i, i + bs), slice(None))
             pi_block = nx.exp(f[i : i + bs, None] + g[None, :] - M_block / reg)
             loss += nx.sum(M_block * pi_block)
 
