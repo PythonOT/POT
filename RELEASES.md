@@ -16,8 +16,13 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix the envelope gradient of `ot.batch.solve_gromov_batch` with respect to the marginals `a` and `b` for the PyTorch backend: `grad="envelope"` previously returned no marginal gradient even when the solver reached the correct optimum. The first-order marginal gradient is now reconstructed from the centred dual scaling potentials with a batch-aware VJP. `res.value` keeps its envelope gradients with respect to `M`, `Ca` and `Cb`; `res.value_linear` keeps a gradient path to `M` only (`d value_linear / d M = (1-alpha) T`) and is not differentiable with respect to `Ca`/`Cb`. The forward `value` and `plan` are unchanged. The custom marginal gradient is registered only on the trusted Torch envelope path when the outer solve converged, the plan is marginally feasible and the centred sensitivities are stable under one extra proximal projection. That extra projection and the three checks are evaluated only on this path; elsewhere the corresponding `res.log` flags are `None` (not evaluated). The checks are reduced over the whole batch: one failing sample suppresses marginal gradients for all samples rather than emitting a zero gradient. Torch-only, first-order, locally stationary branch; the stability check is an empirically validated criterion, not a guarantee for every GW problem. JAX/TensorFlow marginal gradients and higher-order differentiation are not covered
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
