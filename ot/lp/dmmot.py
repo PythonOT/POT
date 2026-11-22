@@ -184,6 +184,16 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
         except Exception:
             pass
 
+    # Zero-mass bins do not contribute to the dual objective, but the greedy
+    # fill-in can leave them at potentials that violate dual feasibility.
+    # Lowering them to a globally safe bound restores feasibility without
+    # changing the dual objective or the primal cost.
+    if np.any(A == 0):
+        n_bins, n_hists = A.shape
+        safe_lower_bound = (n_hists - 1) * (n_bins - 1)
+        for j in range(n_hists):
+            dual[j][A[:, j] == 0] = -safe_lower_bound
+
     dualobj = sum([np.dot(A[:, i], arr) for i, arr in enumerate(dual)])
     obj = nx.from_numpy(obj)
 
