@@ -22,6 +22,7 @@
 
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix `ot.bregman.screenkhorn` failing with a shape error when `ns_budget` and `nt_budget` are the full source and target sizes and these differ (PR #871)
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
