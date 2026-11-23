@@ -191,6 +191,22 @@ def gromov_wasserstein(
     else:
 
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            if symmetric:
+                # The quadratic GW objective lets the gradient be carried
+                # forward instead of recomputing hC1 @ G @ hC2.T each iteration.
+                return _solve_gromov_linesearch_with_grad(
+                    G,
+                    deltaG,
+                    cost_G,
+                    hC1,
+                    hC2,
+                    M=0.0,
+                    reg=1.0,
+                    df_G=df_G,
+                    nx=np_,
+                    symmetric=True,
+                    **kwargs,
+                )
             return solve_gromov_linesearch(
                 G,
                 deltaG,
@@ -595,6 +611,22 @@ def fused_gromov_wasserstein(
     else:
 
         def line_search(cost, G, deltaG, Mi, cost_G, df_G, **kwargs):
+            if symmetric:
+                # The feature cost is linear in G, so it does not change the
+                # quadratic GW gradient update carried by the linesearch.
+                return _solve_gromov_linesearch_with_grad(
+                    G,
+                    deltaG,
+                    cost_G,
+                    hC1,
+                    hC2,
+                    M=(1 - alpha) * M,
+                    reg=alpha,
+                    df_G=df_G,
+                    nx=np_,
+                    symmetric=True,
+                    **kwargs,
+                )
             return solve_gromov_linesearch(
                 G,
                 deltaG,
@@ -850,6 +882,73 @@ def fused_gromov_wasserstein2(
         return fgw_dist
 
 
+def _solve_gromov_linesearch_impl(
+    G, deltaG, cost_G, C1, C2, M, reg, alpha_min, alpha_max, nx, symmetric
+):
+    """Core exact GW linesearch, also exposing the reusable quadratic cross term.
+
+    Returns ``(alpha, fc, cost_G, dot)`` with ``dot = C1 @ deltaG @ C2.T``.
+    The public :func:`solve_gromov_linesearch` keeps its three-value contract.
+    """
+    dot = nx.dot(nx.dot(C1, deltaG), C2.T)
+    a = -reg * nx.sum(dot * deltaG)
+    if symmetric:
+        b = nx.sum(M * deltaG) - 2 * reg * nx.sum(dot * G)
+    else:
+        b = nx.sum(M * deltaG) - reg * (
+            nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG)
+        )
+
+    alpha = solve_1d_linesearch_quad(a, b)
+    if alpha_min is not None or alpha_max is not None:
+        alpha = np.clip(alpha, alpha_min, alpha_max)
+
+    cost_G = cost_G + a * (alpha**2) + b * alpha
+
+    return alpha, 1, cost_G, dot
+
+
+def _solve_gromov_linesearch_with_grad(
+    G,
+    deltaG,
+    cost_G,
+    C1,
+    C2,
+    M,
+    reg,
+    df_G,
+    alpha_min=None,
+    alpha_max=None,
+    nx=None,
+    symmetric=False,
+    **kwargs,
+):
+    """Exact GW linesearch that also returns the next conditional-gradient value.
+
+    With ``dot = C1 @ deltaG @ C2.T`` and POT's convention
+    ``gwggrad(G) = 2 * (constC - C1 @ G @ C2.T)``, the GW quadratic objective
+    satisfies, for every admissible step ``alpha``,
+
+    .. math::
+        g(G + \\alpha \\Delta G) = g(G) - 2 \\alpha\\, C1 \\Delta G C2^T .
+
+    This lets the next conditional-gradient iteration skip one evaluation of
+    ``tensor_product`` (two matrix products) at no change to the step size or
+    to the reported cost. Only used internally by the symmetric, closed-form
+    GW/FGW solvers; the public linesearch API is left untouched.
+    """
+    if nx is None:
+        if isinstance(M, (int, float)):
+            nx = get_backend(G, deltaG, C1, C2, df_G)
+        else:
+            nx = get_backend(G, deltaG, C1, C2, M, df_G)
+
+    alpha, fc, cost_G, dot = _solve_gromov_linesearch_impl(
+        G, deltaG, cost_G, C1, C2, M, reg, alpha_min, alpha_max, nx, symmetric
+    )
+    return alpha, fc, cost_G, df_G - 2 * alpha * dot
+
+
 def solve_gromov_linesearch(
     G,
     deltaG,
@@ -923,23 +1022,10 @@ def solve_gromov_linesearch(
         else:
             nx = get_backend(G, deltaG, C1, C2, M)
 
-    dot = nx.dot(nx.dot(C1, deltaG), C2.T)
-    a = -reg * nx.sum(dot * deltaG)
-    if symmetric:
-        b = nx.sum(M * deltaG) - 2 * reg * nx.sum(dot * G)
-    else:
-        b = nx.sum(M * deltaG) - reg * (
-            nx.sum(dot * G) + nx.sum(nx.dot(nx.dot(C1, G), C2.T) * deltaG)
-        )
-
-    alpha = solve_1d_linesearch_quad(a, b)
-    if alpha_min is not None or alpha_max is not None:
-        alpha = np.clip(alpha, alpha_min, alpha_max)
-
-    # the new cost is deduced from the line search quadratic function
-    cost_G = cost_G + a * (alpha**2) + b * alpha
-
-    return alpha, 1, cost_G
+    alpha, fc, cost_G, _ = _solve_gromov_linesearch_impl(
+        G, deltaG, cost_G, C1, C2, M, reg, alpha_min, alpha_max, nx, symmetric
+    )
+    return alpha, fc, cost_G
 
 
 def gromov_barycenters(

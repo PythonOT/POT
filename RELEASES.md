@@ -16,6 +16,10 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Performance improvements
+
+- Reuse the quadratic cross term already computed by the exact line search to carry the GW gradient across conditional-gradient iterations in symmetric `ot.gromov.gromov_wasserstein` and `ot.gromov.fused_gromov_wasserstein`. This removes two matrix products per iteration without changing the step size, the reported cost or the public `solve_gromov_linesearch` return contract (Issue #491 as background).
+
 #### Documentation
 
 - Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
