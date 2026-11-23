@@ -134,8 +134,11 @@ def test_reuse_solver_matches_explicit_gradient_reference():
     # Reference: force the generic solver to recompute df at every iteration by
     # calling the public three-value linesearch explicitly.
     constC, hC1, hC2 = init_matrix(C1, C2, p, q)
-    f = lambda T: ot.gromov.gwloss(constC, hC1, hC2, T, NumpyBackend())
-    df = lambda T: gwggrad(constC, hC1, hC2, T, NumpyBackend())
+    def f(T):
+        return ot.gromov.gwloss(constC, hC1, hC2, T, NumpyBackend())
+
+    def df(T):
+        return gwggrad(constC, hC1, hC2, T, NumpyBackend())
 
     def line_search(cost, Gt, deltaG, Mi, cost_G, df_G, **kwargs):
         return ot.gromov.solve_gromov_linesearch(
