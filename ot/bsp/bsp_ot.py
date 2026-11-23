@@ -42,7 +42,11 @@ def compute_bspot_bijection(
         Comes with a cubic complexity with dimension.
         If 'auto', then the heuristic is used for dimensions smaller than 64, and disabled for larger dimensions.
     seed : int, optional
-        Random seed for reproducibility (default 0).
+        Random seed for reproducibility (default 0). Candidate plans are
+        reproducible for a given seed within a fixed build, so a loop that
+        refines a solution with ``initial_perm`` should use a different seed
+        at each round: reusing the same seed regenerates the same candidate
+        plans and can stall the refinement.
 
     Returns
     -------
@@ -149,6 +153,28 @@ def merge_bijections(X, Y, perms, p=2):
 
     if X_np.ndim != 2:
         raise ValueError("X and Y must be 2D arrays")
+
+    perms = np.asarray(perms)
+
+    if perms.ndim != 2:
+        raise ValueError("perms must be a 2D array of shape (n_plans, n_samples)")
+
+    if perms.shape[1] != X_np.shape[0]:
+        raise ValueError(
+            "perms must have shape (n_plans, n_samples) where n_samples is the number "
+            "of points in X and Y, got {} plans of length {} for {} points".format(
+                perms.shape[0], perms.shape[1], X_np.shape[0]
+            )
+        )
+
+    if perms.shape[0] == 0:
+        raise ValueError("perms must contain at least one plan")
+
+    # Checked before the cast to int32: that cast truncates fractional values and wraps
+    # integers that do not fit, either of which can turn an invalid row into a permutation.
+    expected = np.broadcast_to(np.arange(X_np.shape[0]), perms.shape)
+    if not np.array_equal(np.sort(perms, axis=1), expected):
+        raise ValueError("each row of perms must be a permutation of 0..n_samples-1")
 
     perms = np.asarray(perms, dtype=np.int32)
 
