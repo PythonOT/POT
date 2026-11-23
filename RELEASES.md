@@ -19,6 +19,7 @@
 #### Documentation
 
 - Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+- Fix the `ot.batch` docstrings that broke the API page: malformed `References` and `Examples` sections, the dictionaries listed under `Returns`, and a citation in `solve_sample_batch` pointing to [91] instead of [92] (Issue #222)
 
 #### Closed issues
 
