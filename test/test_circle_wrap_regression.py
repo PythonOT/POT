@@ -54,3 +54,36 @@ def test_binary_search_matches_independent_optimum():
     got = np.asarray(binary_search_circle(x, y, a, b, p=2, eps=1e-6))[0]
     # SciPy linprog / exact Fraction breakpoint enumeration value.
     np.testing.assert_allclose(got, 0.03158514371890842, atol=1e-9, rtol=1e-9)
+
+
+def test_batch_composition_invariance():
+    """An all-negative batch must not depend on another batch's sign mask."""
+    from ot.lp.solver_circle import derivative_cost_on_circle
+
+    theta = -1e-17
+    xA = np.array([0.0, 0.125, 0.25])
+    y = np.array([0.0, 0.125, 0.25, 0.875])
+    aA = np.array([2.0, 3.0, 1.0]) / 6
+    bA = np.array([1.0, 1.0, 3.0, 2.0]) / 7
+    xB = np.array([0.5, 0.625, 0.75])
+    aB = np.ones(3) / 3
+    bB = np.ones(4) / 4
+
+    def value(x, a, b):
+        X = x[None, :] if x.ndim == 1 else x
+        A = a[None, :] if a.ndim == 1 else a
+        B = b[None, :] if b.ndim == 1 else b
+        Y = np.repeat(y[None, :], X.shape[0], axis=0)
+        B = np.repeat(B, X.shape[0], axis=0) if B.shape[0] == 1 else B
+        th = np.full((X.shape[0], Y.shape[1]), theta)
+        c = np.asarray(ot_cost_on_circle(th, X, Y, np.cumsum(A, 1), np.cumsum(B, 1), 2))
+        dp, dm = derivative_cost_on_circle(th, X, Y, np.cumsum(A, 1), np.cumsum(B, 1), 2)
+        return c, dp, dm
+
+    a_alone = value(xA, aA, bA)[0][0]
+    a_with_b = value(np.stack([xA, xB]), np.stack([aA, aB]), np.stack([bA, bB]))[0][0]
+    a_with_ba = value(np.stack([xB, xA]), np.stack([aB, aA]), np.stack([bB, bA]))[0][1]
+    a_repeated = value(np.stack([xA, xA]), np.stack([aA, aA]), np.stack([bA, bA]))[0][0]
+    np.testing.assert_allclose(a_with_b, a_alone, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(a_with_ba, a_alone, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(a_repeated, a_alone, rtol=1e-12, atol=1e-12)
