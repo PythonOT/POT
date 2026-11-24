@@ -1,4 +1,4 @@
-"""Regression for the all-negative CDF branch in circular Sinkhorn costs."""
+"""Regression for the all-negative CDF branch in circular optimal transport."""
 
 import numpy as np
 
@@ -80,10 +80,14 @@ def test_batch_composition_invariance():
         dp, dm = derivative_cost_on_circle(th, X, Y, np.cumsum(A, 1), np.cumsum(B, 1), 2)
         return c, dp, dm
 
-    a_alone = value(xA, aA, bA)[0][0]
-    a_with_b = value(np.stack([xA, xB]), np.stack([aA, aB]), np.stack([bA, bB]))[0][0]
-    a_with_ba = value(np.stack([xB, xA]), np.stack([aB, aA]), np.stack([bB, bA]))[0][1]
-    a_repeated = value(np.stack([xA, xA]), np.stack([aA, aA]), np.stack([bA, bA]))[0][0]
+    def at(result, index):
+        cost, d_cp, d_cm = result
+        return np.array([cost[index], d_cp[index, 0], d_cm[index, 0]])
+
+    a_alone = at(value(xA, aA, bA), 0)
+    a_with_b = at(value(np.stack([xA, xB]), np.stack([aA, aB]), np.stack([bA, bB])), 0)
+    a_with_ba = at(value(np.stack([xB, xA]), np.stack([aB, aA]), np.stack([bB, bA])), 1)
+    a_repeated = at(value(np.stack([xA, xA]), np.stack([aA, aA]), np.stack([bA, bA])), 0)
     np.testing.assert_allclose(a_with_b, a_alone, rtol=1e-12, atol=1e-12)
     np.testing.assert_allclose(a_with_ba, a_alone, rtol=1e-12, atol=1e-12)
     np.testing.assert_allclose(a_repeated, a_alone, rtol=1e-12, atol=1e-12)
