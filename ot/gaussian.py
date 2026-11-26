@@ -175,12 +175,12 @@ def bures_wasserstein_mapping_hd(ms, mt, Us, Ut, ls, lt, sigma2_s, sigma2_t, log
 
     # source
     Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
-    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p, type_as=Us)
     Ds = nx.diag((nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s)) / nx.sqrt(ls + sigma2_s))
-    Ss_sqinv = (1 / nx.sqrt(sigma2_s)) * (nx.eye(p) - dots(Us, Ds, Us.T))
+    Ss_sqinv = (1 / nx.sqrt(sigma2_s)) * (nx.eye(p, type_as=Us) - dots(Us, Ds, Us.T))
 
     # destination
-    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p, type_as=Ut)
 
     M0 = nx.sqrtm(dots(Ss_sq, St, Ss_sq))
 
@@ -346,7 +346,7 @@ def empirical_bures_wasserstein_mapping_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    d_instrinsic : int or list of two ints
+    d_intrinsic : int or list of two ints
                   the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same                            
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
@@ -676,10 +676,10 @@ def bures_wasserstein_distance_hd(
 
     # source
     Cs = nx.diag(nx.sqrt(ls + sigma2_s) - nx.sqrt(sigma2_s))
-    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p)
+    Ss_sq = dots(Us, Cs, Us.T) + nx.sqrt(sigma2_s) * nx.eye(p, type_as=Us)
 
     # destination
-    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p)
+    St = dots(Ut, nx.diag(lt), Ut.T) + sigma2_t * nx.eye(p, type_as=Ut)
     A = dots(Ss_sq, St, Ss_sq)
     W2 = (
         nx.sum((ms - mt) ** 2)
@@ -818,7 +818,7 @@ def empirical_bures_wasserstein_distance_hd(
         samples in the source domain
     xt : array-like (nt,p)
         samples in the target domain
-    d_instrinsic : int or list of two ints
+    d_intrinsic : int or list of two ints
                   the intrinsic dimensions of the source and destination distribution, respectively. If d_intrinsic is int it is assumed the intrinsic dimension is the same     
     reg : float,optional
         regularization added to the diagonals of covariances (null by default)
@@ -937,8 +937,6 @@ def bures_barycenter_fixpoint(
         covariance of k distributions
     weights : array-like (k), optional
         weights for each distribution
-    method : str
-        method used for the solver, either 'fixed_point' or 'gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional
@@ -990,7 +988,10 @@ def bures_barycenter_fixpoint(
         Cb = Cnew
 
     if diff > eps:
-        print("Dit not converge.")
+        warnings.warn(
+            "Bures barycenter fixed point did not converge, consider "
+            "increasing num_iter or eps."
+        )
 
     if log:
         log = {}
@@ -1027,8 +1028,6 @@ def bures_barycenter_gradient_descent(
         covariance of k distributions
     weights : array-like (k), optional
         weights for each distribution
-    method : str
-        method used for the solver, either 'fixed_point' or 'gradient_descent'
     num_iter : int, optional
         number of iteration for the fixed point algorithm
     eps : float, optional

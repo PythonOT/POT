@@ -122,7 +122,6 @@ def plot_list_res(
 
         X = lst_res[i].X
         list_P = [lst_res[i].list_res[k].plan for k in range(2)]
-        loss = lst_res[i].value
 
         plot2D_samples_mat(x1, X, list_P[0])
         plot2D_samples_mat(x2, X, list_P[1])
