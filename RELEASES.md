@@ -16,8 +16,19 @@
   blocks, selectable with `sampling_slices` in `sliced_wasserstein_distance`,
   as described in [97] (PR #853)
 
+#### Documentation
+
+- Clarify how transported mass is interpreted in partial optimal transport and extend the existing 2D example with a deterministic mass sweep and matched-mass summaries (Issue #890).
+
 #### Closed issues
 
+- Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
+- Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
+- Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)
+- Fix an out-of-bounds read in `ot.bsp.merge_bijections`: the number of plans was taken from `perms.shape[1]` (the number of samples) instead of `perms.shape[0]`, so merging fewer plans than samples read past the array and merging more silently dropped plans. A `perms` outside the documented `(n_plans, n_samples)` layout, an empty plan stack and rows that are not permutations are now rejected (PR #911, Issue #910)
+- Fix overflow to NaN in `ot.stochastic.coordinate_grad_semi_dual` by shifting before exponentiating, as `ot.stochastic.c_transform_entropic` already does. The factor cancels in the normalisation, so results are unchanged where the old code did not overflow (PR #866, Issue #264)
+- Fix `ot.bsp.compute_bspot_bijection` (and `random_state` of `ot.solve_sample(..., method="bsp")`) not being reproducible for a given `seed`: its candidate plans came from a `thread_local` `std::mt19937` seeded once per OpenMP thread, so the result depended on the call history and on the number of threads. Every thread started from the same state, so the previous version could underperform with multiple threads. Each plan now draws its own stream, derived from the seed and the plan index (PR #898, Issue #897)
+- Fix duplicate function and class descriptions in generated module API pages while preserving top-level aliases and example backreferences (Issue #527)
 - Fix internal arrays created on the torch default device instead of the input device in `ot.partial.partial_wasserstein`, `ot.wasserstein_circle` (and `ot.sliced_wasserstein_sphere`), the high-dimensional Bures-Wasserstein functions in `ot.gaussian`, `ot.gmm`, `ot.lowrank_sinkhorn` with `init="deterministic"`, the semi-relaxed (F)GW barycenters and `ot.utils.projection_sparse_simplex`, which made them fail on GPU inputs. Add a `meta_default_device` test fixture to catch such allocations on CPU (PR #883, Issue #852)
 - Keep the configured `limit_max` multiplier unchanged when refitting domain-adaptation transport estimators, so repeated fits do not compound the label penalty or change the transport plan.
 
@@ -39,6 +50,7 @@
 - Fix `ot.gromov.fused_unbalanced_across_spaces_divergence` crashing with a `TypeError` when only one of the sample or feature dual pairs was passed in `init_duals` (PR #888)
 - Raise errors instead of printing a message and returning `None` or dummy values in `ot.datasets.make_data_classif` (unknown dataset), `ot.stochastic.solve_semi_dual_entropic` (unknown method) and `ot.mapping.nearest_brenier_potential_*` (missing CVXPY), and emit warnings instead of prints in `ot.gaussian.bures_barycenter_fixpoint`, `ot.regpath` and `ot.partial.entropic_partial_wasserstein` (PR #888)
 - Fix docstring errors (wrong or duplicated parameters, typos) and fix the file patterns of the ruff hooks in `.pre-commit-config.yaml` (PR #888)
+- Fix `arange` in all backends silently ignoring the dtype of `type_as` (and the device in the NumPy, JAX, TensorFlow and CuPy backends), unlike `zeros`, `ones` and `full`. `roll_cols` in `ot.lp.solver_circle` no longer passes a plain Python `int` as `type_as` (PR #903, Issue #864)
 
 ## 0.9.7.post1
 
