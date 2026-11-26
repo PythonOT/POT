@@ -8,9 +8,6 @@ on:
   push:
     branches:
       - 'master'
-  create:
-    branches:
-      - 'master'
     tags:
       - '**'
 
