@@ -142,6 +142,45 @@ def test_projection_sparse_simplex():
         np.testing.assert_allclose(slow_sparse_proj, fast_sparse_proj)
 
 
+@pytest.mark.parametrize("axis", [None, 0, 1])
+@pytest.mark.parametrize("extra_budget", [0, 2])
+def test_projection_sparse_simplex_unconstrained_budget(nx, axis, extra_budget):
+    values = np.array([[0.8, 0.1, -1.0], [0.4, 0.3, 0.2]])
+    z = 0.5
+    if axis is None:
+        dimension = values.size
+        expected = np.array([0.45, 0.0, 0.0, 0.05, 0.0, 0.0])
+    elif axis == 0:
+        dimension = values.shape[0]
+        expected = np.array([[0.45, 0.15, 0.0], [0.05, 0.35, 0.5]])
+    else:
+        dimension = values.shape[1]
+        expected = np.array([[0.5, 0.0, 0.0], [4 / 15, 1 / 6, 1 / 15]])
+    result = ot.utils.projection_sparse_simplex(
+        nx.from_numpy(values), dimension + extra_budget, z=z, axis=axis
+    )
+    np.testing.assert_allclose(nx.to_numpy(result), expected, atol=1e-12)
+
+
+@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("extra_budget", [0, 2])
+def test_projection_sparse_simplex_unconstrained_vector_mass(nx, axis, extra_budget):
+    values = np.array([[0.8, 0.1, -1.0], [0.4, 0.3, 0.2]])
+    if axis == 0:
+        mass = np.array([0.5, 1.0, 0.2])
+        expected = np.array([[0.45, 0.4, 0.0], [0.05, 0.6, 0.2]])
+    else:
+        mass = np.array([0.5, 1.0])
+        expected = np.array([[0.5, 0.0, 0.0], [13 / 30, 1 / 3, 7 / 30]])
+    result = ot.utils.projection_sparse_simplex(
+        nx.from_numpy(values),
+        values.shape[axis] + extra_budget,
+        z=nx.from_numpy(mass),
+        axis=axis,
+    )
+    np.testing.assert_allclose(nx.to_numpy(result), expected, atol=1e-12)
+
+
 def test_parmap():
     n = 10
 
