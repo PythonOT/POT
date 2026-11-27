@@ -355,6 +355,25 @@ equation above is given to those functions with the parameter :code:`reg`.
 
 More details about the algorithms used are given in the following note.
 
+An optional :code:`plan_tol` in :any:`ot.sinkhorn` adds a stopping check for
+the total variation error in the **full returned transport matrix**, rather
+than just a marginal residual. It is available with :code:`method="sinkhorn"`
+for one pair of strictly positive NumPy float64 histograms and a finite,
+numerically safe positive Gibbs kernel. The estimate follows from an
+exact-arithmetic scaling bound; its float64 evaluation is not an
+interval-certified bound. If the requested tolerance cannot be verified
+within the iteration budget, the opt-in mode raises an error. See the
+`proof discussion and benchmarks <https://github.com/PythonOT/POT/issues/934>`_
+and :ref:`sphx_glr_auto_examples_plot_sinkhorn_plan_tol.py`.
+Omitting the option keeps the ordinary marginal stopping target. Eligible
+positive dense NumPy calls automatically reuse matrix products and may stop
+between the usual checkpoints after checking the returned marginals.
+For supported NumPy warm starts, the classic solver also checks the caller's
+marginal tolerance after updates 2, 3 and 4. An early return checks the row
+and column residuals on the returned matrix. With :code:`log=True` the
+ordinary log includes the final error and scaling vectors, so a registration
+loop can use them for its next warm start.
+
 .. note::
     The main function to solve entropic regularized OT is :any:`ot.sinkhorn`.
     This function is a wrapper and the parameter :code:`method` allows you to select
