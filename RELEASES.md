@@ -22,6 +22,7 @@
 
 #### Closed issues
 
+- Fix `ot.lp.dmmot_monge_1dgrid_loss` returning dual potentials that violate dual feasibility when an input distribution has exact zero-mass bins. Such potentials could not be used as valid subgradients of the d-MMOT value. Zero-mass potentials are now lowered to a safe bound, leaving the primal value, dual objective and all strictly positive inputs unchanged
 - Fix dead links in the README (three example gallery pages and the reference [39]), the user guide and the contributing guide (PR #928)
 - Fix ordinary JAX gradients for dense `ot.emd2` and preserve the magnitude and higher-order dependence of gradients supplied to `JaxBackend.set_gradients`, including the envelope gradients in `ot.solve` (Issue #625)
 - Fix `ot.semidiscrete_wasserstein2_unif_circle` pairing sorted sample locations with unsorted weights, which broke permutation and rotation invariance for nonuniform weights (Issue #921)

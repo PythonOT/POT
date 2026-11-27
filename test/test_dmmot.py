@@ -80,3 +80,51 @@ def test_dmmot_monge_1dgrid_optimize(nx):
             err_msg="Test failed: \
                                    Expected vectors of all zeros",
         )
+
+
+def test_dmmot_zero_mass_dual_feasibility():
+    """Zero-mass bins must not leave the returned dual infeasible."""
+    A = np.array([[1.0, 1.0], [0.0, 0.0]])
+    obj, log = ot.lp.dmmot_monge_1dgrid_loss(A, log=True)
+    u, v = np.asarray(log["dual"][0]), np.asarray(log["dual"][1])
+    slack = np.array([[0.0, 1.0], [1.0, 0.0]]) - u[:, None] - v[None, :]
+
+    np.testing.assert_allclose(obj, 0.0, atol=1e-12)
+    np.testing.assert_allclose(log["dual objective"], obj, atol=1e-12)
+    assert np.all(slack >= -1e-12)
+
+
+def test_dmmot_positive_and_near_zero_inputs_unchanged():
+    """The zero-bin completion must not alter strictly positive or near-zero bins."""
+    A = np.array([[0.7, 0.3], [0.3, 0.7]])
+    obj, log = ot.lp.dmmot_monge_1dgrid_loss(A, log=True)
+    np.testing.assert_allclose(obj, 0.4, atol=1e-12)
+    np.testing.assert_allclose(
+        np.column_stack(log["dual"]), [[0, 0], [-1, 1]], atol=1e-12
+    )
+
+    A_near = np.array([[0.2, 0.3], [0.3, 0.3], [0.5, 0.4], [1e-12, 2e-12]])
+    _, log_near = ot.lp.dmmot_monge_1dgrid_loss(A_near, log=True)
+    np.testing.assert_allclose(
+        np.column_stack(log_near["dual"]),
+        [[0, 0], [1, -1], [2, -2], [3, -3]],
+        atol=1e-12,
+    )
+
+
+def test_dmmot_multiple_zero_marginals_dual_feasibility():
+    """The tighter safe bound remains feasible with zeros in several marginals."""
+    A = np.array([[1.0, 0.5, 0.0], [0.0, 0.5, 1.0]])
+    obj, log = ot.lp.dmmot_monge_1dgrid_loss(A, log=True)
+    u, v, w = [np.asarray(x) for x in log["dual"]]
+    C = np.array(
+        [
+            [[max(t) - min(t) for t in [(i, j, k)]] for k in range(2)]
+            for i in range(2)
+            for j in range(2)
+        ]
+    ).reshape(2, 2, 2)
+
+    slack = C - u[:, None, None] - v[None, :, None] - w[None, None, :]
+    np.testing.assert_allclose(log["dual objective"], obj, atol=1e-12)
+    assert np.all(slack >= -1e-12)
