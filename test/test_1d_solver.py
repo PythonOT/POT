@@ -347,3 +347,50 @@ def test_wasserstein_1d_plan():
         shape=(x.shape[0], y.shape[0]),
     ).toarray()
     np.testing.assert_allclose(plan_1d_tuple, plan_emd, atol=1e-05)
+
+
+def test_free_support_barycenter_1d(nx):
+    x, y = nx.from_numpy(np.array([6.0, 0.0, 0.0]), np.array([4.0, 100.0]))
+    a, b = nx.from_numpy(np.array([0.25, 0.5, 0.25]), np.array([1.0, 0.0]))
+    weights = nx.from_numpy(np.array([2.0, 1.0]))
+    atoms, masses = ot.lp.free_support_barycenter_1d([x, y], [a, b], weights)
+    np.testing.assert_allclose(nx.to_numpy(atoms), [4 / 3, 16 / 3])
+    np.testing.assert_allclose(nx.to_numpy(masses), [0.75, 0.25])
+    atoms, masses = ot.lp.free_support_barycenter_1d([x], [a])
+    np.testing.assert_allclose(nx.to_numpy(atoms), [0, 6])
+    np.testing.assert_allclose(nx.to_numpy(masses), [0.75, 0.25])
+
+
+def test_free_support_barycenter_1d_objective():
+    rng = np.random.RandomState(13)
+    x, y = rng.randn(9), rng.randn(15)
+    a, b = rng.rand(9), rng.rand(15)
+    a, b = a / a.sum(), b / b.sum()
+    t = 0.3
+    z, c = ot.lp.free_support_barycenter_1d([x, y], [a, b], [1 - t, t])
+    objective = (1 - t) * ot.emd2(a, c, (x[:, None] - z) ** 2)
+    objective += t * ot.emd2(b, c, (y[:, None] - z) ** 2)
+    np.testing.assert_allclose(
+        objective, t * (1 - t) * ot.emd2(a, b, (x[:, None] - y) ** 2)
+    )
+    z, c = ot.lp.free_support_barycenter_1d(
+        [[0.0, 3.0], [6.0], [100.0, 110.0]], weights=[2.0, 1.0, 0.0]
+    )
+    np.testing.assert_allclose(z, [2.0, 4.0])
+    np.testing.assert_allclose(c, [0.5, 0.5])
+
+
+@pytest.mark.parametrize(
+    "locations,masses,weights",
+    [
+        ([], None, None),
+        ([[0.0]], [], None),
+        ([[0.0]], None, [0.0]),
+        ([[0.0, 2.0]], [[-1.0, 2.0]], None),
+        ([[np.nan]], None, None),
+        ([[0.0, 2.0]], [[1.0]], None),
+    ],
+)
+def test_free_support_barycenter_1d_invalid(locations, masses, weights):
+    with pytest.raises(ValueError):
+        ot.lp.free_support_barycenter_1d(locations, masses, weights)

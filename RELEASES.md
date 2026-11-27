@@ -4,6 +4,8 @@
 
 #### New features
 
+- Add an exact free-support quadratic Wasserstein barycenter for discrete measures on the real line.
+
 
 - `ot.dr.wda` gains `solver='torch'`, a PyTorch autodiff solver with Riemannian gradient descent, usable on installations without autograd or pymanopt, and accepting torch tensors directly (PR #858, Issue #806)
 - `ot.dr` dependencies (autograd, pymanopt, scikit-learn, torch) are now imported optionally, so importing `ot.dr` no longer requires all of them; each function raises an explicit `ImportError` naming what it needs (PR #858)
