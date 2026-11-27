@@ -1625,9 +1625,7 @@ def solve_sample(
             else:
                 raise (
                     NotImplementedError(
-                        'Not implemented unbalanced_type="{}" with regularization'.format(
-                            unbalanced_type
-                        )
+                        "Regularized lazy solver not implemented for unbalanced OT"
                     )
                 )
 
