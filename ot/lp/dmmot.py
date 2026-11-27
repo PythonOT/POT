@@ -195,7 +195,9 @@ def dmmot_monge_1dgrid_loss(A, verbose=False, log=False):
     }
 
     # define forward/backward relations for pytorch
-    obj = nx.set_gradients(obj, (A_copy), (dual))
+    # dual[j] is the potential of marginal j: the gradient wrt column j of A
+    grad_A = np.stack(dual, axis=1)
+    obj = nx.set_gradients(obj, (A_copy,), (nx.from_numpy(grad_A, type_as=A_copy),))
 
     if log:
         return obj, log_dict
