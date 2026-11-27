@@ -6,6 +6,7 @@
 #
 # License: MIT License
 
+import warnings
 import numpy as np
 import pytest
 from ot.utils import proj_simplex
@@ -158,6 +159,115 @@ def test_gmm_apply_map():
 
     plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
     gmm_ot_apply_map(x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan)
+
+
+def test_gmm_apply_bary_map_value(nx):
+    """
+    Transporting N(0, 1) to 0.5*N(0, -2) + 0.5*N(0, -2)
+    should result in the indentity map with the barycentric
+    method
+    """
+    x = nx.from_numpy(np.linspace(-2, 2, 10)).reshape((-1, 1))
+
+    m_s = nx.from_numpy(np.array([0.0])).reshape((-1, 1))
+    m_t = nx.from_numpy(np.array([-2.0, 2.0])).reshape((-1, 1))
+
+    k_s = len(m_s)
+    k_t = len(m_t)
+
+    C_s = nx.from_numpy(np.array([1.0])).reshape((k_s, 1, 1))
+    C_t = nx.from_numpy(np.array([1.0, 1.0])).reshape((k_t, 1, 1))
+
+    w_s = nx.from_numpy(np.array([1.0]))
+    w_t = nx.from_numpy(np.array([0.5, 0.5]))
+
+    plan = gmm_ot_plan(m_s, m_t, C_s, C_t, w_s, w_t)
+    T_mean_x = gmm_ot_apply_map(
+        x, m_s, m_t, C_s, C_t, w_s, w_t, plan=plan, method="bary"
+    )
+    assert nx.allclose(x, T_mean_x)
+
+
+@pytest.skip_backend("tf")  # skips because of array assignment
+@pytest.skip_backend("jax")
+def test_gmm_apply_map_overflow(nx):
+    x_coord = 12.0
+    d = 1
+    k = 2
+    x = nx.from_numpy(np.array([x_coord]).reshape((-1, d)))
+
+    m_s = nx.from_numpy(np.array([x_coord, 0.0], dtype=np.float64).reshape((k, d)))
+    m_t = nx.from_numpy(np.array([x_coord, 0.0], dtype=np.float64).reshape((k, d)))
+
+    C_s = nx.from_numpy(np.ones((k, d, d)) / 10.0)
+    C_t = nx.from_numpy(np.ones((k, d, d)) / 10.0)
+
+    w_s = nx.from_numpy(np.array([0.5, 0.5]))
+    w_t = nx.from_numpy(np.array([0.5, 0.5]))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter(action="error")
+        gmm_ot_apply_map(
+            x,
+            m_s,
+            m_t,
+            C_s,
+            C_t,
+            w_s,
+            w_t,
+            method="rand",
+            seed=0,
+        )
+
+
+def test_weighted_logsumexp_overflow_safety(nx):
+    """Test that large exponents don't overflow."""
+    x = nx.from_numpy(np.array([0.0, 710.0]))
+    result = nx.weighted_logsumexp(x, scaling_factor=nx.from_numpy(np.array([1, 1])))
+    # Should be equal to exp(log(0)) + exp(log(710)) = 710
+    assert nx.isfinite(result)
+    assert nx.allclose(result, nx.from_numpy(np.array([710.0])))
+
+
+def test_weighted_logsumexp_dims_and_axes(nx):
+    """
+    Test whether the logsumexp yields expected results
+    with all the possible axis arguments
+    """
+    elements = nx.from_numpy(np.array([[0.0, 0.0], [5.0, 5.0], [10.0, 10.0]]))
+    weights = nx.ones(elements.shape, type_as=elements)
+
+    # Each axis along its expected result
+    configs = (
+        (
+            0,
+            nx.from_numpy(
+                np.array(
+                    [
+                        np.log(1 + np.exp(5) + np.exp(10)),
+                        np.log(1 + np.exp(5) + np.exp(10)),
+                    ]
+                ),
+                type_as=elements,
+            ),
+        ),
+        (
+            1,
+            nx.from_numpy(
+                np.array([np.log(2), 5 + np.log(2), 10 + np.log(2)]), type_as=elements
+            ),
+        ),
+        (
+            None,
+            nx.from_numpy(
+                np.array([np.log(2 + 2 * np.exp(5) + 2 * np.exp(10))]), type_as=elements
+            ),
+        ),
+    )
+
+    for axis, expected in configs:
+        result = nx.weighted_logsumexp(elements, weights, axis=axis)
+        assert nx.allclose(result, expected), f"Unexpected behaviour with axis={axis}"
 
 
 @pytest.mark.skipif(not torch, reason="No torch available")
