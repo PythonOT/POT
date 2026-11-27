@@ -9,7 +9,7 @@ Batch operations for linear optimal transport.
 #
 # License: MIT License
 
-from ..backend import get_backend
+from ..backend import get_backend, torch
 from ..utils import OTResult, check_marginal
 from ._utils import (
     bregman_log_projection_batch,
@@ -24,6 +24,32 @@ solve_batch_method_lst = ["auto", "proximal", "log_sinkhorn", "sinkhorn"]
 solve_batch_reg_type_lst = ["kl", "entropy"]
 
 solve_batch_grad_lst = ["detach", "autodiff", "last_step", "envelope"]
+
+if torch:
+
+    class _BatchEnvelopeMarginals(torch.autograd.Function):
+        r"""Attach batch-aware marginal VJP to an envelope-mode value.
+
+        ``Backend.set_gradients`` implements a scalar-output VJP: its Torch
+        ``ValFunction.backward`` multiplies each gradient by ``grad_output``
+        without a batch dimension.  That is invalid for the vector-valued
+        ``value`` returned by :func:`solve_batch` (silent mis-broadcast when
+        ``B`` matches a trailing dimension, otherwise a shape error).  This
+        local Function keeps the batch axis aligned with the upstream
+        cotangent and leaves the existing differentiable path to ``M`` intact.
+        """
+
+        @staticmethod
+        def forward(ctx, value, grad_a, grad_b, a, b):
+            ctx.save_for_backward(grad_a, grad_b)
+            return value
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            grad_a, grad_b = ctx.saved_tensors
+            w = grad_output.reshape((-1,) + (1,) * (grad_a.ndim - 1))
+            # gradients: value, grad_a, grad_b, a, b
+            return grad_output, None, None, w * grad_a, w * grad_b
 
 
 def dist_lp_batch(X, Y, p=2, q=1, nx=None):
@@ -295,11 +321,18 @@ def solve_batch(
     grad : str, optional
         Type of gradient computation, either 'detach', 'autodiff', 'last_step' or 'envelope'. 
         'detach' does not compute the gradients. 
-        'autodiff' provides gradients of all outputs (`plan, value, value_linear`) but with important memory cost. 
+        'autodiff' provides gradients of all outputs (`plan, value, value_linear`) but with important memory cost.
         'last_step' provides gradients of all outputs (`plan, value, value_linear`) only for the last method iteration, useful for memory saving.
-        'envelope' provides gradients only for `value`. 
+        'envelope' provides gradients only for `value`. With PyTorch, the
+        envelope gradient of ``value`` is available with respect to ``M``,
+        ``a`` and ``b`` (first order only); the existing gradient path to ``M``
+        is unchanged. For ``reg_type="kl"`` the dependency of the reference
+        measure ``a (x) b`` is included. This marginal gradient is specific to
+        the PyTorch backend: JAX and TensorFlow batch marginal gradients are
+        not part of this behaviour, and the custom marginal gradient does not
+        support higher-order differentiation.
         Default is 'envelope'.
-       
+
 
     Returns
     -------
@@ -411,15 +444,54 @@ def solve_batch(
         T = nx.detach(T)
 
     value_linear = loss_linear_batch(M, T)
+
+    # The local envelope VJP is registered only for Torch, where the marginal
+    # sensitivities can be attached to the vector-valued output.  Other
+    # backends keep their previous behaviour unchanged.
+    local_envelope = (
+        grad == "envelope"
+        and reg is not None
+        and reg > 0
+        and torch
+        and isinstance(value_linear, torch.Tensor)
+    )
+
     if reg_type == "entropy" and reg is not None:
         entr = -entropy_batch(T, nx=nx)
         value = value_linear + reg * entr
     elif reg_type == "kl" and reg is not None:
-        ref = nx.einsum("bi,bj->bij", a, b)
+        # When the local VJP is active the marginal gradient is supplied
+        # explicitly below.  Detaching the reference measure then avoids an
+        # incorrect duplicate autodiff term through the detached plan.  For
+        # backends without the local VJP the reference stays differentiable,
+        # preserving the previous behaviour.
+        ref_a, ref_b = (nx.detach(a), nx.detach(b)) if local_envelope else (a, b)
+        ref = nx.einsum("bi,bj->bij", ref_a, ref_b)
         kl = nx.sum(T * nx.log(T / ref + 1e-16), axis=(1, 2))
         value = value_linear + reg * kl
     else:
         value = value_linear
+
+    if local_envelope:
+        # Envelope sensitivities at convergence.  The dual potentials are in
+        # log space for log_sinkhorn/proximal and in scaling space for sinkhorn.
+        # The proximal inner regularisation is active in the dual relation.
+        reg_eff = reg + inner_reg if method == "proximal" else reg
+        u, v = out["potentials"]
+        if method == "sinkhorn":
+            u, v = nx.log(u), nx.log(v)
+        n_u, n_v = u.shape[1], v.shape[1]
+        grad_a = reg_eff * (u - nx.sum(u, axis=1, keepdims=True) / n_u)
+        grad_b = reg_eff * (v - nx.sum(v, axis=1, keepdims=True) / n_v)
+        if reg_type == "kl":
+            # KL(P||a (x) b) = sum P log P - sum a log a - sum b log b on U(a,b),
+            # so the reference measure adds an explicit -reg log(a) term.
+            log_a, log_b = nx.log(a), nx.log(b)
+            grad_a = grad_a - reg * (log_a - nx.sum(log_a, axis=1, keepdims=True) / n_u)
+            grad_b = grad_b - reg * (log_b - nx.sum(log_b, axis=1, keepdims=True) / n_v)
+        value = _BatchEnvelopeMarginals.apply(
+            value, nx.detach(grad_a), nx.detach(grad_b), a, b
+        )
     log = {"n_iter": out["n_iters"]}
 
     res = OTResult(
@@ -488,7 +560,9 @@ def solve_sample_batch(
         'detach' does not compute the gradients.
         'autodiff' provides gradients of all outputs (`plan, value, value_linear`) but with important memory cost.
         'last_step' provides gradients of all outputs (`plan, value, value_linear`) only for the last method iteration, useful for memory saving.
-        'envelope' provides gradients only for `value`.
+        'envelope' provides gradients only for `value`. See :func:`solve_batch`
+        for the backend-specific scope of the envelope gradient with respect
+        to ``a`` and ``b``.
         Default is 'envelope'.
 
     Returns
