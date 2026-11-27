@@ -1550,8 +1550,10 @@ def sinkhorn_unbalanced_translation_invariant(
         else 0
     )
 
-    k_rho1 = k1 * reg_m1 / reg if reg_m1 != float("inf") else 0
-    k_rho2 = k2 * reg_m2 / reg if reg_m2 != float("inf") else 0
+    # k_rho1 is used in the update of v and k_rho2 in the update of u: with
+    # reg_m1 != reg_m2 the other pairing converges to another fixed point
+    k_rho1 = k2 * reg_m1 / reg if reg_m1 != float("inf") else 0
+    k_rho2 = k1 * reg_m2 / reg if reg_m2 != float("inf") else 0
 
     if reg_m1 == float("inf") and reg_m2 == float("inf"):
         xi1, xi2 = 0, 0
