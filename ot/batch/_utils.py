@@ -111,6 +111,7 @@ def bregman_projection_batch(
     -------
     dict
         Dictionary containing:
+
         - 'T' : array-like, shape (B, n, m)
             Optimal transport plan for each problem.
         - 'potentials' : tuple of array-like, shapes ((B, n), (B, m))
@@ -231,6 +232,7 @@ def bregman_log_projection_batch(
     -------
     dict
         Dictionary containing:
+
         - 'T' : array-like, shape (B, n, m)
             Optimal transport plan for each problem.
         - 'log_T' : array-like, shape (B, n, m)
@@ -363,6 +365,7 @@ def proximal_bregman_log_plan_batch(
     -------
     dict
         Dictionary containing:
+
         - 'T' : array-like, shape (B, n, m)
             Optimal transport plan for each problem.
         - 'log_T' : array-like, shape (B, n, m)
@@ -372,7 +375,7 @@ def proximal_bregman_log_plan_batch(
         - 'n_iters' : int
             Number of iterations performed.
 
-    Example
+    Examples
     --------
     >>> import numpy as np
     >>> from ot.batch import proximal_bregman_log_plan_batch
@@ -382,11 +385,11 @@ def proximal_bregman_log_plan_batch(
     >>> T = result['T']  # Shape (5, 10, 15)
 
     .. _references-OT-bregman-proximal-point:
-    Reference
+    References
     ----------
-    .. [92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August). 
-    A fast proximal point method for computing exact wasserstein distance.
-    In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
+    .. [92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August).
+        A fast proximal point method for computing exact wasserstein distance.
+        In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
     """
 
     if nx is None:

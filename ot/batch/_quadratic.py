@@ -58,6 +58,7 @@ def tensor_batch(
     -------
     dict
         Dictionary containing:
+
         - constC : array-like, shape (B, n, m)
             Constant term in the tensor product.
         - hCa : array-like, shape (B, n, n, d) or (B, n, n)

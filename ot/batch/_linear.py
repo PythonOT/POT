@@ -313,6 +313,11 @@ def solve_batch(
 
         See :any:`OTResult` for more information.
 
+    See Also
+    --------
+    ot.batch.dist_batch : batched cost matrix computation for computing M.
+    ot.solve : non-batched version of the solve_batch function.
+
     Examples
     --------
     >>> import numpy as np
@@ -328,21 +333,16 @@ def solve_batch(
     >>> s_result.value.shape  # Optimal transport values for each batch
     (5,)
 
-    See Also
-    --------
-    ot.batch.dist_batch : batched cost matrix computation for computing M.
-    ot.solve : non-batched version of the solve_batch function.
-
     .. _references-batch-solver:
-    Reference
+    References
     ----------
-    .. [92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August). 
-    A fast proximal point method for computing exact wasserstein distance.
-    In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
+    .. [92] Xie, Y., Wang, X., Wang, R., & Zha, H. (2020, August).
+        A fast proximal point method for computing exact wasserstein distance.
+        In Uncertainty in artificial intelligence (pp. 433-453). PMLR.
 
     .. [2] M. Cuturi, Sinkhorn Distances : Lightspeed Computation
-    of Optimal Transport, Advances in Neural Information Processing
-    Systems (NIPS) 26, 2013
+        of Optimal Transport, Advances in Neural Information Processing
+        Systems (NIPS) 26, 2013
     """
 
     if method not in solve_batch_method_lst:
@@ -453,7 +453,7 @@ def solve_sample_batch(
     r"""
     Return solutions of a batch of discrete optimal transport problems in a :any:`OTResult` object computed from batches of source and target samples.
 
-    The problem is solved with either a proximal point method :ref:`[91] <references-batch-solver>` or a Sinkhorn algorithm :ref:`[2] <references-batch-solver>`. Unlike the Sinkhorn algorithm, which assumes a regularization term, the proximal point method can solve both regularized and unregularized optimal transport problems. When `method` is set to 'auto', the function automatically selects the appropriate method based on the value of `reg`. if `reg` is None or 0, the proximal point method is used. If `reg` is greater than 0, the Sinkhorn algorithm is used.
+    The problem is solved with either a proximal point method :ref:`[92] <references-batch-solver>` or a Sinkhorn algorithm :ref:`[2] <references-batch-solver>`. Unlike the Sinkhorn algorithm, which assumes a regularization term, the proximal point method can solve both regularized and unregularized optimal transport problems. When `method` is set to 'auto', the function automatically selects the appropriate method based on the value of `reg`. if `reg` is None or 0, the proximal point method is used. If `reg` is greater than 0, the Sinkhorn algorithm is used.
 
     Parameters
     ----------
