@@ -8,11 +8,52 @@ Batch operations for quadratic optimal transport.
 #
 # License: MIT License
 
+import math
+
 from ..utils import OTResult
-from ot.backend import get_backend
+from ot.backend import get_backend, torch
 from ot.batch._linear import loss_linear_batch
 from ot.batch._utils import bmv, bop, bregman_log_projection_batch
 from ot.utils import check_marginal, deprecated, list_to_array
+
+if torch:
+
+    class _BatchGWMarginals(torch.autograd.Function):
+        r"""Attach a batch-aware marginal VJP to an envelope-mode GW value.
+
+        ``Backend.set_gradients`` is a scalar-output VJP; on the ``(B,)`` value
+        returned by :func:`solve_gromov_batch` it mis-broadcasts the upstream
+        cotangent.  This local Function aligns the batch axis explicitly and
+        passes ``grad_output`` through to ``value`` so that the existing
+        gradients with respect to the cost matrices (``M``, ``Ca``, ``Cb``)
+        remain intact.
+        """
+
+        @staticmethod
+        def forward(ctx, value, grad_a, grad_b, a, b):
+            ctx.save_for_backward(grad_a, grad_b)
+            return value
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            grad_a, grad_b = ctx.saved_tensors
+            w = grad_output.reshape((-1,) + (1,) * (grad_a.ndim - 1))
+            # gradients: value, grad_a, grad_b, a, b
+            return grad_output, None, None, w * grad_a, w * grad_b
+
+
+def _centered_marginal_sensitivities(u, v, reg, nx):
+    r"""Return the registered marginal sensitivities from dual potentials.
+
+    Centering removes the gauge freedom ``u -> u + c``, ``v -> v - c`` of the
+    log-domain Bregman potentials.  The resulting arrays are exactly the
+    gradients registered by :class:`_BatchGWMarginals` and are invariant under
+    that gauge transformation.
+    """
+    n_u, n_v = u.shape[1], v.shape[1]
+    grad_a = reg * (u - nx.sum(u, axis=1, keepdims=True) / n_u)
+    grad_b = reg * (v - nx.sum(v, axis=1, keepdims=True) / n_v)
+    return grad_a, grad_b
 
 
 def tensor_batch(
@@ -581,10 +622,31 @@ def solve_gromov_batch(
     tol_inner : float, optional
         Tolerance for convergence of the inner Bregman projection. Default is 1e-5.
     grad : str, optional
-        Type of gradient computation, either or 'autodiff', 'envelope' or 'detach'. 'autodiff' provides gradients wrt all
-        outputs (`plan, value, value_linear`) but with important memory cost.
-        'envelope' provides gradients only for (`value, value_linear`)`.  `detach`` is the fastest option but
-        provides no gradients. Default is 'envelope'.
+        Type of gradient computation, either 'autodiff', 'envelope' or
+        'detach'. 'autodiff' provides gradients wrt all outputs
+        (`plan, value, value_linear`) but with important memory cost.
+        'envelope' detaches the plan and provides gradients only for `value`
+        and `value_linear`. `res.value` keeps its envelope gradient paths to
+        the cost inputs `M`, `Ca` and `Cb`. `res.value_linear = (1-alpha)<M,T>`
+        keeps a gradient path to `M` only (`d value_linear / d M = (1-alpha) T`);
+        it does NOT depend on `Ca` or `Cb`, since those enter solely through
+        the quadratic term. With PyTorch, the first-order gradient with
+        respect to the marginals `a` and `b` is additionally registered on
+        `res.value` only when the solver converged, the plan satisfies the
+        marginal constraints, and the centred marginal sensitivities are
+        stable under one extra proximal projection. This extra projection and
+        these checks run only on the Torch envelope marginal path; elsewhere
+        the corresponding `res.log` entries are `None` (not evaluated). The
+        stability check is an empirically validated criterion, not a
+        mathematical guarantee for every GW problem. The three flags are
+        reduced over the whole batch: if any sample fails, the marginal
+        gradient is withheld for every sample rather than returning a zero
+        gradient for the failing ones. This marginal gradient is
+        PyTorch-only, first-order, and relies on a locally stable stationary
+        branch; it is not a global-optimum sensitivity at non-unique or
+        active-set switching points. JAX and TensorFlow batch marginal
+        gradients are not part of this behaviour. `detach` is the fastest
+        option and provides no gradients. Default is 'envelope'.
     logits : bool, optional
         For KL loss, whether Ca and Cb are logits (unnormalized log
         probabilities). Default is None.
@@ -669,14 +731,30 @@ def solve_gromov_batch(
 
     grad_inner = "autodiff" if grad == "autodiff" else "detach"
 
+    # The extra stability projection is an autograd-plumbing cost incurred
+    # only for the Torch envelope marginal gradient.  All other backends and
+    # gradient modes keep the original iteration and computational cost.
+    need_marginal_grad = (
+        grad == "envelope"
+        and reg is not None
+        and reg > 0
+        and torch
+        and isinstance(a, torch.Tensor)
+    )
+
     T = T_init
     log_T = nx.log(T + 1e-15)  # Avoid log(0)
+    converged = False
+    # Diagnostics of the final iterate, used to decide whether an envelope
+    # marginal gradient can be trusted (see the note below).
+    verify_dual_change = None
     for iter in range(max_iter):
         T_prev = T
+        log_T_prev = log_T
         Mk = (1 - alpha) * M + 2 * alpha * tensor_product_batch(
             L, T, nx=nx, recompute_const=False, symmetric=symmetric
         )
-        K = -Mk / reg + log_T
+        K = -Mk / reg + log_T_prev
         out = bregman_log_projection_batch(
             K, a, b, nx=nx, max_iter=max_iter_inner, tol=tol_inner, grad=grad_inner
         )
@@ -684,6 +762,36 @@ def solve_gromov_batch(
         log_T = out["log_T"]
         max_err = nx.max(nx.mean(nx.abs(T_prev - T), axis=(1, 2)))
         if max_err < tol:
+            converged = True
+            if need_marginal_grad:
+                # Verify that the *registered* sensitivities are a fixed
+                # point of the proximal map.  Compare centred potentials,
+                # not raw ones: the gauge u->u+c, v->v-c leaves both the
+                # plan and the marginal gradient unchanged.  A loose outer
+                # ``tol`` can stop while the value is correct but the
+                # sensitivities are still moving, giving a wrong gradient.
+                Mk_next = (1 - alpha) * M + 2 * alpha * tensor_product_batch(
+                    L, T, nx=nx, recompute_const=False, symmetric=symmetric
+                )
+                K_next = -Mk_next / reg + log_T
+                out_next = bregman_log_projection_batch(
+                    K_next,
+                    a,
+                    b,
+                    nx=nx,
+                    max_iter=max_iter_inner,
+                    tol=tol_inner,
+                    grad="detach",
+                )
+                u_now, v_now = out["potentials"]
+                u_next, v_next = out_next["potentials"]
+                ga_now, gb_now = _centered_marginal_sensitivities(u_now, v_now, reg, nx)
+                ga_next, gb_next = _centered_marginal_sensitivities(
+                    u_next, v_next, reg, nx
+                )
+                du = nx.max(nx.abs(ga_next - ga_now), axis=1)
+                dv = nx.max(nx.abs(gb_next - gb_now), axis=1)
+                verify_dual_change = nx.detach(nx.maximum(du, dv))
             break
 
     if grad == "detach":
@@ -698,7 +806,60 @@ def solve_gromov_batch(
         L, T, nx=nx, recompute_const=True, symmetric=symmetric
     )  # Always recompute const for accurate value
     value = (1 - alpha) * value_linear + alpha * value_quadratic
-    log = {"n_iter": iter}
+
+    # The marginal sensitivity of a GW/FGW solution is recovered from the
+    # last Bregman projection's log-scaling potentials only when three
+    # independent conditions hold:
+    #   (1) the outer iteration actually converged;
+    #   (2) the transport plan satisfies the marginal constraints;
+    #   (3) the registered, centred sensitivities are stable under one extra
+    #       proximal projection (reg-weighted change below a tol-scaled
+    #       threshold).  Centring makes this check invariant to the
+    #       u -> u+c, v -> v-c gauge freedom of the log potentials.
+    # The outer break flag alone is NOT sufficient: a loose ``tol`` can stop
+    # early with a correct value but stale potentials, giving a wrong marginal
+    # gradient.  Batch semantics are conservative: the three checks are
+    # reduced over the whole batch, so a single sample failing any check
+    # suppresses the marginal gradient for *all* samples.  No zero gradient
+    # is emitted for an untrusted sample.  Cost-matrix gradients (M, Ca, Cb)
+    # keep their autograd path through value in every case.
+    # Diagnostics are evaluated ONLY on the Torch envelope marginal path.
+    # Non-target backends and detach/autodiff keep their original behaviour
+    # and pay no extra reduction/float() cost; the flags are reported as None
+    # (not evaluated) there rather than as a misleading True.
+    marginal_feasible = None
+    potentials_stable = None
+    if need_marginal_grad and converged:
+        row_res = nx.max(nx.abs(nx.sum(T, axis=2) - a))
+        col_res = nx.max(nx.abs(nx.sum(T, axis=1) - b))
+        marginal_feasible = bool(
+            max(float(nx.detach(row_res)), float(nx.detach(col_res))) <= max(tol, 1e-12)
+        )
+        if verify_dual_change is not None:
+            dual_res = float(nx.detach(nx.max(verify_dual_change)))
+            dual_tol = max(math.sqrt(float(tol)), 1e-12) * reg
+            potentials_stable = dual_res <= dual_tol
+        else:
+            potentials_stable = False
+    local_envelope = (
+        need_marginal_grad
+        and converged
+        and marginal_feasible is True
+        and potentials_stable is True
+        and isinstance(value, torch.Tensor)
+    )
+    if local_envelope:
+        u, v = out["potentials"]  # log-domain scaling potentials (B, n), (B, m)
+        grad_a, grad_b = _centered_marginal_sensitivities(u, v, reg, nx)
+        value = _BatchGWMarginals.apply(
+            value, nx.detach(grad_a), nx.detach(grad_b), a, b
+        )
+    log = {
+        "n_iter": iter,
+        "converged": converged,
+        "marginal_feasible": marginal_feasible,
+        "potentials_stable": potentials_stable,
+    }
 
     res = OTResult(
         value=value,
