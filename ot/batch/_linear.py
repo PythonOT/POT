@@ -85,10 +85,29 @@ def dist_euclidean_batch(X, Y, squared=True, nx=None):
 
     if nx is None:
         nx = get_backend(X, Y)
+
+    # Translate both point sets by a common per-batch reference point before
+    # forming the Gram matrix. A large common offset otherwise cancels against
+    # ||x||^2 + ||y||^2 and can destroy the (much smaller) squared distance.
+    # This translation leaves Euclidean distances unchanged mathematically,
+    # and remains differentiable for all backends.
+    if X.shape[1] > 0:
+        ref = X[:, 0:1, :]
+    elif Y.shape[1] > 0:
+        ref = Y[:, 0:1, :]
+    else:
+        ref = None
+    if ref is not None:
+        X = X - ref
+        Y = Y - ref
+
     XX = nx.sum(X**2, axis=-1, keepdims=True)
     YY = nx.sum(Y**2, axis=-1, keepdims=True)
     YY = nx.transpose(YY, axes=(0, 2, 1))
     M = XX + YY - 2 * nx.einsum("bid,bjd->bij", X, Y)
+    # Round-off can still make the diagonal slightly negative; squared
+    # distances are non-negative by definition.
+    M = nx.maximum(M, 0)
     if not squared:
         M = nx.sqrt(M)
     return M
