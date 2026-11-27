@@ -30,6 +30,8 @@ def sinkhorn(
     log=False,
     warn=True,
     warmstart=None,
+    *,
+    plan_tol=None,
     **kwargs,
 ):
     r"""
@@ -110,6 +112,20 @@ def sinkhorn(
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors)
 
+    plan_tol : float, optional
+        Require an estimated total variation error below this tolerance for
+        the full transport matrix, in addition to both marginal checks.
+        Supported only for `method="sinkhorn"`, single strictly positive
+        NumPy float64 probability marginals, and a C-contiguous cost matrix
+        with a numerically safe, positive Gibbs kernel. In this mode,
+        `verbose=True` is not supported. Invalid inputs raise
+        ValueError; failure to verify the tolerance (including exhaustion)
+        raises ArithmeticError. This float64 estimate is not an interval
+        certificate. When `log=True`, `plan_tv_estimate` records the estimate.
+        With `None`, eligible NumPy plan calls use automatic marginal stopping
+        at `stopThr`. Supported warm starts also check at updates 2, 3 and 4.
+        An early return records the final checked error when logging is enabled.
+
     Returns
     -------
     gamma : array-like, shape (dim_a, dim_b)
@@ -161,6 +177,9 @@ def sinkhorn(
 
     """
 
+    if plan_tol is not None and method.lower() != "sinkhorn":
+        raise ValueError("plan_tol is only supported by method='sinkhorn'.")
+
     if method.lower() == "sinkhorn":
         return sinkhorn_knopp(
             a,
@@ -173,6 +192,7 @@ def sinkhorn(
             log=log,
             warn=warn,
             warmstart=warmstart,
+            plan_tol=plan_tol,
             **kwargs,
         )
     elif method.lower() == "sinkhorn_log":
@@ -384,12 +404,17 @@ def sinkhorn2(
         :ref:`[9] <references-sinkhorn2>` :ref:`[10] <references-sinkhorn2>`
     """
 
+    if kwargs.pop("plan_tol", None) is not None:
+        raise ValueError(
+            "plan_tol is only supported by sinkhorn, which returns the transport matrix."
+        )
+
     M, a, b = list_to_array(M, a, b)
     nx = get_backend(M, a, b)
 
     if len(b.shape) < 2:
         if method.lower() == "sinkhorn":
-            res = sinkhorn_knopp(
+            res = _sinkhorn_knopp_standard(
                 a,
                 b,
                 M,
@@ -400,7 +425,6 @@ def sinkhorn2(
                 log=log,
                 warn=warn,
                 warmstart=warmstart,
-                **kwargs,
             )
         elif method.lower() == "sinkhorn_log":
             res = sinkhorn_log(
@@ -439,7 +463,7 @@ def sinkhorn2(
 
     else:
         if method.lower() == "sinkhorn":
-            return sinkhorn_knopp(
+            return _sinkhorn_knopp_standard(
                 a,
                 b,
                 M,
@@ -450,7 +474,6 @@ def sinkhorn2(
                 log=log,
                 warn=warn,
                 warmstart=warmstart,
-                **kwargs,
             )
         elif method.lower() == "sinkhorn_log":
             return sinkhorn_log(
@@ -495,6 +518,8 @@ def sinkhorn_knopp(
     log=False,
     warn=True,
     warmstart=None,
+    *,
+    plan_tol=None,
     **kwargs,
 ):
     r"""
@@ -550,6 +575,20 @@ def sinkhorn_knopp(
         Initialization of dual potentials. If provided, the dual potentials should be given
         (that is the logarithm of the u,v sinkhorn scaling vectors)
 
+    plan_tol : float, optional
+        Require an estimated total variation error below this tolerance for
+        the full transport matrix, in addition to both marginal checks.
+        Supported only for `method="sinkhorn"`, single strictly positive
+        NumPy float64 probability marginals, and a C-contiguous cost matrix
+        with a numerically safe, positive Gibbs kernel. In this mode,
+        `verbose=True` is not supported. Invalid inputs raise
+        ValueError; failure to verify the tolerance (including exhaustion)
+        raises ArithmeticError. This float64 estimate is not an interval
+        certificate. When `log=True`, `plan_tv_estimate` records the estimate.
+        With `None`, eligible NumPy plan calls use automatic marginal stopping
+        at `stopThr`. Supported warm starts also check at updates 2, 3 and 4.
+        An early return records the final checked error when logging is enabled.
+
     Returns
     -------
     gamma : array-like, shape (dim_a, dim_b)
@@ -585,6 +624,51 @@ def sinkhorn_knopp(
 
     """
 
+    if plan_tol is not None:
+        if verbose or kwargs:
+            raise ValueError(
+                "plan_tol does not support verbose or extra solver arguments."
+            )
+        from ._sinkhorn_plan import _solve_full_plan
+
+        return _solve_full_plan(
+            a, b, M, reg, numItermax, stopThr, plan_tol, log=log, warmstart=warmstart
+        )
+
+    kernel = None
+    if (
+        type(log) is bool
+        and (not log or warmstart is not None)
+        and verbose is False
+        and not kwargs
+        and type(warn) is bool
+    ):
+        from ._sinkhorn_plan import _try_marginal
+
+        plan, kernel = _try_marginal(
+            a, b, M, reg, numItermax, stopThr, warn, warmstart=warmstart, log=log
+        )
+        if plan is not None:
+            return plan
+    return _sinkhorn_knopp_standard(
+        a, b, M, reg, numItermax, stopThr, verbose, log, warn, warmstart, kernel=kernel
+    )
+
+
+def _sinkhorn_knopp_standard(
+    a,
+    b,
+    M,
+    reg,
+    numItermax=1000,
+    stopThr=1e-9,
+    verbose=False,
+    log=False,
+    warn=True,
+    warmstart=None,
+    *,
+    kernel=None,
+):
     a, b, M = list_to_array(a, b, M)
 
     nx = get_backend(M, a, b)
@@ -618,7 +702,7 @@ def sinkhorn_knopp(
     else:
         u, v = nx.exp(warmstart[0]), nx.exp(warmstart[1])
 
-    K = nx.exp(M / (-reg))
+    K = nx.exp(M / (-reg)) if kernel is None else kernel
 
     Kp = (1 / a).reshape(-1, 1) * K
 
