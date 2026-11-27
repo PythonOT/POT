@@ -739,6 +739,35 @@ def test_lowrank_LazyTensor(nx):
     np.testing.assert_allclose(nx.to_numpy(T[:]), nx.to_numpy(T0))
 
 
+@pytest.mark.parametrize("weighted", [False, True])
+@pytest.mark.parametrize(
+    "index",
+    [
+        0,
+        -1,
+        (1, 2),
+        (-1, -2),
+        (1, slice(1, None)),
+        (slice(None), 1),
+        (slice(1, 3), slice(None)),
+        slice(None),
+    ],
+)
+def test_lowrank_LazyTensor_indexing(nx, weighted, index):
+    Q, R, d = nx.from_numpy(
+        np.arange(10, dtype=float).reshape(5, 2),
+        np.arange(6, dtype=float).reshape(3, 2),
+        np.array([0.25, 2.0]),
+    )
+    if not weighted:
+        d = None
+    T = ot.utils.get_lowrank_lazytensor(Q, R, d)
+    dense = nx.dot(Q if d is None else Q * d, R.T)
+
+    assert T[index].shape == dense[index].shape
+    np.testing.assert_allclose(nx.to_numpy(T[index]), nx.to_numpy(dense[index]))
+
+
 def test_labels_to_mask_helper(nx):
     y = np.array([1, 0, 2, 2, 1])
     out = np.array(
