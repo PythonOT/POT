@@ -603,6 +603,31 @@ def test_barycenter(nx, method, verbose, warn):
         ot.bregman.barycenter(A_nx, M_nx, reg, log=True)
 
 
+@pytest.mark.parametrize("method", ["sinkhorn", "sinkhorn_log"])
+def test_barycenter_unequal_weights(nx, method):
+    # the barycenter of two 1D Gaussians lies at the weighted mean of their means
+    n_bins = 100
+    a1 = ot.datasets.make_1D_gauss(n_bins, m=20, s=5)
+    a2 = ot.datasets.make_1D_gauss(n_bins, m=60, s=8)
+    A = np.vstack((a1, a2)).T
+    M = ot.utils.dist0(n_bins)
+    M /= M.max()
+    weights = np.array([0.8, 0.2])
+    reg = 1e-3
+
+    A_nx, M_nx, weights_nx = nx.from_numpy(A, M, weights)
+    if nx.__name__ in ("jax", "tf") and method == "sinkhorn_log":
+        pytest.skip("Log-domain barycenter is not implemented for Jax and TF")
+
+    bary = nx.to_numpy(
+        ot.bregman.barycenter(A_nx, M_nx, reg, weights_nx, method=method)
+    )
+    bary_log = ot.bregman.barycenter(A, M, reg, weights, method="sinkhorn_log")
+
+    np.testing.assert_allclose(np.sum(np.arange(n_bins) * bary), 28.0, atol=1e-2)
+    np.testing.assert_allclose(bary, bary_log, atol=1e-6)
+
+
 def test_free_support_sinkhorn_barycenter():
     measures_locations = [
         np.array([-1.0]).reshape((1, 1)),  # First dirac support
