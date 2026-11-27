@@ -106,7 +106,7 @@ def derivative_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p=2):
     v_values[mask_n] += nx.floor(theta)[mask_n] + 1
     v_values[mask_p] += nx.floor(theta)[mask_p]
 
-    if nx.any(mask_n) and nx.any(mask_p):
+    if nx.any(mask_n):
         v_cdf_theta[mask_n] += 1
 
     v_cdf_theta2 = nx.copy(v_cdf_theta)
@@ -201,7 +201,7 @@ def ot_cost_on_circle(theta, u_values, v_values, u_cdf, v_cdf, p):
     v_values[mask_n] += nx.floor(theta)[mask_n] + 1
     v_values[mask_p] += nx.floor(theta)[mask_p]
 
-    if nx.any(mask_n) and nx.any(mask_p):
+    if nx.any(mask_n):
         v_cdf_theta[mask_n] += 1
 
     # Put negative values at the end
