@@ -25,22 +25,29 @@ def quantile_function(qs, cws, xs, return_index=False):
 
     Parameters
     ----------
-    qs: array-like, shape (n,)
-        Quantiles at which the quantile function is evaluated
+    qs: array-like, shape (k, ...)
+        Quantiles at which the quantile function is evaluated. The trailing
+        batch dimensions must match those of cws and xs.
     cws: array-like, shape (m, ...)
         cumulative weights of the 1D empirical distribution, if batched, must be similar to xs
-    xs: array-like, shape (n, ...)
-        locations of the 1D empirical distribution, batched against the `xs.ndim - 1` first dimensions
+    xs: array-like, shape (m, ...)
+        Sorted locations of the 1D empirical distributions. The first axis
+        contains samples and the remaining axes contain independent batches.
     return_index: bool, optional
         if True, returns also the associated indices. If False, do not return them
 
     Returns
     -------
-    q: array-like, shape (..., n)
+    q: array-like, shape (k, ...)
         The quantiles of the distribution
     """
     nx = get_backend(qs, cws)
     n = xs.shape[0]
+    qs_shape = qs.shape
+    # Some backends support only one batch axis in searchsorted.
+    if cws.ndim > 2:
+        cws = nx.reshape(cws, (cws.shape[0], -1))
+        qs = nx.reshape(qs, (qs.shape[0], -1))
     if nx.__name__ == "torch":
         # this is to ensure the best performance for torch searchsorted
         # and avoid a warning related to non-contiguous arrays
@@ -50,7 +57,10 @@ def quantile_function(qs, cws, xs, return_index=False):
         cws = cws.T
         qs = qs.T
 
-    idx = nx.clip(nx.searchsorted(cws, qs).T, 0, n - 1)
+    idx = nx.searchsorted(cws, qs)
+    if idx.ndim > 1:
+        idx = nx.transpose(idx)
+    idx = nx.reshape(nx.clip(idx, 0, n - 1), qs_shape)
 
     if return_index:
         return nx.take_along_axis(xs, idx, axis=0), idx
@@ -88,9 +98,11 @@ def wasserstein_1d(
     v_values: array-like, shape (m, ...)
         locations of the second empirical distributions
     u_weights: array-like, shape (n, ...), optional
-        weights of the first empirical distributions, if None then uniform weights are used
+        weights of the first empirical distributions, if None then uniform weights are used.
+        Omitted trailing batch dimensions are repeated over the corresponding values axes.
     v_weights: array-like, shape (m, ...), optional
-        weights of the second empirical distributions, if None then uniform weights are used
+        weights of the second empirical distributions, if None then uniform weights are used.
+        Omitted trailing batch dimensions are repeated over the corresponding values axes.
     p: int, optional
         order of the ground metric used, should be at least 1 (see [2, Chap. 2], default is 1
     require_sort: bool, optional
@@ -113,6 +125,9 @@ def wasserstein_1d(
         if return_plans is "coo_tuple", returns the plans as a list of namedTuple
         containing the data, rows and cols of the non-zero elements of the
         transportation matrix.
+        There is one plan per batch, in row-major order over the trailing
+        dimensions of the inputs, or a single-element list for unbatched inputs.
+        Row and column indices refer to the original input sample order.
 
     References
     ----------
@@ -129,12 +144,14 @@ def wasserstein_1d(
 
     if u_weights is None:
         u_weights = nx.full(u_values.shape, 1.0 / n, type_as=u_values)
-    elif u_weights.ndim != u_values.ndim:
-        u_weights = nx.repeat(u_weights[..., None], u_values.shape[-1], -1)
+    else:
+        for axis in range(u_weights.ndim, u_values.ndim):
+            u_weights = nx.repeat(u_weights[..., None], u_values.shape[axis], -1)
     if v_weights is None:
         v_weights = nx.full(v_values.shape, 1.0 / m, type_as=v_values)
-    elif v_weights.ndim != v_values.ndim:
-        v_weights = nx.repeat(v_weights[..., None], v_values.shape[-1], -1)
+    else:
+        for axis in range(v_weights.ndim, v_values.ndim):
+            v_weights = nx.repeat(v_weights[..., None], v_values.shape[axis], -1)
 
     if require_sort:
         u_sorter = nx.argsort(u_values, 0)
@@ -145,9 +162,6 @@ def wasserstein_1d(
 
         u_weights = nx.take_along_axis(u_weights, u_sorter, 0)
         v_weights = nx.take_along_axis(v_weights, v_sorter, 0)
-    else:
-        u_sorter = nx.arange(n)
-        v_sorter = nx.arange(m)
 
     u_cumweights = nx.cumsum(u_weights, 0)
     v_cumweights = nx.cumsum(v_weights, 0)
@@ -165,28 +179,32 @@ def wasserstein_1d(
     diff_quantiles = nx.abs(u_quantiles - v_quantiles)
 
     if return_plans is not False:
-        u_quantiles_idx = nx.take_along_axis(u_sorter, idx_u, axis=0)
-        v_quantiles_idx = nx.take_along_axis(v_sorter, idx_v, axis=0)
+        if require_sort:
+            idx_u = nx.take_along_axis(u_sorter, idx_u, axis=0)
+            idx_v = nx.take_along_axis(v_sorter, idx_v, axis=0)
+        u_quantiles_idx = nx.reshape(idx_u, (n + m, -1))
+        v_quantiles_idx = nx.reshape(idx_v, (n + m, -1))
+        plan_weights = nx.reshape(delta, (n + m, -1))
         if return_plans == "coo_tuple":
             PlanTuple = namedtuple("PlanTuple", ["data", "rows", "cols"])
             plans = [
                 PlanTuple(
-                    data=delta[:, k],
+                    data=plan_weights[:, k],
                     rows=u_quantiles_idx[:, k],
                     cols=v_quantiles_idx[:, k],
                 )
-                for k in range(delta.shape[1])
+                for k in range(plan_weights.shape[1])
             ]
         else:
             plans = [
                 nx.coo_matrix(
-                    delta[:, k],
+                    plan_weights[:, k],
                     u_quantiles_idx[:, k],
                     v_quantiles_idx[:, k],
                     shape=(n, m),
                     type_as=u_values,
                 )
-                for k in range(delta.shape[1])
+                for k in range(plan_weights.shape[1])
             ]
 
     if p == 1:
